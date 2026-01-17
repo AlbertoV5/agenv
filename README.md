@@ -8,6 +8,9 @@ A centralized Python+Bun environment for AI agents. This monorepo provides share
 ~/.agenv/
 ├── packages/           # Bun/TypeScript packages
 │   └── planning/       # Plan management library
+├── skills/             # Shared agent skills
+│   ├── creating-plans/
+│   └── implementing-plans/
 ├── libraries/          # Python libraries (uv workspace)
 └── services/           # Long-running services
 ```
@@ -15,14 +18,45 @@ A centralized Python+Bun environment for AI agents. This monorepo provides share
 ## Installation
 
 ```bash
-# Install agenv and add commands to PATH
+# Install CLI tools and add to PATH
 ~/.agenv/install.sh
+
+# Install CLI tools + skills to ~/.claude/skills
+~/.agenv/install.sh --with-skills
+
+# Install skills to all agent directories (Claude, Gemini)
+~/.agenv/install.sh --skills-all
 
 # Reload shell or run:
 source ~/.zshrc  # or ~/.bashrc
 ```
 
 This adds `~/.agenv/bin` to your PATH and creates symlinks for all CLI tools.
+
+### Installing Skills Separately
+
+```bash
+# List available skills
+~/.agenv/install-skills.sh --list
+
+# Install to Claude (default)
+~/.agenv/install-skills.sh --claude
+
+# Install to Gemini
+~/.agenv/install-skills.sh --gemini
+
+# Install to all supported agents
+~/.agenv/install-skills.sh --all
+
+# Install to custom location
+~/.agenv/install-skills.sh --target ~/my-agent/skills
+
+# Preview what would be installed
+~/.agenv/install-skills.sh --dry-run --all
+
+# Clean install - remove all existing skills first
+~/.agenv/install-skills.sh --clean --claude
+```
 
 ## Packages
 
@@ -77,12 +111,22 @@ const result = generatePlan({
 })
 ```
 
+## Skills
+
+Skills are agent-specific instructions stored in `~/.agenv/skills/`. Each skill has a `SKILL.md` file and optionally a `scripts/` directory.
+
+| Skill | Description |
+|-------|-------------|
+| `creating-plans` | How to create implementation plans for tasks |
+| `implementing-plans` | How to follow and update plans during implementation |
+
+Skills are installed to agent directories (`~/.claude/skills/`, `~/.gemini/skills/`) using the `install-skills.sh` script.
+
 ## Usage from Agent Skills
 
-Agent skills (in `~/.claude/skills/`, `~/.gemini/skills/`, etc.) can:
+Agent skills can use agenv packages by:
 
-1. **Call CLI tools directly**: Reference `~/.agenv/packages/planning/bin/*.ts`
-2. **Import as library**: Use `import { ... } from "@agenv/planning"` (requires path mapping)
-3. **Use wrapper scripts**: Skills can have thin wrappers that import from agenv
+1. **CLI tools**: Use the `plan` command (available after `install.sh`)
+2. **Library imports**: Use `import { ... } from "@agenv/planning"` (requires path mapping)
 
 This centralizes dependencies and logic while keeping skill directories simple.

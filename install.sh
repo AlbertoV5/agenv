@@ -5,16 +5,54 @@
 # 1. Adds ~/.agenv/bin to PATH
 # 2. Creates symlinks for all package CLI tools
 # 3. Updates shell configuration (.zshrc, .bashrc)
+# 4. Optionally installs skills to agent directories
 #
 # Usage:
-#   curl -fsSL ~/.agenv/install.sh | bash
-#   # or
-#   ~/.agenv/install.sh
+#   ~/.agenv/install.sh [options]
+#
+# Options:
+#   --with-skills     Also install skills to ~/.claude/skills
+#   --skills-all      Install skills to all agent directories
+#   --skills-only     Only install skills, skip CLI setup
 
 set -e
 
 AGENV_HOME="${HOME}/.agenv"
 AGENV_BIN="${AGENV_HOME}/bin"
+
+# Parse arguments
+INSTALL_SKILLS="false"
+SKILLS_ALL="false"
+SKILLS_ONLY="false"
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --with-skills)
+            INSTALL_SKILLS="true"
+            shift
+            ;;
+        --skills-all)
+            INSTALL_SKILLS="true"
+            SKILLS_ALL="true"
+            shift
+            ;;
+        --skills-only)
+            SKILLS_ONLY="true"
+            shift
+            ;;
+        *)
+            shift
+            ;;
+    esac
+done
+
+# Skip CLI setup if --skills-only
+if [ "$SKILLS_ONLY" = "true" ]; then
+    if [ -x "$AGENV_HOME/install-skills.sh" ]; then
+        "$AGENV_HOME/install-skills.sh" --all
+    fi
+    exit 0
+fi
 
 echo "Installing AgEnv..."
 
@@ -78,8 +116,26 @@ for cmd in "$AGENV_BIN"/*; do
         echo "  $(basename "$cmd")"
     fi
 done
+
+# Install skills if requested
+if [ "$INSTALL_SKILLS" = "true" ]; then
+    echo ""
+    if [ -x "$AGENV_HOME/install-skills.sh" ]; then
+        if [ "$SKILLS_ALL" = "true" ]; then
+            "$AGENV_HOME/install-skills.sh" --all
+        else
+            "$AGENV_HOME/install-skills.sh" --claude
+        fi
+    else
+        echo "Warning: install-skills.sh not found or not executable"
+    fi
+fi
+
 echo ""
 echo "To use now, run:"
 echo "  source $SHELL_CONFIG"
 echo ""
 echo "Or restart your terminal."
+echo ""
+echo "To install skills separately, run:"
+echo "  ~/.agenv/install-skills.sh --help"
