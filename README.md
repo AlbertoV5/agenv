@@ -1,4 +1,4 @@
-# .agenv
+# AgEnv
 
 To install dependencies:
 
