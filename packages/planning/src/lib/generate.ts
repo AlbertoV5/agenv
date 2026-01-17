@@ -1,0 +1,593 @@
+/**
+ * Plan generation functions
+ *
+ * Creates plan directories with dynamically generated templates.
+ */
+
+import { existsSync, mkdirSync, writeFileSync } from "fs"
+import { join } from "path"
+import type { PlanSize, PlanMetadata } from "./types.ts"
+import { DEFAULT_SESSION_CONFIGS, DEFAULT_STRUCTURE } from "./types.ts"
+import { getPlansDir } from "./repo.ts"
+import {
+  getOrCreateIndex,
+  saveIndex,
+  getNextOrderNumber,
+  formatOrderNumber,
+} from "./index.ts"
+import { toTitleCase, getDateString } from "./utils.ts"
+
+export interface GeneratePlanArgs {
+  name: string
+  size: PlanSize
+  repoRoot: string
+  stages: number
+  supertasks: number
+  subtasks: number
+}
+
+export interface GeneratePlanResult {
+  planId: string
+  planPath: string
+  size: PlanSize
+  stages: number
+  supertasks: number
+  subtasks: number
+  sessions: number
+}
+
+/**
+ * Generate a supertask section with subtasks
+ */
+function generateSupertask(
+  supertaskNum: number,
+  subtaskCount: number,
+  stageNum?: number,
+): string {
+  const prefix = stageNum !== undefined ? `Stage ${stageNum} - ` : ""
+  const lines: string[] = [
+    `### ${prefix}Task Group ${supertaskNum}`,
+    "",
+    "<!-- Description of this task group -->",
+    "",
+  ]
+
+  for (let i = 1; i <= subtaskCount; i++) {
+    lines.push(`- [ ] Subtask ${supertaskNum}.${i}`)
+  }
+
+  lines.push("")
+  lines.push("**Notes:**")
+  lines.push("")
+  lines.push("<!-- Add implementation notes for this task group -->")
+  lines.push("")
+  return lines.join("\n")
+}
+
+/**
+ * Generate a stage section (for medium plans - inline stages)
+ */
+function generateInlineStage(
+  stageNum: number,
+  supertaskCount: number,
+  subtaskCount: number,
+): string {
+  const lines: string[] = [
+    `## Stage ${stageNum}: <!-- Stage Title -->`,
+    "",
+    "<!-- Stage description -->",
+    "",
+  ]
+
+  for (let st = 1; st <= supertaskCount; st++) {
+    lines.push(generateSupertask(st, subtaskCount, stageNum))
+  }
+
+  lines.push("---")
+  lines.push("")
+  return lines.join("\n")
+}
+
+/**
+ * Generate checklist INDEX.md for short plans (single file, no stages)
+ */
+function generateShortChecklist(args: GeneratePlanArgs): string {
+  const planName = toTitleCase(args.name)
+  const now = getDateString()
+
+  const lines: string[] = [
+    `# ${planName} - Checklist`,
+    "",
+    `> **Plan Size:** ${args.size} | **Created:** ${now}`,
+    "",
+    "## Overview",
+    "",
+    "<!-- Implementation plan overview -->",
+    "",
+    "## Tasks",
+    "",
+  ]
+
+  for (let st = 1; st <= args.supertasks; st++) {
+    lines.push(generateSupertask(st, args.subtasks))
+  }
+
+  lines.push("---")
+  lines.push("")
+  lines.push(`*Last updated: ${now}*`)
+
+  return lines.join("\n")
+}
+
+/**
+ * Generate checklist INDEX.md for medium plans (inline stages)
+ */
+function generateMediumChecklist(args: GeneratePlanArgs): string {
+  const planName = toTitleCase(args.name)
+  const now = getDateString()
+
+  // Build stage table
+  const stageTableRows = Array.from({ length: args.stages }, (_, i) => {
+    return `| ${i + 1} | <!-- Stage ${i + 1} Title --> | Pending |`
+  }).join("\n")
+
+  const lines: string[] = [
+    `# ${planName} - Checklist`,
+    "",
+    `> **Plan Size:** ${args.size} | **Created:** ${now}`,
+    "",
+    "## Overview",
+    "",
+    "<!-- Implementation plan overview -->",
+    "",
+    "## Stage Overview",
+    "",
+    "| Stage | Title | Status |",
+    "|-------|-------|--------|",
+    stageTableRows,
+    "",
+    "---",
+    "",
+  ]
+
+  for (let s = 1; s <= args.stages; s++) {
+    lines.push(generateInlineStage(s, args.supertasks, args.subtasks))
+  }
+
+  lines.push(`*Last updated: ${now}*`)
+
+  return lines.join("\n")
+}
+
+/**
+ * Generate checklist INDEX.md for long plans (links to stage files)
+ */
+function generateLongChecklistIndex(args: GeneratePlanArgs): string {
+  const planName = toTitleCase(args.name)
+  const now = getDateString()
+
+  // Build stage table with file links
+  const stageTableRows = Array.from({ length: args.stages }, (_, i) => {
+    const num = i + 1
+    return `| ${num} | [STAGE_${num}.md](./STAGE_${num}.md) | <!-- Stage ${num} Title --> | Pending |`
+  }).join("\n")
+
+  // Build quick links
+  const stageLinks = Array.from({ length: args.stages }, (_, i) => {
+    const num = i + 1
+    return `- [Stage ${num}](./STAGE_${num}.md)`
+  }).join("\n")
+
+  return [
+    `# ${planName} - Checklist`,
+    "",
+    `> **Plan Size:** ${args.size} | **Created:** ${now}`,
+    "",
+    "## Overview",
+    "",
+    "<!-- Implementation plan overview -->",
+    "",
+    "## Stages",
+    "",
+    "This long-term plan is divided into multiple stage files for better organization.",
+    "",
+    "| Stage | File | Title | Status |",
+    "|-------|------|-------|--------|",
+    stageTableRows,
+    "",
+    "## Progress Summary",
+    "",
+    `- **Total Stages:** ${args.stages}`,
+    "- **Completed:** 0",
+    "- **In Progress:** 0",
+    `- **Pending:** ${args.stages}`,
+    "",
+    "## Quick Links",
+    "",
+    stageLinks,
+    "",
+    "---",
+    "",
+    `*Last updated: ${now}*`,
+  ].join("\n")
+}
+
+/**
+ * Generate a STAGE_N.md file for long plans
+ */
+function generateLongStageFile(
+  args: GeneratePlanArgs,
+  stageNum: number,
+): string {
+  const planName = toTitleCase(args.name)
+  const now = getDateString()
+
+  const lines: string[] = [
+    `# Stage ${stageNum}: <!-- Stage Title -->`,
+    "",
+    `> **Plan:** ${planName} | **Stage:** ${stageNum} of ${args.stages}`,
+    "",
+  ]
+
+  for (let st = 1; st <= args.supertasks; st++) {
+    lines.push(generateSupertask(st, args.subtasks))
+  }
+
+  lines.push("---")
+  lines.push("")
+  lines.push(`*Last updated: ${now}*`)
+
+  return lines.join("\n")
+}
+
+/**
+ * Generate all checklist files based on plan size
+ */
+function generateChecklist(args: GeneratePlanArgs): Map<string, string> {
+  const files = new Map<string, string>()
+
+  if (args.size === "short") {
+    files.set("INDEX.md", generateShortChecklist(args))
+  } else if (args.size === "medium") {
+    files.set("INDEX.md", generateMediumChecklist(args))
+  } else if (args.size === "long") {
+    files.set("INDEX.md", generateLongChecklistIndex(args))
+    for (let s = 1; s <= args.stages; s++) {
+      files.set(`STAGE_${s}.md`, generateLongStageFile(args, s))
+    }
+  }
+
+  return files
+}
+
+/**
+ * Generate principle INDEX.md for short plans
+ */
+function generateShortPrinciple(args: GeneratePlanArgs): string {
+  const planName = toTitleCase(args.name)
+  const now = getDateString()
+
+  return [
+    `# ${planName} - Principle`,
+    "",
+    `> **Plan Size:** ${args.size} | **Created:** ${now}`,
+    "",
+    "## Goal",
+    "",
+    "<!-- What this implementation aims to achieve -->",
+    "",
+    "## Summary",
+    "",
+    "<!-- Brief overview of the approach -->",
+    "",
+    "## Considerations and Questions",
+    "",
+    "<!-- Constraints, risks, open questions -->",
+    "",
+    "---",
+    "",
+    `*Last updated: ${now}*`,
+  ].join("\n")
+}
+
+/**
+ * Generate principle INDEX.md for medium plans
+ */
+function generateMediumPrinciple(args: GeneratePlanArgs): string {
+  const planName = toTitleCase(args.name)
+  const now = getDateString()
+
+  // Build stage sections
+  const stageSections = Array.from({ length: args.stages }, (_, i) => {
+    const num = i + 1
+    const deps = num === 1 ? "None" : `Stage ${num - 1}`
+    return `### Stage ${num}: <!-- Title -->\n\n<!-- Overview and approach --> | **Dependencies:** ${deps}`
+  }).join("\n\n")
+
+  return [
+    `# ${planName} - Principle`,
+    "",
+    `> **Plan Size:** ${args.size} | **Created:** ${now}`,
+    "",
+    "## Goal",
+    "",
+    "<!-- What this implementation aims to achieve -->",
+    "",
+    "## Summary",
+    "",
+    "<!-- Brief overview of the problem and solution -->",
+    "",
+    "## Details",
+    "",
+    "<!-- Agent fills in with relevant subsections (### Key Concepts, ### Background, etc.) -->",
+    "",
+    "## Architecture & Design",
+    "",
+    "<!-- High-level architecture, diagrams, pseudo-code -->",
+    "",
+    "## Implementation Stages",
+    "",
+    stageSections,
+    "",
+    "## Considerations and Questions",
+    "",
+    "<!-- Constraints, risks, open questions -->",
+    "",
+    "## References",
+    "",
+    "<!-- External docs, resources, related code -->",
+    "",
+    "---",
+    "",
+    `*Last updated: ${now}*`,
+  ].join("\n")
+}
+
+/**
+ * Generate principle INDEX.md for long plans (overview linking to stage files)
+ */
+function generateLongPrincipleIndex(args: GeneratePlanArgs): string {
+  const planName = toTitleCase(args.name)
+  const now = getDateString()
+
+  // Build stage table with file links
+  const stageTableRows = Array.from({ length: args.stages }, (_, i) => {
+    const num = i + 1
+    const deps = num === 1 ? "None" : `Stage ${num - 1}`
+    return `| ${num} | [STAGE_${num}.md](./STAGE_${num}.md) | <!-- Title --> | ${deps} |`
+  }).join("\n")
+
+  return [
+    `# ${planName} - Principle`,
+    "",
+    `> **Plan Size:** ${args.size} | **Created:** ${now}`,
+    "",
+    "## Goal",
+    "",
+    "<!-- What this implementation aims to achieve -->",
+    "",
+    "## Summary",
+    "",
+    "<!-- Brief overview of the problem and solution -->",
+    "",
+    "## Details",
+    "",
+    "<!-- Agent fills in with relevant subsections (### Key Concepts, ### Background, etc.) -->",
+    "",
+    "## Architecture & Design",
+    "",
+    "<!-- High-level architecture, diagrams, pseudo-code -->",
+    "",
+    "## Implementation Stages",
+    "",
+    "| Stage | File | Title | Dependencies |",
+    "|-------|------|-------|--------------|",
+    stageTableRows,
+    "",
+    "## Considerations and Questions",
+    "",
+    "<!-- Constraints, risks, open questions -->",
+    "",
+    "## References",
+    "",
+    "<!-- External docs, resources, related code -->",
+    "",
+    "---",
+    "",
+    `*Last updated: ${now}*`,
+  ].join("\n")
+}
+
+/**
+ * Generate a STAGE_N.md file for long plan principles
+ */
+function generateLongPrincipleStageFile(
+  args: GeneratePlanArgs,
+  stageNum: number,
+): string {
+  const planName = toTitleCase(args.name)
+  const now = getDateString()
+  const deps = stageNum === 1 ? "None" : `Stage ${stageNum - 1}`
+
+  return [
+    `# Stage ${stageNum}: <!-- Stage Title -->`,
+    "",
+    `> **Plan:** ${planName} | **Stage:** ${stageNum} of ${args.stages} | **Dependencies:** ${deps}`,
+    "",
+    "## Goal",
+    "",
+    "<!-- What this stage aims to achieve -->",
+    "",
+    "## Summary",
+    "",
+    "<!-- Brief overview of this stage's approach -->",
+    "",
+    "## Details",
+    "",
+    "<!-- Agent fills in with relevant subsections -->",
+    "",
+    "## Considerations and Questions",
+    "",
+    "<!-- Stage-specific constraints, risks, questions -->",
+    "",
+    "---",
+    "",
+    `*Last updated: ${now}*`,
+  ].join("\n")
+}
+
+/**
+ * Generate all principle files based on plan size
+ */
+function generatePrinciple(args: GeneratePlanArgs): Map<string, string> {
+  const files = new Map<string, string>()
+
+  if (args.size === "short") {
+    files.set("INDEX.md", generateShortPrinciple(args))
+  } else if (args.size === "medium") {
+    files.set("INDEX.md", generateMediumPrinciple(args))
+  } else if (args.size === "long") {
+    files.set("INDEX.md", generateLongPrincipleIndex(args))
+    for (let s = 1; s <= args.stages; s++) {
+      files.set(`STAGE_${s}.md`, generateLongPrincipleStageFile(args, s))
+    }
+  }
+
+  return files
+}
+
+/**
+ * Generate reference INDEX.md
+ */
+function generateReference(args: GeneratePlanArgs): string {
+  const planName = toTitleCase(args.name)
+  const now = getDateString()
+
+  const docsNote =
+    args.size === "long"
+      ? "<!-- Agent adds ### subsections or links to other .md files in this directory -->"
+      : "<!-- Agent adds ### subsections with code snippets, file lists, etc. -->"
+
+  return [
+    `# ${planName} - Reference`,
+    "",
+    `> **Plan Size:** ${args.size} | **Created:** ${now}`,
+    "",
+    "## Summary and Outcomes",
+    "",
+    "<!-- To be filled after implementation: What was achieved and deliverables -->",
+    "",
+    "## Documentation and Files",
+    "",
+    docsNote,
+    "",
+    "## Lessons and Considerations",
+    "",
+    "<!-- What worked, what didn't, future considerations -->",
+    "",
+    "---",
+    "",
+    `*Last updated: ${now}*`,
+  ].join("\n")
+}
+
+/**
+ * Main plan generation function
+ */
+export function generatePlan(args: GeneratePlanArgs): GeneratePlanResult {
+  const plansDir = getPlansDir(args.repoRoot)
+
+  // Ensure plans directory exists
+  if (!existsSync(plansDir)) {
+    mkdirSync(plansDir, { recursive: true })
+  }
+
+  // Get or create index
+  const index = getOrCreateIndex(args.repoRoot)
+
+  // Check if plan with same name already exists
+  const existingPlan = index.plans.find((p) => p.name === args.name)
+  if (existingPlan) {
+    throw new Error(
+      `Plan with name "${args.name}" already exists (${existingPlan.id})`,
+    )
+  }
+
+  // Generate plan ID
+  const order = getNextOrderNumber(index)
+  const planId = `${formatOrderNumber(order)}-${args.name}`
+  const planPath = `docs/plans/${planId}`
+  const planDir = join(plansDir, planId)
+
+  // Create directories
+  mkdirSync(join(planDir, "checklist"), { recursive: true })
+  mkdirSync(join(planDir, "principle"), { recursive: true })
+  mkdirSync(join(planDir, "reference"), { recursive: true })
+
+  // Generate checklist files
+  const checklistFiles = generateChecklist(args)
+  for (const [filename, content] of checklistFiles) {
+    writeFileSync(join(planDir, "checklist", filename), content)
+  }
+
+  // Generate principle files
+  const principleFiles = generatePrinciple(args)
+  for (const [filename, content] of principleFiles) {
+    writeFileSync(join(planDir, "principle", filename), content)
+  }
+
+  // Generate reference
+  writeFileSync(join(planDir, "reference", "INDEX.md"), generateReference(args))
+
+  // Create plan metadata
+  const now = new Date().toISOString()
+  const planMetadata: PlanMetadata = {
+    id: planId,
+    name: args.name,
+    order,
+    size: args.size,
+    session: DEFAULT_SESSION_CONFIGS[args.size],
+    created_at: now,
+    updated_at: now,
+    synthesis: {
+      synthesized: false,
+    },
+    path: planPath,
+  }
+
+  // Update index
+  index.plans.push(planMetadata)
+  saveIndex(args.repoRoot, index)
+
+  return {
+    planId,
+    planPath,
+    size: args.size,
+    stages: args.stages,
+    supertasks: args.supertasks,
+    subtasks: args.subtasks,
+    sessions: DEFAULT_SESSION_CONFIGS[args.size].length,
+  }
+}
+
+/**
+ * Create generate args with defaults based on size
+ */
+export function createGenerateArgs(
+  name: string,
+  size: PlanSize,
+  repoRoot: string,
+  overrides?: Partial<
+    Pick<GeneratePlanArgs, "stages" | "supertasks" | "subtasks">
+  >,
+): GeneratePlanArgs {
+  const defaults = DEFAULT_STRUCTURE[size]
+  return {
+    name,
+    size,
+    repoRoot,
+    stages: overrides?.stages ?? defaults.stages,
+    supertasks: overrides?.supertasks ?? defaults.supertasks,
+    subtasks: overrides?.subtasks ?? defaults.subtasks,
+  }
+}
