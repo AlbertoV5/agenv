@@ -21,10 +21,16 @@ export {
   getOrCreateIndex,
   loadIndex,
   saveIndex,
+  saveIndexSafe,
+  modifyIndex,
   findPlan,
   getPlan,
   getNextOrderNumber,
   formatOrderNumber,
+  deletePlan,
+  atomicWriteFile,
+  type DeletePlanOptions,
+  type DeletePlanResult,
 } from "./lib/index.ts"
 
 // Utility functions

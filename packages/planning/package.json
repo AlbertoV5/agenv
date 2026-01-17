@@ -1,5 +1,5 @@
 {
-  "name": "planning",
+  "name": "@agenv/planning",
   "module": "src/index.ts",
   "type": "module",
   "bin": {
@@ -14,9 +14,13 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/proper-lockfile": "^4.1.4"
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "dependencies": {
+    "proper-lockfile": "^4.1.2"
   }
 }

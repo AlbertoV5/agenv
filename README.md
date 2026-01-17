@@ -7,7 +7,8 @@ A centralized Python+Bun environment for AI agents. This monorepo provides share
 ```
 ~/.agenv/
 ├── packages/           # Bun/TypeScript packages
-│   └── planning/       # Plan management library
+│   ├── cli/            # Main CLI (@agenv/cli)
+│   └── planning/       # Plan management library (@agenv/planning)
 ├── skills/             # Shared agent skills
 │   ├── creating-plans/
 │   └── implementing-plans/
@@ -21,7 +22,7 @@ A centralized Python+Bun environment for AI agents. This monorepo provides share
 # Install CLI tools and add to PATH
 ~/.agenv/install.sh
 
-# Install CLI tools + skills to ~/.claude/skills
+# Install CLI + skills to ~/.claude/skills
 ~/.agenv/install.sh --with-skills
 
 # Install skills to all agent directories (Claude, Gemini)
@@ -31,60 +32,46 @@ A centralized Python+Bun environment for AI agents. This monorepo provides share
 source ~/.zshrc  # or ~/.bashrc
 ```
 
-This adds `~/.agenv/bin` to your PATH and creates symlinks for all CLI tools.
+This adds `~/.agenv/bin` to your PATH and creates the `ag` command.
 
-### Installing Skills Separately
+## CLI
+
+AgEnv provides a unified `ag` command with subcommands:
 
 ```bash
-# List available skills
-~/.agenv/install-skills.sh --list
+# Show help
+ag --help
 
-# Install to Claude (default)
-~/.agenv/install-skills.sh --claude
+# Plan management
+ag plan create --name my-feature --size medium
+ag plan status [--plan "plan-id"]
+ag plan update --plan "plan-id" --task "1.2" --status completed
+ag plan complete --plan "plan-id"
+ag plan index --plan "plan-id" --list
 
-# Install to Gemini
-~/.agenv/install-skills.sh --gemini
-
-# Install to all supported agents
-~/.agenv/install-skills.sh --all
-
-# Install to custom location
-~/.agenv/install-skills.sh --target ~/my-agent/skills
-
-# Preview what would be installed
-~/.agenv/install-skills.sh --dry-run --all
-
-# Clean install - remove all existing skills first
-~/.agenv/install-skills.sh --clean --claude
+# Skills installation
+ag install skills --list              # List available skills
+ag install skills --claude            # Install to ~/.claude/skills (default)
+ag install skills --gemini            # Install to ~/.gemini/skills
+ag install skills --all               # Install to all agent directories
+ag install skills --target ~/custom   # Install to custom location
+ag install skills --clean --claude    # Clean install
+ag install skills --dry-run --all     # Preview what would be installed
 ```
 
 ## Packages
+
+### @agenv/cli
+
+The main CLI package that provides the `ag` command. Routes to subcommands:
+- `ag plan` - Plan management (delegates to @agenv/planning)
+- `ag install` - Installation management (skills)
 
 ### @agenv/planning
 
 Plan management library for AI agents - create, track, and complete implementation plans.
 
-**CLI** (auto-detects repo root from cwd):
-
-```bash
-# Show help
-plan --help
-
-# Create a new plan
-plan create --name my-feature --size medium
-
-# Check plan status
-plan status [--plan "plan-id"]
-
-# Update a task
-plan update --plan "plan-id" --task "1.2" --status completed
-
-# Complete a plan
-plan complete --plan "plan-id"
-
-# Update plan metadata
-plan index --plan "plan-id" --list
-```
+Generated plans include version tracking in both the markdown templates and `index.json` metadata, making it easy to identify which tool versions created each plan.
 
 **Library Usage**:
 
@@ -94,7 +81,9 @@ import {
   generatePlan,
   getPlanProgress,
   updateTask,
-  completePlan
+  completePlan,
+  deletePlan,
+  modifyIndex
 } from "@agenv/planning"
 
 // Auto-detect repo root
@@ -109,6 +98,15 @@ const result = generatePlan({
   supertasks: 2,
   subtasks: 3
 })
+
+// Delete a plan (with file locking for concurrent safety)
+await deletePlan(repoRoot, "001-my-feature", { deleteFiles: true })
+
+// Atomic read-modify-write with locking
+await modifyIndex(repoRoot, (index) => {
+  // Modify index safely
+  return index.plans.length
+})
 ```
 
 ## Skills
@@ -120,13 +118,13 @@ Skills are agent-specific instructions stored in `~/.agenv/skills/`. Each skill 
 | `creating-plans` | How to create implementation plans for tasks |
 | `implementing-plans` | How to follow and update plans during implementation |
 
-Skills are installed to agent directories (`~/.claude/skills/`, `~/.gemini/skills/`) using the `install-skills.sh` script.
+Skills are installed to agent directories using `ag install skills`.
 
 ## Usage from Agent Skills
 
 Agent skills can use agenv packages by:
 
-1. **CLI tools**: Use the `plan` command (available after `install.sh`)
+1. **CLI tools**: Use the `ag` command (available after `install.sh`)
 2. **Library imports**: Use `import { ... } from "@agenv/planning"` (requires path mapping)
 
 This centralizes dependencies and logic while keeping skill directories simple.

@@ -2,11 +2,12 @@
  * Task update operations
  */
 
-import { existsSync, readFileSync, writeFileSync } from "fs"
+import { existsSync, readFileSync } from "fs"
 import { join } from "path"
 import type { TaskStatus, PlanMetadata } from "./types.ts"
 import { getPlansDir } from "./repo.ts"
 import { statusToCheckbox, getDateString } from "./utils.ts"
+import { atomicWriteFile } from "./index.ts"
 
 export interface UpdateTaskArgs {
   repoRoot: string
@@ -277,8 +278,8 @@ export function updateTask(args: UpdateTaskArgs): UpdateTaskResult {
   // Update timestamp
   content = updateTimestamp(content)
 
-  // Write back
-  writeFileSync(targetFile, content)
+  // Write back (atomic)
+  atomicWriteFile(targetFile, content)
 
   return {
     updated: true,

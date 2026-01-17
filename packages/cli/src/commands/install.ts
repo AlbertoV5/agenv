@@ -1,0 +1,299 @@
+/**
+ * ag install - Installation management
+ *
+ * Subcommands:
+ *   skills    - Install skills to agent directories
+ */
+
+import {
+  existsSync,
+  readdirSync,
+  statSync,
+  rmSync,
+  cpSync,
+  mkdirSync,
+  readFileSync,
+} from "fs"
+import { join } from "path"
+
+const AGENV_HOME = process.env.HOME + "/.agenv"
+const AGENV_SKILLS = join(AGENV_HOME, "skills")
+
+// Target directories for different agents
+const TARGETS: Record<string, string> = {
+  claude: process.env.HOME + "/.claude/skills",
+  gemini: process.env.HOME + "/.gemini/skills",
+}
+
+// Colors for output
+const RED = "\x1b[0;31m"
+const GREEN = "\x1b[0;32m"
+const YELLOW = "\x1b[1;33m"
+const NC = "\x1b[0m" // No Color
+
+function printHelp(): void {
+  console.log(`
+ag install - Installation management
+
+Usage:
+  ag install <subcommand> [options]
+
+Subcommands:
+  skills     Install skills to agent directories
+
+Run 'ag install <subcommand> --help' for more information.
+`)
+}
+
+function printSkillsHelp(): void {
+  console.log(`
+ag install skills - Install skills to agent directories
+
+Usage:
+  ag install skills [options]
+
+Options:
+  --claude       Install to ~/.claude/skills (default if no option given)
+  --gemini       Install to ~/.gemini/skills
+  --all          Install to all supported agent directories
+  --target PATH  Install to a custom directory
+  --clean        Remove ALL existing skills in target before installing
+  --list         List available skills without installing
+  --dry-run      Show what would be installed without making changes
+  --help, -h     Show this help message
+
+Examples:
+  ag install skills --claude
+  ag install skills --all
+  ag install skills --clean --claude
+  ag install skills --target ~/my-agent/skills
+  ag install skills --list
+`)
+}
+
+function listSkills(): void {
+  console.log(`Available skills in ${AGENV_SKILLS}:`)
+  console.log("")
+
+  if (!existsSync(AGENV_SKILLS)) {
+    console.log(`${YELLOW}No skills directory found${NC}`)
+    return
+  }
+
+  const entries = readdirSync(AGENV_SKILLS)
+  for (const entry of entries) {
+    const skillDir = join(AGENV_SKILLS, entry)
+    if (!statSync(skillDir).isDirectory()) continue
+
+    const skillMdPath = join(skillDir, "SKILL.md")
+    if (existsSync(skillMdPath)) {
+      console.log(`  ${entry}`)
+      // Try to extract description from SKILL.md frontmatter
+      try {
+        const content = readFileSync(skillMdPath, "utf-8")
+        const match = content.match(/^description:\s*(.+)$/m)
+        if (match) {
+          console.log(`    └─ ${match[1]}`)
+        }
+      } catch {
+        // Ignore read errors
+      }
+    } else {
+      console.log(`  ${entry} (no SKILL.md)`)
+    }
+  }
+}
+
+function cleanTarget(targetDir: string, dryRun: boolean): number {
+  if (!existsSync(targetDir)) return 0
+
+  let removedCount = 0
+  const entries = readdirSync(targetDir)
+
+  for (const entry of entries) {
+    const skillDir = join(targetDir, entry)
+    if (!statSync(skillDir).isDirectory()) continue
+
+    const skillMdPath = join(skillDir, "SKILL.md")
+    if (existsSync(skillMdPath)) {
+      if (dryRun) {
+        console.log(`  [REMOVE] ${entry}`)
+      } else {
+        rmSync(skillDir, { recursive: true, force: true })
+        console.log(`  ${RED}✗${NC} ${entry} (removed)`)
+      }
+      removedCount++
+    }
+  }
+
+  if (removedCount > 0 && !dryRun) {
+    console.log(`${YELLOW}Removed ${removedCount} existing skills${NC}`)
+  }
+
+  return removedCount
+}
+
+function installSkillsTo(
+  targetDir: string,
+  dryRun: boolean,
+  clean: boolean,
+): void {
+  if (!existsSync(AGENV_SKILLS)) {
+    console.error(
+      `${RED}Error: Source skills directory not found: ${AGENV_SKILLS}${NC}`,
+    )
+    process.exit(1)
+  }
+
+  const entries = readdirSync(AGENV_SKILLS).filter((e) =>
+    statSync(join(AGENV_SKILLS, e)).isDirectory(),
+  )
+
+  if (entries.length === 0) {
+    console.log(`${YELLOW}No skills found in ${AGENV_SKILLS}${NC}`)
+    return
+  }
+
+  if (dryRun) {
+    console.log(`${YELLOW}[DRY RUN]${NC} Would install to: ${targetDir}`)
+  } else {
+    console.log(`Installing skills to: ${targetDir}`)
+    mkdirSync(targetDir, { recursive: true })
+  }
+
+  // Clean existing skills if requested
+  if (clean) {
+    if (dryRun) {
+      console.log(`${YELLOW}[DRY RUN]${NC} Would remove existing skills:`)
+    } else {
+      console.log("Removing existing skills...")
+    }
+    cleanTarget(targetDir, dryRun)
+    console.log("")
+  }
+
+  if (dryRun) {
+    console.log("Would install:")
+  } else {
+    console.log("Installing:")
+  }
+
+  for (const entry of entries) {
+    const skillDir = join(AGENV_SKILLS, entry)
+    const targetSkill = join(targetDir, entry)
+
+    if (dryRun) {
+      if (existsSync(targetSkill) && !clean) {
+        console.log(`  [UPDATE] ${entry}`)
+      } else {
+        console.log(`  [NEW]    ${entry}`)
+      }
+    } else {
+      // Remove existing and copy fresh
+      if (existsSync(targetSkill)) {
+        rmSync(targetSkill, { recursive: true, force: true })
+      }
+      cpSync(skillDir, targetSkill, { recursive: true })
+      console.log(`  ${GREEN}✓${NC} ${entry}`)
+    }
+  }
+
+  if (!dryRun) {
+    console.log(
+      `${GREEN}Done!${NC} Installed ${entries.length} skills to ${targetDir}`,
+    )
+  }
+}
+
+function skillsCommand(args: string[]): void {
+  const targets: string[] = []
+  let dryRun = false
+  let listOnly = false
+  let clean = false
+
+  let i = 0
+  while (i < args.length) {
+    const arg = args[i]
+    switch (arg) {
+      case "--claude":
+        targets.push(TARGETS.claude)
+        break
+      case "--gemini":
+        targets.push(TARGETS.gemini)
+        break
+      case "--all":
+        targets.push(TARGETS.claude, TARGETS.gemini)
+        break
+      case "--target":
+        i++
+        if (!args[i]) {
+          console.error(`${RED}Error: --target requires a path${NC}`)
+          process.exit(1)
+        }
+        targets.push(args[i])
+        break
+      case "--clean":
+        clean = true
+        break
+      case "--list":
+        listOnly = true
+        break
+      case "--dry-run":
+        dryRun = true
+        break
+      case "--help":
+      case "-h":
+        printSkillsHelp()
+        process.exit(0)
+      default:
+        console.error(`${RED}Error: Unknown option: ${arg}${NC}`)
+        printSkillsHelp()
+        process.exit(1)
+    }
+    i++
+  }
+
+  // Handle list mode
+  if (listOnly) {
+    listSkills()
+    return
+  }
+
+  // Default to Claude if no targets specified
+  if (targets.length === 0) {
+    targets.push(TARGETS.claude)
+  }
+
+  // Install to each target
+  for (const target of targets) {
+    installSkillsTo(target, dryRun, clean)
+    console.log("")
+  }
+}
+
+export function main(argv: string[]): void {
+  const args = argv.slice(2) // Remove 'bun' and 'ag-install'
+
+  if (args.length === 0) {
+    printHelp()
+    process.exit(0)
+  }
+
+  const subcommand = args[0]
+
+  if (subcommand === "--help" || subcommand === "-h") {
+    printHelp()
+    process.exit(0)
+  }
+
+  switch (subcommand) {
+    case "skills":
+      skillsCommand(args.slice(1))
+      break
+    default:
+      console.error(`Error: Unknown subcommand "${subcommand}"`)
+      console.error("\nAvailable subcommands: skills")
+      console.error("\nRun 'ag install --help' for usage information.")
+      process.exit(1)
+  }
+}

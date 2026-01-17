@@ -17,6 +17,7 @@ interface CreatePlanCliArgs {
   stages?: number
   supertasks?: number
   subtasks?: number
+  cliVersion?: string
 }
 
 function printHelp(): void {
@@ -142,6 +143,14 @@ function parseCliArgs(argv: string[]): CreatePlanCliArgs | null {
       case "-h":
         printHelp()
         process.exit(0)
+
+      case "--cli-version":
+        // Hidden arg: CLI version passed from @agenv/cli
+        if (next) {
+          parsed.cliVersion = next
+          i++
+        }
+        break
     }
   }
 
@@ -179,6 +188,7 @@ export function main(argv: string[] = process.argv): void {
     stages: cliArgs.stages,
     supertasks: cliArgs.supertasks,
     subtasks: cliArgs.subtasks,
+    cliVersion: cliArgs.cliVersion,
   })
 
   try {

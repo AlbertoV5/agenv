@@ -48,9 +48,8 @@ done
 
 # Skip CLI setup if --skills-only
 if [ "$SKILLS_ONLY" = "true" ]; then
-    if [ -x "$AGENV_HOME/install-skills.sh" ]; then
-        "$AGENV_HOME/install-skills.sh" --all
-    fi
+    cd "$AGENV_HOME" && bun install --silent
+    bun run "$AGENV_HOME/packages/cli/bin/ag.ts" install skills --all
     exit 0
 fi
 
@@ -59,19 +58,10 @@ echo "Installing AgEnv..."
 # Create bin directory
 mkdir -p "$AGENV_BIN"
 
-# Find all bin scripts in packages and create symlinks
-echo "Creating command symlinks..."
-
-for pkg_bin in "$AGENV_HOME"/packages/*/bin/*.ts; do
-    if [ -f "$pkg_bin" ]; then
-        # Get the command name (e.g., plan-create from plan-create.ts)
-        cmd_name=$(basename "$pkg_bin" .ts)
-
-        # Create symlink in agenv/bin
-        ln -sf "$pkg_bin" "$AGENV_BIN/$cmd_name"
-        echo "  $cmd_name -> $pkg_bin"
-    fi
-done
+# Create symlink for the main `ag` command from cli package
+echo "Creating ag command symlink..."
+ln -sf "$AGENV_HOME/packages/cli/bin/ag.ts" "$AGENV_BIN/ag"
+echo "  ag -> $AGENV_HOME/packages/cli/bin/ag.ts"
 
 # Detect shell and config file
 detect_shell_config() {
@@ -111,23 +101,17 @@ echo ""
 echo "AgEnv installed successfully!"
 echo ""
 echo "Available commands:"
-for cmd in "$AGENV_BIN"/*; do
-    if [ -f "$cmd" ]; then
-        echo "  $(basename "$cmd")"
-    fi
-done
+echo "  ag                  - Main CLI entry point"
+echo "  ag plan             - Plan management"
+echo "  ag install skills   - Install skills to agent directories"
 
 # Install skills if requested
 if [ "$INSTALL_SKILLS" = "true" ]; then
     echo ""
-    if [ -x "$AGENV_HOME/install-skills.sh" ]; then
-        if [ "$SKILLS_ALL" = "true" ]; then
-            "$AGENV_HOME/install-skills.sh" --all
-        else
-            "$AGENV_HOME/install-skills.sh" --claude
-        fi
+    if [ "$SKILLS_ALL" = "true" ]; then
+        bun run "$AGENV_HOME/packages/cli/bin/ag.ts" install skills --all
     else
-        echo "Warning: install-skills.sh not found or not executable"
+        bun run "$AGENV_HOME/packages/cli/bin/ag.ts" install skills --claude
     fi
 fi
 
@@ -138,4 +122,4 @@ echo ""
 echo "Or restart your terminal."
 echo ""
 echo "To install skills separately, run:"
-echo "  ~/.agenv/install-skills.sh --help"
+echo "  ag install skills --help"

@@ -60,15 +60,15 @@ function printVersion(): void {
   console.log("plan v0.1.0")
 }
 
-function main(): void {
-  const args = process.argv.slice(2)
+export function main(argv?: string[]): void {
+  const args = argv ? argv.slice(2) : process.argv.slice(2)
 
   if (args.length === 0) {
     printHelp()
     process.exit(0)
   }
 
-  const firstArg = args[0]
+  const firstArg = args[0]!
 
   // Handle global flags
   if (firstArg === "--help" || firstArg === "-h") {
@@ -97,4 +97,7 @@ function main(): void {
   SUBCOMMANDS[subcommand](subcommandArgs)
 }
 
-main()
+// Run if called directly
+if (import.meta.main) {
+  main()
+}

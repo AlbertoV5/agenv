@@ -52,6 +52,12 @@ export interface SynthesisInfo {
   synthesized_at?: string // ISO date
 }
 
+// Version info for generated plans
+export interface GeneratedBy {
+  cli: string // @agenv/cli version
+  planning: string // @agenv/planning version
+}
+
 // Individual plan metadata
 export interface PlanMetadata {
   id: string // e.g., "001-migrate-sql-to-orm"
@@ -63,6 +69,7 @@ export interface PlanMetadata {
   updated_at: string // ISO date
   synthesis: SynthesisInfo
   path: string // relative path from repo root
+  generated_by: GeneratedBy // versions of tools that created this plan
 }
 
 // The index.json structure
