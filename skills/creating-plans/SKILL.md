@@ -5,6 +5,8 @@ description: How to create a plan for the development of a task or project. Plan
 
 # Creating Plans
 
+> **Prerequisite**: Run `~/.agenv/install.sh` to install the `ag` CLI.
+
 ## Overview
 
 Plans help define, track, and document development tasks. Each plan lives in `./docs/plans/{id}/` with three subdirectories:

@@ -5,6 +5,8 @@ description: How to synthesize plan reference documentation into global docs. On
 
 # Synthesizing Plan Reference
 
+> **Prerequisite**: Run `~/.agenv/install.sh` to install the `ag` CLI.
+
 ## Overview
 
 After a plan is complete, synthesize its reference documentation into global docs at `./docs/reference/`. This captures learnings for future use.

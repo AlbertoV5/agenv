@@ -5,6 +5,8 @@ description: How to follow and update a plan during implementation. This is the 
 
 # Implementing Plans
 
+> **Prerequisite**: Run `~/.agenv/install.sh` to install the `ag` CLI.
+
 ## Overview
 
 Plans live in `./docs/plans/{id}/` with three directories:
