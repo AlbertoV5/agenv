@@ -18,7 +18,7 @@ Plans live in `./docs/plans/{id}/` with three directories:
 ## Starting a Session
 
 ```bash
-plan status --plan "plan-id"
+ag plan status --plan "plan-id"
 cat docs/plans/{plan-id}/principle/INDEX.md
 cat docs/plans/{plan-id}/checklist/INDEX.md
 ```
@@ -66,14 +66,14 @@ The `reference/INDEX.md` may contain initial expectations written during plannin
 3. Mark complete:
 
 ```bash
-plan complete --plan "plan-id"
+ag plan complete --plan "plan-id"
 ```
 
 ## CLI Commands
 
 ```bash
-plan status [--plan "plan-id"]                    # Check progress
-plan update --plan "id" --task "1.2" --status completed
-plan complete --plan "id"                         # Mark done
-plan index --plan "id" --list                     # View metadata
+ag plan status [--plan "plan-id"]                    # Check progress
+ag plan update --plan "id" --task "1.2" --status completed
+ag plan complete --plan "id"                         # Mark done
+ag plan index --plan "id" --list                     # View metadata
 ```

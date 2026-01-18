@@ -11,7 +11,8 @@ A centralized Python+Bun environment for AI agents. This monorepo provides share
 │   └── planning/       # Plan management library (@agenv/planning)
 ├── skills/             # Shared agent skills
 │   ├── creating-plans/
-│   └── implementing-plans/
+│   ├── implementing-plans/
+│   └── synthesizing-plans/
 ├── libraries/          # Python libraries (uv workspace)
 └── services/           # Long-running services
 ```
@@ -117,6 +118,7 @@ Skills are agent-specific instructions stored in `~/.agenv/skills/`. Each skill 
 |-------|-------------|
 | `creating-plans` | How to create implementation plans for tasks |
 | `implementing-plans` | How to follow and update plans during implementation |
+| `synthesizing-plans` | How to synthesize plan reference docs into global docs |
 
 Skills are installed to agent directories using `ag install skills`.
 

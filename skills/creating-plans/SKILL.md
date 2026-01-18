@@ -32,7 +32,7 @@ A **session** is ~30-45 minutes of implementation with 4-8 back-and-forth iterat
 Run the generator command (auto-detects repo root from current directory):
 
 ```bash
-plan create --name "plan-name-in-kebab-case" --size short|medium|long
+ag plan create --name "plan-name-in-kebab-case" --size short|medium|long
 ```
 
 Optional flags:

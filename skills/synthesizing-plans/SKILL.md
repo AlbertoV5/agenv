@@ -20,7 +20,7 @@ docs/plans/{id}/reference/INDEX.md  →  docs/reference/{topic}.md
 Read the plan's reference and confirm the codebase matches:
 
 ```bash
-plan status --plan "plan-id"
+ag plan status --plan "plan-id"
 cat docs/plans/{plan-id}/reference/INDEX.md
 ```
 
@@ -41,23 +41,23 @@ Write `docs/reference/{topic}.md` synthesizing the plan's reference with:
 ### 3. Mark Synthesis Complete
 
 ```bash
-plan complete --plan "plan-id" --reference-path "docs/reference/{topic}.md"
+ag plan complete --plan "plan-id" --reference-path "docs/reference/{topic}.md"
 ```
 
 ## CLI Commands
 
 ```bash
 # View plan metadata
-plan index --plan "plan-id" --list
+ag plan index --plan "plan-id" --list
 
 # Check progress
-plan status --plan "plan-id"
+ag plan status --plan "plan-id"
 
 # Mark complete with reference
-plan complete --plan "plan-id" --reference-path "docs/reference/topic.md"
+ag plan complete --plan "plan-id" --reference-path "docs/reference/topic.md"
 
 # Update fields individually
-plan index --plan "plan-id" --field "synthesis.reference_path" --value "path"
+ag plan index --plan "plan-id" --field "synthesis.reference_path" --value "path"
 ```
 
 ## Handling Issues
