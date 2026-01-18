@@ -47,7 +47,7 @@ The script creates template files with placeholder comments. Fill in:
 
 2. **checklist/** - Replace placeholder task names with actual tasks. Update checkbox status during implementation.
 
-3. **reference/INDEX.md** - Leave mostly empty during planning. Fill in Summary and Outcomes, Documentation and Files (add ### subsections or link to other .md files), Lessons and Considerations after implementation.
+3. **reference/INDEX.md** - Can contain initial expectations of high-level logic/content during planning. This is TRANSFORMATIVE: the agent will rewrite it to reflect actual implementation state (unlike checklist which is a log).
 
 ## Plan Index
 

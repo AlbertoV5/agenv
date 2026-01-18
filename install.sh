@@ -60,6 +60,7 @@ mkdir -p "$AGENV_BIN"
 
 # Create symlink for the main `ag` command from cli package
 echo "Creating ag command symlink..."
+chmod +x "$AGENV_HOME/packages/cli/bin/ag.ts"
 ln -sf "$AGENV_HOME/packages/cli/bin/ag.ts" "$AGENV_BIN/ag"
 echo "  ag -> $AGENV_HOME/packages/cli/bin/ag.ts"
 
