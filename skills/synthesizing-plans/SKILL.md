@@ -5,7 +5,7 @@ description: How to synthesize plan reference documentation into global docs. On
 
 # Synthesizing Plan Reference
 
-> **Prerequisite**: Run `~/.agenv/install.sh` to install the `ag` CLI.
+> **Prerequisite**: Requires [bun](https://bun.sh) installed.
 
 ## Overview
 
@@ -22,7 +22,7 @@ docs/plans/{id}/reference/INDEX.md  →  docs/reference/{topic}.md
 Read the plan's reference and confirm the codebase matches:
 
 ```bash
-ag plan status --plan "plan-id"
+bun ~/.agenv/bin/ag plan status --plan "plan-id"
 cat docs/plans/{plan-id}/reference/INDEX.md
 ```
 
@@ -43,23 +43,23 @@ Write `docs/reference/{topic}.md` synthesizing the plan's reference with:
 ### 3. Mark Synthesis Complete
 
 ```bash
-ag plan complete --plan "plan-id" --reference-path "docs/reference/{topic}.md"
+bun ~/.agenv/bin/ag plan complete --plan "plan-id" --reference-path "docs/reference/{topic}.md"
 ```
 
 ## CLI Commands
 
 ```bash
 # View plan metadata
-ag plan index --plan "plan-id" --list
+bun ~/.agenv/bin/ag plan index --plan "plan-id" --list
 
 # Check progress
-ag plan status --plan "plan-id"
+bun ~/.agenv/bin/ag plan status --plan "plan-id"
 
 # Mark complete with reference
-ag plan complete --plan "plan-id" --reference-path "docs/reference/topic.md"
+bun ~/.agenv/bin/ag plan complete --plan "plan-id" --reference-path "docs/reference/topic.md"
 
 # Update fields individually
-ag plan index --plan "plan-id" --field "synthesis.reference_path" --value "path"
+bun ~/.agenv/bin/ag plan index --plan "plan-id" --field "synthesis.reference_path" --value "path"
 ```
 
 ## Handling Issues

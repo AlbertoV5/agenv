@@ -5,7 +5,7 @@ description: How to follow and update a plan during implementation. This is the 
 
 # Implementing Plans
 
-> **Prerequisite**: Run `~/.agenv/install.sh` to install the `ag` CLI.
+> **Prerequisite**: Requires [bun](https://bun.sh) installed.
 
 ## Overview
 
@@ -20,7 +20,7 @@ Plans live in `./docs/plans/{id}/` with three directories:
 ## Starting a Session
 
 ```bash
-ag plan status --plan "plan-id"
+bun ~/.agenv/bin/ag plan status --plan "plan-id"
 cat docs/plans/{plan-id}/principle/INDEX.md
 cat docs/plans/{plan-id}/checklist/INDEX.md
 ```
@@ -68,14 +68,14 @@ The `reference/INDEX.md` may contain initial expectations written during plannin
 3. Mark complete:
 
 ```bash
-ag plan complete --plan "plan-id"
+bun ~/.agenv/bin/ag plan complete --plan "plan-id"
 ```
 
 ## CLI Commands
 
 ```bash
-ag plan status [--plan "plan-id"]                    # Check progress
-ag plan update --plan "id" --task "1.2" --status completed
-ag plan complete --plan "id"                         # Mark done
-ag plan index --plan "id" --list                     # View metadata
+bun ~/.agenv/bin/ag plan status [--plan "plan-id"]                    # Check progress
+bun ~/.agenv/bin/ag plan update --plan "id" --task "1.2" --status completed
+bun ~/.agenv/bin/ag plan complete --plan "id"                         # Mark done
+bun ~/.agenv/bin/ag plan index --plan "id" --list                     # View metadata
 ```

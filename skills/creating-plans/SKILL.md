@@ -5,7 +5,7 @@ description: How to create a plan for the development of a task or project. Plan
 
 # Creating Plans
 
-> **Prerequisite**: Run `~/.agenv/install.sh` to install the `ag` CLI.
+> **Prerequisite**: Requires [bun](https://bun.sh) installed.
 
 ## Overview
 
@@ -34,7 +34,7 @@ A **session** is ~30-45 minutes of implementation with 4-8 back-and-forth iterat
 Run the generator command (auto-detects repo root from current directory):
 
 ```bash
-ag plan create --name "plan-name-in-kebab-case" --size short|medium|long
+bun ~/.agenv/bin/ag plan create --name "plan-name-in-kebab-case" --size short|medium|long
 ```
 
 Optional flags:
