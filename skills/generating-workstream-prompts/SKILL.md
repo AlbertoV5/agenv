@@ -12,7 +12,7 @@ Before an agent starts work on a thread, generate a prompt containing all necess
 ## Generate Prompt
 
 ```bash
-work prompt --stream "000-stream-id" --stage 1 --batch 1 --thread 2
+work prompt --stream \"000-stream-id\" --stage \"setup\" --batch \"core\" --thread \"config\"
 ```
 
 ## What the Prompt Contains
@@ -60,14 +60,12 @@ These threads run alongside yours in this batch:
 
 ## CLI Summary
 
+> **Note:** Commands accept stage/batch/thread names or numeric indices.
+
 ```bash
-# Generate prompt for a thread
-work prompt --stream "000-..." --stage N --batch M --thread T
+# Generate prompt for a thread (by name)
+work prompt --stream \"000-...\" --stage \"setup\" --batch \"core\" --thread \"config\"
 
 # Output to file
-work prompt --stream "000-..." --stage 1 --batch 1 --thread 2 > thread-prompt.md
+work prompt --stream \"000-...\" --stage \"setup\" --batch \"core\" --thread \"auth\" > thread-prompt.md
 ```
-
-## Next Steps
-
-After generating prompt: `/implementing-workstream-plans`
