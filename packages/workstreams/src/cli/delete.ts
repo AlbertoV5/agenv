@@ -18,10 +18,10 @@ interface DeleteCliArgs {
   repoRoot?: string
   streamId?: string
   // Delete targets (mutually exclusive)
-  task?: string // e.g., "1.00.2.3"
-  stage?: number // e.g., 1
-  batch?: string // e.g., "1.00" (stage.batch)
-  thread?: string // e.g., "1.00.2" (stage.batch.thread)
+  task?: string // e.g., "01.00.02.03"
+  stage?: number // e.g., 01
+  batch?: string // e.g., "01.00" (stage.batch)
+  thread?: string // e.g., "01.00.02" (stage.batch.thread)
   stream?: boolean // delete entire stream
   force?: boolean
 }
@@ -34,10 +34,10 @@ Usage:
   work delete [--stream <id>] [target] [options]
 
 Targets (mutually exclusive):
-  --task, -t <id>     Delete a single task (e.g., "1.00.2.3")
-  --stage <num>       Delete all tasks in a stage (e.g., 1)
-  --batch <id>        Delete all tasks in a batch (e.g., "1.00")
-  --thread <id>       Delete all tasks in a thread (e.g., "1.00.2")
+  --task, -t <id>     Delete a single task (e.g., "01.00.02.03")
+  --stage <num>       Delete all tasks in a stage (e.g., 01)
+  --batch <id>        Delete all tasks in a batch (e.g., "01.00")
+  --thread <id>       Delete all tasks in a thread (e.g., "01.00.02")
   (no target)         Delete the entire workstream
 
 Options:
@@ -48,16 +48,16 @@ Options:
 
 Examples:
   # Delete a single task (uses current workstream)
-  work delete --task "1.00.2.3"
+  work delete --task "01.00.02.03"
 
-  # Delete all tasks in stage 2
-  work delete --stage 2
+  # Delete all tasks in stage 02
+  work delete --stage 02
 
-  # Delete all tasks in batch 1.00
-  work delete --batch "1.00"
+  # Delete all tasks in batch 01.00
+  work delete --batch "01.00"
 
-  # Delete all tasks in thread 1.00.2
-  work delete --thread "1.00.2"
+  # Delete all tasks in thread 01.00.02
+  work delete --thread "01.00.02"
 
   # Delete specific workstream (with confirmation)
   work delete --stream "001-my-stream"
@@ -148,7 +148,7 @@ function parseCliArgs(argv: string[]): DeleteCliArgs | null {
         const threadParts = next.split(".")
         if (threadParts.length !== 3 || threadParts.some((p) => isNaN(parseInt(p, 10)))) {
           console.error(
-            'Error: --thread must be in format "stage.batch.thread" (e.g., "1.00.2")'
+            'Error: --thread must be in format "stage.batch.thread" (e.g., "01.00.02")'
           )
           return null
         }

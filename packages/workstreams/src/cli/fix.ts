@@ -36,8 +36,8 @@ Optional:
   --help, -h       Show this help message
 
 Examples:
-  work fix --stage 1 --name "api-error-handling"
-  work fix --batch --stage 2 --name "validation-logic"
+  work fix --stage 01 --name "api-error-handling"
+  work fix --batch --stage 02 --name "validation-logic"
 `)
 }
 

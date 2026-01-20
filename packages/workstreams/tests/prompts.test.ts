@@ -167,7 +167,7 @@ Test summary
 
 ## Stages
 
-### Stage 1: Setup
+### Stage 01: Setup
 
 #### Stage Definition
 Setup definition
@@ -180,7 +180,7 @@ Setup definition
 
 ##### Batch 00: Init
 
-###### Thread 1: Backend
+###### Thread 01: Backend
 **Summary:**
 
 Backend setup
@@ -204,7 +204,7 @@ Test summary
 
 ## Stages
 
-### Stage 1: Setup
+### Stage 01: Setup
 
 #### Stage Definition
 Setup definition
@@ -217,7 +217,7 @@ Setup definition
 
 ##### Batch 00: Init
 
-###### Thread 1: Backend
+###### Thread 01: Backend
 **Summary:**
 
 Backend setup
@@ -241,7 +241,7 @@ Test summary
 
 ## Stages
 
-### Stage 1: Setup
+### Stage 01: Setup
 
 #### Stage Definition
 Setup definition
@@ -254,7 +254,7 @@ Setup definition
 
 ##### Batch 00: Init
 
-###### Thread 1: Backend
+###### Thread 01: Backend
 **Summary:**
 
 Backend setup
@@ -278,7 +278,7 @@ Test summary
 
 ## Stages
 
-### Stage 1: Setup
+### Stage 01: Setup
 
 #### Stage Definition
 Setup the project structure
@@ -300,7 +300,7 @@ Setup the project structure
 
 ##### Batch 00: Init
 
-###### Thread 1: Backend
+###### Thread 01: Backend
 **Summary:**
 
 Backend setup
@@ -309,7 +309,7 @@ Backend setup
 
 Create backend structure
 
-###### Thread 2: Frontend
+###### Thread 02: Frontend
 **Summary:**
 
 Frontend setup
@@ -384,7 +384,7 @@ Test summary
 
 ## Stages
 
-### Stage 1: Setup
+### Stage 01: Setup
 
 #### Stage Definition
 Setup
@@ -397,7 +397,7 @@ Setup
 
 ##### Batch 00: Init
 
-###### Thread 1: Backend
+###### Thread 01: Backend
 **Summary:**
 
 Backend

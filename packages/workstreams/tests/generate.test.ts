@@ -79,7 +79,7 @@ describe("generateStream", () => {
       expect(content).toContain("## Stages")
 
       // Stage subsections
-      expect(content).toContain("### Stage 1:")
+      expect(content).toContain("### Stage 01:")
       expect(content).toContain("#### Stage Definition")
       expect(content).toContain("#### Stage Constitution")
       expect(content).toContain("#### Stage Questions")
@@ -92,7 +92,7 @@ describe("generateStream", () => {
       expect(content).toContain("**Flows:**")
 
       // Thread structure
-      expect(content).toContain("##### Thread 1:")
+      expect(content).toContain("##### Thread 01:")
       expect(content).toContain("**Summary:**")
       expect(content).toContain("**Details:**")
     })

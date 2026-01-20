@@ -278,7 +278,7 @@ export function parseTasksMd(
             }
           } else {
             errors.push(
-              `Task missing ID: "${description}". Format should be "- [ ] Task 1.00.1.1: Description"`,
+              `Task missing ID: "${description}". Format should be "- [ ] Task 01.00.01.01: Description"`,
             )
             continue
           }

@@ -35,7 +35,7 @@ Usage:
   work update --task <id> --status <status> [options]
 
 Required:
-  --task, -t       Task ID (e.g., "1.1.1" = Stage 1, Thread 1, Task 1)
+  --task, -t       Task ID (e.g., "01.00.01.01" = Stage 01, Batch 00, Thread 01, Task 01)
   --status         New status: pending, in_progress, completed, blocked, cancelled
 
 Optional:
@@ -47,17 +47,17 @@ Optional:
   --help, -h       Show this help message
 
 Task ID Format:
-  "1.2.3" = Stage 1, Thread 2, Task 3
+  "01.00.02.03" = Stage 01, Batch 00, Thread 02, Task 03
 
 Examples:
   # Mark task completed (uses current workstream)
-  work update --task "1.1.1" --status completed
+  work update --task "01.00.01.01" --status completed
 
   # Mark task with note
-  work update --task "1.2.3" --status completed --note "Used alternative approach"
+  work update --task "01.00.02.03" --status completed --note "Used alternative approach"
 
   # Update task in a specific workstream
-  work update --stream "001-my-stream" --task "1.1.1" --status completed
+  work update --stream "001-my-stream" --task "01.00.01.01" --status completed
 `)
 }
 

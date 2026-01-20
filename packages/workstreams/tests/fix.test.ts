@@ -23,7 +23,7 @@ describe("fix", () => {
 ## Summary
 Summary text.
 ## Stages
-### Stage 1: Initial
+### Stage 01: Initial
 `
     await writeFile(join(tempDir, "work", streamId, "PLAN.md"), planContent)
 
@@ -41,7 +41,7 @@ Summary text.
       "utf-8",
     )
     expect(newContent).toContain("### Stage 2: Fix - bug-fixes")
-    expect(newContent).toContain("Addressing issues found in Stage 1")
+    expect(newContent).toContain("Addressing issues found in Stage 01")
     expect(newContent).toContain("Fixing bugs")
     expect(newContent).toContain("Batch 01: Fixes")
   })
@@ -53,13 +53,13 @@ Summary text.
 
 ## Stages
 
-### Stage 1: Initial
+### Stage 01: Initial
 
 #### Batches
 
 ##### Batch 00: Setup
 
-###### Thread 1: Init
+###### Thread 01: Init
 
 ### Stage 2: Next
 `
@@ -98,13 +98,13 @@ Summary text.
 
 ## Stages
 
-### Stage 1: Only Stage
+### Stage 01: Only Stage
 
 #### Batches
 
 ##### Batch 00: Setup
 
-###### Thread 1: Init
+###### Thread 01: Init
 **Summary:**
 Initialize the project.
 
@@ -147,7 +147,7 @@ Summary text.
 
 ## Stages
 
-### Stage 1: Empty Stage
+### Stage 01: Empty Stage
 
 #### Definition
 A stage with no batches yet.

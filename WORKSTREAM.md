@@ -202,15 +202,15 @@ What this batch accomplishes.
 ```markdown
 # Tasks: {Stream Name}
 
-## Stage 1: {Name}
+## Stage 01: {Name}
 
 ### Batch 01: {Name}
 
-#### Thread 1: {Name}
+#### Thread 01: {Name}
 - [ ] Task 01.01.01.01: Description
 - [ ] Task 01.01.01.02: Description
 
-#### Thread 2: {Name}
+#### Thread 02: {Name}
 - [ ] Task 01.01.02.01: Description
 ```
 

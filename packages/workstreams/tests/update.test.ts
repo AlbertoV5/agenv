@@ -275,7 +275,7 @@ describe("updateTask", () => {
         tasks: [
           {
             id: "01.01.01.01",
-            name: "Stage 1 Task",
+            name: "Stage 01 Task",
             thread_name: "T1",
             batch_name: "B01",
             stage_name: "S1",

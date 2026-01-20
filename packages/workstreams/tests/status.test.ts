@@ -82,11 +82,11 @@ describe("task operations", () => {
   describe("addTasks", () => {
     test("creates tasks.json if it doesn't exist", async () => {
       const task: Task = {
-        id: "1.01.1.1",
+        id: "01.01.01.01",
         name: "Test task",
-        thread_name: "Thread 1",
+        thread_name: "Thread 01",
         batch_name: "Batch 01",
-        stage_name: "Stage 1",
+        stage_name: "Stage 01",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         status: "pending",
@@ -96,27 +96,27 @@ describe("task operations", () => {
 
       const tasks = getTasks(tempDir, "001-test-stream")
       expect(tasks).toHaveLength(1)
-      expect(tasks[0]?.id).toBe("1.01.1.1")
+      expect(tasks[0]?.id).toBe("01.01.01.01")
     })
 
     test("appends tasks to existing file", async () => {
       const task1: Task = {
-        id: "1.01.1.1",
+        id: "01.01.01.01",
         name: "First task",
-        thread_name: "Thread 1",
+        thread_name: "Thread 01",
         batch_name: "Batch 01",
-        stage_name: "Stage 1",
+        stage_name: "Stage 01",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         status: "pending",
       }
 
       const task2: Task = {
-        id: "1.01.1.2",
+        id: "01.01.01.02",
         name: "Second task",
-        thread_name: "Thread 1",
+        thread_name: "Thread 01",
         batch_name: "Batch 01",
-        stage_name: "Stage 1",
+        stage_name: "Stage 01",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         status: "pending",
@@ -127,17 +127,17 @@ describe("task operations", () => {
 
       const tasks = getTasks(tempDir, "001-test-stream")
       expect(tasks).toHaveLength(2)
-      expect(tasks[0]?.id).toBe("1.01.1.1")
-      expect(tasks[1]?.id).toBe("1.01.1.2")
+      expect(tasks[0]?.id).toBe("01.01.01.01")
+      expect(tasks[1]?.id).toBe("01.01.01.02")
     })
 
     test("preserves existing task status when updating", async () => {
       const task1: Task = {
-        id: "1.01.1.1",
+        id: "01.01.01.01",
         name: "Task",
-        thread_name: "Thread 1",
+        thread_name: "Thread 01",
         batch_name: "Batch 01",
-        stage_name: "Stage 1",
+        stage_name: "Stage 01",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         status: "completed",
@@ -164,7 +164,7 @@ describe("task operations", () => {
         {
           id: "2.01.1.1",
           name: "Task 2.01.1.1",
-          thread_name: "Thread 1",
+          thread_name: "Thread 01",
           batch_name: "Batch 01",
           stage_name: "Stage 2",
           created_at: new Date().toISOString(),
@@ -172,21 +172,21 @@ describe("task operations", () => {
           status: "pending",
         },
         {
-          id: "1.01.2.1",
-          name: "Task 1.01.2.1",
-          thread_name: "Thread 2",
+          id: "01.01.02.01",
+          name: "Task 01.01.02.01",
+          thread_name: "Thread 02",
           batch_name: "Batch 01",
-          stage_name: "Stage 1",
+          stage_name: "Stage 01",
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           status: "pending",
         },
         {
-          id: "1.01.1.1",
-          name: "Task 1.01.1.1",
-          thread_name: "Thread 1",
+          id: "01.01.01.01",
+          name: "Task 01.01.01.01",
+          thread_name: "Thread 01",
           batch_name: "Batch 01",
-          stage_name: "Stage 1",
+          stage_name: "Stage 01",
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           status: "pending",
@@ -196,8 +196,8 @@ describe("task operations", () => {
       addTasks(tempDir, "001-test-stream", tasks)
 
       const result = getTasks(tempDir, "001-test-stream")
-      expect(result[0]?.id).toBe("1.01.1.1")
-      expect(result[1]?.id).toBe("1.01.2.1")
+      expect(result[0]?.id).toBe("01.01.01.01")
+      expect(result[1]?.id).toBe("01.01.02.01")
       expect(result[2]?.id).toBe("2.01.1.1")
     })
   })
@@ -215,7 +215,7 @@ describe("task operations", () => {
         last_updated: new Date().toISOString(),
         tasks: [
           {
-            id: "1.01.1.1",
+            id: "01.01.01.01",
             name: "Pending",
             thread_name: "T1",
             batch_name: "B01",
@@ -225,7 +225,7 @@ describe("task operations", () => {
             status: "pending",
           },
           {
-            id: "1.01.1.2",
+            id: "01.01.01.02",
             name: "Completed",
             thread_name: "T1",
             batch_name: "B01",
@@ -235,7 +235,7 @@ describe("task operations", () => {
             status: "completed",
           },
           {
-            id: "1.01.1.3",
+            id: "01.01.01.03",
             name: "In Progress",
             thread_name: "T1",
             batch_name: "B01",
@@ -268,7 +268,7 @@ describe("task operations", () => {
         last_updated: new Date().toISOString(),
         tasks: [
           {
-            id: "1.01.1.1",
+            id: "01.01.01.01",
             name: "T1",
             thread_name: "T1",
             batch_name: "B01",
@@ -278,7 +278,7 @@ describe("task operations", () => {
             status: "pending",
           },
           {
-            id: "1.01.1.2",
+            id: "01.01.01.02",
             name: "T2",
             thread_name: "T1",
             batch_name: "B01",
@@ -288,7 +288,7 @@ describe("task operations", () => {
             status: "completed",
           },
           {
-            id: "1.01.1.3",
+            id: "01.01.01.03",
             name: "T3",
             thread_name: "T1",
             batch_name: "B01",
@@ -298,7 +298,7 @@ describe("task operations", () => {
             status: "completed",
           },
           {
-            id: "1.01.2.1",
+            id: "01.01.02.01",
             name: "T4",
             thread_name: "T2",
             batch_name: "B01",
@@ -308,7 +308,7 @@ describe("task operations", () => {
             status: "in_progress",
           },
           {
-            id: "1.01.2.2",
+            id: "01.01.02.02",
             name: "T5",
             thread_name: "T2",
             batch_name: "B01",
@@ -379,41 +379,41 @@ describe("getStreamProgress", () => {
       last_updated: new Date().toISOString(),
       tasks: [
         {
-          id: "1.01.1.1",
+          id: "01.01.01.01",
           name: "Task 1",
-          thread_name: "Thread 1",
+          thread_name: "Thread 01",
           batch_name: "B01",
-          stage_name: "Stage 1",
+          stage_name: "Stage 01",
           created_at: "",
           updated_at: "",
           status: "completed",
         },
         {
-          id: "1.01.1.2",
+          id: "01.01.01.02",
           name: "Task 2",
-          thread_name: "Thread 1",
+          thread_name: "Thread 01",
           batch_name: "B01",
-          stage_name: "Stage 1",
+          stage_name: "Stage 01",
           created_at: "",
           updated_at: "",
           status: "in_progress",
         },
         {
-          id: "1.01.2.1",
+          id: "01.01.02.01",
           name: "Task 3",
-          thread_name: "Thread 2",
+          thread_name: "Thread 02",
           batch_name: "B01",
-          stage_name: "Stage 1",
+          stage_name: "Stage 01",
           created_at: "",
           updated_at: "",
           status: "pending",
         },
         {
-          id: "1.01.2.2",
+          id: "01.01.02.02",
           name: "Task 4",
-          thread_name: "Thread 2",
+          thread_name: "Thread 02",
           batch_name: "B01",
-          stage_name: "Stage 1",
+          stage_name: "Stage 01",
           created_at: "",
           updated_at: "",
           status: "blocked",
@@ -445,11 +445,11 @@ describe("getStreamProgress", () => {
       last_updated: new Date().toISOString(),
       tasks: [
         {
-          id: "1.01.1.1",
-          name: "Stage 1 Task",
-          thread_name: "Thread 1",
+          id: "01.01.01.01",
+          name: "Stage 01 Task",
+          thread_name: "Thread 01",
           batch_name: "B01",
-          stage_name: "Stage 1",
+          stage_name: "Stage 01",
           created_at: "",
           updated_at: "",
           status: "completed",
@@ -457,7 +457,7 @@ describe("getStreamProgress", () => {
         {
           id: "2.01.1.1",
           name: "Stage 2 Task",
-          thread_name: "Thread 1",
+          thread_name: "Thread 01",
           batch_name: "B01",
           stage_name: "Stage 2",
           created_at: "",
@@ -467,7 +467,7 @@ describe("getStreamProgress", () => {
         {
           id: "2.01.1.2",
           name: "Stage 2 Task 2",
-          thread_name: "Thread 1",
+          thread_name: "Thread 01",
           batch_name: "B01",
           stage_name: "Stage 2",
           created_at: "",
@@ -499,7 +499,7 @@ describe("getStreamProgress", () => {
       last_updated: new Date().toISOString(),
       tasks: [
         {
-          id: "1.01.1.1",
+          id: "01.01.01.01",
           name: "T1",
           thread_name: "T1",
           batch_name: "B01",
@@ -509,7 +509,7 @@ describe("getStreamProgress", () => {
           status: "completed",
         },
         {
-          id: "1.01.1.2",
+          id: "01.01.01.02",
           name: "T2",
           thread_name: "T1",
           batch_name: "B01",
@@ -534,7 +534,7 @@ describe("getStreamProgress", () => {
       ...tasksFile1,
       tasks: [
         {
-          id: "1.01.1.1",
+          id: "01.01.01.01",
           name: "T1",
           thread_name: "T1",
           batch_name: "B01",
@@ -544,7 +544,7 @@ describe("getStreamProgress", () => {
           status: "completed",
         },
         {
-          id: "1.01.1.2",
+          id: "01.01.01.02",
           name: "T2",
           thread_name: "T1",
           batch_name: "B01",
@@ -569,7 +569,7 @@ describe("getStreamProgress", () => {
       ...tasksFile1,
       tasks: [
         {
-          id: "1.01.1.1",
+          id: "01.01.01.01",
           name: "T1",
           thread_name: "T1",
           batch_name: "B01",
@@ -579,7 +579,7 @@ describe("getStreamProgress", () => {
           status: "blocked",
         },
         {
-          id: "1.01.1.2",
+          id: "01.01.01.02",
           name: "T2",
           thread_name: "T1",
           batch_name: "B01",
@@ -654,7 +654,7 @@ describe("formatProgress", () => {
           status: "in_progress",
           tasks: [
             {
-              id: "2.1.1",
+              id: "02.01.01.01",
               description: "Task",
               status: "in_progress",
               taskGroupNumber: 1,
@@ -709,7 +709,7 @@ describe("formatProgress", () => {
 
     expect(output).toContain("001-test-stream")
     expect(output).toContain("25%")
-    expect(output).toContain("[x] Stage 1: Setup")
+    expect(output).toContain("[x] Stage 01: Setup")
     expect(output).toContain("[~] Stage 2: Implementation")
     expect(output).toContain("[!] Stage 3: Testing")
     expect(output).toContain("[ ] Stage 4: Deploy")
@@ -766,7 +766,7 @@ describe("formatProgress", () => {
       stages: [
         {
           number: 1,
-          title: "Stage 1",
+          title: "Stage 01",
           status: "pending",
           tasks: [],
           file: "tasks.json",

@@ -35,7 +35,7 @@ export function updateTask(args: UpdateTaskArgs): UpdateTaskResult {
     parseTaskId(args.taskId)
   } catch (e) {
     throw new Error(
-      `Invalid task ID: ${args.taskId}. Expected format "stage.thread.task" (e.g., "1.2.3")`,
+      `Invalid task ID: ${args.taskId}. Expected format "stage.batch.thread.task" (e.g., "01.00.02.03")`,
     )
   }
 

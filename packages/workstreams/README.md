@@ -73,7 +73,7 @@ work/
   └── 001-feature-name/   # Individual workstream directory
 
 
-**Task ID Format:** `{stage}.{thread}.{task}` (e.g., `1.2.3` = Stage 1, Thread 2, Task 3)
+**Task ID Format:** `{stage}.{batch}.{thread}.{task}` (e.g., `01.00.02.03` = Stage 01, Batch 00, Thread 02, Task 03)
 
 ## Workstream Lifecycle Stages
 
@@ -246,14 +246,14 @@ console.log(formatProgress(progress))
 import { updateTask, parseTaskId } from "@agenv/workstreams"
 
 // Parse task ID
-const parts = parseTaskId("1.2.3")
-// { stage: 1, thread: 2, task: 3 }
+const parts = parseTaskId("01.00.02.03")
+// { stage: 1, batch: 0, thread: 2, task: 3 }
 
 // Update task status
 const result = updateTask({
   repoRoot,
   stream,  // StreamMetadata from getStream()
-  taskId: "1.2.3",
+  taskId: "01.00.02.03",
   status: "completed",
 })
 ```
@@ -337,16 +337,16 @@ work preview --stream "001-my-feature"
 work consolidate --stream "001-my-feature"
 
 # Add tasks
-work add-task --stream "001-my-feature" --stage 1 --thread 1 --name "Task description"
+work add-task --stream "001-my-feature" --stage 01 --batch 00 --thread 01 --name "Task description"
 
 # List tasks
 work list --stream "001-my-feature" --tasks
 
 # Read task details
-work read --stream "001-my-feature" --task "1.1.1"
+work read --stream "001-my-feature" --task "01.00.01.01"
 
 # Update task status
-work update --stream "001-my-feature" --task "1.1.1" --status completed
+work update --stream "001-my-feature" --task "01.00.01.01" --status completed
 
 # Delete task/thread/stage/workstream
 work delete --stream "001-my-feature" --task "1.1.1"

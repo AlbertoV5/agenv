@@ -62,7 +62,7 @@ function generatePlanMd(
 
 ## Stages
 
-### Stage 1: <!-- Stage Name -->
+### Stage 01: <!-- Stage Name -->
 
 #### Stage Definition
 
@@ -93,7 +93,7 @@ function generatePlanMd(
 
 #### Stage Threads
 
-##### Thread 1: <!-- Thread Name -->
+##### Thread 01: <!-- Thread Name -->
 
 **Summary:**
 <!-- Short description of this parallelizable work unit -->

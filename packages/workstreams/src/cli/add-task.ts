@@ -41,15 +41,15 @@ Description:
   Adds a new task to the workstream's tasks.json file. The task ID is automatically
   generated based on the stage, batch, thread, and the next available task number.
 
-  Task ID format: {stage}.{batch}.{thread}.{task} (e.g., 1.00.2.3)
-  Batch numbers are zero-padded to 2 digits for consistent sorting.
+  Task ID format: {stage}.{batch}.{thread}.{task} (e.g., 01.00.02.03)
+  All numbers are zero-padded for consistent sorting.
 
 Examples:
-  # Add a task to stage 1, batch 00, thread 2 (uses current workstream)
-  work add-task --stage 1 --batch 0 --thread 2 --name "Implement login form"
+  # Add a task to stage 01, batch 00, thread 02 (uses current workstream)
+  work add-task --stage 01 --batch 00 --thread 02 --name "Implement login form"
 
   # Add task to specific workstream
-  work add-task --stream "001-my-stream" --stage 1 --batch 0 --thread 2 --name "Implement login form"
+  work add-task --stream "001-my-stream" --stage 01 --batch 00 --thread 02 --name "Implement login form"
 `)
 }
 

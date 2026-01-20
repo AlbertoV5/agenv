@@ -19,7 +19,7 @@ describe("files", () => {
   })
 
   const task: Task = {
-    id: "1.00.1.1",
+    id: "01.00.01.01",
     name: "Task 1",
     thread_name: "setup-thread",
     batch_name: "preparation",

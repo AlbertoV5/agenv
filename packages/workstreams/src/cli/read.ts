@@ -26,16 +26,16 @@ Usage:
 Options:
   --repo-root, -r  Repository root (auto-detected if omitted)
   --stream, -s     Workstream ID or name (uses current if not specified)
-  --task, -t       Task ID in format "stage.thread.task" (e.g., "1.2.3") (required)
+  --task, -t       Task ID in format "stage.batch.thread.task" (e.g., "01.00.02.01") (required)
   --json, -j       Output as JSON
   --help, -h       Show this help message
 
 Examples:
-  # Read task 1.2.1 (uses current workstream)
-  work read --task "1.2.1"
+  # Read task 01.00.02.01 (uses current workstream)
+  work read --task "01.00.02.01"
 
   # Read task from specific workstream
-  work read --stream "001-my-stream" --task "1.2.1"
+  work read --stream "001-my-stream" --task "01.00.02.01"
 `)
 }
 

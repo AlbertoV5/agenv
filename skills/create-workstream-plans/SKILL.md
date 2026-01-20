@@ -20,12 +20,29 @@ Workstreams live in `./work/{id}/`:
 
 | File | Purpose |
 |------|---------|
-| `PLAN.md` | Stages, threads, documentation |
+| `PLAN.md` | Stages, batches, threads, documentation |
 | `tasks.json` | Task tracking (CLI managed) |
-| `files/` | Outputs (docs, scripts) |
+| `files/` | Outputs organized by stage/batch/thread |
 
-**Hierarchy:** Stage → Thread → Task
-**Task ID:** `{stage}.{thread}.{task}` (e.g., `1.2.3`)
+**Hierarchy:** Stage → Batch → Thread → Task
+
+| Level | Execution | Description |
+|-------|-----------|-------------|
+| Stage | Serial | Major checkpoints |
+| Batch | Serial | Ordered groups within stage (00-setup, 01-impl) |
+| Thread | Parallel | Concurrent work units within batch |
+| Task | Hybrid | Granular steps within thread |
+
+**Task ID:** `{stage}.{batch}.{thread}.{task}` (e.g., `01.00.02.01`)
+
+## Shared Files
+
+These live at `./work/` (shared across all workstreams):
+
+| File | Purpose |
+|------|---------|
+| `AGENTS.md` | Agent definitions and capabilities |
+| `TESTS.md` | Test commands and requirements |
 
 ## Create a Workstream
 
@@ -41,22 +58,32 @@ work create --name "feature-name-kebab-case"
 ## Summary
 Brief overview.
 
-## Stage 1: {Stage Name}
+## References
+- Links to relevant docs
+
+## Stage 01: {Stage Name}
 {What this stage accomplishes}
 
-### Thread 1: {Thread Name}
+### Batch 00: {Batch Name}
+{What this batch accomplishes}
 
-#### Summary
+#### Thread 01: {Thread Name}
+
+##### Summary
 What this thread accomplishes.
 
-#### Details
+##### Details
 Implementation approach.
 ```
 
-## Add Tasks
+## Add Batches and Tasks
 
 ```bash
-work add-task --stream "000-my-stream" --stage 1 --thread 1 --name "Task description"
+# Add batch to stage
+work add-batch --stream "000-my-stream" --stage 01 --name "setup"
+
+# Add task to thread within batch
+work add-task --stream "000-my-stream" --stage 01 --batch 00 --thread 01 --name "Task description"
 ```
 
 ## Validate
@@ -71,10 +98,12 @@ work consolidate --stream "000-my-stream"
 work create --name "feature-name"
 work preview --stream "000-..."
 work consolidate --stream "000-..."
-work add-task --stream "000-..." --stage N --thread M --name "desc"
+work add-batch --stream "000-..." --stage N --name "batch-name"
+work add-task --stream "000-..." --stage N --batch M --thread T --name "desc"
 ```
 
 ## Next Steps
 
 - `/implementing-workstream-plans` - work through tasks
 - `/reviewing-workstream-plans` - manage workstream structure
+- `/generating-workstream-prompts` - generate execution prompts for threads

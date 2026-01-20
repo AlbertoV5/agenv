@@ -9,7 +9,7 @@ describe("parser debug", () => {
 ## Summary
 Summary text.
 ## Stages
-### Stage 1: Initial
+### Stage 01: Initial
 `
     const errors1: any[] = []
     parseStreamDocument(content1, errors1)
@@ -21,13 +21,13 @@ Summary text.
 
 ## Stages
 
-### Stage 1: Initial
+### Stage 01: Initial
 
 #### Batches
 
 ##### Batch 00: Setup
 
-###### Thread 1: Init
+###### Thread 01: Init
 
 ### Stage 2: Next
 `

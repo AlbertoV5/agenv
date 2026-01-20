@@ -193,7 +193,7 @@ export interface StreamProgress {
 // Update task command options
 export interface UpdateTaskOptions {
   streamId: string
-  taskId: string // e.g., "1.2" or "2.1.3" (stage.taskgroup.subtask)
+  taskId: string // e.g., "01.00.02.03" (stage.batch.thread.task)
   status: TaskStatus
   note?: string
   breadcrumb?: string

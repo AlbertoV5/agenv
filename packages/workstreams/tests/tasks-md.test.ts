@@ -44,11 +44,11 @@ describe("tasks-md", () => {
     const md = generateTasksMdFromPlan("Test Stream", mockStreamDoc)
 
     expect(md).toContain("# Tasks: Test Stream")
-    expect(md).toContain("## Stage 1: Stage One")
+    expect(md).toContain("## Stage 01: Stage One")
     expect(md).toContain("### Batch 01: Setup")
-    expect(md).toContain("#### Thread 1: Thread One")
+    expect(md).toContain("#### Thread 01: Thread One")
     expect(md).toContain("- [ ] Task 01.01.01.01: ")
-    expect(md).toContain("#### Thread 2: Thread Two")
+    expect(md).toContain("#### Thread 02: Thread Two")
     expect(md).toContain("- [ ] Task 01.01.02.01: ")
   })
 
@@ -56,15 +56,15 @@ describe("tasks-md", () => {
     const md = `
 # Tasks: Test Stream
 
-## Stage 1: Stage One
+## Stage 01: Stage One
 
 ### Batch 01: Setup
 
-#### Thread 1: Thread One
+#### Thread 01: Thread One
 - [ ] Task 01.01.01.01: First task
 - [x] Task 01.01.01.02: Second task (completed)
 
-#### Thread 2: Thread Two
+#### Thread 02: Thread Two
 - [~] Task 01.01.02.01: Third task (in progress)
 `
     const { tasks, errors } = parseTasksMd(md, "stream-id")
@@ -98,9 +98,9 @@ describe("tasks-md", () => {
     const md = `
 # Tasks: Test Stream
 
-## Stage 1: Stage One
+## Stage 01: Stage One
 ### Batch 01: Setup
-#### Thread 1: Thread One
+#### Thread 01: Thread One
 - [ ] Task 02.01.01.01: Wrong stage ID
 `
     const { tasks, errors } = parseTasksMd(md, "stream-id")
@@ -136,11 +136,11 @@ describe("tasks-md", () => {
 
     const md = generateTasksMdFromTasks("Test Stream", tasks)
 
-    expect(md).toContain("## Stage 1: Stage One")
+    expect(md).toContain("## Stage 01: Stage One")
     expect(md).toContain("### Batch 01: Setup")
-    expect(md).toContain("#### Thread 1: Thread One")
+    expect(md).toContain("#### Thread 01: Thread One")
     expect(md).toContain("- [ ] Task 01.01.01.01: First task")
-    expect(md).toContain("#### Thread 2: Thread Two")
+    expect(md).toContain("#### Thread 02: Thread Two")
     expect(md).toContain("- [x] Task 01.01.02.01: Second task")
   })
 })

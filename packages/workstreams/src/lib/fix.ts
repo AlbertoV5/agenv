@@ -46,7 +46,7 @@ export function appendFixBatch(
 
   const template = `
 ##### Batch ${newBatchPrefix}: Fix - ${options.name}
-###### Thread 1: Fix Implementation
+###### Thread 01: Fix Implementation
 **Summary:**
 Addressing issues in Stage ${options.targetStage}.
 ${options.description || "Fixes and improvements."}
@@ -149,7 +149,7 @@ ${options.description || "Fixes and improvements based on evaluation."}
 
 #### Batches
 ##### Batch 01: Fixes
-###### Thread 1: Implementation
+###### Thread 01: Implementation
 **Summary:**
 Apply fixes.
 

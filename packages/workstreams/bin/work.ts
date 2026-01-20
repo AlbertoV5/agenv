@@ -117,15 +117,15 @@ Current Workstream:
   Then run commands without --stream:
     work status
     work list --tasks
-    work update --task "1.1.1" --status completed
+    work update --task "01.00.01.01" --status completed
 
 Examples:
   work create --name my-feature
   work current --set "001-my-feature"
   work status
   work list --tasks
-  work update --task "1.1.1" --status completed
-  work add-task --stage 1 --thread 1 --name "Task description"
+  work update --task "01.00.01.01" --status completed
+  work add-task --stage 01 --batch 00 --thread 01 --name "Task description"
   work files --save
   work metrics --blockers
   work report --output report.md
