@@ -515,7 +515,8 @@ work assign --thread "01.01.01" --agent "name"
 work prompt                                # Generate all prompts
 work prompt --stage 1                      # Generate prompts for stage 1
 work prompt --thread "01.01.01"            # Generate prompt for single thread
-work execute --thread "01.01.01"           # Execute thread via opencode
+work execute --thread "01.01.01"           # Execute thread by ID
+work execute --thread "Server Module"      # Execute thread by name
 work execute --thread "01.01.01" --dry-run # Preview command without executing
 
 # Fixes

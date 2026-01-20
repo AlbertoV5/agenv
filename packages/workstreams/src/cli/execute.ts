@@ -12,6 +12,7 @@ import { loadIndex, getResolvedStream } from "../lib/index.ts"
 import { getAgentsConfig, getAgent } from "../lib/agents.ts"
 import { readTasksFile, parseTaskId } from "../lib/tasks.ts"
 import { parseStreamDocument } from "../lib/stream-parser.ts"
+import type { StreamDocument } from "../lib/types.ts"
 
 interface ExecuteCliArgs {
     repoRoot?: string
@@ -21,15 +22,23 @@ interface ExecuteCliArgs {
     dryRun?: boolean
 }
 
+interface ResolvedThread {
+    threadId: string  // Numeric format: "01.01.01"
+    threadName: string
+    stageName: string
+    batchName: string
+}
+
 function printHelp(): void {
     console.log(`
 work execute - Execute a thread prompt via opencode
 
 Usage:
   work execute --thread "01.01.01" [options]
+  work execute --thread "Dependencies & Config" [options]
 
 Required:
-  --thread, -t     Thread ID in "stage.batch.thread" format (e.g., "01.01.02")
+  --thread, -t     Thread ID ("01.01.02") or thread name ("My Thread Name")
 
 Optional:
   --stream, -s     Workstream ID or name (uses current if not specified)
@@ -42,13 +51,18 @@ Description:
   Executes a thread by piping its prompt to opencode with the correct model.
   The model is determined from the assigned agent's definition in AGENTS.md.
 
+  Threads can be specified by:
+  - Numeric ID: "01.01.01" (stage.batch.thread)
+  - Thread name: "Dependencies & Config" (case-insensitive, partial match)
+
   The agent's model field must be in "provider/model" format, e.g.:
   - google/gemini-3-flash-preview
   - anthropic/claude-sonnet-4
 
 Examples:
   work execute --thread "01.01.01"
-  work execute --thread "01.01.01" --agent "backend-expert"
+  work execute --thread "dependencies"
+  work execute --thread "Server Module" --agent "backend-expert"
   work execute --thread "01.01.01" --dry-run
 `)
 }
@@ -114,6 +128,48 @@ function parseCliArgs(argv: string[]): ExecuteCliArgs | null {
     }
 
     return parsed as ExecuteCliArgs
+}
+
+/**
+ * Check if a string looks like a numeric thread ID (e.g., "01.02.03")
+ */
+function isNumericThreadId(threadId: string): boolean {
+    const parts = threadId.split(".")
+    if (parts.length !== 3) return false
+    return parts.every((p) => /^\d+$/.test(p))
+}
+
+/**
+ * Resolve a thread name to a numeric thread ID by searching the PLAN.md
+ * Returns the first matching thread (case-insensitive, partial match)
+ */
+function resolveThreadByName(
+    doc: StreamDocument,
+    threadName: string
+): ResolvedThread | null {
+    const searchName = threadName.toLowerCase()
+
+    for (const stage of doc.stages) {
+        for (const batch of stage.batches) {
+            for (const thread of batch.threads) {
+                // Check for partial case-insensitive match
+                if (thread.name.toLowerCase().includes(searchName)) {
+                    const stageNum = stage.id.toString().padStart(2, "0")
+                    const batchNum = batch.id.toString().padStart(2, "0")
+                    const threadNum = thread.id.toString().padStart(2, "0")
+
+                    return {
+                        threadId: `${stageNum}.${batchNum}.${threadNum}`,
+                        threadName: thread.name,
+                        stageName: stage.name,
+                        batchName: batch.name,
+                    }
+                }
+            }
+        }
+    }
+
+    return null
 }
 
 /**
@@ -243,23 +299,66 @@ export async function main(argv: string[] = process.argv): Promise<void> {
         process.exit(1)
     }
 
+    // Resolve thread ID (could be numeric or name)
+    let resolvedThreadId = cliArgs.threadId
+    let threadDisplayName = cliArgs.threadId
+
+    if (!isNumericThreadId(cliArgs.threadId)) {
+        // Try to resolve by name
+        const workDir = getWorkDir(repoRoot)
+        const planPath = join(workDir, stream.id, "PLAN.md")
+
+        if (!existsSync(planPath)) {
+            console.error(`Error: PLAN.md not found for stream ${stream.id}`)
+            process.exit(1)
+        }
+
+        const planContent = readFileSync(planPath, "utf-8")
+        const errors: { message: string }[] = []
+        const doc = parseStreamDocument(planContent, errors)
+
+        if (!doc) {
+            console.error("Error: Could not parse PLAN.md")
+            process.exit(1)
+        }
+
+        const resolved = resolveThreadByName(doc, cliArgs.threadId)
+        if (!resolved) {
+            console.error(`Error: Could not find thread matching "${cliArgs.threadId}"`)
+            console.error("\nAvailable threads:")
+            for (const stage of doc.stages) {
+                for (const batch of stage.batches) {
+                    for (const thread of batch.threads) {
+                        const id = `${stage.id.toString().padStart(2, "0")}.${batch.id.toString().padStart(2, "0")}.${thread.id.toString().padStart(2, "0")}`
+                        console.error(`  ${id}: ${thread.name}`)
+                    }
+                }
+            }
+            process.exit(1)
+        }
+
+        resolvedThreadId = resolved.threadId
+        threadDisplayName = `${resolved.threadName} (${resolved.threadId})`
+        console.log(`Resolved thread: "${cliArgs.threadId}" → ${threadDisplayName}`)
+    }
+
     // Get prompt file path
-    const promptPath = getPromptFilePath(repoRoot, stream.id, cliArgs.threadId)
+    const promptPath = getPromptFilePath(repoRoot, stream.id, resolvedThreadId)
     if (!promptPath) {
-        console.error(`Error: Could not find thread ${cliArgs.threadId} in stream ${stream.id}`)
+        console.error(`Error: Could not find thread ${resolvedThreadId} in stream ${stream.id}`)
         process.exit(1)
     }
 
     if (!existsSync(promptPath)) {
         console.error(`Error: Prompt file not found: ${promptPath}`)
-        console.error(`\nHint: Run 'work prompt --thread "${cliArgs.threadId}"' to generate it first.`)
+        console.error(`\nHint: Run 'work prompt --thread "${resolvedThreadId}"' to generate it first.`)
         process.exit(1)
     }
 
     // Determine agent
     let agentName = cliArgs.agent
     if (!agentName) {
-        agentName = getThreadAssignedAgent(repoRoot, stream.id, cliArgs.threadId)
+        agentName = getThreadAssignedAgent(repoRoot, stream.id, resolvedThreadId)
     }
 
     if (!agentName) {
@@ -287,13 +386,14 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     if (cliArgs.dryRun) {
         console.log("Would execute:")
         console.log(command)
-        console.log(`\nAgent: ${agent.name}`)
+        console.log(`\nThread: ${threadDisplayName}`)
+        console.log(`Agent: ${agent.name}`)
         console.log(`Model: ${agent.model}`)
         console.log(`Prompt: ${promptPath}`)
         return
     }
 
-    console.log(`Executing thread ${cliArgs.threadId} with agent "${agent.name}" (${agent.model})...`)
+    console.log(`Executing thread ${threadDisplayName} with agent "${agent.name}" (${agent.model})...`)
     console.log(`Prompt: ${promptPath}\n`)
 
     // Execute via shell to handle pipe
