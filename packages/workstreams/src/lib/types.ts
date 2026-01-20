@@ -1,5 +1,27 @@
 /**
  * Types for workstream generation, management, and implementation tracking
+ *
+ * ## Execution Model
+ *
+ * Workstreams follow a strict sequential execution model with one exception:
+ *
+ * | Unit     | Parallel? | Notes                                           |
+ * |----------|-----------|------------------------------------------------|
+ * | Stages   | ❌ No     | Must complete in order (Stage N blocks N+1)    |
+ * | Batches  | ❌ No     | Within a stage, batches are sequential         |
+ * | Threads  | ✅ Yes    | Within a batch, threads can run in parallel    |
+ * | Tasks    | ❌ No     | Within a thread, tasks are sequential          |
+ *
+ * This model allows parallelization of independent work (threads) while
+ * maintaining clear dependencies between phases (stages and batches).
+ *
+ * ### Why Sequential Stages?
+ * Each stage typically produces outputs required by subsequent stages.
+ * For example, a "Setup" stage must complete before "Implementation" can begin.
+ *
+ * ### Why Parallel Threads?
+ * Threads represent independent work units that don't depend on each other.
+ * Multiple agents can work on different threads simultaneously.
  */
 
 // Stream size categories
@@ -193,7 +215,7 @@ export interface StreamProgress {
 // Update task command options
 export interface UpdateTaskOptions {
   streamId: string
-  taskId: string // e.g., "01.00.02.03" (stage.batch.thread.task)
+  taskId: string // e.g., "01.01.02.03" (stage.batch.thread.task)
   status: TaskStatus
   note?: string
   breadcrumb?: string
@@ -210,13 +232,15 @@ export interface CompleteStreamOptions {
 
 /**
  * Constitution definition - the "how" of a stage
- * Contains requirements, inputs, outputs, and workflows
+ *
+ * - inputs: What feeds into this stage
+ * - structure: Internal planning, architecture diagrams, component relationships
+ * - outputs: What this stage produces
  */
 export interface ConstitutionDefinition {
-  requirements: string[]
   inputs: string[]
+  structure: string[]
   outputs: string[]
-  flows: string[]
 }
 
 /**
@@ -276,7 +300,7 @@ export interface StreamDocument {
 
 /**
  * Task in tasks.json - generated from consolidation
- * ID format: "{stage}.{batch}.{thread}.{task}" (e.g., "01.00.02.03")
+ * ID format: "{stage}.{batch}.{thread}.{task}" (e.g., "01.01.02.03")
  * All components are zero-padded to 2 digits for consistent sorting
  */
 export interface Task {

@@ -19,7 +19,7 @@ describe("files", () => {
   })
 
   const task: Task = {
-    id: "01.00.01.01",
+    id: "01.01.01.01",
     name: "Task 1",
     thread_name: "setup-thread",
     batch_name: "preparation",
@@ -31,10 +31,10 @@ describe("files", () => {
 
   test("generates correct directory path", () => {
     const dir = getTaskFilesDir(tempDir, streamId, task)
-    // Expected: work/{streamId}/files/stage-1/00-preparation/setup-thread
-    expect(dir).toEndWith(
-      `work/${streamId}/files/stage-1/00-preparation/setup-thread`,
-    )
+     // Expected: work/{streamId}/files/stage-1/01-preparation/setup-thread
+     expect(dir).toEndWith(
+       "work/001-test-stream/files/stage-1/01-preparation/setup-thread"
+     )
   })
 
   test("creates directory if it does not exist", async () => {
@@ -52,7 +52,7 @@ describe("files", () => {
     const dir = getTaskFilesDir(tempDir, streamId, dirtyTask)
     // "Setup & Init!" -> "setup---init-"
     // "Thread #1 (Auth)" -> "thread--1--auth-"
-    expect(dir).toContain("00-setup---init-")
+     expect(dir).toContain("01-setup---init-")
     expect(dir).toContain("thread--1--auth-")
   })
 })

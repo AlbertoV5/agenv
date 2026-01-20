@@ -18,10 +18,10 @@ interface DeleteCliArgs {
   repoRoot?: string
   streamId?: string
   // Delete targets (mutually exclusive)
-  task?: string // e.g., "01.00.02.03"
+  task?: string // e.g., "01.01.02.03"
   stage?: number // e.g., 01
   batch?: string // e.g., "01.00" (stage.batch)
-  thread?: string // e.g., "01.00.02" (stage.batch.thread)
+  thread?: string // e.g., "01.01.02" (stage.batch.thread)
   stream?: boolean // delete entire stream
   force?: boolean
 }
@@ -34,10 +34,10 @@ Usage:
   work delete [--stream <id>] [target] [options]
 
 Targets (mutually exclusive):
-  --task, -t <id>     Delete a single task (e.g., "01.00.02.03")
+  --task, -t <id>     Delete a single task (e.g., "01.01.02.03")
   --stage <num>       Delete all tasks in a stage (e.g., 01)
   --batch <id>        Delete all tasks in a batch (e.g., "01.00")
-  --thread <id>       Delete all tasks in a thread (e.g., "01.00.02")
+  --thread <id>       Delete all tasks in a thread (e.g., "01.01.02")
   (no target)         Delete the entire workstream
 
 Options:
@@ -48,7 +48,7 @@ Options:
 
 Examples:
   # Delete a single task (uses current workstream)
-  work delete --task "01.00.02.03"
+  work delete --task "01.01.02.03"
 
   # Delete all tasks in stage 02
   work delete --stage 02
@@ -56,8 +56,8 @@ Examples:
   # Delete all tasks in batch 01.00
   work delete --batch "01.00"
 
-  # Delete all tasks in thread 01.00.02
-  work delete --thread "01.00.02"
+  # Delete all tasks in thread 01.01.02
+  work delete --thread "01.01.02"
 
   # Delete specific workstream (with confirmation)
   work delete --stream "001-my-stream"
@@ -129,9 +129,12 @@ function parseCliArgs(argv: string[]): DeleteCliArgs | null {
         }
         // Validate format: "stage.batch"
         const batchParts = next.split(".")
-        if (batchParts.length !== 2 || batchParts.some((p) => isNaN(parseInt(p, 10)))) {
+        if (
+          batchParts.length !== 2 ||
+          batchParts.some((p) => isNaN(parseInt(p, 10)))
+        ) {
           console.error(
-            'Error: --batch must be in format "stage.batch" (e.g., "1.00")'
+            'Error: --batch must be in format "stage.batch" (e.g., "1.00")',
           )
           return null
         }
@@ -146,9 +149,12 @@ function parseCliArgs(argv: string[]): DeleteCliArgs | null {
         }
         // Validate format: "stage.batch.thread"
         const threadParts = next.split(".")
-        if (threadParts.length !== 3 || threadParts.some((p) => isNaN(parseInt(p, 10)))) {
+        if (
+          threadParts.length !== 3 ||
+          threadParts.some((p) => isNaN(parseInt(p, 10)))
+        ) {
           console.error(
-            'Error: --thread must be in format "stage.batch.thread" (e.g., "01.00.02")'
+            'Error: --thread must be in format "stage.batch.thread" (e.g., "01.01.02")',
           )
           return null
         }
@@ -169,11 +175,16 @@ function parseCliArgs(argv: string[]): DeleteCliArgs | null {
   }
 
   // Check for mutually exclusive targets
-  const targets = [parsed.task, parsed.stage, parsed.batch, parsed.thread].filter(
-    (t) => t !== undefined
-  )
+  const targets = [
+    parsed.task,
+    parsed.stage,
+    parsed.batch,
+    parsed.thread,
+  ].filter((t) => t !== undefined)
   if (targets.length > 1) {
-    console.error("Error: --task, --stage, --batch, and --thread are mutually exclusive")
+    console.error(
+      "Error: --task, --stage, --batch, and --thread are mutually exclusive",
+    )
     return null
   }
 
@@ -232,7 +243,9 @@ export async function main(argv: string[] = process.argv): Promise<void> {
       if (deleted) {
         console.log(`Deleted task ${cliArgs.task}: ${deleted.name}`)
       } else {
-        console.error(`Task "${cliArgs.task}" not found in workstream "${stream.id}"`)
+        console.error(
+          `Task "${cliArgs.task}" not found in workstream "${stream.id}"`,
+        )
         process.exit(1)
       }
       return
@@ -243,7 +256,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
       const deleted = deleteTasksByStage(repoRoot, stream.id, cliArgs.stage)
       if (deleted.length > 0) {
         console.log(
-          `Deleted ${deleted.length} task(s) from stage ${cliArgs.stage}`
+          `Deleted ${deleted.length} task(s) from stage ${cliArgs.stage}`,
         )
         for (const task of deleted) {
           console.log(`  - ${task.id}: ${task.name}`)
@@ -260,7 +273,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
       const deleted = deleteTasksByBatch(repoRoot, stream.id, stage!, batch!)
       if (deleted.length > 0) {
         console.log(
-          `Deleted ${deleted.length} task(s) from batch ${cliArgs.batch}`
+          `Deleted ${deleted.length} task(s) from batch ${cliArgs.batch}`,
         )
         for (const task of deleted) {
           console.log(`  - ${task.id}: ${task.name}`)
@@ -274,10 +287,16 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     // Delete all tasks in a thread
     if (cliArgs.thread) {
       const [stage, batch, thread] = cliArgs.thread.split(".").map(Number)
-      const deleted = deleteTasksByThread(repoRoot, stream.id, stage!, batch!, thread!)
+      const deleted = deleteTasksByThread(
+        repoRoot,
+        stream.id,
+        stage!,
+        batch!,
+        thread!,
+      )
       if (deleted.length > 0) {
         console.log(
-          `Deleted ${deleted.length} task(s) from thread ${cliArgs.thread}`
+          `Deleted ${deleted.length} task(s) from thread ${cliArgs.thread}`,
         )
         for (const task of deleted) {
           console.log(`  - ${task.id}: ${task.name}`)
@@ -292,13 +311,15 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     if (cliArgs.stream) {
       if (!cliArgs.force) {
         console.log(
-          `This will delete workstream "${stream.id}" and all its files.`
+          `This will delete workstream "${stream.id}" and all its files.`,
         )
         console.log("Run with --force to confirm.")
         process.exit(1)
       }
 
-      const result = await deleteStream(repoRoot, stream.id, { deleteFiles: true })
+      const result = await deleteStream(repoRoot, stream.id, {
+        deleteFiles: true,
+      })
       console.log(`Deleted workstream: ${result.streamId}`)
       console.log(`   Path: ${result.streamPath}`)
       return

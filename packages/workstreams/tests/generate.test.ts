@@ -12,6 +12,16 @@ describe("createGenerateArgs", () => {
     expect(args).toEqual({
       name: "my-feature",
       repoRoot: "/repo",
+      stages: undefined,
+    })
+  })
+
+  test("creates args with stages option", () => {
+    const args = createGenerateArgs("my-feature", "/repo", 4)
+    expect(args).toEqual({
+      name: "my-feature",
+      repoRoot: "/repo",
+      stages: 4,
     })
   })
 })
@@ -83,18 +93,31 @@ describe("generateStream", () => {
       expect(content).toContain("#### Stage Definition")
       expect(content).toContain("#### Stage Constitution")
       expect(content).toContain("#### Stage Questions")
-      expect(content).toContain("#### Stage Threads")
+      expect(content).toContain("#### Stage Batches")
 
       // Constitution parts
-      expect(content).toContain("**Requirements:**")
       expect(content).toContain("**Inputs:**")
       expect(content).toContain("**Outputs:**")
-      expect(content).toContain("**Flows:**")
+      expect(content).toContain("**Structure:**")
 
-      // Thread structure
-      expect(content).toContain("##### Thread 01:")
+      // Batch/Thread structure (H5 for batch, H6 for thread)
+      expect(content).toContain("##### Batch 01:")
+      expect(content).toContain("###### Thread 01:")
       expect(content).toContain("**Summary:**")
       expect(content).toContain("**Details:**")
+    })
+
+    test("creates multiple stages when specified", async () => {
+      const args = createGenerateArgs("test-feature", tempDir, 3)
+      generateStream(args)
+
+      const planMdPath = join(tempDir, "work/000-test-feature/PLAN.md")
+      const content = await readFile(planMdPath, "utf-8")
+
+      expect(content).toContain("### Stage 01:")
+      expect(content).toContain("### Stage 02:")
+      expect(content).toContain("### Stage 03:")
+      expect(content).not.toContain("### Stage 04:")
     })
 
     test("includes version info", async () => {

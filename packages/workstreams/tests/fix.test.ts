@@ -18,12 +18,48 @@ describe("fix", () => {
   })
 
   test("appends fix stage to PLAN.md", async () => {
-    const planContent = `
-# Plan: Test Stream
+    const planContent = `# Plan: Test Stream
 ## Summary
 Summary text.
+
 ## Stages
+
 ### Stage 01: Initial
+
+#### Definition
+
+A stage.
+
+#### Constitution
+
+**Inputs:**
+
+- 
+
+**Structure:**
+
+- 
+
+**Outputs:**
+
+- 
+
+#### Stage Questions
+
+- [ ]
+
+#### Batches
+
+##### Batch 01: Setup
+
+###### Thread 01: Init
+
+**Summary:**
+
+Summary
+
+**Details:**
+- [ ] Setup
 `
     await writeFile(join(tempDir, "work", streamId, "PLAN.md"), planContent)
 
@@ -32,6 +68,7 @@ Summary text.
       name: "bug-fixes",
       description: "Fixing bugs",
     })
+
 
     expect(result.success).toBe(true)
     expect(result.newStageNumber).toBe(2)
@@ -57,7 +94,7 @@ Summary text.
 
 #### Batches
 
-##### Batch 00: Setup
+##### Batch 01: Setup
 
 ###### Thread 01: Init
 
@@ -72,7 +109,7 @@ Summary text.
     })
 
     expect(result.success).toBe(true)
-    expect(result.newBatchNumber).toBe(1) // 00 -> 01
+    expect(result.newBatchNumber).toBe(2) // 01 -> 02
 
     const newContent = await readFile(
       join(tempDir, "work", streamId, "PLAN.md"),
@@ -80,10 +117,10 @@ Summary text.
     )
 
     // Should contain new batch
-    expect(newContent).toContain("##### Batch 01: Fix - validation-fix")
+    expect(newContent).toContain("##### Batch 02: Fix - validation-fix")
 
     // Should be BEFORE Stage 2
-    const batchIndex = newContent.indexOf("Batch 01: Fix - validation-fix")
+    const batchIndex = newContent.indexOf("Batch 02: Fix - validation-fix")
     const stage2Index = newContent.indexOf("### Stage 2: Next")
 
     expect(batchIndex).toBeGreaterThan(-1)
@@ -102,7 +139,7 @@ Summary text.
 
 #### Batches
 
-##### Batch 00: Setup
+##### Batch 01: Setup
 
 ###### Thread 01: Init
 **Summary:**
@@ -120,7 +157,7 @@ Initialize the project.
     })
 
     expect(result.success).toBe(true)
-    expect(result.newBatchNumber).toBe(1) // 00 -> 01
+    expect(result.newBatchNumber).toBe(2) // 01 -> 02
 
     const newContent = await readFile(
       join(tempDir, "work", streamId, "PLAN.md"),
@@ -128,12 +165,12 @@ Initialize the project.
     )
 
     // Should contain new batch
-    expect(newContent).toContain("##### Batch 01: Fix - final-fixes")
+    expect(newContent).toContain("##### Batch 02: Fix - final-fixes")
     expect(newContent).toContain("Final fixes for stage 1")
 
-    // Should be after Batch 00 content
-    const batch00Index = newContent.indexOf("##### Batch 00: Setup")
-    const batch01Index = newContent.indexOf("##### Batch 01: Fix - final-fixes")
+    // Should be after Batch 01 content
+    const batch00Index = newContent.indexOf("##### Batch 01: Setup")
+    const batch01Index = newContent.indexOf("##### Batch 02: Fix - final-fixes")
 
     expect(batch00Index).toBeGreaterThan(-1)
     expect(batch01Index).toBeGreaterThan(-1)
@@ -175,7 +212,7 @@ A stage with no batches yet.
 
     // Should be BEFORE Stage 2
     const batchIndex = newContent.indexOf("##### Batch 00: Fix - initial-batch")
-    const stage2Index = newContent.indexOf("### Stage 2: Next Stage")
+    const stage2Index = newContent.indexOf("### Stage 2: Next")
 
     expect(batchIndex).toBeGreaterThan(-1)
     expect(stage2Index).toBeGreaterThan(-1)

@@ -15,8 +15,8 @@ import type { TasksFile, WorkIndex, AgentsConfig } from "../src/lib/types"
 
 describe("parseThreadId", () => {
   test("parses valid thread ID", () => {
-    const result = parseThreadId("01.00.02")
-    expect(result).toEqual({ stage: 1, batch: 0, thread: 2 })
+    const result = parseThreadId("01.01.02")
+    expect(result).toEqual({ stage: 1, batch: 1, thread: 2 })
   })
 
   test("parses thread ID with larger numbers", () => {
@@ -29,7 +29,7 @@ describe("parseThreadId", () => {
   })
 
   test("returns null for invalid format - too many parts", () => {
-    expect(parseThreadId("01.00.02.03")).toBeNull()
+    expect(parseThreadId("01.01.02.03")).toBeNull()
   })
 
   test("returns null for non-numeric parts", () => {
@@ -43,7 +43,7 @@ describe("parseThreadId", () => {
 
 describe("formatThreadId", () => {
   test("formats thread ID with zero-padding", () => {
-    expect(formatThreadId(1, 0, 2)).toBe("01.00.02")
+    expect(formatThreadId(1, 1, 2)).toBe("01.01.02")
   })
 
   test("formats thread ID with larger numbers", () => {
@@ -154,7 +154,7 @@ describe("getPromptContext", () => {
   })
 
   test("throws if PLAN.md not found", () => {
-    expect(() => getPromptContext(tempDir, streamId, "01.00.01")).toThrow(
+    expect(() => getPromptContext(tempDir, streamId, "01.01.01")).toThrow(
       "PLAN.md not found",
     )
   })
@@ -173,12 +173,12 @@ Test summary
 Setup definition
 
 #### Stage Constitution
-**Requirements:**
-- Req 1
+**Structure:**
+- Structure 1
 
 #### Stage Batches
 
-##### Batch 00: Init
+##### Batch 01: Init
 
 ###### Thread 01: Backend
 **Summary:**
@@ -191,7 +191,7 @@ Details here
 `
     await writeFile(join(tempDir, "work", streamId, "PLAN.md"), planContent)
 
-    expect(() => getPromptContext(tempDir, streamId, "02.00.01")).toThrow(
+    expect(() => getPromptContext(tempDir, streamId, "02.01.01")).toThrow(
       "Stage 2 not found",
     )
   })
@@ -210,12 +210,12 @@ Test summary
 Setup definition
 
 #### Stage Constitution
-**Requirements:**
-- Req 1
+**Structure:**
+- Structure 1
 
 #### Stage Batches
 
-##### Batch 00: Init
+##### Batch 01: Init
 
 ###### Thread 01: Backend
 **Summary:**
@@ -247,12 +247,12 @@ Test summary
 Setup definition
 
 #### Stage Constitution
-**Requirements:**
-- Req 1
+**Structure:**
+- Structure 1
 
 #### Stage Batches
 
-##### Batch 00: Init
+##### Batch 01: Init
 
 ###### Thread 01: Backend
 **Summary:**
@@ -265,7 +265,7 @@ Details here
 `
     await writeFile(join(tempDir, "work", streamId, "PLAN.md"), planContent)
 
-    expect(() => getPromptContext(tempDir, streamId, "01.00.05")).toThrow(
+    expect(() => getPromptContext(tempDir, streamId, "01.01.05")).toThrow(
       "Thread 5 not found",
     )
   })
@@ -284,7 +284,7 @@ Test summary
 Setup the project structure
 
 #### Stage Constitution
-**Requirements:**
+**Structure:**
 - Project structure created
 
 **Inputs:**
@@ -293,12 +293,9 @@ Setup the project structure
 **Outputs:**
 - Directory structure
 
-**Flows:**
-- Data flows here
-
 #### Stage Batches
 
-##### Batch 00: Init
+##### Batch 01: Init
 
 ###### Thread 01: Backend
 **Summary:**
@@ -326,7 +323,7 @@ Create frontend structure
       last_updated: new Date().toISOString(),
       tasks: [
         {
-          id: "01.00.01.01",
+          id: "01.01.01.01",
           name: "Task 1",
           thread_name: "Backend",
           batch_name: "Init",
@@ -336,7 +333,7 @@ Create frontend structure
           status: "pending",
         },
         {
-          id: "01.00.01.02",
+          id: "01.01.01.02",
           name: "Task 2",
           thread_name: "Backend",
           batch_name: "Init",
@@ -346,7 +343,7 @@ Create frontend structure
           status: "pending",
         },
         {
-          id: "01.00.02.01",
+          id: "01.01.02.01",
           name: "Frontend Task",
           thread_name: "Frontend",
           batch_name: "Init",
@@ -362,11 +359,11 @@ Create frontend structure
       JSON.stringify(tasksFile, null, 2),
     )
 
-    const ctx = getPromptContext(tempDir, streamId, "01.00.01")
+    const ctx = getPromptContext(tempDir, streamId, "01.01.01")
 
     expect(ctx.streamId).toBe(streamId)
     expect(ctx.streamName).toBe("Test Stream")
-    expect(ctx.threadId).toEqual({ stage: 1, batch: 0, thread: 1 })
+    expect(ctx.threadId).toEqual({ stage: 1, batch: 1, thread: 1 })
     expect(ctx.thread.name).toBe("Backend")
     expect(ctx.thread.summary).toBe("Backend setup")
     expect(ctx.stage.name).toBe("Setup")
@@ -395,7 +392,7 @@ Setup
 
 #### Stage Batches
 
-##### Batch 00: Init
+##### Batch 01: Init
 
 ###### Thread 01: Backend
 **Summary:**
@@ -414,7 +411,7 @@ Details
       last_updated: new Date().toISOString(),
       tasks: [
         {
-          id: "01.00.01.01",
+          id: "01.01.01.01",
           name: "Task 1",
           thread_name: "Backend",
           batch_name: "Init",
@@ -443,7 +440,7 @@ Details
 `
     await writeFile(join(tempDir, "work", "AGENTS.md"), agentsContent)
 
-    const ctx = getPromptContext(tempDir, streamId, "01.00.01")
+    const ctx = getPromptContext(tempDir, streamId, "01.01.01")
 
     expect(ctx.assignedAgent).toBeDefined()
     expect(ctx.assignedAgent!.name).toBe("claude-opus")
@@ -455,7 +452,7 @@ describe("generateThreadPrompt", () => {
   test("generates markdown prompt with all sections", () => {
     const context = {
       threadId: { stage: 1, batch: 0, thread: 1 },
-      threadIdString: "01.00.01",
+      threadIdString: "01.01.01",
       streamId: "001-test",
       streamName: "Test Stream",
       thread: {
@@ -469,10 +466,9 @@ describe("generateThreadPrompt", () => {
         name: "Setup",
         definition: "Setup the project",
         constitution: {
-          requirements: ["Req 1"],
           inputs: ["Input 1"],
+          structure: ["Structure 1"],
           outputs: ["Output 1"],
-          flows: ["Flow 1"],
         },
         questions: [],
         batches: [],
@@ -486,7 +482,7 @@ describe("generateThreadPrompt", () => {
       },
       tasks: [
         {
-          id: "01.00.01.01",
+          id: "01.01.01.01",
           name: "Task 1",
           thread_name: "Backend",
           batch_name: "Init",
@@ -527,7 +523,7 @@ describe("generateThreadPrompt", () => {
   test("excludes test section when includeTests is false", () => {
     const context = {
       threadId: { stage: 1, batch: 0, thread: 1 },
-      threadIdString: "01.00.01",
+      threadIdString: "01.01.01",
       streamId: "001-test",
       streamName: "Test",
       thread: { id: 1, name: "Backend", summary: "", details: "" },
@@ -535,7 +531,7 @@ describe("generateThreadPrompt", () => {
         id: 1,
         name: "Setup",
         definition: "",
-        constitution: { requirements: [], inputs: [], outputs: [], flows: [] },
+        constitution: { inputs: [], structure: [], outputs: [] },
         questions: [],
         batches: [],
       },
@@ -555,7 +551,7 @@ describe("generateThreadPrompt", () => {
   test("excludes parallel section when includeParallel is false", () => {
     const context = {
       threadId: { stage: 1, batch: 0, thread: 1 },
-      threadIdString: "01.00.01",
+      threadIdString: "01.01.01",
       streamId: "001-test",
       streamName: "Test",
       thread: { id: 1, name: "Backend", summary: "", details: "" },
@@ -563,7 +559,7 @@ describe("generateThreadPrompt", () => {
         id: 1,
         name: "Setup",
         definition: "",
-        constitution: { requirements: [], inputs: [], outputs: [], flows: [] },
+        constitution: { inputs: [], structure: [], outputs: [] },
         questions: [],
         batches: [],
       },
@@ -586,7 +582,7 @@ describe("generateThreadPromptJson", () => {
   test("generates JSON with all context", () => {
     const context = {
       threadId: { stage: 1, batch: 0, thread: 1 },
-      threadIdString: "01.00.01",
+      threadIdString: "01.01.01",
       streamId: "001-test",
       streamName: "Test Stream",
       thread: {
@@ -600,10 +596,9 @@ describe("generateThreadPromptJson", () => {
         name: "Setup",
         definition: "Definition",
         constitution: {
-          requirements: ["Req"],
           inputs: ["In"],
+          structure: ["Req"],
           outputs: ["Out"],
-          flows: ["Flow"],
         },
         questions: [],
         batches: [],
@@ -611,7 +606,7 @@ describe("generateThreadPromptJson", () => {
       batch: { id: 0, prefix: "00", name: "Init", summary: "", threads: [] },
       tasks: [
         {
-          id: "01.00.01.01",
+          id: "01.01.01.01",
           name: "Task",
           thread_name: "Backend",
           batch_name: "Init",
@@ -635,7 +630,7 @@ describe("generateThreadPromptJson", () => {
 
     const json = generateThreadPromptJson(context) as any
 
-    expect(json.threadId).toBe("01.00.01")
+    expect(json.threadId).toBe("01.01.01")
     expect(json.stream.id).toBe("001-test")
     expect(json.stream.name).toBe("Test Stream")
     expect(json.location.stage.id).toBe(1)
@@ -649,7 +644,7 @@ describe("generateThreadPromptJson", () => {
   test("handles null agent and test requirements", () => {
     const context = {
       threadId: { stage: 1, batch: 0, thread: 1 },
-      threadIdString: "01.00.01",
+      threadIdString: "01.01.01",
       streamId: "001-test",
       streamName: "Test",
       thread: { id: 1, name: "Backend", summary: "", details: "" },
@@ -657,7 +652,7 @@ describe("generateThreadPromptJson", () => {
         id: 1,
         name: "Setup",
         definition: "",
-        constitution: { requirements: [], inputs: [], outputs: [], flows: [] },
+        constitution: { inputs: [], structure: [], outputs: [] },
         questions: [],
         batches: [],
       },

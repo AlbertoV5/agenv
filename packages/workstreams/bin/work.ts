@@ -24,6 +24,8 @@ import { main as updateIndexMain } from "../src/cli/update-index.ts"
 import { main as readMain } from "../src/cli/read.ts"
 import { main as listMain } from "../src/cli/list.ts"
 import { main as addTaskMain } from "../src/cli/add-task.ts"
+import { main as addBatchMain } from "../src/cli/add-batch.ts"
+import { main as addThreadMain } from "../src/cli/add-thread.ts"
 import { main as consolidateMain } from "../src/cli/consolidate.ts"
 import { main as previewMain } from "../src/cli/preview.ts"
 import { main as deleteMain } from "../src/cli/delete.ts"
@@ -41,6 +43,7 @@ import { main as tasksMain } from "../src/cli/tasks.ts"
 import { main as agentsMain } from "../src/cli/agents.ts"
 import { main as assignMain } from "../src/cli/assign.ts"
 import { main as promptMain } from "../src/cli/prompt.ts"
+import { main as editMain } from "../src/cli/edit.ts"
 
 const SUBCOMMANDS = {
   create: createMain,
@@ -56,6 +59,9 @@ const SUBCOMMANDS = {
   read: readMain,
   list: listMain,
   "add-task": addTaskMain,
+  "add-batch": addBatchMain,
+  "add-thread": addThreadMain,
+  edit: editMain,
   consolidate: consolidateMain,
   preview: previewMain,
   delete: deleteMain,
@@ -95,7 +101,10 @@ Commands:
   index       Update workstream metadata fields
   read        Read task details
   list        List tasks in a workstream
-  add-task    Add a task to a workstream
+  add-task    Add a task to a workstream (interactive if no flags)
+  add-batch   Add a batch to a stage
+  add-thread  Add a thread to a batch
+  edit        Open PLAN.md in editor
   delete      Delete workstreams, stages, threads, or tasks
   files       List and index files in files/ directory
   tasks       Manage TASKS.md intermediate file (generate/serialize)
@@ -117,15 +126,15 @@ Current Workstream:
   Then run commands without --stream:
     work status
     work list --tasks
-    work update --task "01.00.01.01" --status completed
+    work update --task "01.01.01.01" --status completed
 
 Examples:
   work create --name my-feature
   work current --set "001-my-feature"
   work status
   work list --tasks
-  work update --task "01.00.01.01" --status completed
-  work add-task --stage 01 --batch 00 --thread 01 --name "Task description"
+  work update --task "01.01.01.01" --status completed
+  work add-task --stage 01 --Batch 01 --thread 01 --name "Task description"
   work files --save
   work metrics --blockers
   work report --output report.md
@@ -163,7 +172,9 @@ export function main(argv?: string[]): void {
   // Check if it's a valid subcommand
   if (!(firstArg in SUBCOMMANDS)) {
     console.error(`Error: Unknown command "${firstArg}"`)
-    console.error("\nAvailable commands: " + Object.keys(SUBCOMMANDS).join(", "))
+    console.error(
+      "\nAvailable commands: " + Object.keys(SUBCOMMANDS).join(", "),
+    )
     console.error("\nRun 'work --help' for usage information.")
     process.exit(1)
   }

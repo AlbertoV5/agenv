@@ -26,10 +26,10 @@ function printHelp(): void {
 work prompt - Generate thread execution prompt for agents
 
 Usage:
-  work prompt --thread "01.00.01" [options]
+  work prompt --thread "01.01.01" [options]
 
 Required:
-  --thread, -t     Thread ID in "stage.batch.thread" format (e.g., "01.00.02")
+  --thread, -t     Thread ID in "stage.batch.thread" format (e.g., "01.01.02")
 
 Optional:
   --stream, -s     Workstream ID or name (uses current if not specified)
@@ -50,10 +50,10 @@ Description:
   - Agent assignment information
 
 Examples:
-  work prompt --thread "01.00.01"
-  work prompt --thread "01.00.02" --stream "001-my-feature"
-  work prompt --thread "01.00.01" --json
-  work prompt --thread "01.00.01" > prompt.md
+  work prompt --thread "01.01.01"
+  work prompt --thread "01.01.02" --stream "001-my-feature"
+  work prompt --thread "01.01.01" --json
+  work prompt --thread "01.01.01" > prompt.md
 `)
 }
 
@@ -131,7 +131,7 @@ export function main(argv: string[] = process.argv): void {
   // Thread ID is required
   if (!cliArgs.threadId) {
     console.error("Error: --thread is required")
-    console.error('Example: work prompt --thread "01.00.01"')
+    console.error('Example: work prompt --thread "01.01.01"')
     process.exit(1)
   }
 

@@ -266,7 +266,7 @@ export function parseTaskId(taskId: string): {
     const parsed = parts.map((p) => parseInt(p, 10))
     if (parsed.some(isNaN)) {
       throw new Error(
-        `Invalid task ID format: ${taskId}. Expected "stage.batch.thread.task" (e.g., "01.00.02.03")`,
+        `Invalid task ID format: ${taskId}. Expected "stage.batch.thread.task" (e.g., "01.01.02.03")`,
       )
     }
     return {
@@ -278,7 +278,7 @@ export function parseTaskId(taskId: string): {
   }
 
   throw new Error(
-    `Invalid task ID format: ${taskId}. Expected "stage.batch.thread.task" (e.g., "01.00.02.03")`,
+    `Invalid task ID format: ${taskId}. Expected "stage.batch.thread.task" (e.g., "01.01.02.03")`,
   )
 }
 

@@ -383,7 +383,9 @@ describe("updateTask", () => {
           taskId: "1.1",
           status: "completed",
         }),
-      ).toThrow('Invalid task ID: 1.1. Expected format "stage.batch.thread.task" (e.g., "01.00.02.03")')
+      ).toThrow(
+        'Invalid task ID: 1.1. Expected format "stage.batch.thread.task" (e.g., "01.01.02.03")',
+      )
     })
 
     test("throws on invalid task ID format (single number)", () => {
@@ -414,7 +416,7 @@ describe("updateTask", () => {
 
   describe("timestamp updates", () => {
     test("updates task updated_at timestamp", async () => {
-      const oldDate = "2020-01-01T00:00:00.000Z"
+      const oldDate = "2020-01-01T00:00:01.000Z"
       const tasksFile: TasksFile = {
         version: "1.0.0",
         stream_id: "001-test-stream",

@@ -10,9 +10,10 @@
 import { createHash } from "crypto"
 import { existsSync, readFileSync } from "fs"
 import { join } from "path"
-import type { ApprovalStatus, ApprovalMetadata, StreamMetadata, WorkIndex } from "./types.ts"
+import type { ApprovalStatus, ApprovalMetadata, StreamMetadata, WorkIndex, ConsolidateError } from "./types.ts"
 import { loadIndex, saveIndex, getStream } from "./index.ts"
 import { getWorkDir } from "./repo.ts"
+import { parseStreamDocument } from "./stream-parser.ts"
 
 /**
  * Get the path to PLAN.md for a workstream
@@ -229,5 +230,74 @@ export function getApprovalIcon(stream: StreamMetadata): string {
       return "⚠️"
     default:
       return "❓"
+  }
+}
+
+/**
+ * Result of checking for open questions
+ */
+export interface OpenQuestionsResult {
+  hasOpenQuestions: boolean
+  openCount: number
+  resolvedCount: number
+  questions: { stage: number; stageName: string; question: string }[]
+}
+
+/**
+ * Check for open questions in PLAN.md
+ * Returns details about unresolved questions that should block approval
+ */
+export function checkOpenQuestions(
+  repoRoot: string,
+  streamId: string
+): OpenQuestionsResult {
+  const planPath = getPlanMdPath(repoRoot, streamId)
+
+  if (!existsSync(planPath)) {
+    return {
+      hasOpenQuestions: false,
+      openCount: 0,
+      resolvedCount: 0,
+      questions: [],
+    }
+  }
+
+  const content = readFileSync(planPath, "utf-8")
+  const errors: ConsolidateError[] = []
+  const doc = parseStreamDocument(content, errors)
+
+  if (!doc) {
+    return {
+      hasOpenQuestions: false,
+      openCount: 0,
+      resolvedCount: 0,
+      questions: [],
+    }
+  }
+
+  const openQuestions: { stage: number; stageName: string; question: string }[] = []
+  let openCount = 0
+  let resolvedCount = 0
+
+  for (const stage of doc.stages) {
+    for (const q of stage.questions) {
+      if (q.resolved) {
+        resolvedCount++
+      } else if (q.question.trim()) {
+        openCount++
+        openQuestions.push({
+          stage: stage.id,
+          stageName: stage.name,
+          question: q.question,
+        })
+      }
+    }
+  }
+
+  return {
+    hasOpenQuestions: openCount > 0,
+    openCount,
+    resolvedCount,
+    questions: openQuestions,
   }
 }

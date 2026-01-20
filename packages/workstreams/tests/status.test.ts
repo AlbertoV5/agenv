@@ -31,13 +31,13 @@ describe("task operations", () => {
 
   describe("parseTaskId", () => {
     test("parses four-part ID", () => {
-      const result = parseTaskId("01.00.02.03")
-      expect(result).toEqual({
-        stage: 1,
-        batch: 0,
-        thread: 2,
-        task: 3,
-      })
+     const result = parseTaskId("01.01.02.03")
+     expect(result).toEqual({
+       stage: 1,
+       batch: 1,
+       thread: 2,
+       task: 3,
+     })
     })
 
     test("parses larger numbers", () => {
@@ -52,7 +52,7 @@ describe("task operations", () => {
 
     test("throws on two-part ID", () => {
       expect(() => parseTaskId("1.2")).toThrow(
-        'Invalid task ID format: 1.2. Expected "stage.batch.thread.task" (e.g., "01.00.02.03")',
+        'Invalid task ID format: 1.2. Expected "stage.batch.thread.task" (e.g., "01.01.02.03")',
       )
     })
 
@@ -67,16 +67,16 @@ describe("task operations", () => {
 
   describe("formatTaskId", () => {
     test("formats task ID correctly", () => {
-      expect(formatTaskId(1, 0, 2, 3)).toBe("01.00.02.03")
+      expect(formatTaskId(1, 1, 2, 3)).toBe("01.01.02.03")
     })
 
     test("formats larger numbers with zero-padded batch", () => {
       expect(formatTaskId(10, 5, 2, 15)).toBe("10.05.02.15")
     })
 
-    test("formats batch 0 as 00", () => {
-      expect(formatTaskId(1, 0, 1, 1)).toBe("01.00.01.01")
-    })
+     test("formats batch 1 as 01", () => {
+       expect(formatTaskId(1, 1, 1, 1)).toBe("01.01.01.01")
+     })
   })
 
   describe("addTasks", () => {

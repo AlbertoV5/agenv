@@ -192,11 +192,11 @@ work assign --clear --batch "01.01" --thread "backend"  # Remove assignment
 
 **Commands:**
 ```bash
-work prompt --thread "01.00.01"                # Generate prompt for thread
-work prompt --thread "01.00.02" --stream "001" # Specify workstream
-work prompt --thread "01.00.01" --json         # Output as JSON
-work prompt --thread "01.00.01" --no-tests     # Exclude test section
-work prompt --thread "01.00.01" --no-parallel  # Exclude parallel threads
+work prompt --thread "01.01.01"                # Generate prompt for thread
+work prompt --thread "01.01.02" --stream "001" # Specify workstream
+work prompt --thread "01.01.01" --json         # Output as JSON
+work prompt --thread "01.01.01" --no-tests     # Exclude test section
+work prompt --thread "01.01.01" --no-parallel  # Exclude parallel threads
 ```
 
 **Prompt includes:**

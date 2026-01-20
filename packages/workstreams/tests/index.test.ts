@@ -41,7 +41,7 @@ describe("index operations", () => {
     test("loads existing index", async () => {
       const existingIndex: WorkIndex = {
         version: "1.0.0",
-        last_updated: "2024-01-01T00:00:00.000Z",
+        last_updated: "2024-01-01T00:00:01.000Z",
         streams: [],
       }
       await writeFile(
@@ -50,7 +50,7 @@ describe("index operations", () => {
       )
 
       const index = getOrCreateIndex(tempDir)
-      expect(index.last_updated).toBe("2024-01-01T00:00:00.000Z")
+      expect(index.last_updated).toBe("2024-01-01T00:00:01.000Z")
     })
   })
 
@@ -62,7 +62,7 @@ describe("index operations", () => {
     test("loads existing index", async () => {
       const existingIndex: WorkIndex = {
         version: "1.0.0",
-        last_updated: "2024-01-01T00:00:00.000Z",
+        last_updated: "2024-01-01T00:00:01.000Z",
         streams: [],
       }
       await writeFile(

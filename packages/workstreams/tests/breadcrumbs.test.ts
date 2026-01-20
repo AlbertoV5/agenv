@@ -42,7 +42,7 @@ describe("breadcrumbs", () => {
       last_updated: new Date().toISOString(),
       tasks: [
         {
-          id: "01.00.01.01",
+          id: "01.01.01.01",
           name: "Task 1",
           thread_name: "T1",
           batch_name: "B00",
@@ -62,7 +62,7 @@ describe("breadcrumbs", () => {
     updateTask({
       repoRoot: tempDir,
       stream: baseStream,
-      taskId: "01.00.01.01",
+      taskId: "01.01.01.01",
       status: "in_progress",
       breadcrumb: "Started working on validation logic",
     })
@@ -79,7 +79,7 @@ describe("breadcrumbs", () => {
       last_updated: new Date().toISOString(),
       tasks: [
         {
-          id: "01.00.01.01",
+          id: "01.01.01.01",
           name: "Task 1",
           thread_name: "T1",
           batch_name: "B00",
@@ -100,7 +100,7 @@ describe("breadcrumbs", () => {
     updateTask({
       repoRoot: tempDir,
       stream: baseStream,
-      taskId: "01.00.01.01",
+      taskId: "01.01.01.01",
       status: "in_progress",
       breadcrumb: "New breadcrumb",
     })
@@ -116,7 +116,7 @@ describe("breadcrumbs", () => {
       last_updated: new Date().toISOString(),
       tasks: [
         {
-          id: "01.00.01.01",
+          id: "01.01.01.01",
           name: "Task 1",
           thread_name: "T1",
           batch_name: "B00",
@@ -137,7 +137,7 @@ describe("breadcrumbs", () => {
     updateTask({
       repoRoot: tempDir,
       stream: baseStream,
-      taskId: "01.00.01.01",
+      taskId: "01.01.01.01",
       status: "completed",
     })
 

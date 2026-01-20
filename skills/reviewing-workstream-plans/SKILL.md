@@ -20,67 +20,114 @@ Use for:
 work status                                 # All workstreams
 work preview --stream "000-stream-id"       # Structure overview
 work list --stream "000-stream-id" --tasks  # Task list
-work read --stream "000-stream-id" --task "01.00.02.01"  # Task details
-cat work/000-stream-id/PLAN.md              # Full content
+work read --stream "000-stream-id" --task "01.01.02.01"  # Task details
+work edit                                   # Open PLAN.md in editor
 ```
 
 ## Structure
 
 ```
 Stage 01: Setup
-├── Batch 00: Environment Setup
+├── Batch 01: Environment Setup
 │   ├── Thread 01: Backend
-│   │   └── Task 01.00.01.01: Install deps
+│   │   └── Task 01.01.01.01: Install deps
 │   └── Thread 02: Frontend
-│       └── Task 01.00.02.01: Setup bundler
-└── Batch 01: Database
+│       └── Task 01.01.02.01: Setup bundler
+└── Batch 02: Database
     └── Thread 01: Schema
-        └── Task 01.01.01.01: Create tables
+        └── Task 01.02.01.01: Create tables
 ```
 
 **Hierarchy:** Stage → Batch → Thread → Task
 **Task ID:** `{stage}.{batch}.{thread}.{task}`
 
-Batches run serially (00 before 01). Threads within a batch run in parallel.
+Batches run serially (01 before 02). Threads within a batch run in parallel.
 
-## Edit PLAN.md
+## PLAN.md Format
 
 ```markdown
-## Stage N: {Name}
+### Stage N: {Name}
+
+#### Stage Definition
 {Stage definition}
 
-### Batch MM: {Name}
+#### Stage Constitution
+
+**Inputs:**
+- What this stage needs
+
+**Structure:**
+- Internal planning, architecture, diagrams
+
+**Outputs:**
+- What this stage produces
+
+#### Stage Questions
+- [ ] Unresolved questions (blocks approval)
+- [x] Resolved questions
+
+#### Stage Batches
+
+##### Batch MM: {Name}
 {Batch purpose}
 
-#### Thread T: {Name}
+###### Thread T: {Name}
 
-##### Summary
+**Summary:**
 Thread purpose.
 
-##### Details
+**Details:**
 Implementation approach.
 ```
 
 ## Manage Structure
 
 ```bash
-# Add batch
-work add-batch --stream "000-..." --stage 01 --name "setup"
+# Add batch to a stage
+work add-batch --stage 1 --name "testing"
 
-# Add task
-work add-task --stream "000-..." --stage 01 --batch 00 --thread 02 --name "Task description"
+# Add thread to a batch
+work add-thread --stage 1 --batch 1 --name "unit-tests"
+
+# Add task (interactive)
+work add-task
+# > Select stage: 1
+# > Select batch: 1
+# > Select thread: 2
+# > Task name: Task description
+
+# Add task (explicit)
+work add-task --stage 1 --batch 1 --thread 2 --name "Task description"
 
 # Delete
-work delete --stream "000-..." --task "01.00.02.03"
-work delete --stream "000-..." --thread "01.00.02"
-work delete --stream "000-..." --batch "01.00"
-work delete --stream "000-..." --stage 02
+work delete --stream "000-..." --task "01.01.02.03"
+work delete --stream "000-..." --thread "01.01.02"
+work delete --stream "000-..." --batch "01.01"
+work delete --stream "000-..." --stage 2
 ```
 
 ## Validate
 
 ```bash
 work consolidate --stream "000-stream-id"
+```
+
+## Approval Status
+
+Check and manage approval:
+
+```bash
+# Check status (shows if approved, draft, or revoked)
+work status --stream "000-..."
+
+# Approve plan (blocked if open questions exist)
+work approve
+
+# Force approval with open questions
+work approve --force
+
+# Revoke to make changes
+work approve --revoke --reason "Need changes"
 ```
 
 ## CLI Summary
@@ -90,14 +137,24 @@ work consolidate --stream "000-stream-id"
 work status
 work preview --stream "000-..."
 work list --stream "000-..." --tasks
-work read --stream "000-..." --task "01.00.02.01"
+work read --stream "000-..." --task "01.01.02.01"
+work edit                               # Open in $EDITOR
 
-# Manage
-work add-batch --stream "000-..." --stage 01 --name "batch-name"
-work add-task --stream "000-..." --stage 01 --batch 00 --thread 02 --name "desc"
-work delete --stream "000-..." --task "01.00.02.03"
-work delete --stream "000-..." --batch "01.00"
+# Manage structure
+work add-batch --stage N --name "batch-name"
+work add-thread --stage N --batch M --name "thread-name"
+work add-task                           # Interactive mode
+work add-task --stage N --batch M --thread T --name "desc"
+
+# Delete
+work delete --stream "000-..." --task "01.01.02.03"
+work delete --stream "000-..." --batch "01.01"
+
+# Validate and approve
 work consolidate --stream "000-..."
+work approve
+work approve --force
+work approve --revoke
 ```
 
 ## Next Steps

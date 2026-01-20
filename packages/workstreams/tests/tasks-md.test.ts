@@ -22,7 +22,7 @@ describe("tasks-md", () => {
         id: 1,
         name: "Stage One",
         definition: "",
-        constitution: { requirements: [], inputs: [], outputs: [], flows: [] },
+        constitution: { inputs: [], structure: [], outputs: [] },
         questions: [],
         batches: [
           {

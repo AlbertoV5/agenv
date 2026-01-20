@@ -25,7 +25,7 @@ Summary text.
 
 #### Batches
 
-##### Batch 00: Setup
+##### Batch 01: Setup
 
 ###### Thread 01: Init
 

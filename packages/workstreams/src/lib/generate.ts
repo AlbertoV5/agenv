@@ -28,6 +28,7 @@ function getVersionString(): string {
 export interface GenerateStreamArgs {
   name: string
   repoRoot: string
+  stages?: number // Number of stages to generate (default: 1)
 }
 
 export interface GenerateStreamResult {
@@ -36,15 +37,67 @@ export interface GenerateStreamResult {
 }
 
 /**
+ * Generate a single stage template
+ */
+function generateStageTemplate(stageNum: number): string {
+  const paddedNum = stageNum.toString().padStart(2, "0")
+  return `### Stage ${paddedNum}: <!-- Stage Name -->
+
+#### Stage Definition
+
+<!-- The "what" - what this stage accomplishes -->
+
+#### Stage Constitution
+
+**Inputs:**
+
+- <!-- What feeds into this stage -->
+
+**Structure:**
+
+- <!-- Internal planning, architecture diagrams, component relationships -->
+
+**Outputs:**
+
+- <!-- What this stage produces -->
+
+#### Stage Questions
+
+<!-- Unknowns, research to-dos as [ ] checkboxes -->
+- [ ]
+
+#### Stage Batches
+
+##### Batch 01: <!-- Batch Name -->
+
+<!-- What this batch accomplishes -->
+
+###### Thread 01: <!-- Thread Name -->
+
+**Summary:**
+<!-- Short description of this parallelizable work unit -->
+
+**Details:**
+<!-- Any content - implementation notes, dependencies, goals, code examples, etc. -->`
+}
+
+/**
  * Generate PLAN.md content with the new structured format
  */
 function generatePlanMd(
   streamId: string,
   streamName: string,
+  numStages: number = 1,
 ): string {
   const titleName = toTitleCase(streamName)
   const now = getDateString()
   const version = getVersionString()
+
+  // Generate stage templates
+  const stages: string[] = []
+  for (let i = 1; i <= numStages; i++) {
+    stages.push(generateStageTemplate(i))
+  }
 
   return `# Plan: ${titleName}
 
@@ -62,44 +115,7 @@ function generatePlanMd(
 
 ## Stages
 
-### Stage 01: <!-- Stage Name -->
-
-#### Stage Definition
-
-<!-- The "what" - what this stage accomplishes -->
-
-#### Stage Constitution
-
-**Requirements:**
-
-- <!-- List requirements here -->
-
-**Inputs:**
-
-- <!-- List inputs here -->
-
-**Outputs:**
-
-- <!-- List outputs here -->
-
-**Flows:**
-
-- <!-- Describe flows here -->
-
-#### Stage Questions
-
-<!-- Unknowns, research to-dos as [ ] checkboxes -->
-- [ ]
-
-#### Stage Threads
-
-##### Thread 01: <!-- Thread Name -->
-
-**Summary:**
-<!-- Short description of this parallelizable work unit -->
-
-**Details:**
-<!-- Any content - implementation notes, dependencies, goals, code examples, etc. -->
+${stages.join("\n\n")}
 
 ---
 
@@ -159,7 +175,7 @@ export function generateStream(args: GenerateStreamArgs): GenerateStreamResult {
   // Generate PLAN.md
   atomicWriteFile(
     join(streamDir, "PLAN.md"),
-    generatePlanMd(streamId, args.name),
+    generatePlanMd(streamId, args.name, args.stages ?? 1),
   )
 
   // Generate empty tasks.json
@@ -202,44 +218,17 @@ export function generateStream(args: GenerateStreamArgs): GenerateStreamResult {
 }
 
 /**
- * Create generate args (simplified - no size parameters)
+ * Create generate args
  */
 export function createGenerateArgs(
   name: string,
   repoRoot: string,
+  stages?: number,
 ): GenerateStreamArgs {
   return {
     name,
     repoRoot,
+    stages,
   }
 }
 
-// ============================================
-// DEPRECATED EXPORTS (kept for backwards compatibility during migration)
-// These will be removed in Stage 5
-// ============================================
-
-/**
- * @deprecated Use generateStream with new args
- */
-export interface LegacyGenerateStreamArgs {
-  name: string
-  size: "short" | "medium" | "long"
-  repoRoot: string
-  stages: number
-  supertasks: number
-  subtasks: number
-}
-
-/**
- * @deprecated Use generateStream with new args
- */
-export interface LegacyGenerateStreamResult {
-  streamId: string
-  streamPath: string
-  size: "short" | "medium" | "long"
-  stages: number
-  supertasks: number
-  subtasks: number
-  sessions: number
-}

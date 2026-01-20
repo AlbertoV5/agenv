@@ -19,16 +19,16 @@ Read `PLAN.md` for context, find the next pending task.
 
 **Batches run serially, threads run in parallel within a batch.**
 
-1. Complete all threads in Batch 00 before starting Batch 01
+1. Complete all threads in Batch 01 before starting Batch 02
 2. Within a batch, threads can run in parallel (by different agents)
 3. Use `/generating-workstream-prompts` to get thread execution context
 
 ```
 Stage 01
-├── Batch 00 (complete first)
+├── Batch 01 (complete first)
 │   ├── Thread 01 ──┐
 │   └── Thread 02 ──┴── parallel
-└── Batch 01 (then this)
+└── Batch 02 (then this)
     └── Thread 01
 ```
 
@@ -36,12 +36,12 @@ Stage 01
 
 ```bash
 # 1. Start task
-work update --task "01.00.02.01" --status in_progress
+work update --task "01.01.02.01" --status in_progress
 
 # 2. Implement (follow PLAN.md guidance)
 
 # 3. Complete
-work update --task "01.00.02.01" --status completed
+work update --task "01.01.02.01" --status completed
 ```
 
 ## Task Statuses
@@ -55,7 +55,7 @@ work update --task "01.00.02.01" --status completed
 | `cancelled` | Dropped |
 
 ```bash
-work update --task "01.00.02.01" --status blocked --note "Waiting on API spec"
+work update --task "01.01.02.01" --status blocked --note "Waiting on API spec"
 ```
 
 ## Workstream Statuses
@@ -77,14 +77,29 @@ work set-status --clear     # Resume
 ## Reading Context
 
 ```bash
-work read --task "01.00.02.01"           # Task details
+work read --task "01.01.02.01"        # Task details
+work edit                              # Open PLAN.md in editor
 cat work/000-stream-id/PLAN.md        # Full workstream
 ```
 
 ## Add Tasks Mid-Work
 
 ```bash
-work add-task --stage 01 --batch 00 --thread 02 --name "New task"
+# Interactive mode
+work add-task
+# > Select stage: 1
+# > Select batch: 1
+# > Select thread: 2
+# > Task name: New task
+
+# Explicit mode
+work add-task --stage 1 --batch 1 --thread 2 --name "New task"
+
+# Add new batch
+work add-batch --stage 1 --name "hotfix"
+
+# Add new thread
+work add-thread --stage 1 --batch 2 --name "validation"
 ```
 
 ## Fix Workflow
@@ -93,10 +108,10 @@ When issues are discovered:
 
 ```bash
 # Fix within a stage - add fix batch
-work fix --batch --stage 01 --name "fix-validation"
+work fix --batch --stage 1 --name "fix-validation"
 
 # Fix after stage completion - add fix stage
-work fix --stage 01 --name "fix-auth-race"
+work fix --stage 1 --name "fix-auth-race"
 ```
 
 ## Check Progress
@@ -122,15 +137,19 @@ This auto-generates `COMPLETION.md` with:
 # Status
 work status
 work list --tasks
-work read --task "01.00.02.03"
+work read --task "01.01.02.03"
+work edit                               # Open PLAN.md in editor
 
 # Updates
-work update --task "01.00.02.03" --status completed
-work update --task "01.00.02.03" --status blocked --note "reason"
+work update --task "01.01.02.03" --status completed
+work update --task "01.01.02.03" --status blocked --note "reason"
 work set-status on_hold
 
 # Add work
+work add-task                           # Interactive mode
 work add-task --stage N --batch M --thread T --name "desc"
+work add-batch --stage N --name "batch-name"
+work add-thread --stage N --batch M --name "thread-name"
 
 # Fixes
 work fix --batch --stage N --name "fix-name"

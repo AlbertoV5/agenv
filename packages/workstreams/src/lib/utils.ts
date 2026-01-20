@@ -5,6 +5,90 @@
 import type { TaskStatus, StageStatus } from "./types.ts"
 
 /**
+ * Item that can be resolved by name or index
+ */
+export interface NamedItem {
+  id: number
+  name: string
+}
+
+/**
+ * Resolve a name or index to a stage/batch/thread definition
+ * Supports:
+ * - Numeric index (1, 2, 3...)
+ * - Exact name match (case-insensitive)
+ * - Partial name match (case-insensitive)
+ *
+ * @param input - The user input (number or name string)
+ * @param items - Array of items to search
+ * @param itemType - Type name for error messages (e.g., "stage", "batch", "thread")
+ * @returns The matched item
+ * @throws Error if no match found or input is ambiguous
+ */
+export function resolveByNameOrIndex<T extends NamedItem>(
+  input: string,
+  items: T[],
+  itemType: string,
+): T {
+  const trimmed = input.trim()
+
+  // Try numeric index first
+  const num = parseInt(trimmed, 10)
+  if (!isNaN(num) && num >= 1) {
+    const item = items.find((i) => i.id === num)
+    if (item) return item
+    throw new Error(
+      `${itemType} ${num} not found. Available: ${items.map((i) => i.id).join(", ")}`,
+    )
+  }
+
+  // Try exact name match (case-insensitive)
+  const lowerInput = trimmed.toLowerCase()
+  const exactMatch = items.find((i) => i.name.toLowerCase() === lowerInput)
+  if (exactMatch) return exactMatch
+
+  // Try partial name match (case-insensitive)
+  const partialMatches = items.filter((i) =>
+    i.name.toLowerCase().includes(lowerInput),
+  )
+
+  if (partialMatches.length === 1) {
+    return partialMatches[0]!
+  }
+
+  if (partialMatches.length > 1) {
+    throw new Error(
+      `Ambiguous ${itemType} name "${trimmed}". Matches: ${partialMatches.map((i) => `"${i.name}"`).join(", ")}`,
+    )
+  }
+
+  // No match found
+  const availableNames = items.map((i) => `${i.id}: "${i.name}"`).join(", ")
+  throw new Error(
+    `${itemType} "${trimmed}" not found. Available: ${availableNames}`,
+  )
+}
+
+/**
+ * Parse a stage/batch/thread argument that can be a number or name
+ * Returns { isNumeric: true, value: number } or { isNumeric: false, value: string }
+ */
+export function parseNameOrIndex(input: string): {
+  isNumeric: boolean
+  numericValue?: number
+  stringValue: string
+} {
+  const trimmed = input.trim()
+  const num = parseInt(trimmed, 10)
+
+  if (!isNaN(num) && num >= 1 && String(num) === trimmed) {
+    return { isNumeric: true, numericValue: num, stringValue: trimmed }
+  }
+
+  return { isNumeric: false, stringValue: trimmed }
+}
+
+/**
  * Convert kebab-case to Title Case
  */
 export function toTitleCase(kebab: string): string {

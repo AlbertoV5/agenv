@@ -26,16 +26,16 @@ Usage:
 Options:
   --repo-root, -r  Repository root (auto-detected if omitted)
   --stream, -s     Workstream ID or name (uses current if not specified)
-  --task, -t       Task ID in format "stage.batch.thread.task" (e.g., "01.00.02.01") (required)
+  --task, -t       Task ID in format "stage.batch.thread.task" (e.g., "01.01.02.01") (required)
   --json, -j       Output as JSON
   --help, -h       Show this help message
 
 Examples:
-  # Read task 01.00.02.01 (uses current workstream)
-  work read --task "01.00.02.01"
+  # Read task 01.01.02.01 (uses current workstream)
+  work read --task "01.01.02.01"
 
   # Read task from specific workstream
-  work read --stream "001-my-stream" --task "01.00.02.01"
+  work read --stream "001-my-stream" --task "01.01.02.01"
 `)
 }
 
@@ -150,7 +150,9 @@ export function main(argv: string[] = process.argv): void {
   // Get task
   const task = getTaskById(repoRoot, stream.id, cliArgs.taskId)
   if (!task) {
-    console.error(`Error: Task "${cliArgs.taskId}" not found in workstream "${stream.id}"`)
+    console.error(
+      `Error: Task "${cliArgs.taskId}" not found in workstream "${stream.id}"`,
+    )
     process.exit(1)
   }
 

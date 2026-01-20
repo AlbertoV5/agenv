@@ -11,6 +11,7 @@ import { validateStreamName } from "../lib/utils.ts"
 interface CreateStreamCliArgs {
   name: string
   repoRoot?: string
+  stages?: number
 }
 
 function printHelp(): void {
@@ -18,31 +19,32 @@ function printHelp(): void {
 work create - Create a new workstream
 
 Usage:
-  work create --name <name>
+  work create --name <name> [--stages <n>]
 
 Required:
   --name, -n       Workstream name in kebab-case (e.g., "migrate-sql-to-orm")
 
 Optional:
+  --stages         Number of stages to generate in PLAN.md (default: 1)
   --repo-root, -r  Repository root (auto-detected if omitted)
   --help, -h       Show this help message
 
 Examples:
-  # Create a new workstream
+  # Create a new workstream with 1 stage
   work create --name migrate-sql-to-orm
 
-  # Create with specific repo root
-  work create --name refactor-auth --repo-root /path/to/repo
+  # Create with 4 stages
+  work create --name refactor-auth --stages 4
 
 Workstream Structure:
   Creates a new workstream directory with:
   - PLAN.md     Structured markdown for workstream definition
   - tasks.json  Empty task tracker (populate with "work consolidate")
-  - reference/  Directory for supplementary documentation
+  - files/      Directory for task outputs
 
 Workflow:
-  1. Create workstream: work create --name my-feature
-  2. Edit PLAN.md:      Fill in stages, threads, and tasks
+  1. Create workstream: work create --name my-feature --stages 3
+  2. Edit PLAN.md:      Fill in stage names, threads, and details
   3. Consolidate:       work consolidate --stream "001-my-feature"
   4. Track progress:    work list --stream "001-my-feature" --tasks
 `)
@@ -83,6 +85,20 @@ function parseCliArgs(argv: string[]): CreateStreamCliArgs | null {
         i++
         break
 
+      case "--stages":
+        if (!next) {
+          console.error("Error: --stages requires a number")
+          return null
+        }
+        const stages = parseInt(next, 10)
+        if (isNaN(stages) || stages < 1 || stages > 20) {
+          console.error("Error: --stages must be a number between 1 and 20")
+          return null
+        }
+        parsed.stages = stages
+        i++
+        break
+
       case "--help":
       case "-h":
         printHelp()
@@ -95,10 +111,9 @@ function parseCliArgs(argv: string[]): CreateStreamCliArgs | null {
         console.error("Run with --help for usage information.")
         return null
 
-      case "--stages":
       case "--supertasks":
       case "--subtasks":
-        console.error(`Error: ${arg} is no longer supported. Workstreams are now defined via PLAN.md.`)
+        console.error(`Error: ${arg} is no longer supported. Use --stages to specify the number of stages.`)
         console.error("Run with --help for usage information.")
         return null
     }
@@ -133,6 +148,7 @@ export function main(argv: string[] = process.argv): void {
   const generateArgs = createGenerateArgs(
     cliArgs.name,
     repoRoot,
+    cliArgs.stages,
   )
 
   try {

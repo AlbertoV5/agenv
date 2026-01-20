@@ -15,6 +15,7 @@ bun add @agenv/workstreams
 - **Task Management** - Add, update, delete tasks with atomic file writes
 - **Concurrent Safety** - File locking prevents race conditions
 - **Atomic Writes** - Crash-safe file operations using temp file + rename
+- **Approval Workflow** - Human-in-the-loop approval with open question detection
 
 ## Quick Start
 
@@ -43,9 +44,9 @@ console.log(`Created workstream: ${result.streamId}`)
 
 // Add tasks
 addTasks(repoRoot, result.streamId, [
-  { stage: 1, thread: 1, name: "Setup environment" },
-  { stage: 1, thread: 1, name: "Install dependencies" },
-  { stage: 1, thread: 2, name: "Configure database" },
+  { stage: 1, batch: 1, thread: 1, name: "Setup environment" },
+  { stage: 1, batch: 1, thread: 1, name: "Install dependencies" },
+  { stage: 1, batch: 1, thread: 2, name: "Configure database" },
 ])
 
 // Check progress
@@ -58,7 +59,7 @@ const stream = getStream(index, result.streamId)
 updateTask({
   repoRoot,
   stream,
-  taskId: "1.1.1",  // stage.thread.task
+  taskId: "01.01.01.01",  // stage.batch.thread.task
   status: "completed",
 })
 ```
@@ -71,9 +72,55 @@ Workstreams are stored in `work/` with this structure:
 work/
   ├── index.json          # Registry of all workstreams
   └── 001-feature-name/   # Individual workstream directory
+      ├── PLAN.md         # Stages, batches, threads, documentation
+      ├── tasks.json      # Task tracking
+      └── files/          # Output files
+```
 
+**Task ID Format:** `{stage}.{batch}.{thread}.{task}` (e.g., `01.01.02.03` = Stage 01, Batch 01, Thread 02, Task 03)
 
-**Task ID Format:** `{stage}.{batch}.{thread}.{task}` (e.g., `01.00.02.03` = Stage 01, Batch 00, Thread 02, Task 03)
+## PLAN.md Structure
+
+```markdown
+# Plan: {Name}
+
+## Summary
+Brief overview.
+
+## References
+- Links to docs
+
+## Stages
+
+### Stage 01: {Stage Name}
+
+#### Stage Definition
+What this stage accomplishes.
+
+#### Stage Constitution
+
+**Inputs:**
+- What this stage needs (dependencies, data, prior work)
+
+**Structure:**
+- Internal planning, architecture diagrams, component relationships
+
+**Outputs:**
+- What this stage produces (files, features, artifacts)
+
+#### Stage Questions
+- [ ] Open questions (block approval)
+- [x] Resolved questions
+
+#### Stage Batches
+
+##### Batch 01: {Batch Name}
+Batch purpose.
+
+###### Thread 01: {Thread Name}
+**Summary:** Thread purpose.
+**Details:** Implementation approach.
+```
 
 ## Workstream Lifecycle Stages
 
@@ -132,10 +179,11 @@ import { generateStream, createGenerateArgs } from "@agenv/workstreams"
 const result = generateStream({
   name: "my-feature",
   repoRoot: "/path/to/repo",
+  stages: 3,  // Optional: number of stages (default: 1)
 })
 
 // With helper
-const args = createGenerateArgs("my-feature", repoRoot)
+const args = createGenerateArgs("my-feature", repoRoot, 3)
 const result = generateStream(args)
 ```
 
@@ -154,21 +202,21 @@ import {
 
 // Add tasks
 addTasks(repoRoot, streamId, [
-  { stage: 1, thread: 1, name: "First task" },
-  { stage: 1, thread: 2, name: "Second task" },
+  { stage: 1, batch: 1, thread: 1, name: "First task" },
+  { stage: 1, batch: 1, thread: 2, name: "Second task" },
 ])
 
 // Get all tasks
 const tasks = getTasks(repoRoot, streamId)
 
 // Update task status
-updateTaskStatus(repoRoot, streamId, "1.1.1", "completed")
+updateTaskStatus(repoRoot, streamId, "01.01.01.01", "completed")
 
 // Delete single task
-deleteTask(repoRoot, streamId, "1.1.1")
+deleteTask(repoRoot, streamId, "01.01.01.01")
 
 // Delete all tasks in a thread
-deleteTasksByThread(repoRoot, streamId, 1, 2)  // stage 1, thread 2
+deleteTasksByThread(repoRoot, streamId, 1, 1, 2)  // stage 1, batch 1, thread 2
 
 // Delete all tasks in a stage
 deleteTasksByStage(repoRoot, streamId, 2)  // stage 2
@@ -246,14 +294,14 @@ console.log(formatProgress(progress))
 import { updateTask, parseTaskId } from "@agenv/workstreams"
 
 // Parse task ID
-const parts = parseTaskId("01.00.02.03")
-// { stage: 1, batch: 0, thread: 2, task: 3 }
+const parts = parseTaskId("01.01.02.03")
+// { stage: 1, batch: 1, thread: 2, task: 3 }
 
 // Update task status
 const result = updateTask({
   repoRoot,
   stream,  // StreamMetadata from getStream()
-  taskId: "01.00.02.03",
+  taskId: "01.01.02.03",
   status: "completed",
 })
 ```
@@ -329,28 +377,44 @@ The package includes a CLI for workstream management:
 ```bash
 # Create a workstream
 work create --name my-feature
+work create --name my-feature --stages 3
 
-# Preview PLAN.md structure
+# Set current workstream
+work current --set "001-my-feature"
+
+# Preview and validate PLAN.md
 work preview --stream "001-my-feature"
-
-# Validate PLAN.md
 work consolidate --stream "001-my-feature"
 
-# Add tasks
-work add-task --stream "001-my-feature" --stage 01 --batch 00 --thread 01 --name "Task description"
+# Open PLAN.md in editor
+work edit
+
+# Approve plan (blocked if open questions exist)
+work approve
+work approve --force              # Approve with open questions
+work approve --revoke             # Revoke to make changes
+
+# Add structure
+work add-batch --stage 1 --name "testing"
+work add-thread --stage 1 --batch 1 --name "unit-tests"
+
+# Add tasks (interactive or explicit)
+work add-task                     # Interactive mode
+work add-task --stage 1 --batch 1 --thread 1 --name "Task description"
 
 # List tasks
 work list --stream "001-my-feature" --tasks
 
 # Read task details
-work read --stream "001-my-feature" --task "01.00.01.01"
+work read --stream "001-my-feature" --task "01.01.01.01"
 
 # Update task status
-work update --stream "001-my-feature" --task "01.00.01.01" --status completed
+work update --stream "001-my-feature" --task "01.01.01.01" --status completed
 
-# Delete task/thread/stage/workstream
-work delete --stream "001-my-feature" --task "1.1.1"
-work delete --stream "001-my-feature" --thread "1.2"
+# Delete task/thread/batch/stage/workstream
+work delete --stream "001-my-feature" --task "01.01.01.01"
+work delete --stream "001-my-feature" --thread "01.01.02"
+work delete --stream "001-my-feature" --batch "01.01"
 work delete --stream "001-my-feature" --stage 2
 work delete --stream "001-my-feature" --force  # delete entire workstream
 
@@ -391,6 +455,10 @@ import type {
   GenerateStreamResult,
   DeleteStreamOptions,
   DeleteStreamResult,
+  ConstitutionDefinition,
+  StageDefinition,
+  BatchDefinition,
+  ThreadDefinition,
 } from "@agenv/workstreams"
 ```
 

@@ -12,6 +12,7 @@ import {
   revokeApproval,
   getApprovalStatus,
   formatApprovalStatus,
+  checkOpenQuestions,
 } from "../lib/approval.ts"
 
 interface ApproveCliArgs {
@@ -43,6 +44,9 @@ Options:
 Description:
   Plans must be approved before tasks can be created with 'work add-task'.
   This creates a human-in-the-loop checkpoint for AI-generated plans.
+
+  Approval is blocked if there are open questions ([ ] checkboxes) in PLAN.md.
+  Resolve questions by marking them with [x], or use --force to approve anyway.
 
   When approved, a hash of the PLAN.md is stored. If the PLAN.md is modified
   after approval, the approval is automatically revoked on the next
@@ -207,6 +211,39 @@ export function main(argv: string[] = process.argv): void {
     return
   }
 
+  // Check for open questions
+  const questionsResult = checkOpenQuestions(repoRoot, stream.id)
+
+  if (questionsResult.hasOpenQuestions && !cliArgs.force) {
+    if (cliArgs.json) {
+      console.log(JSON.stringify({
+        action: "blocked",
+        reason: "open_questions",
+        streamId: stream.id,
+        streamName: stream.name,
+        openQuestions: questionsResult.questions,
+        openCount: questionsResult.openCount,
+        resolvedCount: questionsResult.resolvedCount,
+      }, null, 2))
+    } else {
+      console.error("Error: Cannot approve plan with open questions")
+      console.error("")
+      console.error(`Found ${questionsResult.openCount} open question(s):`)
+      for (const q of questionsResult.questions) {
+        console.error(`  Stage ${q.stage} (${q.stageName}): ${q.question}`)
+      }
+      console.error("")
+      console.error("Options:")
+      console.error("  1. Resolve questions in PLAN.md (mark with [x])")
+      console.error("  2. Use --force to approve anyway")
+    }
+    process.exit(1)
+  }
+
+  if (questionsResult.hasOpenQuestions && cliArgs.force) {
+    console.log(`Warning: Approving with ${questionsResult.openCount} open question(s)`)
+  }
+
   try {
     const updatedStream = approveStream(repoRoot, stream.id, "user")
 
@@ -216,6 +253,8 @@ export function main(argv: string[] = process.argv): void {
         streamId: updatedStream.id,
         streamName: updatedStream.name,
         approval: updatedStream.approval,
+        openQuestions: questionsResult.hasOpenQuestions ? questionsResult.openCount : 0,
+        forcedApproval: questionsResult.hasOpenQuestions && cliArgs.force,
       }, null, 2))
     } else {
       console.log(`Approved workstream "${updatedStream.name}" (${updatedStream.id})`)

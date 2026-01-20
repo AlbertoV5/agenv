@@ -34,10 +34,9 @@ interface ParseState {
     | "details"
     | null
   currentConstitutionSection:
-    | "requirements"
     | "inputs"
+    | "structure"
     | "outputs"
-    | "flows"
     | null
 }
 
@@ -187,16 +186,15 @@ function parseThreadHeading(text: string): { number: number; name: string } | nu
 
 /**
  * Detect constitution subsection from bold text
- * Expected formats: "**Requirements:**", "**Inputs:**", etc.
+ * Expected formats: "**Inputs:**", "**Structure:**", "**Outputs:**"
  */
 function detectConstitutionSection(
   text: string
-): "requirements" | "inputs" | "outputs" | "flows" | null {
+): "inputs" | "structure" | "outputs" | null {
   const lower = text.toLowerCase()
-  if (lower.includes("requirements")) return "requirements"
+  if (lower.includes("structure")) return "structure"
   if (lower.includes("inputs")) return "inputs"
   if (lower.includes("outputs")) return "outputs"
-  if (lower.includes("flows")) return "flows"
   return null
 }
 
@@ -302,10 +300,9 @@ function parseStages(
   // Track content buffers
   let definitionBuffer: string[] = []
   let constitutionBuffer: ConstitutionDefinition = {
-    requirements: [],
     inputs: [],
+    structure: [],
     outputs: [],
-    flows: [],
   }
   let questionsBuffer: string[] = []
   let currentBatch: BatchDefinition | null = null
@@ -345,7 +342,7 @@ function parseStages(
     }
     currentStage = null
     definitionBuffer = []
-    constitutionBuffer = { requirements: [], inputs: [], outputs: [], flows: [] }
+    constitutionBuffer = { inputs: [], structure: [], outputs: [] }
     questionsBuffer = []
   }
 
@@ -362,7 +359,7 @@ function parseStages(
             id: stageInfo.number,
             name: stageInfo.name,
             definition: "",
-            constitution: { requirements: [], inputs: [], outputs: [], flows: [] },
+            constitution: { inputs: [], structure: [], outputs: [] },
             questions: [],
             batches: [],
           }

@@ -23,7 +23,8 @@ const AGENV_SKILLS = join(AGENV_HOME, "skills")
 const TARGETS: Record<string, string> = {
   claude: process.env.HOME + "/.claude/skills",
   gemini: process.env.HOME + "/.gemini/skills",
-}
+  antigravity: process.env.HOME + "/.gemini/antigravity/skills",
+} as Record<string, string>
 
 // Colors for output
 const RED = "\x1b[0;31m"
@@ -206,7 +207,7 @@ function installSkillsTo(
 }
 
 function skillsCommand(args: string[]): void {
-  const targets: string[] = []
+  const targets: (string | undefined)[] = []
   let dryRun = false
   let listOnly = false
   let clean = false
@@ -220,6 +221,9 @@ function skillsCommand(args: string[]): void {
         break
       case "--gemini":
         targets.push(TARGETS.gemini)
+        break
+      case "--antigravity":
+        targets.push(TARGETS.antigravity)
         break
       case "--all":
         targets.push(TARGETS.claude, TARGETS.gemini)
@@ -266,6 +270,7 @@ function skillsCommand(args: string[]): void {
 
   // Install to each target
   for (const target of targets) {
+    if (!target) continue
     installSkillsTo(target, dryRun, clean)
     console.log("")
   }

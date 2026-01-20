@@ -26,7 +26,7 @@ import type {
 
 /**
  * Thread identifier - parsed from "stage.batch.thread" format
- * Example: "01.00.02" = Stage 1, Batch 00, Thread 2
+ * Example: "01.01.02" = Stage 1, Batch 01, Thread 2
  */
 export interface ThreadId {
   stage: number
@@ -74,7 +74,7 @@ export interface GeneratePromptOptions {
 
 /**
  * Parse thread ID from string format
- * Supports "stage.batch.thread" (e.g., "01.00.02")
+ * Supports "stage.batch.thread" (e.g., "01.01.02")
  */
 export function parseThreadId(threadIdStr: string): ThreadId | null {
   const parts = threadIdStr.split(".")
@@ -207,7 +207,7 @@ export function getPromptContext(
   const threadId = parseThreadId(threadIdStr)
   if (!threadId) {
     throw new Error(
-      `Invalid thread ID format: "${threadIdStr}". Expected "stage.batch.thread" (e.g., "01.00.02")`,
+      `Invalid thread ID format: "${threadIdStr}". Expected "stage.batch.thread" (e.g., "01.01.02")`,
     )
   }
 
@@ -373,10 +373,10 @@ export function generateThreadPrompt(
   // Constitution
   lines.push("### Constitution")
   const c = context.stage.constitution
-  if (c.requirements.length > 0) {
-    lines.push("**Requirements:**")
-    for (const req of c.requirements) {
-      lines.push(`- ${req}`)
+  if (c.structure.length > 0) {
+    lines.push("**Structure:**")
+    for (const item of c.structure) {
+      lines.push(`- ${item}`)
     }
     lines.push("")
   }
@@ -391,13 +391,6 @@ export function generateThreadPrompt(
     lines.push("**Outputs:**")
     for (const output of c.outputs) {
       lines.push(`- ${output}`)
-    }
-    lines.push("")
-  }
-  if (c.flows.length > 0) {
-    lines.push("**Flows:**")
-    for (const flow of c.flows) {
-      lines.push(`- ${flow}`)
     }
     lines.push("")
   }

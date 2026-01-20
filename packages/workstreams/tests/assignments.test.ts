@@ -41,7 +41,7 @@ describe("assignments", () => {
       last_updated: new Date().toISOString(),
       tasks: [
         {
-          id: "01.00.01.01",
+          id: "01.01.01.01",
           name: "Task 1",
           thread_name: "T1",
           batch_name: "B00",
@@ -61,7 +61,7 @@ describe("assignments", () => {
     updateTask({
       repoRoot: tempDir,
       stream: baseStream,
-      taskId: "01.00.01.01",
+      taskId: "01.01.01.01",
       status: "in_progress",
       assigned_agent: "CodebaseAgent",
     })

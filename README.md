@@ -56,10 +56,10 @@ plan current --clear                  # Clear current plan
 # Once current plan is set, all commands use it by default:
 plan preview                          # Show PLAN.md structure
 plan consolidate                      # Validate PLAN.md structure
-plan add-task --stage 01 --batch 00 --thread 01 --name "Task description"
+plan add-task --stage 01 --Batch 01 --thread 01 --name "Task description"
 plan list --tasks                     # List tasks with status
-plan read --task "01.00.01.01"        # Read task details
-plan update --task "01.00.01.01" --status completed
+plan read --task "01.01.01.01"        # Read task details
+plan update --task "01.01.01.01" --status completed
 plan status                           # Show plan progress
 plan complete                         # Mark plan as complete
 plan view --open                      # Generate HTML visualization
@@ -134,7 +134,7 @@ Each plan consists of:
 - `tasks.json` - JSON file tracking task status (separate from PLAN.md)
 - `reference/` - Directory for supplementary documentation
 
-**Task ID Format:** `{stage}.{batch}.{thread}.{task}` (e.g., `01.00.02.03` = Stage 01, Batch 00, Thread 02, Task 03)
+**Task ID Format:** `{stage}.{batch}.{thread}.{task}` (e.g., `01.01.02.03` = Stage 01, Batch 01, Thread 02, Task 03)
 
 **Library Usage:**
 
@@ -165,10 +165,10 @@ const result = generatePlan({
 // Add tasks to a plan
 addTasks(repoRoot, "001-my-feature", [
   {
-    id: "01.00.01.01",
+    id: "01.01.01.01",
     name: "Implement feature",
     thread_name: "Thread 01",
-    batch_name: "Batch 00",
+    batch_name: "Batch 01",
     stage_name: "Stage 01",
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
