@@ -35,19 +35,3 @@ work approve --force
 # Revoke (if plan needs revision during execution)
 work approve --revoke --reason "Missing security review"
 ```
-
-## Quick Fixes
-
-If the plan needs minor adjustments during review:
-
-```bash
-> **Note:** Commands accept names or indices.
-
-# Add missing items
-work add-batch --stage "setup" --name "tests"
-work add-thread --stage "setup" --batch "tests" --name "unit"
-work add-task --stage "setup" --batch "tests" --thread "unit" --name "Check coverage"
-
-# Remove incorrect items
-work delete --task "01.01.01.01"
-```

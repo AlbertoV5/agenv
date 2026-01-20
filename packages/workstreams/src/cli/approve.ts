@@ -173,15 +173,23 @@ export function main(argv: string[] = process.argv): void {
       const updatedStream = revokeApproval(repoRoot, stream.id, cliArgs.reason)
 
       if (cliArgs.json) {
-        console.log(JSON.stringify({
-          action: "revoked",
-          streamId: updatedStream.id,
-          streamName: updatedStream.name,
-          reason: cliArgs.reason,
-          approval: updatedStream.approval,
-        }, null, 2))
+        console.log(
+          JSON.stringify(
+            {
+              action: "revoked",
+              streamId: updatedStream.id,
+              streamName: updatedStream.name,
+              reason: cliArgs.reason,
+              approval: updatedStream.approval,
+            },
+            null,
+            2,
+          ),
+        )
       } else {
-        console.log(`Revoked approval for workstream "${updatedStream.name}" (${updatedStream.id})`)
+        console.log(
+          `Revoked approval for workstream "${updatedStream.name}" (${updatedStream.id})`,
+        )
         if (cliArgs.reason) {
           console.log(`  Reason: ${cliArgs.reason}`)
         }
@@ -198,12 +206,18 @@ export function main(argv: string[] = process.argv): void {
   const currentStatus = getApprovalStatus(stream)
   if (currentStatus === "approved") {
     if (cliArgs.json) {
-      console.log(JSON.stringify({
-        action: "already_approved",
-        streamId: stream.id,
-        streamName: stream.name,
-        approval: stream.approval,
-      }, null, 2))
+      console.log(
+        JSON.stringify(
+          {
+            action: "already_approved",
+            streamId: stream.id,
+            streamName: stream.name,
+            approval: stream.approval,
+          },
+          null,
+          2,
+        ),
+      )
     } else {
       console.log(`Workstream "${stream.name}" is already approved`)
       console.log(`  Status: ${formatApprovalStatus(stream)}`)
@@ -216,15 +230,21 @@ export function main(argv: string[] = process.argv): void {
 
   if (questionsResult.hasOpenQuestions && !cliArgs.force) {
     if (cliArgs.json) {
-      console.log(JSON.stringify({
-        action: "blocked",
-        reason: "open_questions",
-        streamId: stream.id,
-        streamName: stream.name,
-        openQuestions: questionsResult.questions,
-        openCount: questionsResult.openCount,
-        resolvedCount: questionsResult.resolvedCount,
-      }, null, 2))
+      console.log(
+        JSON.stringify(
+          {
+            action: "blocked",
+            reason: "open_questions",
+            streamId: stream.id,
+            streamName: stream.name,
+            openQuestions: questionsResult.questions,
+            openCount: questionsResult.openCount,
+            resolvedCount: questionsResult.resolvedCount,
+          },
+          null,
+          2,
+        ),
+      )
     } else {
       console.error("Error: Cannot approve plan with open questions")
       console.error("")
@@ -241,26 +261,36 @@ export function main(argv: string[] = process.argv): void {
   }
 
   if (questionsResult.hasOpenQuestions && cliArgs.force) {
-    console.log(`Warning: Approving with ${questionsResult.openCount} open question(s)`)
+    console.log(
+      `Warning: Approving with ${questionsResult.openCount} open question(s)`,
+    )
   }
 
   try {
     const updatedStream = approveStream(repoRoot, stream.id, "user")
 
     if (cliArgs.json) {
-      console.log(JSON.stringify({
-        action: "approved",
-        streamId: updatedStream.id,
-        streamName: updatedStream.name,
-        approval: updatedStream.approval,
-        openQuestions: questionsResult.hasOpenQuestions ? questionsResult.openCount : 0,
-        forcedApproval: questionsResult.hasOpenQuestions && cliArgs.force,
-      }, null, 2))
+      console.log(
+        JSON.stringify(
+          {
+            action: "approved",
+            streamId: updatedStream.id,
+            streamName: updatedStream.name,
+            approval: updatedStream.approval,
+            openQuestions: questionsResult.hasOpenQuestions
+              ? questionsResult.openCount
+              : 0,
+            forcedApproval: questionsResult.hasOpenQuestions && cliArgs.force,
+          },
+          null,
+          2,
+        ),
+      )
     } else {
-      console.log(`Approved workstream "${updatedStream.name}" (${updatedStream.id})`)
+      console.log(
+        `Approved workstream "${updatedStream.name}" (${updatedStream.id})`,
+      )
       console.log(`  Status: ${formatApprovalStatus(updatedStream)}`)
-      console.log("")
-      console.log("You can now add tasks with 'work add-task'")
     }
   } catch (e) {
     console.error((e as Error).message)

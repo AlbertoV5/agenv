@@ -24,6 +24,7 @@ const TARGETS: Record<string, string> = {
   claude: process.env.HOME + "/.claude/skills",
   gemini: process.env.HOME + "/.gemini/skills",
   antigravity: process.env.HOME + "/.gemini/antigravity/skills",
+  opencode: process.env.HOME + "/.config/opencode/skills",
 } as Record<string, string>
 
 // Colors for output
@@ -225,8 +226,16 @@ function skillsCommand(args: string[]): void {
       case "--antigravity":
         targets.push(TARGETS.antigravity)
         break
+      case "--opencode":
+        targets.push(TARGETS.opencode)
+        break
       case "--all":
-        targets.push(TARGETS.claude, TARGETS.gemini)
+        targets.push(
+          TARGETS.claude,
+          TARGETS.gemini,
+          TARGETS.antigravity,
+          TARGETS.opencode,
+        )
         break
       case "--target":
         i++

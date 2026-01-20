@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-01-20T17:00:15.959Z",
-  "current_stream": "000-web-visualization",
+  "last_updated": "2026-01-20T17:38:42.080Z",
+  "current_stream": "001-workstream-viz",
   "streams": [
     {
       "id": "000-web-visualization",
@@ -31,6 +31,36 @@
         "approved_at": "2026-01-20T17:00:15.959Z",
         "approved_by": "user",
         "plan_hash": "2d798a2edcf025276e828c4a36c0774c671f7f13c1375c1379c6b9c8761e52d5"
+      }
+    },
+    {
+      "id": "001-workstream-viz",
+      "name": "workstream-viz",
+      "order": 1,
+      "size": "medium",
+      "session_estimated": {
+        "length": 4,
+        "unit": "session",
+        "session_minutes": [
+          30,
+          45
+        ],
+        "session_iterations": [
+          4,
+          8
+        ]
+      },
+      "created_at": "2026-01-20T17:28:30.014Z",
+      "updated_at": "2026-01-20T17:38:42.080Z",
+      "path": "work/001-workstream-viz",
+      "generated_by": {
+        "workstreams": "0.1.0"
+      },
+      "approval": {
+        "status": "approved",
+        "approved_at": "2026-01-20T17:38:42.080Z",
+        "approved_by": "user",
+        "plan_hash": "6530f350e56b7039765617424e166fdd8e1a0299e7b1320c2ae325773e281ffc"
       }
     }
   ]
