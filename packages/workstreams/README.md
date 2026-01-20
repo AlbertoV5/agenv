@@ -65,17 +65,13 @@ updateTask({
 
 ## Workstream Structure
 
-Workstreams are stored in `docs/work/` with this structure:
+Workstreams are stored in `work/` with this structure:
 
-```
-docs/work/
-├── index.json                    # Central index of all workstreams
-└── 001-my-feature/
-    ├── PLAN.md                   # Structured plan document
-    ├── tasks.json                # Task tracking (status, timestamps)
-    └── files/                    # Flexible space for outputs
-        └── README.md             # Description of files directory
-```
+```text
+work/
+  ├── index.json          # Registry of all workstreams
+  └── 001-feature-name/   # Individual workstream directory
+
 
 **Task ID Format:** `{stage}.{thread}.{task}` (e.g., `1.2.3` = Stage 1, Thread 2, Task 3)
 

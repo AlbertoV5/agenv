@@ -23,7 +23,7 @@ describe("index operations", () => {
   beforeEach(async () => {
     tempDir = await mkdtemp(join(tmpdir(), "agenv-test-"))
     // Create the work directory structure
-    await mkdir(join(tempDir, "docs", "work"), { recursive: true })
+    await mkdir(join(tempDir, "work"), { recursive: true })
   })
 
   afterEach(async () => {
@@ -45,7 +45,7 @@ describe("index operations", () => {
         streams: [],
       }
       await writeFile(
-        join(tempDir, "docs", "work", "index.json"),
+        join(tempDir, "work", "index.json"),
         JSON.stringify(existingIndex),
       )
 
@@ -66,7 +66,7 @@ describe("index operations", () => {
         streams: [],
       }
       await writeFile(
-        join(tempDir, "docs", "work", "index.json"),
+        join(tempDir, "work", "index.json"),
         JSON.stringify(existingIndex),
       )
 
@@ -76,7 +76,7 @@ describe("index operations", () => {
 
     test("throws on invalid JSON", async () => {
       await writeFile(
-        join(tempDir, "docs", "work", "index.json"),
+        join(tempDir, "work", "index.json"),
         "not valid json",
       )
 
@@ -94,7 +94,7 @@ describe("index operations", () => {
 
       // Create the index file first (saveIndex expects it to exist or creates atomically)
       await writeFile(
-        join(tempDir, "docs", "work", "index.json"),
+        join(tempDir, "work", "index.json"),
         JSON.stringify(index),
       )
 
@@ -114,7 +114,7 @@ describe("index operations", () => {
       }
 
       await writeFile(
-        join(tempDir, "docs", "work", "index.json"),
+        join(tempDir, "work", "index.json"),
         JSON.stringify(index),
       )
 
@@ -141,7 +141,7 @@ describe("workstream lookup functions", () => {
     },
     created_at: "2024-01-01",
     updated_at: "2024-01-01",
-    path: "docs/work/001-test-stream",
+    path: "work/001-test-stream",
     generated_by: { workstreams: "0.1.0" },
   }
 
@@ -223,7 +223,7 @@ describe("async index operations", () => {
 
   beforeEach(async () => {
     tempDir = await mkdtemp(join(tmpdir(), "agenv-test-"))
-    await mkdir(join(tempDir, "docs", "work"), { recursive: true })
+    await mkdir(join(tempDir, "work"), { recursive: true })
   })
 
   afterEach(async () => {
@@ -239,7 +239,7 @@ describe("async index operations", () => {
       }
       // Create the index file first
       await writeFile(
-        join(tempDir, "docs", "work", "index.json"),
+        join(tempDir, "work", "index.json"),
         JSON.stringify(index),
       )
 
@@ -257,7 +257,7 @@ describe("async index operations", () => {
         streams: [],
       }
       await writeFile(
-        join(tempDir, "docs", "work", "index.json"),
+        join(tempDir, "work", "index.json"),
         JSON.stringify(index),
       )
 
@@ -276,7 +276,7 @@ describe("async index operations", () => {
         streams: [],
       }
       await writeFile(
-        join(tempDir, "docs", "work", "index.json"),
+        join(tempDir, "work", "index.json"),
         JSON.stringify(initialIndex),
       )
 
@@ -294,7 +294,7 @@ describe("async index operations", () => {
           },
           created_at: "2024-01-01",
           updated_at: "2024-01-01",
-          path: "docs/work/001-test",
+          path: "work/001-test",
           generated_by: { workstreams: "0.1.0" },
         })
         return index.streams.length
@@ -313,7 +313,7 @@ describe("async index operations", () => {
         streams: [],
       }
       await writeFile(
-        join(tempDir, "docs", "work", "index.json"),
+        join(tempDir, "work", "index.json"),
         JSON.stringify(initialIndex),
       )
 
@@ -337,7 +337,7 @@ describe("async index operations", () => {
       },
       created_at: "2024-01-01",
       updated_at: "2024-01-01",
-      path: "docs/work/001-test-stream",
+      path: "work/001-test-stream",
       generated_by: { workstreams: "0.1.0" },
     }
 
@@ -348,7 +348,7 @@ describe("async index operations", () => {
         streams: [mockStream],
       }
       await writeFile(
-        join(tempDir, "docs", "work", "index.json"),
+        join(tempDir, "work", "index.json"),
         JSON.stringify(index),
       )
 
@@ -367,7 +367,7 @@ describe("async index operations", () => {
         streams: [mockStream],
       }
       await writeFile(
-        join(tempDir, "docs", "work", "index.json"),
+        join(tempDir, "work", "index.json"),
         JSON.stringify(index),
       )
 
@@ -384,7 +384,7 @@ describe("async index operations", () => {
         streams: [],
       }
       await writeFile(
-        join(tempDir, "docs", "work", "index.json"),
+        join(tempDir, "work", "index.json"),
         JSON.stringify(index),
       )
 
@@ -400,11 +400,11 @@ describe("async index operations", () => {
         streams: [mockStream],
       }
       await writeFile(
-        join(tempDir, "docs", "work", "index.json"),
+        join(tempDir, "work", "index.json"),
         JSON.stringify(index),
       )
       // Create the workstream directory
-      const streamDir = join(tempDir, "docs", "work", "001-test-stream")
+      const streamDir = join(tempDir, "work", "001-test-stream")
       await mkdir(streamDir, { recursive: true })
       await writeFile(join(streamDir, "README.md"), "# Test Stream")
 
@@ -423,10 +423,10 @@ describe("async index operations", () => {
         streams: [mockStream],
       }
       await writeFile(
-        join(tempDir, "docs", "work", "index.json"),
+        join(tempDir, "work", "index.json"),
         JSON.stringify(index),
       )
-      const streamDir = join(tempDir, "docs", "work", "001-test-stream")
+      const streamDir = join(tempDir, "work", "001-test-stream")
       await mkdir(streamDir, { recursive: true })
       await writeFile(join(streamDir, "README.md"), "# Test Stream")
 
@@ -442,7 +442,7 @@ describe("async index operations", () => {
         streams: [mockStream],
       }
       await writeFile(
-        join(tempDir, "docs", "work", "index.json"),
+        join(tempDir, "work", "index.json"),
         JSON.stringify(index),
       )
       // Don't create the workstream directory

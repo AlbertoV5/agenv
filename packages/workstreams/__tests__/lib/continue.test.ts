@@ -12,7 +12,7 @@ describe("getContinueContext", () => {
 
   beforeEach(async () => {
     tempDir = await mkdtemp(join(tmpdir(), "agenv-continue-test-"))
-    await mkdir(join(tempDir, "docs", "work", streamId), { recursive: true })
+    await mkdir(join(tempDir, "work", streamId), { recursive: true })
   })
 
   afterEach(async () => {
@@ -32,7 +32,7 @@ describe("getContinueContext", () => {
     }
 
     await writeFile(
-      join(tempDir, "docs/work", streamId, "tasks.json"),
+      join(tempDir, "work", streamId, "tasks.json"),
       JSON.stringify(tasksFile, null, 2)
     )
 
@@ -57,7 +57,7 @@ describe("getContinueContext", () => {
     }
 
     await writeFile(
-      join(tempDir, "docs/work", streamId, "tasks.json"),
+      join(tempDir, "work", streamId, "tasks.json"),
       JSON.stringify(tasksFile, null, 2)
     )
 
@@ -79,7 +79,7 @@ describe("getContinueContext", () => {
     }
 
     await writeFile(
-      join(tempDir, "docs/work", streamId, "tasks.json"),
+      join(tempDir, "work", streamId, "tasks.json"),
       JSON.stringify(tasksFile, null, 2)
     )
 

@@ -16,7 +16,7 @@ description: How to create a workstream plan for the development of a task or pr
 
 ## Structure
 
-Workstreams live in `./docs/work/{id}/`:
+Workstreams live in `./work/{id}/`:
 
 | File | Purpose |
 |------|---------|

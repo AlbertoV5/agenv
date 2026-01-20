@@ -149,7 +149,7 @@ export function generateStream(args: GenerateStreamArgs): GenerateStreamResult {
   // Generate stream ID
   const order = getNextOrderNumber(index)
   const streamId = `${formatOrderNumber(order)}-${args.name}`
-  const streamPath = `docs/work/${streamId}`
+  const streamPath = `work/${streamId}`
   const streamDir = join(workDir, streamId)
 
   // Create directories

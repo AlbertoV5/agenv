@@ -11,7 +11,7 @@ describe("files", () => {
 
   beforeEach(async () => {
     tempDir = await mkdtemp(join(tmpdir(), "agenv-files-test-"))
-    await mkdir(join(tempDir, "docs", "work", streamId), { recursive: true })
+    await mkdir(join(tempDir, "work", streamId), { recursive: true })
   })
 
   afterEach(async () => {
@@ -31,8 +31,8 @@ describe("files", () => {
 
   test("generates correct directory path", () => {
     const dir = getTaskFilesDir(tempDir, streamId, task)
-    // Expected: docs/work/{streamId}/files/stage-1/00-preparation/setup-thread
-    expect(dir).toEndWith(`docs/work/${streamId}/files/stage-1/00-preparation/setup-thread`)
+    // Expected: work/{streamId}/files/stage-1/00-preparation/setup-thread
+    expect(dir).toEndWith(`work/${streamId}/files/stage-1/00-preparation/setup-thread`)
   })
 
   test("creates directory if it does not exist", async () => {

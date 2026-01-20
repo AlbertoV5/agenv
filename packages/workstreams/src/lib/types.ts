@@ -276,11 +276,11 @@ export interface StreamDocument {
 
 /**
  * Task in tasks.json - generated from consolidation
- * ID format: "{stage}.{batch}.{thread}.{task}" (e.g., "1.00.2.3")
- * Batch is zero-padded to 2 digits for consistent sorting
+ * ID format: "{stage}.{batch}.{thread}.{task}" (e.g., "01.00.02.03")
+ * All components are zero-padded to 2 digits for consistent sorting
  */
 export interface Task {
-  id: string // e.g., "1.00.2.3" = stage 1, batch 00, thread 2, task 3
+  id: string // e.g., "01.00.02.03" = stage 1, batch 00, thread 2, task 3
   name: string // Task description from PLAN.md
   thread_name: string // Parent thread name for context
   batch_name: string // Parent batch name for context
@@ -404,3 +404,32 @@ export interface ChangelogEntry {
  * Export format options
  */
 export type ExportFormat = "md" | "csv" | "json"
+
+// ============================================
+// AGENTS CONFIGURATION TYPES
+// ============================================
+
+/**
+ * Agent definition - describes an available agent
+ * Defined in work/AGENTS.md (shared across all workstreams)
+ *
+ * Format in AGENTS.md:
+ * ### backend-orm-expert
+ * **Description:** Specializes in database schema design...
+ * **Best for:** Database setup, migration scripts...
+ * **Model:** claude-opus
+ */
+export interface AgentDefinition {
+  name: string // e.g., "backend-orm-expert" (from H3 heading)
+  description: string // Multi-sentence description of specialization
+  bestFor: string // Use cases summary
+  model: string // e.g., "claude-opus", "claude-sonnet"
+}
+
+/**
+ * Full agents configuration from AGENTS.md
+ * Agent-to-task assignments are stored in tasks.json (Task.assigned_agent)
+ */
+export interface AgentsConfig {
+  agents: AgentDefinition[]
+}

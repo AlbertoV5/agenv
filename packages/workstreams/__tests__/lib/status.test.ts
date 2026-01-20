@@ -11,7 +11,7 @@ describe("task operations", () => {
 
   beforeEach(async () => {
     tempDir = await mkdtemp(join(tmpdir(), "agenv-tasks-test-"))
-    await mkdir(join(tempDir, "docs", "work", "001-test-stream"), { recursive: true })
+    await mkdir(join(tempDir, "work", "001-test-stream"), { recursive: true })
   })
 
   afterEach(async () => {
@@ -20,17 +20,7 @@ describe("task operations", () => {
 
   describe("parseTaskId", () => {
     test("parses four-part ID", () => {
-      const result = parseTaskId("1.00.2.3")
-      expect(result).toEqual({
-        stage: 1,
-        batch: 0,
-        thread: 2,
-        task: 3,
-      })
-    })
-
-    test("parses legacy three-part ID (treated as batch 0)", () => {
-      const result = parseTaskId("1.2.3")
+      const result = parseTaskId("01.00.02.03")
       expect(result).toEqual({
         stage: 1,
         batch: 0,
@@ -40,7 +30,7 @@ describe("task operations", () => {
     })
 
     test("parses larger numbers", () => {
-      const result = parseTaskId("4.01.5.10")
+      const result = parseTaskId("04.01.05.10")
       expect(result).toEqual({
         stage: 4,
         batch: 1,
@@ -51,7 +41,7 @@ describe("task operations", () => {
 
     test("throws on two-part ID", () => {
       expect(() => parseTaskId("1.2")).toThrow(
-        'Invalid task ID format: 1.2. Expected "stage.batch.thread.task" (e.g., "1.00.2.3")'
+        'Invalid task ID format: 1.2. Expected "stage.batch.thread.task" (e.g., "01.00.02.03")'
       )
     })
 
@@ -66,25 +56,25 @@ describe("task operations", () => {
 
   describe("formatTaskId", () => {
     test("formats task ID correctly", () => {
-      expect(formatTaskId(1, 0, 2, 3)).toBe("1.00.2.3")
+      expect(formatTaskId(1, 0, 2, 3)).toBe("01.00.02.03")
     })
 
     test("formats larger numbers with zero-padded batch", () => {
-      expect(formatTaskId(10, 5, 2, 15)).toBe("10.05.2.15")
+      expect(formatTaskId(10, 5, 2, 15)).toBe("10.05.02.15")
     })
 
     test("formats batch 0 as 00", () => {
-      expect(formatTaskId(1, 0, 1, 1)).toBe("1.00.1.1")
+      expect(formatTaskId(1, 0, 1, 1)).toBe("01.00.01.01")
     })
   })
 
   describe("addTasks", () => {
     test("creates tasks.json if it doesn't exist", async () => {
       const task: Task = {
-        id: "1.00.1.1",
+        id: "1.01.1.1",
         name: "Test task",
         thread_name: "Thread 1",
-        batch_name: "Batch 00",
+        batch_name: "Batch 01",
         stage_name: "Stage 1",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -95,15 +85,15 @@ describe("task operations", () => {
 
       const tasks = getTasks(tempDir, "001-test-stream")
       expect(tasks).toHaveLength(1)
-      expect(tasks[0]?.id).toBe("1.00.1.1")
+      expect(tasks[0]?.id).toBe("1.01.1.1")
     })
 
     test("appends tasks to existing file", async () => {
       const task1: Task = {
-        id: "1.00.1.1",
+        id: "1.01.1.1",
         name: "First task",
         thread_name: "Thread 1",
-        batch_name: "Batch 00",
+        batch_name: "Batch 01",
         stage_name: "Stage 1",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -111,10 +101,10 @@ describe("task operations", () => {
       }
 
       const task2: Task = {
-        id: "1.00.1.2",
+        id: "1.01.1.2",
         name: "Second task",
         thread_name: "Thread 1",
-        batch_name: "Batch 00",
+        batch_name: "Batch 01",
         stage_name: "Stage 1",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -126,16 +116,16 @@ describe("task operations", () => {
 
       const tasks = getTasks(tempDir, "001-test-stream")
       expect(tasks).toHaveLength(2)
-      expect(tasks[0]?.id).toBe("1.00.1.1")
-      expect(tasks[1]?.id).toBe("1.00.1.2")
+      expect(tasks[0]?.id).toBe("1.01.1.1")
+      expect(tasks[1]?.id).toBe("1.01.1.2")
     })
 
     test("preserves existing task status when updating", async () => {
       const task1: Task = {
-        id: "1.00.1.1",
+        id: "1.01.1.1",
         name: "Task",
         thread_name: "Thread 1",
-        batch_name: "Batch 00",
+        batch_name: "Batch 01",
         stage_name: "Stage 1",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -161,30 +151,30 @@ describe("task operations", () => {
     test("sorts tasks by ID", async () => {
       const tasks: Task[] = [
         {
-          id: "2.00.1.1",
-          name: "Task 2.00.1.1",
+          id: "2.01.1.1",
+          name: "Task 2.01.1.1",
           thread_name: "Thread 1",
-          batch_name: "Batch 00",
+          batch_name: "Batch 01",
           stage_name: "Stage 2",
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           status: "pending",
         },
         {
-          id: "1.00.2.1",
-          name: "Task 1.00.2.1",
+          id: "1.01.2.1",
+          name: "Task 1.01.2.1",
           thread_name: "Thread 2",
-          batch_name: "Batch 00",
+          batch_name: "Batch 01",
           stage_name: "Stage 1",
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           status: "pending",
         },
         {
-          id: "1.00.1.1",
-          name: "Task 1.00.1.1",
+          id: "1.01.1.1",
+          name: "Task 1.01.1.1",
           thread_name: "Thread 1",
-          batch_name: "Batch 00",
+          batch_name: "Batch 01",
           stage_name: "Stage 1",
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -195,9 +185,9 @@ describe("task operations", () => {
       addTasks(tempDir, "001-test-stream", tasks)
 
       const result = getTasks(tempDir, "001-test-stream")
-      expect(result[0]?.id).toBe("1.00.1.1")
-      expect(result[1]?.id).toBe("1.00.2.1")
-      expect(result[2]?.id).toBe("2.00.1.1")
+      expect(result[0]?.id).toBe("1.01.1.1")
+      expect(result[1]?.id).toBe("1.01.2.1")
+      expect(result[2]?.id).toBe("2.01.1.1")
     })
   })
 
@@ -213,14 +203,14 @@ describe("task operations", () => {
         stream_id: "001-test-stream",
         last_updated: new Date().toISOString(),
         tasks: [
-          { id: "1.00.1.1", name: "Pending", thread_name: "T1", batch_name: "B00", stage_name: "S1", created_at: "", updated_at: "", status: "pending" },
-          { id: "1.00.1.2", name: "Completed", thread_name: "T1", batch_name: "B00", stage_name: "S1", created_at: "", updated_at: "", status: "completed" },
-          { id: "1.00.1.3", name: "In Progress", thread_name: "T1", batch_name: "B00", stage_name: "S1", created_at: "", updated_at: "", status: "in_progress" },
+          { id: "1.01.1.1", name: "Pending", thread_name: "T1", batch_name: "B01", stage_name: "S1", created_at: "", updated_at: "", status: "pending" },
+          { id: "1.01.1.2", name: "Completed", thread_name: "T1", batch_name: "B01", stage_name: "S1", created_at: "", updated_at: "", status: "completed" },
+          { id: "1.01.1.3", name: "In Progress", thread_name: "T1", batch_name: "B01", stage_name: "S1", created_at: "", updated_at: "", status: "in_progress" },
         ],
       }
 
       await writeFile(
-        join(tempDir, "docs/work/001-test-stream/tasks.json"),
+        join(tempDir, "work/001-test-stream/tasks.json"),
         JSON.stringify(tasksFile, null, 2)
       )
 
@@ -237,16 +227,16 @@ describe("task operations", () => {
         stream_id: "001-test-stream",
         last_updated: new Date().toISOString(),
         tasks: [
-          { id: "1.00.1.1", name: "T1", thread_name: "T1", batch_name: "B00", stage_name: "S1", created_at: "", updated_at: "", status: "pending" },
-          { id: "1.00.1.2", name: "T2", thread_name: "T1", batch_name: "B00", stage_name: "S1", created_at: "", updated_at: "", status: "completed" },
-          { id: "1.00.1.3", name: "T3", thread_name: "T1", batch_name: "B00", stage_name: "S1", created_at: "", updated_at: "", status: "completed" },
-          { id: "1.00.2.1", name: "T4", thread_name: "T2", batch_name: "B00", stage_name: "S1", created_at: "", updated_at: "", status: "in_progress" },
-          { id: "1.00.2.2", name: "T5", thread_name: "T2", batch_name: "B00", stage_name: "S1", created_at: "", updated_at: "", status: "blocked" },
+          { id: "1.01.1.1", name: "T1", thread_name: "T1", batch_name: "B01", stage_name: "S1", created_at: "", updated_at: "", status: "pending" },
+          { id: "1.01.1.2", name: "T2", thread_name: "T1", batch_name: "B01", stage_name: "S1", created_at: "", updated_at: "", status: "completed" },
+          { id: "1.01.1.3", name: "T3", thread_name: "T1", batch_name: "B01", stage_name: "S1", created_at: "", updated_at: "", status: "completed" },
+          { id: "1.01.2.1", name: "T4", thread_name: "T2", batch_name: "B01", stage_name: "S1", created_at: "", updated_at: "", status: "in_progress" },
+          { id: "1.01.2.2", name: "T5", thread_name: "T2", batch_name: "B01", stage_name: "S1", created_at: "", updated_at: "", status: "blocked" },
         ],
       }
 
       await writeFile(
-        join(tempDir, "docs/work/001-test-stream/tasks.json"),
+        join(tempDir, "work/001-test-stream/tasks.json"),
         JSON.stringify(tasksFile, null, 2)
       )
 
@@ -273,7 +263,7 @@ describe("getStreamProgress", () => {
 
   beforeEach(async () => {
     tempDir = await mkdtemp(join(tmpdir(), "agenv-progress-test-"))
-    await mkdir(join(tempDir, "docs", "work", "001-test-stream"), { recursive: true })
+    await mkdir(join(tempDir, "work", "001-test-stream"), { recursive: true })
   })
 
   afterEach(async () => {
@@ -288,7 +278,7 @@ describe("getStreamProgress", () => {
     session_estimated: { length: 1, unit: "session", session_minutes: [30, 45], session_iterations: [4, 8] },
     created_at: "2024-01-01",
     updated_at: "2024-01-01",
-    path: "docs/work/001-test-stream",
+    path: "work/001-test-stream",
     generated_by: { workstreams: "0.1.0" },
   }
 
@@ -298,15 +288,15 @@ describe("getStreamProgress", () => {
       stream_id: "001-test-stream",
       last_updated: new Date().toISOString(),
       tasks: [
-        { id: "1.00.1.1", name: "Task 1", thread_name: "Thread 1", batch_name: "B00", stage_name: "Stage 1", created_at: "", updated_at: "", status: "completed" },
-        { id: "1.00.1.2", name: "Task 2", thread_name: "Thread 1", batch_name: "B00", stage_name: "Stage 1", created_at: "", updated_at: "", status: "in_progress" },
-        { id: "1.00.2.1", name: "Task 3", thread_name: "Thread 2", batch_name: "B00", stage_name: "Stage 1", created_at: "", updated_at: "", status: "pending" },
-        { id: "1.00.2.2", name: "Task 4", thread_name: "Thread 2", batch_name: "B00", stage_name: "Stage 1", created_at: "", updated_at: "", status: "blocked" },
+        { id: "1.01.1.1", name: "Task 1", thread_name: "Thread 1", batch_name: "B01", stage_name: "Stage 1", created_at: "", updated_at: "", status: "completed" },
+        { id: "1.01.1.2", name: "Task 2", thread_name: "Thread 1", batch_name: "B01", stage_name: "Stage 1", created_at: "", updated_at: "", status: "in_progress" },
+        { id: "1.01.2.1", name: "Task 3", thread_name: "Thread 2", batch_name: "B01", stage_name: "Stage 1", created_at: "", updated_at: "", status: "pending" },
+        { id: "1.01.2.2", name: "Task 4", thread_name: "Thread 2", batch_name: "B01", stage_name: "Stage 1", created_at: "", updated_at: "", status: "blocked" },
       ],
     }
 
     await writeFile(
-      join(tempDir, "docs/work/001-test-stream/tasks.json"),
+      join(tempDir, "work/001-test-stream/tasks.json"),
       JSON.stringify(tasksFile, null, 2)
     )
 
@@ -328,14 +318,14 @@ describe("getStreamProgress", () => {
       stream_id: "001-test-stream",
       last_updated: new Date().toISOString(),
       tasks: [
-        { id: "1.00.1.1", name: "Stage 1 Task", thread_name: "Thread 1", batch_name: "B00", stage_name: "Stage 1", created_at: "", updated_at: "", status: "completed" },
-        { id: "2.00.1.1", name: "Stage 2 Task", thread_name: "Thread 1", batch_name: "B00", stage_name: "Stage 2", created_at: "", updated_at: "", status: "pending" },
-        { id: "2.00.1.2", name: "Stage 2 Task 2", thread_name: "Thread 1", batch_name: "B00", stage_name: "Stage 2", created_at: "", updated_at: "", status: "pending" },
+        { id: "1.01.1.1", name: "Stage 1 Task", thread_name: "Thread 1", batch_name: "B01", stage_name: "Stage 1", created_at: "", updated_at: "", status: "completed" },
+        { id: "2.01.1.1", name: "Stage 2 Task", thread_name: "Thread 1", batch_name: "B01", stage_name: "Stage 2", created_at: "", updated_at: "", status: "pending" },
+        { id: "2.01.1.2", name: "Stage 2 Task 2", thread_name: "Thread 1", batch_name: "B01", stage_name: "Stage 2", created_at: "", updated_at: "", status: "pending" },
       ],
     }
 
     await writeFile(
-      join(tempDir, "docs/work/001-test-stream/tasks.json"),
+      join(tempDir, "work/001-test-stream/tasks.json"),
       JSON.stringify(tasksFile, null, 2)
     )
 
@@ -355,13 +345,13 @@ describe("getStreamProgress", () => {
       stream_id: "001-test-stream",
       last_updated: new Date().toISOString(),
       tasks: [
-        { id: "1.00.1.1", name: "T1", thread_name: "T1", batch_name: "B00", stage_name: "S1", created_at: "", updated_at: "", status: "completed" },
-        { id: "1.00.1.2", name: "T2", thread_name: "T1", batch_name: "B00", stage_name: "S1", created_at: "", updated_at: "", status: "completed" },
+        { id: "1.01.1.1", name: "T1", thread_name: "T1", batch_name: "B01", stage_name: "S1", created_at: "", updated_at: "", status: "completed" },
+        { id: "1.01.1.2", name: "T2", thread_name: "T1", batch_name: "B01", stage_name: "S1", created_at: "", updated_at: "", status: "completed" },
       ],
     }
 
     await writeFile(
-      join(tempDir, "docs/work/001-test-stream/tasks.json"),
+      join(tempDir, "work/001-test-stream/tasks.json"),
       JSON.stringify(tasksFile1, null, 2)
     )
 
@@ -372,13 +362,13 @@ describe("getStreamProgress", () => {
     const tasksFile2: TasksFile = {
       ...tasksFile1,
       tasks: [
-        { id: "1.00.1.1", name: "T1", thread_name: "T1", batch_name: "B00", stage_name: "S1", created_at: "", updated_at: "", status: "completed" },
-        { id: "1.00.1.2", name: "T2", thread_name: "T1", batch_name: "B00", stage_name: "S1", created_at: "", updated_at: "", status: "in_progress" },
+        { id: "1.01.1.1", name: "T1", thread_name: "T1", batch_name: "B01", stage_name: "S1", created_at: "", updated_at: "", status: "completed" },
+        { id: "1.01.1.2", name: "T2", thread_name: "T1", batch_name: "B01", stage_name: "S1", created_at: "", updated_at: "", status: "in_progress" },
       ],
     }
 
     await writeFile(
-      join(tempDir, "docs/work/001-test-stream/tasks.json"),
+      join(tempDir, "work/001-test-stream/tasks.json"),
       JSON.stringify(tasksFile2, null, 2)
     )
 
@@ -389,13 +379,13 @@ describe("getStreamProgress", () => {
     const tasksFile3: TasksFile = {
       ...tasksFile1,
       tasks: [
-        { id: "1.00.1.1", name: "T1", thread_name: "T1", batch_name: "B00", stage_name: "S1", created_at: "", updated_at: "", status: "blocked" },
-        { id: "1.00.1.2", name: "T2", thread_name: "T1", batch_name: "B00", stage_name: "S1", created_at: "", updated_at: "", status: "blocked" },
+        { id: "1.01.1.1", name: "T1", thread_name: "T1", batch_name: "B01", stage_name: "S1", created_at: "", updated_at: "", status: "blocked" },
+        { id: "1.01.1.2", name: "T2", thread_name: "T1", batch_name: "B01", stage_name: "S1", created_at: "", updated_at: "", status: "blocked" },
       ],
     }
 
     await writeFile(
-      join(tempDir, "docs/work/001-test-stream/tasks.json"),
+      join(tempDir, "work/001-test-stream/tasks.json"),
       JSON.stringify(tasksFile3, null, 2)
     )
 
@@ -412,7 +402,7 @@ describe("getStreamProgress", () => {
     }
 
     await writeFile(
-      join(tempDir, "docs/work/001-test-stream/tasks.json"),
+      join(tempDir, "work/001-test-stream/tasks.json"),
       JSON.stringify(tasksFile, null, 2)
     )
 

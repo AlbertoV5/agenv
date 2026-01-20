@@ -263,7 +263,7 @@ export function parseTaskId(taskId: string): {
     const parsed = parts.map((p) => parseInt(p, 10))
     if (parsed.some(isNaN)) {
       throw new Error(
-        `Invalid task ID format: ${taskId}. Expected "stage.batch.thread.task" (e.g., "1.00.2.3")`
+        `Invalid task ID format: ${taskId}. Expected "stage.batch.thread.task" (e.g., "01.00.02.03")`
       )
     }
     return {
@@ -274,30 +274,14 @@ export function parseTaskId(taskId: string): {
     }
   }
 
-  // Legacy 3-part format: stage.thread.task (treated as batch 0)
-  if (parts.length === 3) {
-    const parsed = parts.map((p) => parseInt(p, 10))
-    if (parsed.some(isNaN)) {
-      throw new Error(
-        `Invalid task ID format: ${taskId}. Expected "stage.batch.thread.task" (e.g., "1.00.2.3")`
-      )
-    }
-    return {
-      stage: parsed[0]!,
-      batch: 0,
-      thread: parsed[1]!,
-      task: parsed[2]!,
-    }
-  }
-
   throw new Error(
-    `Invalid task ID format: ${taskId}. Expected "stage.batch.thread.task" (e.g., "1.00.2.3")`
+    `Invalid task ID format: ${taskId}. Expected "stage.batch.thread.task" (e.g., "01.00.02.03")`
   )
 }
 
 /**
  * Format task ID from components
- * Batch is zero-padded to 2 digits for consistent sorting
+ * All components are zero-padded to 2 digits for consistent sorting
  */
 export function formatTaskId(
   stage: number,
@@ -305,8 +289,11 @@ export function formatTaskId(
   thread: number,
   task: number
 ): string {
+  const stageStr = stage.toString().padStart(2, "0")
   const batchStr = batch.toString().padStart(2, "0")
-  return `${stage}.${batchStr}.${thread}.${task}`
+  const threadStr = thread.toString().padStart(2, "0")
+  const taskStr = task.toString().padStart(2, "0")
+  return `${stageStr}.${batchStr}.${threadStr}.${taskStr}`
 }
 
 /**
@@ -441,7 +428,7 @@ export function groupTasksByStageAndBatchAndThread(
     const stageMap = grouped.get(task.stage_name)!
 
     // Batch level
-    const batchName = task.batch_name || "Batch 00"
+    const batchName = task.batch_name || "Batch 01"
     if (!stageMap.has(batchName)) {
       stageMap.set(batchName, new Map())
     }

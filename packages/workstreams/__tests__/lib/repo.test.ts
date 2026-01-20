@@ -100,18 +100,18 @@ describe("getRepoRoot", () => {
 
 describe("getWorkDir", () => {
   test("returns correct path", () => {
-    expect(getWorkDir("/repo")).toBe("/repo/docs/work")
+    expect(getWorkDir("/repo")).toBe("/repo/work")
   })
 
   test("handles trailing slash in repo root", () => {
     // join normalizes paths, so this should still work
     const result = getWorkDir("/repo/")
-    expect(result).toMatch(/docs\/work$/)
+    expect(result).toMatch(/\/work$/)
   })
 })
 
 describe("getIndexPath", () => {
   test("returns correct path", () => {
-    expect(getIndexPath("/repo")).toBe("/repo/docs/work/index.json")
+    expect(getIndexPath("/repo")).toBe("/repo/work/index.json")
   })
 })

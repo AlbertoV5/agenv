@@ -121,7 +121,11 @@ export function main(argv: string[] = process.argv): void {
     console.log(`Task ID: ${t.id}`)
     console.log(`Description: ${t.name}`)
     console.log(`Location: Stage ${t.stage_name} > Batch ${t.batch_name} > Thread ${t.thread_name}`)
-    
+
+    if (ctx.assignedAgent) {
+      console.log(`Assigned Agent: ${ctx.assignedAgent}`)
+    }
+
     if (t.breadcrumb) {
       console.log(`\n## Last Breadcrumb`)
       console.log(`> ${t.breadcrumb}`)
@@ -129,7 +133,7 @@ export function main(argv: string[] = process.argv): void {
       console.log(`\n## Last Breadcrumb`)
       console.log(`(No breadcrumb logged)`)
     }
-    
+
     console.log(`\n## Action Required`)
     console.log(`Resume execution of this task. Check the last breadcrumb for context.`)
   } else {
@@ -149,7 +153,11 @@ export function main(argv: string[] = process.argv): void {
       console.log(`Next Task ID: ${t.id}`)
       console.log(`Description: ${t.name}`)
       console.log(`Location: Stage ${t.stage_name} > Batch ${t.batch_name} > Thread ${t.thread_name}`)
-      
+
+      if (ctx.assignedAgent) {
+        console.log(`Assigned Agent: ${ctx.assignedAgent}`)
+      }
+
       console.log(`\n## Action Required`)
       console.log(`Start this task using: work update --task "${t.id}" --status in_progress`)
     } else {

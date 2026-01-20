@@ -16,13 +16,13 @@ describe("assignments", () => {
     session_estimated: { length: 1, unit: "session", session_minutes: [30, 45], session_iterations: [4, 8] },
     created_at: "2024-01-01",
     updated_at: "2024-01-01",
-    path: "docs/work/001-test-stream",
+    path: "work/001-test-stream",
     generated_by: { workstreams: "0.1.0" },
   }
 
   beforeEach(async () => {
     tempDir = await mkdtemp(join(tmpdir(), "agenv-assignments-test-"))
-    await mkdir(join(tempDir, "docs", "work", "001-test-stream"), { recursive: true })
+    await mkdir(join(tempDir, "work", "001-test-stream"), { recursive: true })
   })
 
   afterEach(async () => {
@@ -40,7 +40,7 @@ describe("assignments", () => {
     }
 
     await writeFile(
-      join(tempDir, "docs/work/001-test-stream/tasks.json"),
+      join(tempDir, "work/001-test-stream/tasks.json"),
       JSON.stringify(tasksFile, null, 2)
     )
 

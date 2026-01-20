@@ -58,10 +58,10 @@ export function getRepoRoot(startPath?: string): string {
  * Get the workstreams directory path for a repository.
  *
  * @param repoRoot - The repository root path
- * @returns The workstreams directory path (docs/work)
+ * @returns The workstreams directory path (work)
  */
 export function getWorkDir(repoRoot: string): string {
-  return join(repoRoot, "docs", "work")
+  return join(repoRoot, "work")
 }
 
 /**

@@ -8,7 +8,7 @@ The "plans" to "workstreams" refactoring is complete. Below is the current imple
 - **Package**: `packages/planning/` → `packages/workstreams/`
 - **NPM name**: `@agenv/planning` → `@agenv/workstreams`
 - **CLI command**: `plan` → `work`
-- **Directory**: `docs/plans/` → `docs/work/`
+- **Directory**: `docs/plans/` → `work/` (at repository root)
 - **Plan file**: Kept as `PLAN.md`
 
 ### Terminology Changes
@@ -44,7 +44,7 @@ The spec requires a 5-level hierarchy: Workstream → Stage → Batch → Thread
 | Aspect | Before | After |
 |--------|--------|-------|
 | Hierarchy | Stage → Thread → Task | Stage → **Batch** → Thread → Task |
-| Task ID format | `1.2.3` (stage.thread.task) | `1.00.2.3` (stage.batch.thread.task) |
+| Task ID format | `1.2.3` (stage.thread.task) | `01.01.02.03` (stage.batch.thread.task) |
 | PLAN.md structure | H4: Stage, H5: Thread | H4: Stage, H5: Batch, H6: Thread |
 
 **Files modified:**
@@ -57,8 +57,6 @@ The spec requires a 5-level hierarchy: Workstream → Stage → Batch → Thread
 - `src/lib/consolidate.ts` - Batch validation
 - `src/lib/document.ts` - `batchCount` in reports
 - `src/lib/metrics.ts` - `blockersByBatch` analysis
-
-**Backwards compatibility:** Legacy 3-part task IDs are treated as batch 0.
 
 ### 2. Approval Gate (HITL)
 The spec requires human-in-the-loop approval before task creation.
@@ -126,41 +124,128 @@ Scaffolding for iterative fixes.
 - `src/lib/fix.ts` - Template appending logic
 - `src/cli/fix.ts` - CLI command
 
+### 7. Workstream Directory Location
+**Requirement:** Workstreams at `work/` (repository root) instead of `docs/work/`.
+**Status:** Completed. Default path updated in `repo.ts`.
+
+**Files:**
+- `src/lib/repo.ts` - Updated default path constant
+- `packages/workstreams/README.md` - Documentation updated
+- Skills updated referencing `work/`
+
+### 8. TASKS.md Support
+**Requirement:** Human-readable task file that serializes to tasks.json, then auto-deleted.
+**Status:** Completed.
+
+**New files:**
+- `src/lib/tasks-md.ts` - Parser and generator for TASKS.md format
+- `src/cli/tasks.ts` - `work tasks` CLI command
+
+**Commands:**
+```bash
+work tasks generate             # Create TASKS.md from PLAN.md
+work tasks serialize            # Convert TASKS.md to tasks.json
+```
+
+### 9. AGENTS.md Configuration
+**Requirement:** Define available agents and their thread assignments per batch at `work/AGENTS.md` (shared across all workstreams).
+**Status:** Completed.
+
+**New files:**
+- `src/lib/agents.ts` - Types, parsing, and management for AGENTS.md
+- `src/cli/agents.ts` - `work agents` CLI command
+- `src/cli/assign.ts` - `work assign` CLI command
+- `__tests__/lib/agents.test.ts` - Unit tests (20 tests)
+
+**Types added:**
+- `AgentDefinition` - Agent name, capabilities, constraints
+- `BatchAssignment` - Stream, stage.batch, thread, agent assignment
+- `AgentsConfig` - Full agents configuration
+
+**Commands:**
+```bash
+work agents                              # List all agents
+work agents --add --name "claude-opus" --capabilities "..." --constraints "..."
+work agents --remove "agent-name"        # Remove agent
+
+work assign --batch "01.01" --thread "backend" --agent "claude-opus"
+work assign --batch "01.01" --list        # List assignments for batch
+work assign --clear --batch "01.01" --thread "backend"  # Remove assignment
+```
+
+**Integration:** `work continue` now shows assigned agent for active/next task.
+
 ---
 
 ## Test Status
-- **172 tests pass**, 0 failures
-- **TypeScript compiles** with no errors
+- **196 tests pass**, 0 failures
+- **TypeScript compiles** with minor pre-existing warnings in tasks-md.ts
 
 ---
 
 ## Remaining Gaps vs WORKSTREAM.md Spec
 
-### Medium Priority
+### High Priority (Phase 1 Support)
 
-#### 1. Status Vocabulary Mismatch
-**Spec:** `pending | active | blocked | review | complete`
-**Current:** `pending | in_progress | completed | blocked | cancelled`
-**Work needed:** Decide whether to align with spec or document the difference.
+#### 1. Prompt Generation
+**Requirement:** Generate execution prompts for agents with full thread context.
+**Current:** No prompt generation capability.
+**Work needed:**
+- New file: `src/lib/prompts.ts` - Prompt template generation
+- New command: `work prompt --thread "01.00.01"` - Generate thread execution prompt
+- Include: thread summary, tasks, PLAN.md context, parallel threads, `work/TESTS.md` requirements
+
+### Medium Priority (Phase 2-3 Support)
+
+#### 2. COMPLETION.md Generation
+**Requirement:** Auto-generate completion summary with accomplishments, insights, file references.
+**Current:** `generateReport()` and `generateSummary()` exist but output strings, not files.
+**Work needed:**
+- New command: `work complete` (or update existing) - Generate COMPLETION.md file in workstream directory
+- Include: accomplishments template, file index, metrics
+
+#### 3. Fix Batch Support
+**Requirement:** Create fix batches within a stage (not just fix batches within a stage).
+**Current:** `work fix` only appends new stages.
+**Work needed:**
+- Update `src/lib/fix.ts` - Add batch insertion logic
+- Update `src/cli/fix.ts` - Add `--batch` option
+- Command: `work fix --batch --stage N --name "fix-validation"`
+
+#### 4. TESTS.md Support
+**Requirement:** Define test requirements at `work/TESTS.md` (shared across all workstreams) that agents reference.
+**Current:** No test integration.
+**Work needed:**
+- New file: `src/lib/tests-md.ts` - Parser for TESTS.md format
+- Integration with `work continue` to show test commands
+- Integration with `work prompt` to include test requirements
 
 ### Lower Priority
 
-#### 2. Evaluation Phase Formalization
-**Spec:** End of stage/workstream has formal evaluation gate.
-**Current:** Implicit via task completion.
-**Work needed:** Evaluation skill/command for stage gates.
+#### 5. Status Vocabulary
+**Spec originally:** `pending | active | blocked | review | complete`
+**Current:** `pending | in_progress | completed | blocked | cancelled`
+**Decision:** Keep current vocabulary (documented in WORKSTREAM.md).
 
-#### 3. Documentation Phase (99-document)
-**Spec:** Final batch synthesizes output into clean documentation.
-**Current:** No automated documentation synthesis.
-**Work needed:** Convention for `99-document` batch; skill for documentation synthesis.
+#### 6. Evaluation Phase Formalization
+**Spec:** End of stage/workstream has formal evaluation gate.
+**Current:** Implicit via task completion and user testing.
+**Work needed:** Optional - could add `work evaluate` command for formal stage sign-off.
 
 ---
 
 ## Implementation Priorities
 
-If continuing implementation, recommended order:
+Recommended order for continuing implementation:
 
-1. **Evaluation gates** - Quality checkpoints
-2. **Documentation phase** - Final synthesis
-3. **Status vocabulary** - Clean up technical debt
+### Phase 1 Support (Setup Workstream)
+1. ~~**AGENTS.md support** - Agent configuration and assignment~~ ✅ Completed
+2. **Prompt generation** - Execution prompts for agents
+
+### Phase 2-3 Support (Execute & Document)
+3. **COMPLETION.md generation** - Final completion summary output
+4. **Fix batch support** - In-stage fix workflow
+5. **TESTS.md support** - Test requirements integration (at `work/TESTS.md`)
+
+### Optional Enhancements
+6. **Evaluation command** - Formal stage sign-off

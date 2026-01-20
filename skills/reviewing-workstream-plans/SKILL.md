@@ -21,7 +21,7 @@ work status                                 # All workstreams
 work preview --stream "000-stream-id"       # Structure overview
 work list --stream "000-stream-id" --tasks  # Task list
 work read --stream "000-stream-id" --task "1.2.1"  # Task details
-cat docs/work/000-stream-id/PLAN.md         # Full content
+cat work/000-stream-id/PLAN.md         # Full content
 ```
 
 ## Structure

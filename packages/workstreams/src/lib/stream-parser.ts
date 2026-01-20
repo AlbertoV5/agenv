@@ -410,31 +410,6 @@ function parseStages(
           state.currentThreadSection = null
           continue
         }
-
-        // Legacy support: H5 Thread (treat as batch 0)
-        const threadInfo = parseThreadHeading(heading.text)
-        if (threadInfo && currentStage) {
-          // Create default batch 00 if not exists
-          if (!currentBatch) {
-            currentBatch = {
-              id: 0,
-              prefix: "00",
-              name: "Default",
-              summary: "",
-              threads: [],
-            }
-            state.currentBatch = 0
-          }
-          saveCurrentThread()
-          currentThread = {
-            id: threadInfo.number,
-            name: threadInfo.name,
-            summary: "",
-            details: "",
-          }
-          state.currentThread = threadInfo.number
-          state.currentThreadSection = null
-        }
       }
 
       // H6: Thread N: {name} (inside batches)

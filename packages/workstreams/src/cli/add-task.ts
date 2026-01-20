@@ -31,7 +31,7 @@ Options:
   --repo-root, -r  Repository root (auto-detected if omitted)
   --stream, -s     Workstream ID or name (uses current if not specified)
   --stage          Stage number (required, e.g., 1)
-  --batch, -b      Batch number (required, e.g., 0 for batch 00)
+  --batch, -b      Batch number (required, e.g., 1 for batch 01)
   --thread, -t     Thread number (required, e.g., 2)
   --name, -n       Task description (required)
   --json, -j       Output as JSON
@@ -105,8 +105,8 @@ function parseCliArgs(argv: string[]): AddTaskCliArgs | null {
           return null
         }
         const batchNum = parseInt(next, 10)
-        if (isNaN(batchNum) || batchNum < 0) {
-          console.error("Error: --batch must be a non-negative integer")
+        if (isNaN(batchNum) || batchNum < 1) {
+          console.error("Error: --batch must be a positive integer")
           return null
         }
         parsed.batch = batchNum
@@ -157,8 +157,10 @@ function parseCliArgs(argv: string[]): AddTaskCliArgs | null {
  * Get the next task number for a given stage, batch, and thread
  */
 function getNextTaskNumber(tasks: Task[], stage: number, batch: number, thread: number): number {
+  const stageStr = stage.toString().padStart(2, "0")
   const batchStr = batch.toString().padStart(2, "0")
-  const prefix = `${stage}.${batchStr}.${thread}.`
+  const threadStr = thread.toString().padStart(2, "0")
+  const prefix = `${stageStr}.${batchStr}.${threadStr}.`
   const existingTasks = tasks.filter(t => t.id.startsWith(prefix))
 
   if (existingTasks.length === 0) {

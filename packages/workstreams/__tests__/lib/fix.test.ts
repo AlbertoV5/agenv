@@ -10,7 +10,7 @@ describe("fix", () => {
 
   beforeEach(async () => {
     tempDir = await mkdtemp(join(tmpdir(), "agenv-fix-test-"))
-    await mkdir(join(tempDir, "docs", "work", streamId), { recursive: true })
+    await mkdir(join(tempDir, "work", streamId), { recursive: true })
   })
 
   afterEach(async () => {
@@ -25,7 +25,7 @@ Summary text.
 ## Stages
 ### Stage 1: Initial
 `
-    await writeFile(join(tempDir, "docs", "work", streamId, "PLAN.md"), planContent)
+    await writeFile(join(tempDir, "work", streamId, "PLAN.md"), planContent)
 
     const result = appendFixStage(tempDir, streamId, {
       targetStage: 1,
@@ -36,10 +36,10 @@ Summary text.
     expect(result.success).toBe(true)
     expect(result.newStageNumber).toBe(2)
 
-    const newContent = await readFile(join(tempDir, "docs", "work", streamId, "PLAN.md"), "utf-8")
+    const newContent = await readFile(join(tempDir, "work", streamId, "PLAN.md"), "utf-8")
     expect(newContent).toContain("### Stage 2: Fix - bug-fixes")
     expect(newContent).toContain("Addressing issues found in Stage 1")
     expect(newContent).toContain("Fixing bugs")
-    expect(newContent).toContain("Batch 00: Fixes")
+    expect(newContent).toContain("Batch 01: Fixes")
   })
 })

@@ -37,6 +37,9 @@ import { main as exportMain } from "../src/cli/export.ts"
 import { main as approveMain } from "../src/cli/approve.ts"
 import { main as continueMain } from "../src/cli/continue.ts"
 import { main as fixMain } from "../src/cli/fix.ts"
+import { main as tasksMain } from "../src/cli/tasks.ts"
+import { main as agentsMain } from "../src/cli/agents.ts"
+import { main as assignMain } from "../src/cli/assign.ts"
 
 const SUBCOMMANDS = {
   create: createMain,
@@ -60,6 +63,9 @@ const SUBCOMMANDS = {
   report: reportMain,
   changelog: changelogMain,
   export: exportMain,
+  tasks: tasksMain,
+  agents: agentsMain,
+  assign: assignMain,
 } as const
 
 type Subcommand = keyof typeof SUBCOMMANDS
@@ -77,6 +83,8 @@ Commands:
   continue    Resume work on a workstream (shows context & breadcrumbs)
   fix         Append a fix stage to a workstream
   approve     Approve or revoke plan approval (required before adding tasks)
+  agents      Manage agent definitions (list, add, remove)
+  assign      Assign agents to threads for batch execution
   status      Show workstream progress
   set-status  Set workstream status (pending, in_progress, completed, on_hold)
   update      Update a task's status
@@ -87,6 +95,7 @@ Commands:
   add-task    Add a task to a workstream
   delete      Delete workstreams, stages, threads, or tasks
   files       List and index files in files/ directory
+  tasks       Manage TASKS.md intermediate file (generate/serialize)
   consolidate Validate PLAN.md structure
   preview     Show PLAN.md structure
   metrics     Evaluate workstream metrics and task analysis

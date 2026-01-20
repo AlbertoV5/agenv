@@ -39,7 +39,7 @@ Addressing issues found in Stage ${options.targetStage}.
 ${options.description || "Fixes and improvements based on evaluation."}
 
 #### Batches
-##### Batch 00: Fixes
+##### Batch 01: Fixes
 ###### Thread 1: Implementation
 **Summary:**
 Apply fixes.

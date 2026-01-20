@@ -61,7 +61,7 @@ work set-status --clear     # Resume
 
 ```bash
 work read --task "1.2.1"              # Task details
-cat docs/work/000-stream-id/PLAN.md   # Full workstream
+cat work/000-stream-id/PLAN.md   # Full workstream
 ```
 
 ## Add Tasks Mid-Work

@@ -33,9 +33,9 @@ describe("generateStream", () => {
       const result = generateStream(args)
 
       expect(result.streamId).toBe("000-test-feature")
-      expect(result.streamPath).toBe("docs/work/000-test-feature")
+      expect(result.streamPath).toBe("work/000-test-feature")
 
-      const streamDir = join(tempDir, "docs", "work", "000-test-feature")
+      const streamDir = join(tempDir, "work", "000-test-feature")
       expect(existsSync(streamDir)).toBe(true)
       expect(existsSync(join(streamDir, "PLAN.md"))).toBe(true)
       expect(existsSync(join(streamDir, "tasks.json"))).toBe(true)
@@ -46,7 +46,7 @@ describe("generateStream", () => {
       const args = createGenerateArgs("test-feature", tempDir)
       generateStream(args)
 
-      const streamDir = join(tempDir, "docs", "work", "000-test-feature")
+      const streamDir = join(tempDir, "work", "000-test-feature")
       expect(existsSync(join(streamDir, "checklist"))).toBe(false)
       expect(existsSync(join(streamDir, "principle"))).toBe(false)
     })
@@ -57,7 +57,7 @@ describe("generateStream", () => {
       const args = createGenerateArgs("test-feature", tempDir)
       generateStream(args)
 
-      const planMdPath = join(tempDir, "docs/work/000-test-feature/PLAN.md")
+      const planMdPath = join(tempDir, "work/000-test-feature/PLAN.md")
       const content = await readFile(planMdPath, "utf-8")
 
       expect(content).toContain("# Plan: Test Feature")
@@ -70,7 +70,7 @@ describe("generateStream", () => {
       const args = createGenerateArgs("test-feature", tempDir)
       generateStream(args)
 
-      const planMdPath = join(tempDir, "docs/work/000-test-feature/PLAN.md")
+      const planMdPath = join(tempDir, "work/000-test-feature/PLAN.md")
       const content = await readFile(planMdPath, "utf-8")
 
       // Main sections
@@ -101,7 +101,7 @@ describe("generateStream", () => {
       const args = createGenerateArgs("test-feature", tempDir)
       generateStream(args)
 
-      const planMdPath = join(tempDir, "docs/work/000-test-feature/PLAN.md")
+      const planMdPath = join(tempDir, "work/000-test-feature/PLAN.md")
       const content = await readFile(planMdPath, "utf-8")
 
       expect(content).toContain("@agenv/workstreams@")
@@ -111,7 +111,7 @@ describe("generateStream", () => {
       const args = createGenerateArgs("test-feature", tempDir)
       generateStream(args)
 
-      const planMdPath = join(tempDir, "docs/work/000-test-feature/PLAN.md")
+      const planMdPath = join(tempDir, "work/000-test-feature/PLAN.md")
       const content = await readFile(planMdPath, "utf-8")
 
       expect(content).toMatch(/\*Last updated: \d{4}-\d{2}-\d{2}\*/)
@@ -123,7 +123,7 @@ describe("generateStream", () => {
       const args = createGenerateArgs("test-feature", tempDir)
       generateStream(args)
 
-      const tasksPath = join(tempDir, "docs/work/000-test-feature/tasks.json")
+      const tasksPath = join(tempDir, "work/000-test-feature/tasks.json")
       const content = await readFile(tasksPath, "utf-8")
       const tasks = JSON.parse(content)
 
@@ -139,7 +139,7 @@ describe("generateStream", () => {
       const args = createGenerateArgs("test-feature", tempDir)
       generateStream(args)
 
-      const filesDir = join(tempDir, "docs/work/000-test-feature/files")
+      const filesDir = join(tempDir, "work/000-test-feature/files")
       expect(existsSync(filesDir)).toBe(true)
 
       // Directory should be empty (no README.md)
@@ -157,7 +157,7 @@ describe("generateStream", () => {
       expect(index.streams).toHaveLength(1)
       expect(index.streams[0]?.id).toBe("000-test-feature")
       expect(index.streams[0]?.name).toBe("test-feature")
-      expect(index.streams[0]?.path).toBe("docs/work/000-test-feature")
+      expect(index.streams[0]?.path).toBe("work/000-test-feature")
     })
 
     test("stores version in index metadata", async () => {
