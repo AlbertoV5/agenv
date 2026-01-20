@@ -1,4 +1,4 @@
-Hello Agent backend-heavy-hitter!
+Hello Agent!
 
 You are working on the "Data Layer" batch at the "Foundation" stage of the "Workstream Viz" workstream.
 

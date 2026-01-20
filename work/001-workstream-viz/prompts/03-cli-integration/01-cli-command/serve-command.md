@@ -1,4 +1,4 @@
-Hello Agent default!
+Hello Agent!
 
 You are working on the "CLI Command" batch at the "CLI Integration" stage of the "Workstream Viz" workstream.
 

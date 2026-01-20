@@ -318,7 +318,7 @@ export function generateThreadPrompt(
   const lines: string[] = []
 
   // Greeting
-  lines.push(`Hello Agent${context.agentName ? " " + context.agentName : ""}!`)
+  lines.push(`Hello Agent!`)
   lines.push("")
 
   // Context

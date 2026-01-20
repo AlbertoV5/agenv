@@ -1,4 +1,4 @@
-Hello Agent default!
+Hello Agent!
 
 You are working on the "Setup" batch at the "Foundation" stage of the "Workstream Viz" workstream.
 

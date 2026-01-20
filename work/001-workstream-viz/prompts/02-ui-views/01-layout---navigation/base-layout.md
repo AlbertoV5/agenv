@@ -1,4 +1,4 @@
-Hello Agent frontend-speedster!
+Hello Agent!
 
 You are working on the "Layout & Navigation" batch at the "UI Views" stage of the "Workstream Viz" workstream.
 
