@@ -183,7 +183,7 @@ work assign --thread "01.01.01" --agent "backend-expert"
 work assign --thread "01.01.02" --agent "frontend-specialist"
 ```
 
-Assignments are stored in tasks.json and included in generated prompts.
+Assignments are stored in tasks.json.
 
 **Note:** `work/AGENTS.md` and `work/TESTS.md` are user-managed configuration files. The planning agent does not create or edit them—only reads them for agent assignment and prompt generation.
 
@@ -195,6 +195,51 @@ Create execution prompts for implementation agents:
 work prompt --stage 1 --batch 1 --thread 1
 work prompt --stage 1 --batch 1              # All threads in batch
 ```
+
+Prompts are automatically appended to `work/{stream-id}/PROMPTS.md`.
+
+### Prompt Content & Structure
+
+The generated prompt aggregates context from multiple sources to give the agent a complete picture:
+
+| Section | Source |
+|---------|--------|
+| Thread Summary | PLAN.md thread summary |
+| Thread Details | PLAN.md implementation approach |
+| Stage Context | PLAN.md stage definition |
+| Batch Context | PLAN.md batch purpose |
+| Assigned Tasks | tasks.json tasks for this thread |
+| Parallel Threads | Other threads in same batch (for awareness) |
+| Test Requirements | `work/TESTS.md` if present |
+| Agent Assignment | `work/AGENTS.md` if present (for planning, not prompt output) |
+
+**Example Structure:**
+
+```markdown
+# Thread: {Thread Name}
+
+## Context
+Stage: {Stage Name} - {Stage Definition}
+Batch: {Batch Name} - {Batch Purpose}
+
+## Summary
+{Thread summary from PLAN.md}
+
+## Details
+{Thread details from PLAN.md}
+
+## Tasks
+- [ ] {task id}: {description}
+- [ ] {task id}: {description}
+
+## Parallel Threads
+These threads run alongside yours in this batch:
+- Thread {N}: {Name}
+
+## Test Requirements
+{From work/TESTS.md if present}
+
+
 
 Present these prompts to the user. They will run implementation agents with this context.
 

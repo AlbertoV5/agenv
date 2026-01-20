@@ -88,9 +88,8 @@ work prompt --stage 1 --batch 1 --thread 1 --no-tests
 # Generate prompt for a thread (by name)
 work prompt --stream \"000-...\" --stage \"setup\" --batch \"core\" --thread \"config\"
 
-# Output to file
-work prompt --stream \"000-...\" --stage \"setup\" --batch \"core\" --thread \"auth\" > thread-prompt.md
-
 # All threads in a batch
 work prompt --stage 1 --batch 1
+
+# Note: All generated prompts are automatically appended to `work/{id}/PROMPTS.md` with a timestamp.
 ```

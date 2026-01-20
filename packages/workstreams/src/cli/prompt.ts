@@ -4,7 +4,9 @@
  * Generates execution prompts for agents with full thread context.
  */
 
-import { getRepoRoot } from "../lib/repo.ts"
+import { join } from "path"
+import { appendFileSync } from "fs"
+import { getRepoRoot, getWorkDir } from "../lib/repo.ts"
 import { loadIndex, getResolvedStream } from "../lib/index.ts"
 import {
   getPromptContext,
@@ -55,14 +57,36 @@ Description:
   - Stage definition and constitution
   - Parallel threads for awareness
   - Test requirements from work/TESTS.md (if present)
-  - Agent assignment information
 
 Examples:
   work prompt --thread "01.01.01"
   work prompt --thread "01.01.02" --stream "001-my-feature"
   work prompt --thread "01.01.01" --json
   work prompt --stage 1 --batch 1
+  work prompt --stage 1 --batch 1
 `)
+}
+
+function appendToPromptsFile(repoRoot: string, streamId: string, content: string, title: string) {
+  const workDir = getWorkDir(repoRoot)
+  const promptsPath = join(workDir, streamId, "PROMPTS.md")
+  const timestamp = new Date().toISOString()
+
+  const entry = `
+<!-- ================================================================================================= -->
+<!-- GENERATED PROMPT: ${title} -->
+<!-- TIMESTAMP: ${timestamp} -->
+<!-- ================================================================================================= -->
+
+${content}
+`
+
+  try {
+    appendFileSync(promptsPath, entry)
+    console.warn(`Saved prompt to ${promptsPath}`)
+  } catch (e) {
+    console.warn(`Warning: Failed to save prompt to PROMPTS.md: ${(e as Error).message}`)
+  }
 }
 
 function parseCliArgs(argv: string[]): PromptCliArgs | null {
@@ -206,6 +230,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
         includeParallel: !cliArgs.noParallel,
       })
       console.log(prompt)
+      appendToPromptsFile(repoRoot, stream.id, prompt, cliArgs.threadId)
     }
     return
   }
@@ -285,6 +310,8 @@ export async function main(argv: string[] = process.argv): Promise<void> {
           console.log(`--- START PROMPT: ${threadIdStr} ---`)
           console.log(prompt)
           console.log(`--- END PROMPT: ${threadIdStr} ---\n`)
+
+          appendToPromptsFile(repoRoot, stream.id, prompt, threadIdStr)
         }
       } catch (e) {
         console.error(`Error generating prompt for ${threadIdStr}: ${(e as Error).message}`)

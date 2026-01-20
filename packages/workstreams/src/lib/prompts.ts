@@ -10,13 +10,11 @@ import { join } from "path"
 import { getWorkDir } from "./repo.ts"
 import { parseStreamDocument } from "./stream-parser.ts"
 import { getTasks, parseTaskId } from "./tasks.ts"
-import { getAgentsConfig, getAgent } from "./agents.ts"
 import type {
   Task,
   StageDefinition,
   BatchDefinition,
   ThreadDefinition,
-  AgentDefinition,
   ConsolidateError,
 } from "./types.ts"
 
@@ -55,7 +53,6 @@ export interface PromptContext {
   batch: BatchDefinition
   tasks: Task[]
   parallelThreads: ThreadDefinition[]
-  assignedAgent?: AgentDefinition
   testRequirements?: TestRequirements
   outputDir: string
 }
@@ -269,14 +266,7 @@ export function getPromptContext(
   const tasks = allTasks.filter((t) => t.id.startsWith(threadPrefix))
 
   // Get agent assignment from first task (they should all have the same agent)
-  let assignedAgent: AgentDefinition | undefined
-  const assignedAgentName = tasks.find((t) => t.assigned_agent)?.assigned_agent
-  if (assignedAgentName) {
-    const agentsConfig = getAgentsConfig(repoRoot)
-    if (agentsConfig) {
-      assignedAgent = getAgent(agentsConfig, assignedAgentName) || undefined
-    }
-  }
+  // Agent assignment removed from prompt generation context as per requirements.
 
   // Load test requirements
   const testRequirements = getTestRequirements(repoRoot) || undefined
@@ -298,7 +288,6 @@ export function getPromptContext(
     batch,
     tasks,
     parallelThreads,
-    assignedAgent,
     testRequirements,
     outputDir,
   }
@@ -334,9 +323,6 @@ export function generateThreadPrompt(
   )
   lines.push(
     `- **Location:** Stage ${context.stage.id} > Batch ${context.batch.prefix}-${context.batch.name} > Thread ${context.thread.id}`,
-  )
-  lines.push(
-    `- **Assigned Agent:** ${context.assignedAgent ? `${context.assignedAgent.name} (${context.assignedAgent.model})` : "Unassigned"}`,
   )
   lines.push("")
 
@@ -481,14 +467,6 @@ export function generateThreadPromptJson(context: PromptContext): object {
       name: t.name,
       summary: t.summary,
     })),
-    assignedAgent: context.assignedAgent
-      ? {
-        name: context.assignedAgent.name,
-        model: context.assignedAgent.model,
-        description: context.assignedAgent.description,
-        bestFor: context.assignedAgent.bestFor,
-      }
-      : null,
     testRequirements: context.testRequirements || null,
     outputDir: context.outputDir,
   }
