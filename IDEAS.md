@@ -31,4 +31,5 @@ work create --name "feature-v2" --from "000-feature-v1"
 - PLAN: Ask for TASKS.md generation.
 - REVIEW: Ask to revew and edit TASKS.md if any (iterate).
 - PLAN: Ask for TASKS.md serialization and assignements.
-- 
+- USER: Review tasks.
+- PLAN: Ask for prompts generation.
