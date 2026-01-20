@@ -32,6 +32,14 @@ function extractField(text: string, fieldName: string): string | null {
 }
 
 /**
+ * Validate that model follows provider/model format
+ * e.g., "google/gemini-3-flash-preview", "anthropic/claude-sonnet-4"
+ */
+export function isValidModelFormat(model: string): boolean {
+  return model.includes("/")
+}
+
+/**
  * Parse AGENTS.md content to extract AgentsConfig
  *
  * Expected format:
@@ -123,6 +131,15 @@ export function parseAgentsMd(content: string): {
     currentAgent.model
   ) {
     agents.push(currentAgent as AgentDefinition)
+  }
+
+  // Validate model format for each agent
+  for (const agent of agents) {
+    if (!isValidModelFormat(agent.model)) {
+      errors.push(
+        `Agent "${agent.name}" has model "${agent.model}" which is not in provider/model format (e.g., "google/gemini-3-flash-preview")`
+      )
+    }
   }
 
   const config: AgentsConfig = { agents }

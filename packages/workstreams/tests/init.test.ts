@@ -11,6 +11,7 @@ describe("work init", () => {
 
     beforeEach(() => {
         tempDir = mkdtempSync(join(tmpdir(), "work-init-test-"))
+        mkdirSync(join(tempDir, ".git"))
         workDir = join(tempDir, "work")
     })
 

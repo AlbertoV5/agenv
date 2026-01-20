@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-01-20T17:38:42.080Z",
+  "last_updated": "2026-01-20T21:13:00.962Z",
   "current_stream": "001-workstream-viz",
   "streams": [
     {
@@ -51,7 +51,7 @@
         ]
       },
       "created_at": "2026-01-20T17:28:30.014Z",
-      "updated_at": "2026-01-20T17:38:42.080Z",
+      "updated_at": "2026-01-20T21:04:31.740Z",
       "path": "work/001-workstream-viz",
       "generated_by": {
         "workstreams": "0.1.0"
@@ -61,7 +61,8 @@
         "approved_at": "2026-01-20T17:38:42.080Z",
         "approved_by": "user",
         "plan_hash": "6530f350e56b7039765617424e166fdd8e1a0299e7b1320c2ae325773e281ffc"
-      }
+      },
+      "status": "completed"
     }
   ]
 }

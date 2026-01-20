@@ -16,7 +16,7 @@ const DEFAULT_AGENTS_MD = `# Agents
 ### default
 **Description:** General-purpose implementation agent
 **Best for:** Standard development tasks
-**Model:** claude-sonnet
+**Model:** anthropic/claude-sonnet-4
 `
 
 const DEFAULT_TESTS_MD = `# Test Requirements
@@ -45,13 +45,19 @@ export async function main(argv: string[]): Promise<void> {
     const args = argv.slice(2)
     const force = args.includes("--force")
 
+    const repoRootIdx = args.indexOf("--repo-root")
+    let repoRootArg: string | undefined
+    if (repoRootIdx !== -1 && repoRootIdx + 1 < args.length) {
+        repoRootArg = args[repoRootIdx + 1]
+    }
+
     if (args.includes("--help") || args.includes("-h")) {
         printHelp()
         return
     }
 
     try {
-        const repoRoot = getRepoRoot()
+        const repoRoot = getRepoRoot(repoRootArg)
         const workDir = getWorkDir(repoRoot)
 
         if (!existsSync(workDir)) {

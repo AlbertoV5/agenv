@@ -435,13 +435,13 @@ export type ExportFormat = "md" | "csv" | "json"
  * ### backend-orm-expert
  * **Description:** Specializes in database schema design...
  * **Best for:** Database setup, migration scripts...
- * **Model:** claude-opus
+ * **Model:** google/gemini-3-flash-preview
  */
 export interface AgentDefinition {
   name: string // e.g., "backend-orm-expert" (from H3 heading)
   description: string // Multi-sentence description of specialization
   bestFor: string // Use cases summary
-  model: string // e.g., "claude-opus", "claude-sonnet"
+  model: string // Must be in "provider/model" format, e.g., "google/gemini-3-flash-preview", "anthropic/claude-sonnet-4"
 }
 
 /**
