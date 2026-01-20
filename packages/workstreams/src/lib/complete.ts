@@ -64,6 +64,7 @@ export function completeStream(args: CompleteStreamArgs): CompleteStreamResult {
 
 /**
  * Generate a COMPLETION.md summary for a workstream
+ * Aggregates task reports by stage/batch/thread hierarchy
  */
 export function generateCompletionMd(args: {
   repoRoot: string
@@ -82,6 +83,9 @@ export function generateCompletionMd(args: {
   const filesDir = join(streamDir, "files")
   const files = getFilesRecursively(filesDir, filesDir)
 
+  // Group tasks by stage, batch, thread
+  const grouped = groupTasksByHierarchy(tasks)
+
   const lines: string[] = []
   lines.push(`# Completion: ${stream.name}`)
   lines.push("")
@@ -90,15 +94,46 @@ export function generateCompletionMd(args: {
   lines.push("")
 
   lines.push("## Accomplishments")
-  const completedTasks = tasks.filter((t) => t.status === "completed")
-  if (completedTasks.length > 0) {
-    for (const task of completedTasks) {
-      lines.push(`- ${task.name}`)
-    }
-  } else {
-    lines.push("_No tasks marked as completed._")
-  }
   lines.push("")
+
+  if (grouped.size === 0) {
+    lines.push("_No tasks found._")
+  } else {
+    // Iterate through stages
+    const sortedStages = Array.from(grouped.keys()).sort()
+    for (const stageName of sortedStages) {
+      const stageMap = grouped.get(stageName)!
+      lines.push(`### ${stageName}`)
+      lines.push("")
+
+      // Iterate through batches
+      const sortedBatches = Array.from(stageMap.keys()).sort()
+      for (const batchName of sortedBatches) {
+        const batchMap = stageMap.get(batchName)!
+        lines.push(`#### ${batchName}`)
+        lines.push("")
+
+        // Iterate through threads
+        const sortedThreads = Array.from(batchMap.keys()).sort()
+        for (const threadName of sortedThreads) {
+          const threadTasks = batchMap.get(threadName)!
+          lines.push(`**Thread: ${threadName}**`)
+
+          // Sort tasks by ID
+          threadTasks.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }))
+
+          for (const task of threadTasks) {
+            const icon = getStatusIcon(task.status)
+            lines.push(`- ${icon} ${task.name}`)
+            if (task.report) {
+              lines.push(`  > ${task.report}`)
+            }
+          }
+          lines.push("")
+        }
+      }
+    }
+  }
 
   lines.push("## Key Insights")
   lines.push("- (Add insights and learnings here)")
@@ -117,10 +152,25 @@ export function generateCompletionMd(args: {
   }
   lines.push("")
 
+  // Count unique stages, batches, threads
+  let stageCount = 0
+  let batchCount = 0
+  let threadCount = 0
+  for (const stageMap of grouped.values()) {
+    stageCount++
+    for (const batchMap of stageMap.values()) {
+      batchCount++
+      threadCount += batchMap.size
+    }
+  }
+
   lines.push("## Metrics")
-  lines.push(`- **Total Tasks:** ${metrics.totalTasks}`)
+  lines.push(`- **Tasks:** ${metrics.statusCounts.completed}/${metrics.totalTasks} completed`)
+  lines.push(`- **Stages:** ${stageCount}`)
+  lines.push(`- **Batches:** ${batchCount}`)
+  lines.push(`- **Threads:** ${threadCount}`)
   lines.push(`- **Completion Rate:** ${metrics.completionRate.toFixed(1)}%`)
-  lines.push(`- **Status Counts:**`)
+  lines.push(`- **Status Breakdown:**`)
   lines.push(`  - Completed: ${metrics.statusCounts.completed}`)
   lines.push(`  - In Progress: ${metrics.statusCounts.in_progress}`)
   lines.push(`  - Pending: ${metrics.statusCounts.pending}`)
@@ -133,6 +183,55 @@ export function generateCompletionMd(args: {
   writeFileSync(outputPath, content)
 
   return outputPath
+}
+
+/**
+ * Group tasks by stage name, batch name, thread name
+ */
+function groupTasksByHierarchy(
+  tasks: Task[],
+): Map<string, Map<string, Map<string, Task[]>>> {
+  const grouped = new Map<string, Map<string, Map<string, Task[]>>>()
+
+  for (const task of tasks) {
+    const stageName = task.stage_name || "Stage 01"
+    const batchName = task.batch_name || "Batch 01"
+    const threadName = task.thread_name || "Thread 01"
+
+    if (!grouped.has(stageName)) {
+      grouped.set(stageName, new Map())
+    }
+    const stageMap = grouped.get(stageName)!
+
+    if (!stageMap.has(batchName)) {
+      stageMap.set(batchName, new Map())
+    }
+    const batchMap = stageMap.get(batchName)!
+
+    if (!batchMap.has(threadName)) {
+      batchMap.set(threadName, [])
+    }
+    batchMap.get(threadName)!.push(task)
+  }
+
+  return grouped
+}
+
+function getStatusIcon(status: string): string {
+  switch (status) {
+    case "completed":
+      return "✓"
+    case "in_progress":
+      return "◐"
+    case "pending":
+      return "○"
+    case "blocked":
+      return "✗"
+    case "cancelled":
+      return "−"
+    default:
+      return "?"
+  }
 }
 
 function formatSize(bytes: number): string {

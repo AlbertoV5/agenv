@@ -212,6 +212,8 @@ If the user reports problems:
 - Add fix stages with `work fix` if needed
 - Regenerate prompts after adjustments
 
+After a stage completes, generate a stage report with `work report --stage N` to review progress before proceeding to the next stage.
+
 ---
 
 ## CLI Reference
@@ -244,7 +246,11 @@ work assign --thread "01.01.01" --agent "backend-expert"
 work prompt --stage 1 --batch 1 --thread 1
 
 # Status updates (after user feedback)
-work update --task "01.01.01.01" --status completed
+work update --task "01.01.01.01" --status completed --report "Summary of work done"
 work update --task "01.01.01.01" --status blocked
 work fix   # Add fix stage
+
+# Reports & completion
+work report --stage 1            # Generate stage report
+work complete                    # Generate COMPLETION.md
 ```

@@ -23,12 +23,12 @@ describe("parseAgentsMd", () => {
 ### backend-orm-expert
 **Description:** Specializes in database schema design, ORM configuration, migrations, and query optimization.
 **Best for:** Database setup, migration scripts, complex queries, performance tuning.
-**Model:** claude-opus
+**Model:** anthropic/claude-opus
 
 ### frontend-styling
 **Description:** Focuses on CSS architecture, component styling, design system implementation.
 **Best for:** UI polish, style refactors, design system tokens.
-**Model:** claude-sonnet
+**Model:** anthropic/claude-sonnet
 `
 
     const { config, errors } = parseAgentsMd(content)
@@ -42,14 +42,14 @@ describe("parseAgentsMd", () => {
         "Specializes in database schema design, ORM configuration, migrations, and query optimization.",
       bestFor:
         "Database setup, migration scripts, complex queries, performance tuning.",
-      model: "claude-opus",
+      model: "anthropic/claude-opus",
     })
     expect(config!.agents[1]).toEqual({
       name: "frontend-styling",
       description:
         "Focuses on CSS architecture, component styling, design system implementation.",
       bestFor: "UI polish, style refactors, design system tokens.",
-      model: "claude-sonnet",
+      model: "anthropic/claude-sonnet",
     })
   })
 
@@ -115,13 +115,13 @@ describe("generateAgentsMd", () => {
           description:
             "Specializes in database schema design, ORM configuration",
           bestFor: "Database setup, migration scripts",
-          model: "claude-opus",
+          model: "anthropic/claude-opus",
         },
         {
           name: "frontend-styling",
           description: "Focuses on CSS architecture, component styling",
           bestFor: "UI polish, style refactors",
-          model: "claude-sonnet",
+          model: "anthropic/claude-sonnet",
         },
       ],
     }
@@ -132,9 +132,9 @@ describe("generateAgentsMd", () => {
     expect(errors).toHaveLength(0)
     expect(parsed!.agents).toHaveLength(2)
     expect(parsed!.agents[0]!.name).toBe("backend-orm-expert")
-    expect(parsed!.agents[0]!.model).toBe("claude-opus")
+    expect(parsed!.agents[0]!.model).toBe("anthropic/claude-opus")
     expect(parsed!.agents[1]!.name).toBe("frontend-styling")
-    expect(parsed!.agents[1]!.model).toBe("claude-sonnet")
+    expect(parsed!.agents[1]!.model).toBe("anthropic/claude-sonnet")
   })
 })
 

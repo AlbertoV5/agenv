@@ -16,6 +16,7 @@ interface UpdateTaskCliArgs {
   status: TaskStatus
   note?: string
   breadcrumb?: string
+  report?: string
   assigned_agent?: string
 }
 
@@ -43,6 +44,7 @@ Optional:
   --repo-root, -r  Repository root (auto-detected if omitted)
   --note, -n       Add implementation note
   --breadcrumb, -b Add recovery breadcrumb (last action)
+  --report         Completion report (brief summary of what was done)
   --agent          Assign agent to task
   --help, -h       Show this help message
 
@@ -52,6 +54,9 @@ Task ID Format:
 Examples:
   # Mark task completed (uses current workstream)
   work update --task "01.01.01.01" --status completed
+
+  # Mark task completed with report (recommended)
+  work update --task "01.01.01.01" --status completed --report "Added hono dependencies. Fixed peer warning."
 
   # Mark task with note
   work update --task "01.01.02.03" --status completed --note "Used alternative approach"
@@ -137,6 +142,15 @@ function parseCliArgs(argv: string[]): UpdateTaskCliArgs | null {
         i++
         break
 
+      case "--report":
+        if (!next) {
+          console.error("Error: --report requires a value")
+          return null
+        }
+        parsed.report = next
+        i++
+        break
+
       case "--agent":
         if (!next) {
           console.error("Error: --agent requires a value")
@@ -206,6 +220,7 @@ export function main(argv: string[] = process.argv): void {
       status: cliArgs.status,
       note: cliArgs.note,
       breadcrumb: cliArgs.breadcrumb,
+      report: cliArgs.report,
       assigned_agent: cliArgs.assigned_agent,
     })
 

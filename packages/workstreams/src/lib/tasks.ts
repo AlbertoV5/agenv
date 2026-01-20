@@ -99,6 +99,7 @@ export function getTasks(
 export interface TaskUpdateOptions {
   status?: TaskStatus
   breadcrumb?: string
+  report?: string
   assigned_agent?: string
 }
 
@@ -130,6 +131,7 @@ export function updateTaskStatus(
 
   if (opts.status) task.status = opts.status
   if (opts.breadcrumb) task.breadcrumb = opts.breadcrumb
+  if (opts.report) task.report = opts.report
   if (opts.assigned_agent) task.assigned_agent = opts.assigned_agent
 
   task.updated_at = new Date().toISOString()

@@ -670,54 +670,59 @@ After the final stage:
 4. **State tracking** - add `current_batch` to StreamMetadata
 5. **Batch detection** - implement `findNextIncompleteBatch()`
 
-### Phase 4: Task Reports
+### Phase 4: Task Reports ✅
 
-6. **Add `report` field** to Task interface in `types.ts`
-7. **Update `work update`** to accept `--report` flag
-8. **Update `updateTaskStatus()`** in `tasks.ts`
+6. ~~**Add `report` field** to Task interface in `types.ts`~~
+7. ~~**Update `work update`** to accept `--report` flag~~
+8. ~~**Update `updateTaskStatus()`** in `tasks.ts`~~
 
-### Phase 5: Stage Reports
+### Phase 5: Stage Reports ✅
 
-9. **`cli/report.ts`** - `work report --stage N` command
-10. **`lib/reports.ts`** - stage report generation logic
-11. **Report aggregation** - collect task reports by stage/batch/thread
+9. ~~**`cli/report.ts`** - `work report --stage N` command~~
+10. ~~**`lib/reports.ts`** - stage report generation logic~~
+11. ~~**Report aggregation** - collect task reports by stage/batch/thread~~
 
-### Phase 6: Completion Enhancement
+### Phase 6: Completion Enhancement ✅
 
-12. **Update `work complete`** - aggregate all stage reports into COMPLETION.md
-13. **Include full metrics** - tasks, stages, batches, threads, fix iterations
+12. ~~**Update `work complete`** - aggregate all stage reports into COMPLETION.md~~
+13. ~~**Include full metrics** - tasks, stages, batches, threads, fix iterations~~
 
-### Phase 7: Skill Updates
+### Phase 7: Skill Updates (Partial) ✅
 
-14. **Update `implementing-workstream-plans`** - add report instructions
-15. **Update `create-workstream-plans`** - add stage lifecycle workflow
+14. ~~**Update `implementing-workstream-plans`** - add report instructions~~
+15. **Update `create-workstream-plans`** with full lifecycle - deferred to Phase 9
 
 ### Phase 8: Navigator (Optional)
 
 16. **`cli/multi-navigator.ts`** - SST-style navigation panel
+
+### Phase 9: Skill Docs (After Multi Implementation)
+
+17. **Update `create-workstream-plans`** - add full stage lifecycle workflow with `work multi`
+18. **Update `implementing-workstream-plans`** - add multi execution context
 
 ---
 
 ## Implementation Checklist
 
 ### Types & Data
-- [ ] Add `report?: string` to `Task` interface in `types.ts`
+- [x] Add `report?: string` to `Task` interface in `types.ts`
 - [ ] Add `current_batch?: string` to `StreamMetadata` in `types.ts`
 
 ### CLI Commands
-- [ ] Update `work update` to accept `--report` flag
+- [x] Update `work update` to accept `--report` flag
 - [ ] Create `work multi` command (`cli/multi.ts`)
-- [ ] Create `work report` command (`cli/report.ts`)
-- [ ] Update `work complete` to use aggregated reports
+- [x] Update `work report` with `--stage` flag
+- [x] Update `work complete` to use aggregated reports
 
 ### Libraries
 - [ ] Create `lib/tmux.ts` for tmux management
 - [ ] Create `lib/opencode.ts` for opencode serve
-- [ ] Create `lib/reports.ts` for report generation
+- [x] Create `lib/reports.ts` for report generation
 
 ### Skills
-- [ ] Update `skills/implementing-workstream-plans/SKILL.md`
-- [ ] Update `skills/create-workstream-plans/SKILL.md`
+- [x] Update `skills/implementing-workstream-plans/SKILL.md` with `--report` flag
+- [ ] Update `skills/create-workstream-plans/SKILL.md` with full lifecycle (Phase 9)
 
 ### Tests
 - [ ] Add `tests/multi.test.ts`
@@ -750,10 +755,10 @@ After the final stage:
 - [WORKSTREAM.md](./WORKSTREAM.md) - Core framework specification
 - [opencode CLI docs](https://opencode.ai/docs/cli/) - opencode command reference
 
-### Skills to Update
+### Skills to Update (Phase 9)
 
 | Skill | File | Changes |
 |-------|------|---------|
-| Executor | `skills/implementing-workstream-plans/SKILL.md` | Add task report instructions |
-| Planner | `skills/create-workstream-plans/SKILL.md` | Add stage lifecycle, report workflow |
+| Executor | `skills/implementing-workstream-plans/SKILL.md` | Add multi execution context |
+| Planner | `skills/create-workstream-plans/SKILL.md` | Add full stage lifecycle with `work multi` |
 

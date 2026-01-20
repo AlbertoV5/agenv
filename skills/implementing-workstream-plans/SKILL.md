@@ -29,9 +29,32 @@ work read --task "ID"   # Read specific task details
 2. **Start**: `work update --task "01.01.01.01" --status in_progress`
 3. **Work**: Implement changes defined in `PLAN.md` (read via `work edit`)
 4. **Test**: If `work/TESTS.md` exists, run tests and fix any failures
-5. **Finish**: `work update --task "01.01.01.01" --status completed`
+5. **Finish**: `work update --task "01.01.01.01" --status completed --report "Brief summary"`
 
 **Status options:** `in_progress`, `completed`, `blocked`, `cancelled`
+
+## Task Completion
+
+When completing a task, **always include a brief report**:
+
+```bash
+work update --task "01.01.01.01" --status completed \
+  --report "Brief summary of what was done"
+```
+
+**Do NOT create COMPLETION.md** — this is generated automatically at the end.
+
+Reports should be:
+- 1-2 sentences
+- Mention specific files/dependencies changed
+- Note any important decisions or deviations
+
+### Example
+
+```bash
+work update --task "01.01.01.01" --status completed \
+  --report "Added hono@4.0.0 to package.json. Fixed peer dependency warning by also adding @hono/node-server."
+```
 
 ## Reference Files
 

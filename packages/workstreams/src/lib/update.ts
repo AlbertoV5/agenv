@@ -15,6 +15,7 @@ export interface UpdateTaskArgs {
   status: TaskStatus
   note?: string // Note: notes are not currently stored in tasks.json
   breadcrumb?: string
+  report?: string
   assigned_agent?: string
 }
 
@@ -44,7 +45,7 @@ export function updateTask(args: UpdateTaskArgs): UpdateTaskResult {
   if (!existingTask) {
     throw new Error(
       `Task "${args.taskId}" not found in workstream "${args.stream.id}". ` +
-        `Run "work consolidate --stream ${args.stream.id}" first to generate tasks from PLAN.md.`,
+      `Run "work consolidate --stream ${args.stream.id}" first to generate tasks from PLAN.md.`,
     )
   }
 
@@ -56,6 +57,7 @@ export function updateTask(args: UpdateTaskArgs): UpdateTaskResult {
     {
       status: args.status,
       breadcrumb: args.breadcrumb,
+      report: args.report,
       assigned_agent: args.assigned_agent,
     },
   )

@@ -307,6 +307,7 @@ export interface Task {
   updated_at: string // ISO date
   status: TaskStatus
   breadcrumb?: string // Last action/status for recovery
+  report?: string // Completion summary (for COMPLETION.md aggregation)
   assigned_agent?: string // Agent assigned to this task
 }
 

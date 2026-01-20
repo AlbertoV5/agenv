@@ -2,19 +2,27 @@
  * CLI: Workstream Report
  *
  * Generate progress reports for workstreams.
+ * Supports both full workstream reports and stage-specific reports.
  */
 
 import { writeFileSync } from "fs"
 import { getRepoRoot } from "../lib/repo.ts"
 import { loadIndex, resolveStreamId, findStream } from "../lib/index.ts"
 import { generateReport, formatReportMarkdown } from "../lib/document.ts"
+import {
+  generateStageReport,
+  formatStageReportMarkdown,
+  saveStageReport,
+} from "../lib/reports.ts"
 
 interface ReportCliArgs {
   repoRoot?: string
   streamId?: string
+  stage?: string
   all: boolean
   output?: string
   json: boolean
+  save: boolean
 }
 
 function printHelp(): void {
@@ -27,14 +35,23 @@ Usage:
 Options:
   --repo-root, -r  Repository root (auto-detected if omitted)
   --stream, -s     Specific workstream ID or name (uses current if set)
+  --stage          Generate stage-specific report (number or name)
   --all            Generate report for all workstreams
   --output, -o     Output file path (prints to stdout if omitted)
+  --save           Save stage report to reports/ directory
   --json, -j       Output as JSON
   --help, -h       Show this help message
 
 Examples:
   # Current workstream report
   work report
+
+  # Stage-specific report
+  work report --stage 1
+  work report --stage "Foundation"
+
+  # Save stage report to work/{stream}/reports/
+  work report --stage 1 --save
 
   # Specific workstream
   work report --stream "001-my-stream"
@@ -55,6 +72,7 @@ function parseCliArgs(argv: string[]): ReportCliArgs | null {
   const parsed: ReportCliArgs = {
     all: false,
     json: false,
+    save: false,
   }
 
   for (let i = 0; i < args.length; i++) {
@@ -84,6 +102,15 @@ function parseCliArgs(argv: string[]): ReportCliArgs | null {
         i++
         break
 
+      case "--stage":
+        if (!next) {
+          console.error("Error: --stage requires a value")
+          return null
+        }
+        parsed.stage = next
+        i++
+        break
+
       case "--all":
         parsed.all = true
         break
@@ -96,6 +123,10 @@ function parseCliArgs(argv: string[]): ReportCliArgs | null {
         }
         parsed.output = next
         i++
+        break
+
+      case "--save":
+        parsed.save = true
         break
 
       case "--json":
@@ -142,6 +173,65 @@ export function main(argv: string[] = process.argv): void {
     return
   }
 
+  // Resolve stream ID first (needed for stage reports too)
+  const resolvedStreamId = resolveStreamId(index, cliArgs.streamId)
+
+  // Handle --stage flag: generate stage-specific report
+  if (cliArgs.stage) {
+    if (!resolvedStreamId) {
+      console.error(
+        "Error: No workstream specified. Use --stream or set current with 'work current --set'",
+      )
+      process.exit(1)
+    }
+
+    const stream = findStream(index, resolvedStreamId)
+    if (!stream) {
+      console.error(`Error: Workstream "${resolvedStreamId}" not found`)
+      process.exit(1)
+    }
+
+    try {
+      // Parse stage reference (number or name)
+      const stageRef = /^\d+$/.test(cliArgs.stage)
+        ? parseInt(cliArgs.stage, 10)
+        : cliArgs.stage
+
+      const report = generateStageReport(repoRoot, stream.id, stageRef)
+
+      if (cliArgs.json) {
+        const output = JSON.stringify(report, null, 2)
+        if (cliArgs.output) {
+          writeFileSync(cliArgs.output, output)
+          console.log(`Stage report written to ${cliArgs.output}`)
+        } else {
+          console.log(output)
+        }
+        return
+      }
+
+      // Save to reports directory if --save flag is set
+      if (cliArgs.save) {
+        const savedPath = saveStageReport(repoRoot, stream.id, report)
+        console.log(`Stage report saved to ${savedPath}`)
+        return
+      }
+
+      const output = formatStageReportMarkdown(report)
+
+      if (cliArgs.output) {
+        writeFileSync(cliArgs.output, output)
+        console.log(`Stage report written to ${cliArgs.output}`)
+      } else {
+        console.log(output)
+      }
+    } catch (e) {
+      console.error(`Error: ${(e as Error).message}`)
+      process.exit(1)
+    }
+    return
+  }
+
   // Handle --all flag
   if (cliArgs.all) {
     const reports = index.streams.map((stream) => generateReport(repoRoot, stream.id))
@@ -170,11 +260,9 @@ export function main(argv: string[] = process.argv): void {
   }
 
   // Single workstream report
-  const resolvedStreamId = resolveStreamId(index, cliArgs.streamId)
-
   if (!resolvedStreamId) {
     console.error(
-      "Error: No workstream specified. Use --stream or set current with 'work current --set'"
+      "Error: No workstream specified. Use --stream or set current with 'work current --set'",
     )
     process.exit(1)
   }
