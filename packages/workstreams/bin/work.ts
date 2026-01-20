@@ -14,6 +14,7 @@
  *   delete      - Delete workstreams, stages, threads, or tasks
  *   consolidate - Validate PLAN.md structure
  *   preview     - Show PLAN.md structure
+ *   init        - Initialize work/ directory with default config files
  */
 
 import { main as createMain } from "../src/cli/create.ts"
@@ -44,8 +45,10 @@ import { main as agentsMain } from "../src/cli/agents.ts"
 import { main as assignMain } from "../src/cli/assign.ts"
 import { main as promptMain } from "../src/cli/prompt.ts"
 import { main as editMain } from "../src/cli/edit.ts"
+import { main as initMain } from "../src/cli/init.ts"
 
 const SUBCOMMANDS = {
+  init: initMain,
   create: createMain,
   current: currentMain,
   continue: continueMain,
@@ -86,6 +89,7 @@ Usage:
   work <command> [options]
 
 Commands:
+  init        Initialize work/ directory with default config files
   create      Create a new workstream
   current     Get or set the current workstream
   continue    Resume work on a workstream (shows context & breadcrumbs)

@@ -58,6 +58,28 @@ These threads run alongside yours in this batch:
 {From work/AGENTS.md if present}
 ```
 
+## User-Managed Configuration Files
+
+These files are created and maintained by the user. The planning agent reads them but does not create or edit them.
+
+### AGENTS.md (at `work/AGENTS.md`)
+
+If present, defines available agents. Use `work agents` to list them, then assign to threads:
+
+```bash
+work agents                                      # List available agents
+work assign --thread "01.01.01" --agent "backend-expert"
+```
+
+### TESTS.md (at `work/TESTS.md`)
+
+If present, test requirements are automatically included in generated prompts.
+
+To exclude test requirements from a prompt:
+```bash
+work prompt --stage 1 --batch 1 --thread 1 --no-tests
+```
+
 ## CLI Summary
 
 > **Note:** Commands accept stage/batch/thread names or numeric indices.
@@ -68,4 +90,7 @@ work prompt --stream \"000-...\" --stage \"setup\" --batch \"core\" --thread \"c
 
 # Output to file
 work prompt --stream \"000-...\" --stage \"setup\" --batch \"core\" --thread \"auth\" > thread-prompt.md
+
+# All threads in a batch
+work prompt --stage 1 --batch 1
 ```

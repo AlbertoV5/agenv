@@ -127,17 +127,22 @@ work approve --revoke     # Revoke approval
 
 #### 1.4 Task Creation
 
-After approval, create tasks using one of two workflows:
+After approval, tasks **must** be created using the TASKS.md workflow. This ensures all threads have tasks defined upfront before execution begins.
 
-**Option A: TASKS.md Workflow (Recommended for batch creation)**
+**Required Workflow:**
 
 ```bash
-work tasks generate    # Creates TASKS.md with placeholders from PLAN.md
-# Edit TASKS.md to fill in task descriptions
-work tasks serialize   # Converts to tasks.json, deletes TASKS.md
+# Step 1: Generate TASKS.md from approved PLAN.md
+work tasks generate
+
+# Step 2: Edit TASKS.md to fill in task descriptions for all threads
+# (Use your editor to add specific, actionable task names)
+
+# Step 3: Convert to tasks.json (deletes TASKS.md)
+work tasks serialize
 ```
 
-TASKS.md format:
+**TASKS.md format:**
 ```markdown
 ## Stage 01: Setup
 
@@ -151,12 +156,14 @@ TASKS.md format:
 - [ ] Task 01.01.02.01: Setup environment variables
 ```
 
-Status markers: `[ ]` pending, `[x]` completed, `[~]` in_progress, `[!]` blocked, `[-]` cancelled
+**Status markers:** `[ ]` pending, `[x]` completed, `[~]` in_progress, `[!]` blocked, `[-]` cancelled
 
-**Option B: Direct Workflow (One-by-one)**
+**Adding Tasks During Execution:**
+
+Use `work add-task` only for additional tasks discovered mid-execution:
 
 ```bash
-work add-task --stage 1 --batch 1 --thread 1 --name "Create route definitions"
+work add-task --stage 1 --batch 1 --thread 1 --name "Handle edge case discovered during testing"
 work add-task   # Interactive mode
 ```
 

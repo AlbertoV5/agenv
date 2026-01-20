@@ -28,9 +28,20 @@ work read --task "ID"   # Read specific task details
 1. **Find Task**: Use `work continue` or pick from `work list`
 2. **Start**: `work update --task "01.01.01.01" --status in_progress`
 3. **Work**: Implement changes defined in `PLAN.md` (read via `work edit`)
-4. **Finish**: `work update --task "01.01.01.01" --status completed`
+4. **Test**: If `work/TESTS.md` exists, run tests and fix any failures
+5. **Finish**: `work update --task "01.01.01.01" --status completed`
 
 **Status options:** `in_progress`, `completed`, `blocked`, `cancelled`
+
+## Reference Files
+
+Check these files for context during execution (read-only):
+
+| File | Purpose |
+|------|---------|
+| `work/{stream}/PLAN.md` | Thread details, implementation approach |
+| `work/TESTS.md` | Test requirements (user-managed, if present) |
+| `work/AGENTS.md` | Agent definitions (user-managed, if present) |
 
 ## Adjustments (Mid-Stream)
 

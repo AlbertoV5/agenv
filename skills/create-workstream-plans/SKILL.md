@@ -20,11 +20,12 @@ Your scope is **planning only** — you do not implement code. Follow this workf
 1. **Create workstream** — `work create --name "feature" --stages N`
 2. **Fill out PLAN.md** — Define stages, batches, threads, and resolve questions
 3. **Ask user for review** — Present the plan structure for feedback
-4. **Create tasks** — Once approved, add tasks to each thread
-5. **Plan agent assignments** — Decide which threads map to which implementation agents
-6. **Generate agent prompts** — Use `work prompt` to create execution context
-7. **Ask user to run agents** — Hand off prompts to user for execution
-8. **Wait for instructions** — User may request fixes, additional stages, or adjustments
+4. **Get approval** — User runs `work approve`
+5. **Create tasks** — Run `work tasks generate`, edit TASKS.md, then `work tasks serialize`
+6. **Assign agents** — Use `work assign` to map agents to threads (if `work/AGENTS.md` exists)
+7. **Generate prompts** — Use `work prompt` to create execution context
+8. **Ask user to run agents** — Hand off prompts to user for execution
+9. **Wait for instructions** — User may request fixes, additional stages, or adjustments
 
 The user manages agent execution. Your job ends when prompts are ready.
 
@@ -44,7 +45,15 @@ Workstreams live in `./work/{id}/`:
 | File | Purpose |
 |------|---------|
 | `PLAN.md` | Stages, batches, threads, documentation |
+| `TASKS.md` | Intermediate task file (temporary, during task creation) |
 | `tasks.json` | Task tracking (CLI managed) |
+
+Shared configuration files in `./work/` (user-managed, read-only for planning agent):
+
+| File | Purpose |
+|------|---------|
+| `AGENTS.md` | Agent definitions for assignment and prompts |
+| `TESTS.md` | Test requirements included in execution prompts |
 
 **Hierarchy:** Stage → Batch → Thread → Task
 **Execution:** Stages/batches run serially; threads run in parallel within a batch.
@@ -99,16 +108,52 @@ work approve      # Approve plan (blocked if open questions)
 work approve --force  # Approve with open questions
 ```
 
-## Create Tasks
+## Create Tasks (Required Workflow)
 
-After approval, add tasks to threads:
+After approval, tasks **must** be created using the TASKS.md workflow:
 
 ```bash
-work add-task --stage 1 --batch 1 --thread 1 --name "Implement router"
-work add-task   # Interactive mode
+# Step 1: Generate TASKS.md from approved PLAN.md
+work tasks generate
+
+# Step 2: Edit TASKS.md to fill in task descriptions for all threads
+# Add specific, actionable task names for each thread
+
+# Step 3: Convert to tasks.json (deletes TASKS.md)
+work tasks serialize
 ```
 
-Each thread typically has 1-3 tasks. Task names should be actionable.
+**TASKS.md format:**
+```markdown
+## Stage 01: Setup
+
+### Batch 01: Core
+
+#### Thread 01: Router
+- [ ] Task 01.01.01.01: Create route definitions
+- [ ] Task 01.01.01.02: Add middleware chain
+```
+
+Status markers: `[ ]` pending, `[x]` completed, `[~]` in_progress, `[!]` blocked, `[-]` cancelled
+
+Use `work add-task` only for tasks discovered during execution:
+```bash
+work add-task --stage 1 --batch 1 --thread 1 --name "Handle edge case"
+```
+
+## Assign Agents to Threads (Optional)
+
+If `work/AGENTS.md` exists, assign agents to threads before generating prompts:
+
+```bash
+work agents                                      # List available agents
+work assign --thread "01.01.01" --agent "backend-expert"
+work assign --thread "01.01.02" --agent "frontend-specialist"
+```
+
+Assignments are stored in tasks.json and included in generated prompts.
+
+**Note:** `work/AGENTS.md` and `work/TESTS.md` are user-managed configuration files. The planning agent does not create or edit them—only reads them for agent assignment and prompt generation.
 
 ## Generate Agent Prompts
 
@@ -154,8 +199,14 @@ work preview
 work consolidate
 work approve
 
-# Tasks (after approval)
-work add-task --stage 1 --batch 1 --thread 1 --name "Task description"
+# Tasks (required workflow after approval)
+work tasks generate              # Create TASKS.md from PLAN.md
+work tasks serialize             # Convert TASKS.md to tasks.json
+work add-task --stage 1 --batch 1 --thread 1 --name "..."  # Only for mid-execution additions
+
+# Agent assignment (if work/AGENTS.md exists)
+work agents                      # List available agents
+work assign --thread "01.01.01" --agent "backend-expert"
 
 # Agent prompts
 work prompt --stage 1 --batch 1 --thread 1
