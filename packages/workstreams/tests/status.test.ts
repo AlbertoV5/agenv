@@ -2,9 +2,20 @@ import { describe, test, expect, beforeEach, afterEach } from "bun:test"
 import { mkdtemp, rm, mkdir, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { getStreamProgress, formatProgress } from "../../src/lib/status"
-import { addTasks, getTasks, getTaskCounts, parseTaskId, formatTaskId } from "../../src/lib/tasks"
-import type { StreamMetadata, Task, TasksFile, StreamProgress } from "../../src/lib/types"
+import { getStreamProgress, formatProgress } from "../src/lib/status"
+import {
+  addTasks,
+  getTasks,
+  getTaskCounts,
+  parseTaskId,
+  formatTaskId,
+} from "../src/lib/tasks"
+import type {
+  StreamMetadata,
+  Task,
+  TasksFile,
+  StreamProgress,
+} from "../src/lib/types"
 
 describe("task operations", () => {
   let tempDir: string
@@ -41,7 +52,7 @@ describe("task operations", () => {
 
     test("throws on two-part ID", () => {
       expect(() => parseTaskId("1.2")).toThrow(
-        'Invalid task ID format: 1.2. Expected "stage.batch.thread.task" (e.g., "01.00.02.03")'
+        'Invalid task ID format: 1.2. Expected "stage.batch.thread.task" (e.g., "01.00.02.03")',
       )
     })
 
@@ -203,20 +214,49 @@ describe("task operations", () => {
         stream_id: "001-test-stream",
         last_updated: new Date().toISOString(),
         tasks: [
-          { id: "1.01.1.1", name: "Pending", thread_name: "T1", batch_name: "B01", stage_name: "S1", created_at: "", updated_at: "", status: "pending" },
-          { id: "1.01.1.2", name: "Completed", thread_name: "T1", batch_name: "B01", stage_name: "S1", created_at: "", updated_at: "", status: "completed" },
-          { id: "1.01.1.3", name: "In Progress", thread_name: "T1", batch_name: "B01", stage_name: "S1", created_at: "", updated_at: "", status: "in_progress" },
+          {
+            id: "1.01.1.1",
+            name: "Pending",
+            thread_name: "T1",
+            batch_name: "B01",
+            stage_name: "S1",
+            created_at: "",
+            updated_at: "",
+            status: "pending",
+          },
+          {
+            id: "1.01.1.2",
+            name: "Completed",
+            thread_name: "T1",
+            batch_name: "B01",
+            stage_name: "S1",
+            created_at: "",
+            updated_at: "",
+            status: "completed",
+          },
+          {
+            id: "1.01.1.3",
+            name: "In Progress",
+            thread_name: "T1",
+            batch_name: "B01",
+            stage_name: "S1",
+            created_at: "",
+            updated_at: "",
+            status: "in_progress",
+          },
         ],
       }
 
       await writeFile(
         join(tempDir, "work/001-test-stream/tasks.json"),
-        JSON.stringify(tasksFile, null, 2)
+        JSON.stringify(tasksFile, null, 2),
       )
 
       expect(getTasks(tempDir, "001-test-stream", "pending")).toHaveLength(1)
       expect(getTasks(tempDir, "001-test-stream", "completed")).toHaveLength(1)
-      expect(getTasks(tempDir, "001-test-stream", "in_progress")).toHaveLength(1)
+      expect(getTasks(tempDir, "001-test-stream", "in_progress")).toHaveLength(
+        1,
+      )
     })
   })
 
@@ -227,17 +267,62 @@ describe("task operations", () => {
         stream_id: "001-test-stream",
         last_updated: new Date().toISOString(),
         tasks: [
-          { id: "1.01.1.1", name: "T1", thread_name: "T1", batch_name: "B01", stage_name: "S1", created_at: "", updated_at: "", status: "pending" },
-          { id: "1.01.1.2", name: "T2", thread_name: "T1", batch_name: "B01", stage_name: "S1", created_at: "", updated_at: "", status: "completed" },
-          { id: "1.01.1.3", name: "T3", thread_name: "T1", batch_name: "B01", stage_name: "S1", created_at: "", updated_at: "", status: "completed" },
-          { id: "1.01.2.1", name: "T4", thread_name: "T2", batch_name: "B01", stage_name: "S1", created_at: "", updated_at: "", status: "in_progress" },
-          { id: "1.01.2.2", name: "T5", thread_name: "T2", batch_name: "B01", stage_name: "S1", created_at: "", updated_at: "", status: "blocked" },
+          {
+            id: "1.01.1.1",
+            name: "T1",
+            thread_name: "T1",
+            batch_name: "B01",
+            stage_name: "S1",
+            created_at: "",
+            updated_at: "",
+            status: "pending",
+          },
+          {
+            id: "1.01.1.2",
+            name: "T2",
+            thread_name: "T1",
+            batch_name: "B01",
+            stage_name: "S1",
+            created_at: "",
+            updated_at: "",
+            status: "completed",
+          },
+          {
+            id: "1.01.1.3",
+            name: "T3",
+            thread_name: "T1",
+            batch_name: "B01",
+            stage_name: "S1",
+            created_at: "",
+            updated_at: "",
+            status: "completed",
+          },
+          {
+            id: "1.01.2.1",
+            name: "T4",
+            thread_name: "T2",
+            batch_name: "B01",
+            stage_name: "S1",
+            created_at: "",
+            updated_at: "",
+            status: "in_progress",
+          },
+          {
+            id: "1.01.2.2",
+            name: "T5",
+            thread_name: "T2",
+            batch_name: "B01",
+            stage_name: "S1",
+            created_at: "",
+            updated_at: "",
+            status: "blocked",
+          },
         ],
       }
 
       await writeFile(
         join(tempDir, "work/001-test-stream/tasks.json"),
-        JSON.stringify(tasksFile, null, 2)
+        JSON.stringify(tasksFile, null, 2),
       )
 
       const counts = getTaskCounts(tempDir, "001-test-stream")
@@ -275,7 +360,12 @@ describe("getStreamProgress", () => {
     name: "test-stream",
     order: 0,
     size: "medium",
-    session_estimated: { length: 1, unit: "session", session_minutes: [30, 45], session_iterations: [4, 8] },
+    session_estimated: {
+      length: 1,
+      unit: "session",
+      session_minutes: [30, 45],
+      session_iterations: [4, 8],
+    },
     created_at: "2024-01-01",
     updated_at: "2024-01-01",
     path: "work/001-test-stream",
@@ -288,16 +378,52 @@ describe("getStreamProgress", () => {
       stream_id: "001-test-stream",
       last_updated: new Date().toISOString(),
       tasks: [
-        { id: "1.01.1.1", name: "Task 1", thread_name: "Thread 1", batch_name: "B01", stage_name: "Stage 1", created_at: "", updated_at: "", status: "completed" },
-        { id: "1.01.1.2", name: "Task 2", thread_name: "Thread 1", batch_name: "B01", stage_name: "Stage 1", created_at: "", updated_at: "", status: "in_progress" },
-        { id: "1.01.2.1", name: "Task 3", thread_name: "Thread 2", batch_name: "B01", stage_name: "Stage 1", created_at: "", updated_at: "", status: "pending" },
-        { id: "1.01.2.2", name: "Task 4", thread_name: "Thread 2", batch_name: "B01", stage_name: "Stage 1", created_at: "", updated_at: "", status: "blocked" },
+        {
+          id: "1.01.1.1",
+          name: "Task 1",
+          thread_name: "Thread 1",
+          batch_name: "B01",
+          stage_name: "Stage 1",
+          created_at: "",
+          updated_at: "",
+          status: "completed",
+        },
+        {
+          id: "1.01.1.2",
+          name: "Task 2",
+          thread_name: "Thread 1",
+          batch_name: "B01",
+          stage_name: "Stage 1",
+          created_at: "",
+          updated_at: "",
+          status: "in_progress",
+        },
+        {
+          id: "1.01.2.1",
+          name: "Task 3",
+          thread_name: "Thread 2",
+          batch_name: "B01",
+          stage_name: "Stage 1",
+          created_at: "",
+          updated_at: "",
+          status: "pending",
+        },
+        {
+          id: "1.01.2.2",
+          name: "Task 4",
+          thread_name: "Thread 2",
+          batch_name: "B01",
+          stage_name: "Stage 1",
+          created_at: "",
+          updated_at: "",
+          status: "blocked",
+        },
       ],
     }
 
     await writeFile(
       join(tempDir, "work/001-test-stream/tasks.json"),
-      JSON.stringify(tasksFile, null, 2)
+      JSON.stringify(tasksFile, null, 2),
     )
 
     const result = getStreamProgress(tempDir, baseStream)
@@ -318,15 +444,42 @@ describe("getStreamProgress", () => {
       stream_id: "001-test-stream",
       last_updated: new Date().toISOString(),
       tasks: [
-        { id: "1.01.1.1", name: "Stage 1 Task", thread_name: "Thread 1", batch_name: "B01", stage_name: "Stage 1", created_at: "", updated_at: "", status: "completed" },
-        { id: "2.01.1.1", name: "Stage 2 Task", thread_name: "Thread 1", batch_name: "B01", stage_name: "Stage 2", created_at: "", updated_at: "", status: "pending" },
-        { id: "2.01.1.2", name: "Stage 2 Task 2", thread_name: "Thread 1", batch_name: "B01", stage_name: "Stage 2", created_at: "", updated_at: "", status: "pending" },
+        {
+          id: "1.01.1.1",
+          name: "Stage 1 Task",
+          thread_name: "Thread 1",
+          batch_name: "B01",
+          stage_name: "Stage 1",
+          created_at: "",
+          updated_at: "",
+          status: "completed",
+        },
+        {
+          id: "2.01.1.1",
+          name: "Stage 2 Task",
+          thread_name: "Thread 1",
+          batch_name: "B01",
+          stage_name: "Stage 2",
+          created_at: "",
+          updated_at: "",
+          status: "pending",
+        },
+        {
+          id: "2.01.1.2",
+          name: "Stage 2 Task 2",
+          thread_name: "Thread 1",
+          batch_name: "B01",
+          stage_name: "Stage 2",
+          created_at: "",
+          updated_at: "",
+          status: "pending",
+        },
       ],
     }
 
     await writeFile(
       join(tempDir, "work/001-test-stream/tasks.json"),
-      JSON.stringify(tasksFile, null, 2)
+      JSON.stringify(tasksFile, null, 2),
     )
 
     const result = getStreamProgress(tempDir, baseStream)
@@ -345,14 +498,32 @@ describe("getStreamProgress", () => {
       stream_id: "001-test-stream",
       last_updated: new Date().toISOString(),
       tasks: [
-        { id: "1.01.1.1", name: "T1", thread_name: "T1", batch_name: "B01", stage_name: "S1", created_at: "", updated_at: "", status: "completed" },
-        { id: "1.01.1.2", name: "T2", thread_name: "T1", batch_name: "B01", stage_name: "S1", created_at: "", updated_at: "", status: "completed" },
+        {
+          id: "1.01.1.1",
+          name: "T1",
+          thread_name: "T1",
+          batch_name: "B01",
+          stage_name: "S1",
+          created_at: "",
+          updated_at: "",
+          status: "completed",
+        },
+        {
+          id: "1.01.1.2",
+          name: "T2",
+          thread_name: "T1",
+          batch_name: "B01",
+          stage_name: "S1",
+          created_at: "",
+          updated_at: "",
+          status: "completed",
+        },
       ],
     }
 
     await writeFile(
       join(tempDir, "work/001-test-stream/tasks.json"),
-      JSON.stringify(tasksFile1, null, 2)
+      JSON.stringify(tasksFile1, null, 2),
     )
 
     let result = getStreamProgress(tempDir, baseStream)
@@ -362,14 +533,32 @@ describe("getStreamProgress", () => {
     const tasksFile2: TasksFile = {
       ...tasksFile1,
       tasks: [
-        { id: "1.01.1.1", name: "T1", thread_name: "T1", batch_name: "B01", stage_name: "S1", created_at: "", updated_at: "", status: "completed" },
-        { id: "1.01.1.2", name: "T2", thread_name: "T1", batch_name: "B01", stage_name: "S1", created_at: "", updated_at: "", status: "in_progress" },
+        {
+          id: "1.01.1.1",
+          name: "T1",
+          thread_name: "T1",
+          batch_name: "B01",
+          stage_name: "S1",
+          created_at: "",
+          updated_at: "",
+          status: "completed",
+        },
+        {
+          id: "1.01.1.2",
+          name: "T2",
+          thread_name: "T1",
+          batch_name: "B01",
+          stage_name: "S1",
+          created_at: "",
+          updated_at: "",
+          status: "in_progress",
+        },
       ],
     }
 
     await writeFile(
       join(tempDir, "work/001-test-stream/tasks.json"),
-      JSON.stringify(tasksFile2, null, 2)
+      JSON.stringify(tasksFile2, null, 2),
     )
 
     result = getStreamProgress(tempDir, baseStream)
@@ -379,14 +568,32 @@ describe("getStreamProgress", () => {
     const tasksFile3: TasksFile = {
       ...tasksFile1,
       tasks: [
-        { id: "1.01.1.1", name: "T1", thread_name: "T1", batch_name: "B01", stage_name: "S1", created_at: "", updated_at: "", status: "blocked" },
-        { id: "1.01.1.2", name: "T2", thread_name: "T1", batch_name: "B01", stage_name: "S1", created_at: "", updated_at: "", status: "blocked" },
+        {
+          id: "1.01.1.1",
+          name: "T1",
+          thread_name: "T1",
+          batch_name: "B01",
+          stage_name: "S1",
+          created_at: "",
+          updated_at: "",
+          status: "blocked",
+        },
+        {
+          id: "1.01.1.2",
+          name: "T2",
+          thread_name: "T1",
+          batch_name: "B01",
+          stage_name: "S1",
+          created_at: "",
+          updated_at: "",
+          status: "blocked",
+        },
       ],
     }
 
     await writeFile(
       join(tempDir, "work/001-test-stream/tasks.json"),
-      JSON.stringify(tasksFile3, null, 2)
+      JSON.stringify(tasksFile3, null, 2),
     )
 
     result = getStreamProgress(tempDir, baseStream)
@@ -403,7 +610,7 @@ describe("getStreamProgress", () => {
 
     await writeFile(
       join(tempDir, "work/001-test-stream/tasks.json"),
-      JSON.stringify(tasksFile, null, 2)
+      JSON.stringify(tasksFile, null, 2),
     )
 
     const result = getStreamProgress(tempDir, baseStream)
@@ -430,7 +637,14 @@ describe("formatProgress", () => {
           title: "Setup",
           status: "complete",
           tasks: [
-            { id: "1.1.1", description: "Task", status: "completed", taskGroupNumber: 1, subtaskNumber: 1, lineNumber: 0 },
+            {
+              id: "1.1.1",
+              description: "Task",
+              status: "completed",
+              taskGroupNumber: 1,
+              subtaskNumber: 1,
+              lineNumber: 0,
+            },
           ],
           file: "tasks.json",
         },
@@ -439,7 +653,14 @@ describe("formatProgress", () => {
           title: "Implementation",
           status: "in_progress",
           tasks: [
-            { id: "2.1.1", description: "Task", status: "in_progress", taskGroupNumber: 1, subtaskNumber: 1, lineNumber: 0 },
+            {
+              id: "2.1.1",
+              description: "Task",
+              status: "in_progress",
+              taskGroupNumber: 1,
+              subtaskNumber: 1,
+              lineNumber: 0,
+            },
           ],
           file: "tasks.json",
         },
@@ -448,7 +669,14 @@ describe("formatProgress", () => {
           title: "Testing",
           status: "blocked",
           tasks: [
-            { id: "3.1.1", description: "Task", status: "blocked", taskGroupNumber: 1, subtaskNumber: 1, lineNumber: 0 },
+            {
+              id: "3.1.1",
+              description: "Task",
+              status: "blocked",
+              taskGroupNumber: 1,
+              subtaskNumber: 1,
+              lineNumber: 0,
+            },
           ],
           file: "tasks.json",
         },
@@ -457,7 +685,14 @@ describe("formatProgress", () => {
           title: "Deploy",
           status: "pending",
           tasks: [
-            { id: "4.1.1", description: "Task", status: "pending", taskGroupNumber: 1, subtaskNumber: 1, lineNumber: 0 },
+            {
+              id: "4.1.1",
+              description: "Task",
+              status: "pending",
+              taskGroupNumber: 1,
+              subtaskNumber: 1,
+              lineNumber: 0,
+            },
           ],
           file: "tasks.json",
         },

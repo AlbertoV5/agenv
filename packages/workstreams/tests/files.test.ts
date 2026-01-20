@@ -2,8 +2,8 @@ import { describe, test, expect, beforeEach, afterEach } from "bun:test"
 import { mkdtemp, rm, mkdir, stat } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { getTaskFilesDir, ensureTaskFilesDir } from "../../src/lib/files"
-import type { Task } from "../../src/lib/types"
+import { getTaskFilesDir, ensureTaskFilesDir } from "../src/lib/files"
+import type { Task } from "../src/lib/types"
 
 describe("files", () => {
   let tempDir: string
@@ -32,7 +32,9 @@ describe("files", () => {
   test("generates correct directory path", () => {
     const dir = getTaskFilesDir(tempDir, streamId, task)
     // Expected: work/{streamId}/files/stage-1/00-preparation/setup-thread
-    expect(dir).toEndWith(`work/${streamId}/files/stage-1/00-preparation/setup-thread`)
+    expect(dir).toEndWith(
+      `work/${streamId}/files/stage-1/00-preparation/setup-thread`,
+    )
   })
 
   test("creates directory if it does not exist", async () => {

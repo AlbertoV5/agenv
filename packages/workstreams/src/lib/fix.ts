@@ -2,7 +2,7 @@
  * Fix stage generation logic
  */
 
-import { readFileSync, appendFileSync, writeFileSync } from "fs"
+import { readFileSync, writeFileSync } from "fs"
 import { getStreamPlanMdPath } from "./consolidate.ts"
 import { parseStreamDocument } from "./stream-parser.ts"
 import type { ConsolidateError } from "./types.ts"
@@ -16,20 +16,28 @@ export interface FixStageOptions {
 export function appendFixBatch(
   repoRoot: string,
   streamId: string,
-  options: FixStageOptions
+  options: FixStageOptions,
 ): { success: boolean; newBatchNumber: number; message: string } {
   const planPath = getStreamPlanMdPath(repoRoot, streamId)
   const content = readFileSync(planPath, "utf-8")
   const errors: ConsolidateError[] = []
-  
+
   const doc = parseStreamDocument(content, errors)
   if (!doc) {
-    return { success: false, newBatchNumber: 0, message: "Failed to parse PLAN.md" }
+    return {
+      success: false,
+      newBatchNumber: 0,
+      message: "Failed to parse PLAN.md",
+    }
   }
 
-  const stage = doc.stages.find(s => s.id === options.targetStage)
+  const stage = doc.stages.find((s) => s.id === options.targetStage)
   if (!stage) {
-    return { success: false, newBatchNumber: 0, message: `Stage ${options.targetStage} not found` }
+    return {
+      success: false,
+      newBatchNumber: 0,
+      message: `Stage ${options.targetStage} not found`,
+    }
   }
 
   const lastBatch = stage.batches[stage.batches.length - 1]
@@ -52,7 +60,7 @@ ${options.description || "Fixes and improvements."}
   // Find insertion point
   // We want to insert after the current stage's content, which is before the next stage starts
   // or at the end of the file if this is the last stage.
-  
+
   const lines = content.split("\n")
   let targetStageLineIndex = -1
   let nextStageLineIndex = -1
@@ -61,12 +69,15 @@ ${options.description || "Fixes and improvements."}
   const stageRegex = /^### Stage\s+(\d+):/
 
   for (let i = 0; i < lines.length; i++) {
-    const match = lines[i].match(stageRegex)
-    if (match) {
+    const match = lines[i]?.match(stageRegex)
+    if (match && match[1]) {
       const stageNum = parseInt(match[1], 10)
       if (stageNum === options.targetStage) {
         targetStageLineIndex = i
-      } else if (targetStageLineIndex !== -1 && stageNum > options.targetStage) {
+      } else if (
+        targetStageLineIndex !== -1 &&
+        stageNum > options.targetStage
+      ) {
         // Found a stage after our target
         nextStageLineIndex = i
         break
@@ -75,7 +86,11 @@ ${options.description || "Fixes and improvements."}
   }
 
   if (targetStageLineIndex === -1) {
-    return { success: false, newBatchNumber: 0, message: `Could not locate Stage ${options.targetStage} header in file` }
+    return {
+      success: false,
+      newBatchNumber: 0,
+      message: `Could not locate Stage ${options.targetStage} header in file`,
+    }
   }
 
   if (nextStageLineIndex !== -1) {
@@ -83,34 +98,47 @@ ${options.description || "Fixes and improvements."}
     lines.splice(nextStageLineIndex, 0, template)
     writeFileSync(planPath, lines.join("\n"))
   } else {
-    // Append to end of file
-    appendFileSync(planPath, template)
+    // No next stage - insert at end of target stage content
+    // Find the last non-empty line to insert after
+    let insertIndex = lines.length
+    for (let i = lines.length - 1; i >= targetStageLineIndex; i--) {
+      if (lines[i]?.trim() !== "") {
+        insertIndex = i + 1
+        break
+      }
+    }
+    lines.splice(insertIndex, 0, template)
+    writeFileSync(planPath, lines.join("\n"))
   }
 
   return {
     success: true,
     newBatchNumber,
-    message: `Appended Batch ${newBatchPrefix} to Stage ${options.targetStage}`
+    message: `Appended Batch ${newBatchPrefix} to Stage ${options.targetStage}`,
   }
 }
 
 export function appendFixStage(
   repoRoot: string,
   streamId: string,
-  options: FixStageOptions
+  options: FixStageOptions,
 ): { success: boolean; newStageNumber: number; message: string } {
   const planPath = getStreamPlanMdPath(repoRoot, streamId)
   const content = readFileSync(planPath, "utf-8")
   const errors: ConsolidateError[] = []
-  
+
   const doc = parseStreamDocument(content, errors)
   if (!doc) {
-    return { success: false, newStageNumber: 0, message: "Failed to parse PLAN.md" }
+    return {
+      success: false,
+      newStageNumber: 0,
+      message: "Failed to parse PLAN.md",
+    }
   }
 
   const lastStage = doc.stages[doc.stages.length - 1]
   const newStageNumber = (lastStage ? lastStage.id : 0) + 1
-  
+
   const template = `
 
 ### Stage ${newStageNumber}: Fix - ${options.name}
@@ -131,11 +159,13 @@ Apply fixes.
 - [ ] Verify fix
 `
 
-  appendFileSync(planPath, template)
-  
-  return { 
-    success: true, 
-    newStageNumber, 
-    message: `Appended Stage ${newStageNumber} to PLAN.md` 
+  // Append to end of file, trimming trailing whitespace first
+  const trimmedContent = content.trimEnd()
+  writeFileSync(planPath, trimmedContent + template)
+
+  return {
+    success: true,
+    newStageNumber,
+    message: `Appended Stage ${newStageNumber} to PLAN.md`,
   }
 }

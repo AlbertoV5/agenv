@@ -39,7 +39,7 @@ export function createEmptyTasksFile(streamId: string): TasksFile {
  */
 export function readTasksFile(
   repoRoot: string,
-  streamId: string
+  streamId: string,
 ): TasksFile | null {
   const filePath = getTasksFilePath(repoRoot, streamId)
 
@@ -57,7 +57,7 @@ export function readTasksFile(
 export function writeTasksFile(
   repoRoot: string,
   streamId: string,
-  tasksFile: TasksFile
+  tasksFile: TasksFile,
 ): void {
   const filePath = getTasksFilePath(repoRoot, streamId)
   tasksFile.last_updated = new Date().toISOString()
@@ -71,7 +71,7 @@ export function writeTasksFile(
 export function getTaskById(
   repoRoot: string,
   streamId: string,
-  taskId: string
+  taskId: string,
 ): Task | null {
   const tasksFile = readTasksFile(repoRoot, streamId)
   if (!tasksFile) return null
@@ -85,7 +85,7 @@ export function getTaskById(
 export function getTasks(
   repoRoot: string,
   streamId: string,
-  status?: TaskStatus
+  status?: TaskStatus,
 ): Task[] {
   const tasksFile = readTasksFile(repoRoot, streamId)
   if (!tasksFile) return []
@@ -111,7 +111,7 @@ export function updateTaskStatus(
   streamId: string,
   taskId: string,
   optionsOrStatus: TaskUpdateOptions | TaskStatus,
-  legacyBreadcrumb?: string
+  legacyBreadcrumb?: string,
 ): Task | null {
   const tasksFile = readTasksFile(repoRoot, streamId)
   if (!tasksFile) return null
@@ -120,9 +120,9 @@ export function updateTaskStatus(
   if (taskIndex === -1) return null
 
   const task = tasksFile.tasks[taskIndex]!
-  
+
   let opts: TaskUpdateOptions
-  if (typeof optionsOrStatus === 'string') {
+  if (typeof optionsOrStatus === "string") {
     opts = { status: optionsOrStatus, breadcrumb: legacyBreadcrumb }
   } else {
     opts = optionsOrStatus
@@ -131,7 +131,7 @@ export function updateTaskStatus(
   if (opts.status) task.status = opts.status
   if (opts.breadcrumb) task.breadcrumb = opts.breadcrumb
   if (opts.assigned_agent) task.assigned_agent = opts.assigned_agent
-  
+
   task.updated_at = new Date().toISOString()
 
   writeTasksFile(repoRoot, streamId, tasksFile)
@@ -145,7 +145,7 @@ export function updateTaskStatus(
 export function addTasks(
   repoRoot: string,
   streamId: string,
-  newTasks: Task[]
+  newTasks: Task[],
 ): TasksFile {
   let tasksFile = readTasksFile(repoRoot, streamId)
 
@@ -175,7 +175,7 @@ export function addTasks(
 
   // Convert map back to array, sorted by ID
   tasksFile.tasks = Array.from(existingTasksMap.values()).sort((a, b) =>
-    a.id.localeCompare(b.id, undefined, { numeric: true })
+    a.id.localeCompare(b.id, undefined, { numeric: true }),
   )
   writeTasksFile(repoRoot, streamId, tasksFile)
 
@@ -185,7 +185,10 @@ export function addTasks(
 /**
  * Get task counts by status
  */
-export function getTaskCounts(repoRoot: string, streamId: string): {
+export function getTaskCounts(
+  repoRoot: string,
+  streamId: string,
+): {
   total: number
   pending: number
   in_progress: number
@@ -210,7 +213,7 @@ export function getTaskCounts(repoRoot: string, streamId: string): {
  * Returns a nested structure: { stageName: { threadName: Task[] } }
  */
 export function groupTasksByStageAndThread(
-  tasks: Task[]
+  tasks: Task[],
 ): Map<string, Map<string, Task[]>> {
   const grouped = new Map<string, Map<string, Task[]>>()
 
@@ -263,7 +266,7 @@ export function parseTaskId(taskId: string): {
     const parsed = parts.map((p) => parseInt(p, 10))
     if (parsed.some(isNaN)) {
       throw new Error(
-        `Invalid task ID format: ${taskId}. Expected "stage.batch.thread.task" (e.g., "01.00.02.03")`
+        `Invalid task ID format: ${taskId}. Expected "stage.batch.thread.task" (e.g., "01.00.02.03")`,
       )
     }
     return {
@@ -275,7 +278,7 @@ export function parseTaskId(taskId: string): {
   }
 
   throw new Error(
-    `Invalid task ID format: ${taskId}. Expected "stage.batch.thread.task" (e.g., "01.00.02.03")`
+    `Invalid task ID format: ${taskId}. Expected "stage.batch.thread.task" (e.g., "01.00.02.03")`,
   )
 }
 
@@ -287,7 +290,7 @@ export function formatTaskId(
   stage: number,
   batch: number,
   thread: number,
-  task: number
+  task: number,
 ): string {
   const stageStr = stage.toString().padStart(2, "0")
   const batchStr = batch.toString().padStart(2, "0")
@@ -303,7 +306,7 @@ export function formatTaskId(
 export function deleteTask(
   repoRoot: string,
   streamId: string,
-  taskId: string
+  taskId: string,
 ): Task | null {
   const tasksFile = readTasksFile(repoRoot, streamId)
   if (!tasksFile) return null
@@ -323,7 +326,7 @@ export function deleteTask(
 export function deleteTasksByStage(
   repoRoot: string,
   streamId: string,
-  stageNumber: number
+  stageNumber: number,
 ): Task[] {
   const tasksFile = readTasksFile(repoRoot, streamId)
   if (!tasksFile) return []
@@ -355,7 +358,7 @@ export function deleteTasksByThread(
   streamId: string,
   stageNumber: number,
   batchNumber: number,
-  threadNumber: number
+  threadNumber: number,
 ): Task[] {
   const tasksFile = readTasksFile(repoRoot, streamId)
   if (!tasksFile) return []
@@ -387,7 +390,7 @@ export function deleteTasksByBatch(
   repoRoot: string,
   streamId: string,
   stageNumber: number,
-  batchNumber: number
+  batchNumber: number,
 ): Task[] {
   const tasksFile = readTasksFile(repoRoot, streamId)
   if (!tasksFile) return []
@@ -416,7 +419,7 @@ export function deleteTasksByBatch(
  * Returns a nested structure: { stageName: { batchName: { threadName: Task[] } } }
  */
 export function groupTasksByStageAndBatchAndThread(
-  tasks: Task[]
+  tasks: Task[],
 ): Map<string, Map<string, Map<string, Task[]>>> {
   const grouped = new Map<string, Map<string, Map<string, Task[]>>>()
 

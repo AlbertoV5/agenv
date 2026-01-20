@@ -280,7 +280,7 @@ export interface StreamDocument {
  * All components are zero-padded to 2 digits for consistent sorting
  */
 export interface Task {
-  id: string // e.g., "01.00.02.03" = stage 1, batch 00, thread 2, task 3
+  id: string // e.g., "01.01.02.03" = stage 1, batch 1, thread 2, task 3
   name: string // Task description from PLAN.md
   thread_name: string // Parent thread name for context
   batch_name: string // Parent batch name for context

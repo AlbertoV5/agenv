@@ -2,9 +2,9 @@ import { describe, test, expect, beforeEach, afterEach } from "bun:test"
 import { mkdtemp, rm, mkdir, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { updateTask } from "../../src/lib/update"
-import { getTasks } from "../../src/lib/tasks"
-import type { StreamMetadata, TasksFile } from "../../src/lib/types"
+import { updateTask } from "../src/lib/update"
+import { getTasks } from "../src/lib/tasks"
+import type { StreamMetadata, TasksFile } from "../src/lib/types"
 
 describe("assignments", () => {
   let tempDir: string
@@ -13,7 +13,12 @@ describe("assignments", () => {
     name: "test-stream",
     order: 0,
     size: "medium",
-    session_estimated: { length: 1, unit: "session", session_minutes: [30, 45], session_iterations: [4, 8] },
+    session_estimated: {
+      length: 1,
+      unit: "session",
+      session_minutes: [30, 45],
+      session_iterations: [4, 8],
+    },
     created_at: "2024-01-01",
     updated_at: "2024-01-01",
     path: "work/001-test-stream",
@@ -35,13 +40,22 @@ describe("assignments", () => {
       stream_id: "001-test-stream",
       last_updated: new Date().toISOString(),
       tasks: [
-        { id: "1.00.1.1", name: "Task 1", thread_name: "T1", batch_name: "B00", stage_name: "S1", created_at: "", updated_at: "", status: "pending" },
+        {
+          id: "1.00.1.1",
+          name: "Task 1",
+          thread_name: "T1",
+          batch_name: "B00",
+          stage_name: "S1",
+          created_at: "",
+          updated_at: "",
+          status: "pending",
+        },
       ],
     }
 
     await writeFile(
       join(tempDir, "work/001-test-stream/tasks.json"),
-      JSON.stringify(tasksFile, null, 2)
+      JSON.stringify(tasksFile, null, 2),
     )
 
     updateTask({

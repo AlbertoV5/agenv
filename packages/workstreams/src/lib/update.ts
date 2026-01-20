@@ -34,7 +34,9 @@ export function updateTask(args: UpdateTaskArgs): UpdateTaskResult {
   try {
     parseTaskId(args.taskId)
   } catch (e) {
-    throw new Error(`Invalid task ID: ${args.taskId}. Expected format "stage.thread.task" (e.g., "1.2.3")`)
+    throw new Error(
+      `Invalid task ID: ${args.taskId}. Expected format "stage.thread.task" (e.g., "1.2.3")`,
+    )
   }
 
   // Check if task exists
@@ -42,7 +44,7 @@ export function updateTask(args: UpdateTaskArgs): UpdateTaskResult {
   if (!existingTask) {
     throw new Error(
       `Task "${args.taskId}" not found in workstream "${args.stream.id}". ` +
-      `Run "work consolidate --stream ${args.stream.id}" first to generate tasks from PLAN.md.`
+        `Run "work consolidate --stream ${args.stream.id}" first to generate tasks from PLAN.md.`,
     )
   }
 
@@ -55,9 +57,8 @@ export function updateTask(args: UpdateTaskArgs): UpdateTaskResult {
       status: args.status,
       breadcrumb: args.breadcrumb,
       assigned_agent: args.assigned_agent,
-    }
+    },
   )
-
 
   if (!updatedTask) {
     throw new Error(`Failed to update task "${args.taskId}"`)

@@ -10,7 +10,7 @@ import {
   setNestedField,
   getNestedField,
   parseValue,
-} from "../../src/lib/utils"
+} from "../src/lib/utils"
 
 describe("toTitleCase", () => {
   test("converts single word", () => {
@@ -22,7 +22,9 @@ describe("toTitleCase", () => {
   })
 
   test("converts multi-word kebab-case", () => {
-    expect(toTitleCase("add-user-authentication")).toBe("Add User Authentication")
+    expect(toTitleCase("add-user-authentication")).toBe(
+      "Add User Authentication",
+    )
   })
 
   test("handles numbers in words", () => {
@@ -83,19 +85,19 @@ describe("parsePositiveInt", () => {
 
   test("throws on zero", () => {
     expect(() => parsePositiveInt("0", "count")).toThrow(
-      'count must be a positive integer. Got: "0"'
+      'count must be a positive integer. Got: "0"',
     )
   })
 
   test("throws on negative numbers", () => {
     expect(() => parsePositiveInt("-1", "count")).toThrow(
-      'count must be a positive integer. Got: "-1"'
+      'count must be a positive integer. Got: "-1"',
     )
   })
 
   test("throws on non-numeric strings", () => {
     expect(() => parsePositiveInt("abc", "count")).toThrow(
-      'count must be a positive integer. Got: "abc"'
+      'count must be a positive integer. Got: "abc"',
     )
   })
 
@@ -106,7 +108,9 @@ describe("parsePositiveInt", () => {
   })
 
   test("includes field name in error message", () => {
-    expect(() => parsePositiveInt("bad", "stages")).toThrow("stages must be a positive integer")
+    expect(() => parsePositiveInt("bad", "stages")).toThrow(
+      "stages must be a positive integer",
+    )
   })
 })
 
@@ -194,9 +198,15 @@ describe("setNestedField", () => {
   })
 
   test("preserves existing fields", () => {
-    const obj: Record<string, unknown> = { existing: "value", config: { keep: true } }
+    const obj: Record<string, unknown> = {
+      existing: "value",
+      config: { keep: true },
+    }
     setNestedField(obj, "config.add", "new")
-    expect(obj).toEqual({ existing: "value", config: { keep: true, add: "new" } })
+    expect(obj).toEqual({
+      existing: "value",
+      config: { keep: true, add: "new" },
+    })
   })
 
   test("overwrites existing values", () => {

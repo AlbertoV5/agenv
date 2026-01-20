@@ -2,7 +2,12 @@ import { describe, test, expect, beforeEach, afterEach } from "bun:test"
 import { mkdtemp, rm, mkdir } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { findRepoRoot, getRepoRoot, getWorkDir, getIndexPath } from "../../src/lib/repo"
+import {
+  findRepoRoot,
+  getRepoRoot,
+  getWorkDir,
+  getIndexPath,
+} from "../src/lib/repo"
 
 describe("findRepoRoot", () => {
   let tempDir: string
@@ -88,9 +93,7 @@ describe("getRepoRoot", () => {
   })
 
   test("throws when not in a git repo", () => {
-    expect(() => getRepoRoot(tempDir)).toThrow(
-      "Not in a git repository"
-    )
+    expect(() => getRepoRoot(tempDir)).toThrow("Not in a git repository")
   })
 
   test("error message suggests --repo-root flag", () => {

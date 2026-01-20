@@ -10,8 +10,8 @@ import {
   getPromptContext,
   generateThreadPrompt,
   generateThreadPromptJson,
-} from "../../src/lib/prompts"
-import type { TasksFile, WorkIndex, AgentsConfig } from "../../src/lib/types"
+} from "../src/lib/prompts"
+import type { TasksFile, WorkIndex, AgentsConfig } from "../src/lib/types"
 
 describe("parseThreadId", () => {
   test("parses valid thread ID", () => {
@@ -125,7 +125,7 @@ describe("getTestRequirements", () => {
   test("returns parsed requirements if TESTS.md exists", async () => {
     await writeFile(
       join(tempDir, "work", "TESTS.md"),
-      `# Test Requirements\n\n## General\n- Test: \`bun test\``
+      `# Test Requirements\n\n## General\n- Test: \`bun test\``,
     )
 
     const result = getTestRequirements(tempDir)
@@ -148,11 +148,15 @@ describe("getPromptContext", () => {
   })
 
   test("throws on invalid thread ID format", () => {
-    expect(() => getPromptContext(tempDir, streamId, "invalid")).toThrow("Invalid thread ID format")
+    expect(() => getPromptContext(tempDir, streamId, "invalid")).toThrow(
+      "Invalid thread ID format",
+    )
   })
 
   test("throws if PLAN.md not found", () => {
-    expect(() => getPromptContext(tempDir, streamId, "01.00.01")).toThrow("PLAN.md not found")
+    expect(() => getPromptContext(tempDir, streamId, "01.00.01")).toThrow(
+      "PLAN.md not found",
+    )
   })
 
   test("throws if stage not found", async () => {
@@ -187,7 +191,9 @@ Details here
 `
     await writeFile(join(tempDir, "work", streamId, "PLAN.md"), planContent)
 
-    expect(() => getPromptContext(tempDir, streamId, "02.00.01")).toThrow("Stage 2 not found")
+    expect(() => getPromptContext(tempDir, streamId, "02.00.01")).toThrow(
+      "Stage 2 not found",
+    )
   })
 
   test("throws if batch not found", async () => {
@@ -222,7 +228,9 @@ Details here
 `
     await writeFile(join(tempDir, "work", streamId, "PLAN.md"), planContent)
 
-    expect(() => getPromptContext(tempDir, streamId, "01.05.01")).toThrow("Batch 5 not found")
+    expect(() => getPromptContext(tempDir, streamId, "01.05.01")).toThrow(
+      "Batch 5 not found",
+    )
   })
 
   test("throws if thread not found", async () => {
@@ -257,7 +265,9 @@ Details here
 `
     await writeFile(join(tempDir, "work", streamId, "PLAN.md"), planContent)
 
-    expect(() => getPromptContext(tempDir, streamId, "01.00.05")).toThrow("Thread 5 not found")
+    expect(() => getPromptContext(tempDir, streamId, "01.00.05")).toThrow(
+      "Thread 5 not found",
+    )
   })
 
   test("returns full context for valid thread", async () => {
@@ -349,7 +359,7 @@ Create frontend structure
     }
     await writeFile(
       join(tempDir, "work", streamId, "tasks.json"),
-      JSON.stringify(tasksFile, null, 2)
+      JSON.stringify(tasksFile, null, 2),
     )
 
     const ctx = getPromptContext(tempDir, streamId, "01.00.01")
@@ -418,7 +428,7 @@ Details
     }
     await writeFile(
       join(tempDir, "work", streamId, "tasks.json"),
-      JSON.stringify(tasksFile, null, 2)
+      JSON.stringify(tasksFile, null, 2),
     )
 
     // Create AGENTS.md
@@ -559,7 +569,9 @@ describe("generateThreadPrompt", () => {
       },
       batch: { id: 0, prefix: "00", name: "Init", summary: "", threads: [] },
       tasks: [],
-      parallelThreads: [{ id: 2, name: "Frontend", summary: "Frontend", details: "" }],
+      parallelThreads: [
+        { id: 2, name: "Frontend", summary: "Frontend", details: "" },
+      ],
       outputDir: "work/001-test/files/stage-1/00-init/backend",
     }
 
@@ -577,7 +589,12 @@ describe("generateThreadPromptJson", () => {
       threadIdString: "01.00.01",
       streamId: "001-test",
       streamName: "Test Stream",
-      thread: { id: 1, name: "Backend", summary: "Summary", details: "Details" },
+      thread: {
+        id: 1,
+        name: "Backend",
+        summary: "Summary",
+        details: "Details",
+      },
       stage: {
         id: 1,
         name: "Setup",

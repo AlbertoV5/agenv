@@ -44,7 +44,10 @@ function extractField(text: string, fieldName: string): string | null {
  * **Best for:** ...
  * **Model:** ...
  */
-export function parseAgentsMd(content: string): { config: AgentsConfig | null; errors: string[] } {
+export function parseAgentsMd(content: string): {
+  config: AgentsConfig | null
+  errors: string[]
+} {
   const lexer = new Lexer()
   const tokens = lexer.lex(content)
   const errors: string[] = []
@@ -67,7 +70,11 @@ export function parseAgentsMd(content: string): { config: AgentsConfig | null; e
           // Left the agent definitions section
           if (inAgentDefinitions && currentAgent?.name) {
             // Save any pending agent
-            if (currentAgent.description && currentAgent.bestFor && currentAgent.model) {
+            if (
+              currentAgent.description &&
+              currentAgent.bestFor &&
+              currentAgent.model
+            ) {
               agents.push(currentAgent as AgentDefinition)
             }
             currentAgent = null
@@ -79,7 +86,12 @@ export function parseAgentsMd(content: string): { config: AgentsConfig | null; e
       // H3 heading = new agent name
       if (heading.depth === 3 && inAgentDefinitions) {
         // Save previous agent if complete
-        if (currentAgent?.name && currentAgent.description && currentAgent.bestFor && currentAgent.model) {
+        if (
+          currentAgent?.name &&
+          currentAgent.description &&
+          currentAgent.bestFor &&
+          currentAgent.model
+        ) {
           agents.push(currentAgent as AgentDefinition)
         }
         // Start new agent
@@ -104,7 +116,12 @@ export function parseAgentsMd(content: string): { config: AgentsConfig | null; e
   }
 
   // Don't forget the last agent
-  if (currentAgent?.name && currentAgent.description && currentAgent.bestFor && currentAgent.model) {
+  if (
+    currentAgent?.name &&
+    currentAgent.description &&
+    currentAgent.bestFor &&
+    currentAgent.model
+  ) {
     agents.push(currentAgent as AgentDefinition)
   }
 
@@ -179,7 +196,10 @@ export function listAgents(config: AgentsConfig): AgentDefinition[] {
 /**
  * Get an agent by name
  */
-export function getAgent(config: AgentsConfig, name: string): AgentDefinition | null {
+export function getAgent(
+  config: AgentsConfig,
+  name: string,
+): AgentDefinition | null {
   return config.agents.find((a) => a.name === name) || null
 }
 

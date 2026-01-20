@@ -258,8 +258,29 @@ work prompt --thread "01.00.01" --no-parallel  # Exclude parallel threads
 
 ---
 
+### 14. Fix Batch Support
+**Requirement:** Create fix batches within a stage (not just fix stages).
+**Status:** Completed.
+
+**Command:**
+```bash
+work fix --batch --stage N --name "fix-name"
+```
+
+**Features:**
+- Appends a new fix batch to an existing stage
+- Correctly handles insertion before next stage or at end of last stage
+- Proper batch numbering (increments from last batch, or starts at 00 if no batches exist)
+
+**Files:**
+- `src/lib/fix.ts` - `appendFixBatch()` implementation
+- `src/cli/fix.ts` - CLI with `--batch` flag
+- `__tests__/lib/fix.test.ts` - Unit tests (4 tests)
+
+---
+
 ## Test Status
-- **218 tests pass**, 0 failures
+- **220 tests pass**, 0 failures
 - **TypeScript compiles** cleanly
 
 ---
@@ -268,13 +289,7 @@ work prompt --thread "01.00.01" --no-parallel  # Exclude parallel threads
 
 ### Medium Priority
 
-#### Fix Batch Support
-**Requirement:** Create fix batches within a stage (not just fix stages).
-**Current:** `work fix` only appends new stages.
-**Work needed:**
-- Update `src/lib/fix.ts` - Add batch insertion logic
-- Update `src/cli/fix.ts` - Add `--batch` option
-- Command: `work fix --batch --stage N --name "fix-validation"`
+None - all medium priority features implemented.
 
 ### Lower Priority
 
@@ -297,9 +312,10 @@ work prompt --thread "01.00.01" --no-parallel  # Exclude parallel threads
 2. ~~**Prompt generation** - Execution prompts for agents~~ ✅
 3. ~~**COMPLETION.md generation** - Final completion summary output~~ ✅
 4. ~~**TESTS.md support** - Parsing, prompt integration, continue integration~~ ✅
+5. ~~**Fix batch support** - In-stage fix workflow~~ ✅
 
 ### Remaining
-1. **Fix batch support** - In-stage fix workflow
+None - all features implemented.
 
 ### Optional
 1. **Evaluation command** - Formal stage sign-off

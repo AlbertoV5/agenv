@@ -1,6 +1,5 @@
-
 import { describe, test, expect } from "bun:test"
-import { parseStreamDocument } from "../../src/lib/stream-parser"
+import { parseStreamDocument } from "../src/lib/stream-parser"
 
 describe("parser debug", () => {
   test("parses batches correctly in sequence", () => {
@@ -33,10 +32,10 @@ Summary text.
 ### Stage 2: Next
 `
     const errors2: any[] = []
-    
+
     const doc = parseStreamDocument(content2, errors2)
     console.log("Doc:", JSON.stringify(doc, null, 2))
-    
-    expect(doc?.stages[0].batches.length).toBe(1)
+
+    expect(doc?.stages[0]?.batches.length).toBe(1)
   })
 })

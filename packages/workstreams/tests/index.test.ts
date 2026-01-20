@@ -14,8 +14,8 @@ import {
   getStream,
   getNextOrderNumber,
   formatOrderNumber,
-} from "../../src/lib/index"
-import type { WorkIndex, StreamMetadata } from "../../src/lib/types"
+} from "../src/lib/index"
+import type { WorkIndex, StreamMetadata } from "../src/lib/types"
 
 describe("index operations", () => {
   let tempDir: string
@@ -75,10 +75,7 @@ describe("index operations", () => {
     })
 
     test("throws on invalid JSON", async () => {
-      await writeFile(
-        join(tempDir, "work", "index.json"),
-        "not valid json",
-      )
+      await writeFile(join(tempDir, "work", "index.json"), "not valid json")
 
       expect(() => loadIndex(tempDir)).toThrow("Failed to parse index.json")
     })

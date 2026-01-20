@@ -3,8 +3,8 @@ import { mkdtemp, rm, readFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { existsSync, readdirSync } from "node:fs"
-import { generateStream, createGenerateArgs } from "../../src/lib/generate"
-import { loadIndex } from "../../src/lib/index"
+import { generateStream, createGenerateArgs } from "../src/lib/generate"
+import { loadIndex } from "../src/lib/index"
 
 describe("createGenerateArgs", () => {
   test("creates args with name and repoRoot", () => {
@@ -188,7 +188,7 @@ describe("generateStream", () => {
       generateStream(args)
 
       expect(() => generateStream(args)).toThrow(
-        'Workstream with name "test-feature" already exists'
+        'Workstream with name "test-feature" already exists',
       )
     })
   })

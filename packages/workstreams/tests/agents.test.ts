@@ -11,8 +11,8 @@ import {
   removeAgent,
   getAgent,
   listAgents,
-} from "../../src/lib/agents"
-import type { AgentsConfig, AgentDefinition } from "../../src/lib/types"
+} from "../src/lib/agents"
+import type { AgentsConfig, AgentDefinition } from "../src/lib/types"
 
 describe("parseAgentsMd", () => {
   test("parses valid AGENTS.md with agent definitions", () => {
@@ -38,13 +38,16 @@ describe("parseAgentsMd", () => {
     expect(config!.agents).toHaveLength(2)
     expect(config!.agents[0]).toEqual({
       name: "backend-orm-expert",
-      description: "Specializes in database schema design, ORM configuration, migrations, and query optimization.",
-      bestFor: "Database setup, migration scripts, complex queries, performance tuning.",
+      description:
+        "Specializes in database schema design, ORM configuration, migrations, and query optimization.",
+      bestFor:
+        "Database setup, migration scripts, complex queries, performance tuning.",
       model: "claude-opus",
     })
     expect(config!.agents[1]).toEqual({
       name: "frontend-styling",
-      description: "Focuses on CSS architecture, component styling, design system implementation.",
+      description:
+        "Focuses on CSS architecture, component styling, design system implementation.",
       bestFor: "UI polish, style refactors, design system tokens.",
       model: "claude-sonnet",
     })
@@ -97,7 +100,9 @@ describe("generateAgentsMd", () => {
     expect(content).toContain("# Agents")
     expect(content).toContain("## Agent Definitions")
     expect(content).toContain("### backend-orm-expert")
-    expect(content).toContain("**Description:** Specializes in database schema design")
+    expect(content).toContain(
+      "**Description:** Specializes in database schema design",
+    )
     expect(content).toContain("**Best for:** Database setup, migrations")
     expect(content).toContain("**Model:** claude-opus")
   })
@@ -107,7 +112,8 @@ describe("generateAgentsMd", () => {
       agents: [
         {
           name: "backend-orm-expert",
-          description: "Specializes in database schema design, ORM configuration",
+          description:
+            "Specializes in database schema design, ORM configuration",
           bestFor: "Database setup, migration scripts",
           model: "claude-opus",
         },
@@ -208,8 +214,18 @@ describe("file operations", () => {
   test("removeAgent removes agent", async () => {
     const config: AgentsConfig = {
       agents: [
-        { name: "agent1", description: "Desc1", bestFor: "Use1", model: "claude-opus" },
-        { name: "agent2", description: "Desc2", bestFor: "Use2", model: "claude-sonnet" },
+        {
+          name: "agent1",
+          description: "Desc1",
+          bestFor: "Use1",
+          model: "claude-opus",
+        },
+        {
+          name: "agent2",
+          description: "Desc2",
+          bestFor: "Use2",
+          model: "claude-sonnet",
+        },
       ],
     }
     saveAgentsConfig(tempDir, config)
@@ -232,8 +248,18 @@ describe("lookup operations", () => {
   test("getAgent finds agent by name", () => {
     const config: AgentsConfig = {
       agents: [
-        { name: "backend-expert", description: "Backend", bestFor: "Backend tasks", model: "claude-opus" },
-        { name: "frontend-expert", description: "Frontend", bestFor: "Frontend tasks", model: "claude-sonnet" },
+        {
+          name: "backend-expert",
+          description: "Backend",
+          bestFor: "Backend tasks",
+          model: "claude-opus",
+        },
+        {
+          name: "frontend-expert",
+          description: "Frontend",
+          bestFor: "Frontend tasks",
+          model: "claude-sonnet",
+        },
       ],
     }
 
@@ -246,7 +272,12 @@ describe("lookup operations", () => {
   test("getAgent returns null when not found", () => {
     const config: AgentsConfig = {
       agents: [
-        { name: "backend-expert", description: "Backend", bestFor: "Backend tasks", model: "claude-opus" },
+        {
+          name: "backend-expert",
+          description: "Backend",
+          bestFor: "Backend tasks",
+          model: "claude-opus",
+        },
       ],
     }
 
@@ -257,8 +288,18 @@ describe("lookup operations", () => {
   test("listAgents returns all agents", () => {
     const config: AgentsConfig = {
       agents: [
-        { name: "agent1", description: "Desc1", bestFor: "Use1", model: "claude-opus" },
-        { name: "agent2", description: "Desc2", bestFor: "Use2", model: "claude-sonnet" },
+        {
+          name: "agent1",
+          description: "Desc1",
+          bestFor: "Use1",
+          model: "claude-opus",
+        },
+        {
+          name: "agent2",
+          description: "Desc2",
+          bestFor: "Use2",
+          model: "claude-sonnet",
+        },
       ],
     }
 
