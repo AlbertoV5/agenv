@@ -16,6 +16,8 @@ interface PromptCliArgs {
   repoRoot?: string
   streamId?: string
   threadId?: string
+  stage?: string
+  batch?: string
   json?: boolean
   noTests?: boolean
   noParallel?: boolean
@@ -30,6 +32,12 @@ Usage:
 
 Required:
   --thread, -t     Thread ID in "stage.batch.thread" format (e.g., "01.01.02")
+  OR
+  --stage, --batch Generate prompts for all threads in a batch
+
+Required (one of):
+  --thread         Thread ID
+  --stage, --batch Stage and Batch numbers
 
 Optional:
   --stream, -s     Workstream ID or name (uses current if not specified)
@@ -53,7 +61,7 @@ Examples:
   work prompt --thread "01.01.01"
   work prompt --thread "01.01.02" --stream "001-my-feature"
   work prompt --thread "01.01.01" --json
-  work prompt --thread "01.01.01" > prompt.md
+  work prompt --stage 1 --batch 1
 `)
 }
 
@@ -98,6 +106,24 @@ function parseCliArgs(argv: string[]): PromptCliArgs | null {
         i++
         break
 
+      case "--stage":
+        if (!next) {
+          console.error("Error: --stage requires a value")
+          return null
+        }
+        parsed.stage = next
+        i++
+        break
+
+      case "--batch":
+        if (!next) {
+          console.error("Error: --batch requires a value")
+          return null
+        }
+        parsed.batch = next
+        i++
+        break
+
       case "--json":
       case "-j":
         parsed.json = true
@@ -121,17 +147,18 @@ function parseCliArgs(argv: string[]): PromptCliArgs | null {
   return parsed as PromptCliArgs
 }
 
-export function main(argv: string[] = process.argv): void {
+export async function main(argv: string[] = process.argv): Promise<void> {
   const cliArgs = parseCliArgs(argv)
   if (!cliArgs) {
     console.error("\nRun with --help for usage information.")
     process.exit(1)
   }
 
-  // Thread ID is required
-  if (!cliArgs.threadId) {
-    console.error("Error: --thread is required")
+  // Validate arguments
+  if (!cliArgs.threadId && (!cliArgs.stage || !cliArgs.batch)) {
+    console.error("Error: Either --thread OR (--stage AND --batch) is required")
     console.error('Example: work prompt --thread "01.01.01"')
+    console.error('Example: work prompt --stage 1 --batch 1')
     process.exit(1)
   }
 
@@ -160,29 +187,117 @@ export function main(argv: string[] = process.argv): void {
     process.exit(1)
   }
 
-  // Get prompt context
-  let context
-  try {
-    context = getPromptContext(repoRoot, stream.id, cliArgs.threadId)
-  } catch (e) {
-    console.error(`Error: ${(e as Error).message}`)
-    process.exit(1)
+  // Handle single thread
+  if (cliArgs.threadId) {
+    let context
+    try {
+      context = getPromptContext(repoRoot, stream.id, cliArgs.threadId)
+    } catch (e) {
+      console.error(`Error: ${(e as Error).message}`)
+      process.exit(1)
+    }
+
+    if (cliArgs.json) {
+      const json = generateThreadPromptJson(context)
+      console.log(JSON.stringify(json, null, 2))
+    } else {
+      const prompt = generateThreadPrompt(context, {
+        includeTests: !cliArgs.noTests,
+        includeParallel: !cliArgs.noParallel,
+      })
+      console.log(prompt)
+    }
+    return
   }
 
-  // Generate and output prompt
-  if (cliArgs.json) {
-    const json = generateThreadPromptJson(context)
-    console.log(JSON.stringify(json, null, 2))
-  } else {
-    const prompt = generateThreadPrompt(context, {
-      includeTests: !cliArgs.noTests,
-      includeParallel: !cliArgs.noParallel,
-    })
-    console.log(prompt)
+  // Handle batch
+  if (cliArgs.stage && cliArgs.batch) {
+    // We need to find all threads in this batch to generate prompts for them
+    // Parse stage/batch numbers
+    const stageNum = parseInt(cliArgs.stage, 10)
+    const batchNum = parseInt(cliArgs.batch, 10)
+
+    if (isNaN(stageNum) || isNaN(batchNum)) {
+      console.error("Error: stage and batch must be numbers")
+      process.exit(1)
+    }
+
+    // We need to look up the stream content to find threads
+    // Since we don't have a direct "getBatch" function, we'll try to probe threads
+    // starting from 1 until we fail.
+    // A more robust way would be to parse PLAN.md, but probing is simpler given existing tools.
+    // actually, let's use getPromptContext and handle errors to stop.
+
+    // Better yet, let's look at `lib/stream-parser.ts` usage.
+    // We can read PLAN.md and parse it.
+
+    const { join } = await import("path")
+    const { readFileSync, existsSync } = await import("fs")
+    const { getWorkDir } = await import("../lib/repo.ts")
+    const { parseStreamDocument } = await import("../lib/stream-parser.ts")
+
+    const workDir = getWorkDir(repoRoot)
+    const planPath = join(workDir, stream.id, "PLAN.md")
+
+    if (!existsSync(planPath)) {
+      console.error(`Error: PLAN.md not found at ${planPath}`)
+      process.exit(1)
+    }
+
+    const planContent = readFileSync(planPath, "utf-8")
+    const errors: any[] = []
+    const doc = parseStreamDocument(planContent, errors)
+
+    if (!doc) {
+      console.error("Error parsing PLAN.md")
+      process.exit(1)
+    }
+
+    const stage = doc.stages.find(s => s.id === stageNum)
+    if (!stage) {
+      console.error(`Error: Stage ${stageNum} not found`)
+      process.exit(1)
+    }
+
+    const batch = stage.batches.find(b => b.id === batchNum)
+    if (!batch) {
+      console.error(`Error: Batch ${batchNum} not found in stage ${stageNum}`)
+      process.exit(1)
+    }
+
+    // Generate prompts for all threads
+    const results: any[] = []
+
+    for (const thread of batch.threads) {
+      const threadIdStr = `${stageNum.toString().padStart(2, '0')}.${batchNum.toString().padStart(2, '0')}.${thread.id.toString().padStart(2, '0')}`
+
+      try {
+        const context = getPromptContext(repoRoot, stream.id, threadIdStr)
+
+        if (cliArgs.json) {
+          results.push(generateThreadPromptJson(context))
+        } else {
+          const prompt = generateThreadPrompt(context, {
+            includeTests: !cliArgs.noTests,
+            includeParallel: !cliArgs.noParallel,
+          })
+
+          console.log(`--- START PROMPT: ${threadIdStr} ---`)
+          console.log(prompt)
+          console.log(`--- END PROMPT: ${threadIdStr} ---\n`)
+        }
+      } catch (e) {
+        console.error(`Error generating prompt for ${threadIdStr}: ${(e as Error).message}`)
+      }
+    }
+
+    if (cliArgs.json) {
+      console.log(JSON.stringify(results, null, 2))
+    }
   }
 }
 
 // Run if called directly
 if (import.meta.main) {
-  main()
+  await main()
 }

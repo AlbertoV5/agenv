@@ -19,15 +19,19 @@ Your scope is **planning only** — you do not implement code. Follow this workf
 
 1. **Create workstream** — `work create --name "feature" --stages N`
 2. **Fill out PLAN.md** — Define stages, batches, threads, and resolve questions
-3. **Ask user for review** — Present the plan structure for feedback
-4. **Get approval** — User runs `work approve`
-5. **Create tasks** — Run `work tasks generate`, edit TASKS.md, then `work tasks serialize`
-6. **Assign agents** — Use `work assign` to map agents to threads (if `work/AGENTS.md` exists)
-7. **Generate prompts** — Use `work prompt` to create execution context
-8. **Ask user to run agents** — Hand off prompts to user for execution
-9. **Wait for instructions** — User may request fixes, additional stages, or adjustments
+3. **Ask user to review PLAN.md** — Present `work preview` output and **wait for confirmation** before proceeding
+4. **User approves plan** — Tell user to run `work approve` (you MUST NOT run this yourself)
+5. **Generate TASKS.md** — Run `work tasks generate`, then fill in task descriptions
+6. **Ask user to review TASKS.md** — Present the tasks and **wait for confirmation** before serializing
+7. **Serialize tasks** — Run `work tasks serialize` only after user confirms
+8. **Assign agents** — Use `work assign` to map agents to threads (if `work/AGENTS.md` exists)
+9. **Generate prompts** — Use `work prompt` to create execution context
+10. **Ask user to run agents** — Hand off prompts to user for execution
+11. **Wait for instructions** — User may request fixes, additional stages, or adjustments
 
 The user manages agent execution. Your job ends when prompts are ready.
+
+**CRITICAL:** Steps 3, 4, and 6 are review checkpoints. You MUST wait for explicit user confirmation before proceeding past each checkpoint. Never assume approval.
 
 ---
 
@@ -108,6 +112,20 @@ work approve      # Approve plan (blocked if open questions)
 work approve --force  # Approve with open questions
 ```
 
+## Review Checkpoint: PLAN.md
+
+After filling out PLAN.md, you MUST pause and ask for user review:
+
+1. Run `work consolidate` to validate structure
+2. Run `work preview` to show the plan hierarchy
+3. Present the preview output to the user
+4. Ask: "Does this plan structure look correct? Any changes needed before approval?"
+5. **Wait for explicit confirmation** — do not proceed until user confirms
+6. If user requests changes, make edits and repeat from step 1
+7. Once confirmed, tell user: "Please run `work approve` to approve the plan"
+
+**You MUST NOT run `work approve` yourself.** The user must run this command to maintain human-in-the-loop control.
+
 ## Create Tasks (Required Workflow)
 
 After approval, tasks **must** be created using the TASKS.md workflow:
@@ -119,7 +137,9 @@ work tasks generate
 # Step 2: Edit TASKS.md to fill in task descriptions for all threads
 # Add specific, actionable task names for each thread
 
-# Step 3: Convert to tasks.json (deletes TASKS.md)
+# Step 3: Ask user to review TASKS.md (see checkpoint below)
+
+# Step 4: Convert to tasks.json (deletes TASKS.md)
 work tasks serialize
 ```
 
@@ -135,6 +155,18 @@ work tasks serialize
 ```
 
 Status markers: `[ ]` pending, `[x]` completed, `[~]` in_progress, `[!]` blocked, `[-]` cancelled
+
+## Review Checkpoint: TASKS.md
+
+After filling in task descriptions, you MUST pause and ask for user review:
+
+1. Present the TASKS.md content or a summary of tasks per thread
+2. Ask: "Do these tasks look correct? Any additions or changes needed?"
+3. **Wait for explicit confirmation** — do not serialize until user confirms
+4. If user requests changes, make edits and repeat from step 1
+5. Once confirmed, run `work tasks serialize`
+
+**Do not serialize tasks without user review.** Task descriptions drive agent execution.
 
 Use `work add-task` only for tasks discovered during execution:
 ```bash

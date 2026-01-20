@@ -1,27 +1,27 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test"
-import { existsSync, rmSync, mkdirSync, readFileSync, writeFileSync } from "fs"
+import { existsSync, rmSync, mkdirSync, readFileSync, writeFileSync, mkdtempSync } from "fs"
 import { join } from "path"
+import { tmpdir } from "os"
 import { main as initMain } from "../src/cli/init.ts"
 import { getRepoRoot } from "../src/lib/repo.ts"
 
 describe("work init", () => {
-    const repoRoot = getRepoRoot()
-    const workDir = join(repoRoot, "work")
+    let tempDir: string
+    let workDir: string
 
     beforeEach(() => {
-        if (existsSync(workDir)) {
-            rmSync(workDir, { recursive: true })
-        }
+        tempDir = mkdtempSync(join(tmpdir(), "work-init-test-"))
+        workDir = join(tempDir, "work")
     })
 
     afterEach(() => {
-        if (existsSync(workDir)) {
-            rmSync(workDir, { recursive: true })
+        if (existsSync(tempDir)) {
+            rmSync(tempDir, { recursive: true, force: true })
         }
     })
 
     it("should initialize work/ directory and default files", async () => {
-        await initMain(["bun", "work", "init"])
+        await initMain(["bun", "work", "init", "--repo-root", tempDir])
 
         expect(existsSync(workDir)).toBe(true)
         expect(existsSync(join(workDir, "index.json"))).toBe(true)
@@ -41,22 +41,22 @@ describe("work init", () => {
     })
 
     it("should not overwrite existing files without --force", async () => {
-        mkdirSync(workDir)
+        mkdirSync(workDir, { recursive: true })
         const customContent = "custom content"
         writeFileSync(join(workDir, "AGENTS.md"), customContent)
 
-        await initMain(["bun", "work", "init"])
+        await initMain(["bun", "work", "init", "--repo-root", tempDir])
 
         const agentsContent = readFileSync(join(workDir, "AGENTS.md"), "utf-8")
         expect(agentsContent).toBe(customContent)
     })
 
     it("should overwrite existing files with --force", async () => {
-        mkdirSync(workDir)
+        mkdirSync(workDir, { recursive: true })
         const customContent = "custom content"
         writeFileSync(join(workDir, "AGENTS.md"), customContent)
 
-        await initMain(["bun", "work", "init", "--force"])
+        await initMain(["bun", "work", "init", "--repo-root", tempDir, "--force"])
 
         const agentsContent = readFileSync(join(workDir, "AGENTS.md"), "utf-8")
         expect(agentsContent).not.toBe(customContent)

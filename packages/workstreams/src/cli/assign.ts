@@ -14,6 +14,7 @@ interface AssignCliArgs {
   repoRoot?: string
   streamId?: string
   task?: string
+  thread?: string
   agent?: string
   list: boolean
   clear: boolean
@@ -32,6 +33,7 @@ Usage:
 Options:
   --repo-root, -r    Repository root (auto-detected if omitted)
   --stream, -s       Workstream ID or name (uses current if not specified)
+  --thread, -th      Thread ID (e.g., "01.01.01")
   --task, -t         Task ID (e.g., "01.01.02.03")
   --agent, -a        Agent name to assign
   --list             List all tasks with agent assignments
@@ -44,7 +46,10 @@ Description:
   using 'work agents --add'. Assignments are stored in tasks.json.
 
 Examples:
-  # Assign an agent to a task
+  # Assign an agent to a thread
+  work assign --thread "01.01.01" --agent "backend-expert"
+
+  # Assign an agent to a specific task
   work assign --task "01.01.02.03" --agent "backend-orm-expert"
 
   # List all tasks with assignments
@@ -93,6 +98,16 @@ function parseCliArgs(argv: string[]): AssignCliArgs | null {
           return null
         }
         parsed.task = next
+        i++
+        break
+
+      case "--thread":
+      case "-th":
+        if (!next) {
+          console.error("Error: --thread requires a value (e.g., '01.01.01')")
+          return null
+        }
+        parsed.thread = next
         i++
         break
 
@@ -189,41 +204,79 @@ export function main(argv: string[] = process.argv): void {
 
   // Handle --clear
   if (cliArgs.clear) {
-    if (!cliArgs.task) {
-      console.error("Error: --clear requires --task")
+    // Determine targets
+    let targetTasks: string[] = []
+
+    if (cliArgs.task) {
+      targetTasks.push(cliArgs.task)
+    } else if (cliArgs.thread) {
+      // Find all tasks in thread
+      const tasks = getTasks(repoRoot, stream.id)
+      const threadPrefix = cliArgs.thread + "."
+      targetTasks = tasks
+        .filter((t) => t.id.startsWith(threadPrefix))
+        .map((t) => t.id)
+
+      if (targetTasks.length === 0) {
+        console.error(`Error: No tasks found for thread "${cliArgs.thread}"`)
+        process.exit(1)
+      }
+    } else {
+      console.error("Error: --clear requires --task or --thread")
       console.error("\nRun with --help for usage information.")
       process.exit(1)
     }
 
-    const existingTask = getTaskById(repoRoot, stream.id, cliArgs.task)
-    if (!existingTask) {
-      console.error(`Error: Task "${cliArgs.task}" not found`)
-      process.exit(1)
+    let successCount = 0
+    const errors: string[] = []
+
+    for (const taskId of targetTasks) {
+      const existingTask = getTaskById(repoRoot, stream.id, taskId)
+      if (!existingTask) {
+        errors.push(`Task "${taskId}" not found`)
+        continue
+      }
+
+      const updated = updateTaskStatus(repoRoot, stream.id, taskId, {
+        assigned_agent: "",
+      })
+
+      if (!updated) {
+        errors.push(`Failed to update task "${taskId}"`)
+      } else {
+        successCount++
+      }
     }
 
-    // Clear the assignment by setting to empty string (will be treated as no assignment)
-    const updated = updateTaskStatus(repoRoot, stream.id, cliArgs.task, {
-      assigned_agent: "",
-    })
-
-    if (!updated) {
-      console.error(`Error: Failed to update task "${cliArgs.task}"`)
-      process.exit(1)
+    if (errors.length > 0) {
+      console.error("Errors clearing assignments:")
+      errors.forEach((e) => console.error(`  - ${e}`))
     }
 
     if (cliArgs.json) {
       console.log(
-        JSON.stringify({ action: "cleared", streamId: stream.id, taskId: cliArgs.task }, null, 2)
+        JSON.stringify(
+          {
+            action: "cleared",
+            streamId: stream.id,
+            clearedCount: successCount,
+            errors,
+          },
+          null,
+          2
+        )
       )
     } else {
-      console.log(`Cleared agent assignment from task "${cliArgs.task}"`)
+      console.log(`Cleared agent assignment from ${successCount} tasks`)
     }
+
+    if (errors.length > 0) process.exit(1)
     return
   }
 
   // Default: create assignment
-  if (!cliArgs.task || !cliArgs.agent) {
-    console.error("Error: --task and --agent are required to create an assignment")
+  if ((!cliArgs.task && !cliArgs.thread) || !cliArgs.agent) {
+    console.error("Error: --agent and either --task or --thread are required")
     console.error("\nRun with --help for usage information.")
     process.exit(1)
   }
@@ -239,21 +292,43 @@ export function main(argv: string[] = process.argv): void {
     }
   }
 
-  // Verify task exists
-  const existingTask = getTaskById(repoRoot, stream.id, cliArgs.task)
-  if (!existingTask) {
-    console.error(`Error: Task "${cliArgs.task}" not found`)
-    process.exit(1)
+  // Identify target tasks
+  let targetTasks: { id: string; name: string }[] = []
+
+  if (cliArgs.task) {
+    const existingTask = getTaskById(repoRoot, stream.id, cliArgs.task)
+    if (!existingTask) {
+      console.error(`Error: Task "${cliArgs.task}" not found`)
+      process.exit(1)
+    }
+    targetTasks.push(existingTask)
+  } else if (cliArgs.thread) {
+    // Find all tasks in thread
+    const tasks = getTasks(repoRoot, stream.id)
+    const threadPrefix = cliArgs.thread + "."
+    targetTasks = tasks
+      .filter((t) => t.id.startsWith(threadPrefix))
+
+    if (targetTasks.length === 0) {
+      console.error(`Error: No tasks found for thread "${cliArgs.thread}"`)
+      process.exit(1)
+    }
   }
 
-  // Update task with agent assignment
-  const updated = updateTaskStatus(repoRoot, stream.id, cliArgs.task, {
-    assigned_agent: cliArgs.agent,
-  })
+  // Update tasks
+  let successCount = 0
+  const errors: string[] = []
 
-  if (!updated) {
-    console.error(`Error: Failed to update task "${cliArgs.task}"`)
-    process.exit(1)
+  for (const task of targetTasks) {
+    const updated = updateTaskStatus(repoRoot, stream.id, task.id, {
+      assigned_agent: cliArgs.agent,
+    })
+
+    if (!updated) {
+      errors.push(`Failed to update task "${task.id}"`)
+    } else {
+      successCount++
+    }
   }
 
   if (cliArgs.json) {
@@ -262,16 +337,27 @@ export function main(argv: string[] = process.argv): void {
         {
           action: "assigned",
           streamId: stream.id,
-          taskId: cliArgs.task,
           agent: cliArgs.agent,
+          assignedCount: successCount,
+          errors,
         },
         null,
         2
       )
     )
   } else {
-    console.log(`Assigned "${cliArgs.agent}" to task "${cliArgs.task}"`)
-    console.log(`  Task: ${existingTask.name}`)
+    console.log(`Assigned "${cliArgs.agent}" to ${successCount} tasks`)
+    if (cliArgs.thread) {
+      console.log(`Thread: ${cliArgs.thread}`)
+    } else {
+      console.log(`Task: ${targetTasks[0]?.name}`)
+    }
+  }
+
+  if (errors.length > 0) {
+    console.error("Errors assigning agent:")
+    errors.forEach((e) => console.error(`  - ${e}`))
+    process.exit(1)
   }
 }
 
