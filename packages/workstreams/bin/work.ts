@@ -47,6 +47,7 @@ import { main as promptMain } from "../src/cli/prompt.ts"
 import { main as editMain } from "../src/cli/edit.ts"
 import { main as initMain } from "../src/cli/init.ts"
 import { main as executeMain } from "../src/cli/execute.ts"
+import { main as multiMain } from "../src/cli/multi.ts"
 
 const SUBCOMMANDS = {
   init: initMain,
@@ -79,6 +80,7 @@ const SUBCOMMANDS = {
   assign: assignMain,
   prompt: promptMain,
   execute: executeMain,
+  multi: multiMain,
 } as const
 
 type Subcommand = keyof typeof SUBCOMMANDS
@@ -101,6 +103,7 @@ Commands:
   assign      Assign agents to threads for batch execution
   prompt      Generate thread execution prompt for agents
   execute     Execute a thread prompt via opencode
+  multi       Execute all threads in a batch in parallel via tmux
   status      Show workstream progress
   set-status  Set workstream status (pending, in_progress, completed, on_hold)
   update      Update a task's status
