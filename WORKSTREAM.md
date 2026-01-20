@@ -326,7 +326,10 @@ What this batch accomplishes.
 
 ### AGENTS.md Format (at `work/AGENTS.md`)
 
-Shared across all workstreams in the repository:
+Shared across all workstreams in the repository.
+
+> [!IMPORTANT]
+> The `Model:` field must use `provider/model` format (e.g., `google/gemini-3-flash-preview`) for compatibility with opencode.
 
 ```markdown
 # Agents
@@ -336,17 +339,17 @@ Shared across all workstreams in the repository:
 ### backend-expert
 **Description:** Specializes in database schema, ORM, migrations
 **Best for:** Database setup, complex queries, API design
-**Model:** claude-opus
+**Model:** anthropic/claude-opus-4
 
 ### frontend-specialist
 **Description:** Focuses on UI components, styling, state management
 **Best for:** Component refactors, style fixes, form handling
-**Model:** claude-sonnet
+**Model:** anthropic/claude-sonnet-4
 
 ### test-writer
 **Description:** Writes comprehensive test suites
 **Best for:** Unit tests, integration tests, E2E scenarios
-**Model:** claude-sonnet
+**Model:** google/gemini-3-flash-preview
 ```
 
 CLI commands:
@@ -510,8 +513,10 @@ work update --task "01.01.01.01" --breadcrumb "..."
 work agents                                # List agents
 work assign --thread "01.01.01" --agent "name"
 work prompt                                # Generate all prompts
-work prompt --stage 1                        # Generate prompts for stage 1
-work prompt --thread "01.01.01"              # Generate prompt for single thread
+work prompt --stage 1                      # Generate prompts for stage 1
+work prompt --thread "01.01.01"            # Generate prompt for single thread
+work execute --thread "01.01.01"           # Execute thread via opencode
+work execute --thread "01.01.01" --dry-run # Preview command without executing
 
 # Fixes
 work add-batch --stage 1 --name "fix-issue"
