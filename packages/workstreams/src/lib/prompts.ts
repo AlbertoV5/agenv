@@ -53,6 +53,7 @@ export interface PromptContext {
   batch: BatchDefinition
   tasks: Task[]
   parallelThreads: ThreadDefinition[]
+  agentName?: string
   testRequirements?: TestRequirements
   outputDir: string
 }
@@ -266,7 +267,10 @@ export function getPromptContext(
   const tasks = allTasks.filter((t) => t.id.startsWith(threadPrefix))
 
   // Get agent assignment from first task (they should all have the same agent)
-  // Agent assignment removed from prompt generation context as per requirements.
+  // We use this to personalize the prompt
+  const assignedAgent = tasks.find((t) => t.assigned_agent)?.assigned_agent
+  const agentName = assignedAgent
+
 
   // Load test requirements
   const testRequirements = getTestRequirements(repoRoot) || undefined
@@ -288,6 +292,7 @@ export function getPromptContext(
     batch,
     tasks,
     parallelThreads,
+    agentName,
     testRequirements,
     outputDir,
   }
@@ -312,18 +317,17 @@ export function generateThreadPrompt(
 
   const lines: string[] = []
 
-  // Header
-  lines.push(`# Thread Execution: ${context.thread.name}`)
+  // Greeting
+  lines.push(`Hello Agent${context.agentName ? " " + context.agentName : ""}!`)
   lines.push("")
 
-  // Context section
-  lines.push("## Context")
+  // Context
   lines.push(
-    `- **Workstream:** ${context.streamName} (\`${context.streamId}\`)`,
+    `You are working on the "${context.batch.name}" batch at the "${context.stage.name}" stage of the "${context.streamName}" workstream.`,
   )
-  lines.push(
-    `- **Location:** Stage ${context.stage.id} > Batch ${context.batch.prefix}-${context.batch.name} > Thread ${context.thread.id}`,
-  )
+  lines.push("")
+
+  lines.push("This is the thread you are responsible for:")
   lines.push("")
 
   // Thread summary
@@ -337,87 +341,22 @@ export function generateThreadPrompt(
   lines.push("")
 
   // Tasks section
-  lines.push("## Tasks")
+  lines.push("Your tasks are:")
   if (context.tasks.length > 0) {
-    lines.push("| ID | Task | Status |")
-    lines.push("|----|------|--------|")
     for (const task of context.tasks) {
-      lines.push(`| ${task.id} | ${task.name} | ${task.status} |`)
+      lines.push(`- [ ] ${task.id} ${task.name}`)
     }
   } else {
     lines.push("(No tasks found for this thread)")
   }
   lines.push("")
 
-  // Stage context
-  lines.push("## Stage Context")
-  lines.push(`**Stage ${context.stage.id}: ${context.stage.name}**`)
-  lines.push("")
-  lines.push(context.stage.definition || "(No definition provided)")
-  lines.push("")
-
-  // Constitution
-  if (context.stage.constitution) {
-    lines.push("### Constitution")
-    lines.push(context.stage.constitution)
-    lines.push("")
-  }
-
-  // Parallel threads
-  if (opts.includeParallel && context.parallelThreads.length > 0) {
-    lines.push(`## Parallel Threads (Batch ${context.batch.prefix})`)
-    lines.push("Other threads executing in parallel:")
-    lines.push("| Thread | Name | Summary |")
-    lines.push("|--------|------|---------|")
-    for (const t of context.parallelThreads) {
-      const summary =
-        t.summary.slice(0, 60) + (t.summary.length > 60 ? "..." : "")
-      lines.push(`| ${t.id} | ${t.name} | ${summary} |`)
-    }
-    lines.push("")
-  }
-
-  // Test requirements
-  if (opts.includeTests && context.testRequirements) {
-    const tr = context.testRequirements
-    lines.push("## Test Requirements")
-    if (tr.general.length > 0) {
-      lines.push("**General:**")
-      for (const item of tr.general) {
-        lines.push(`- ${item}`)
-      }
-    }
-    if (tr.perStage.length > 0) {
-      lines.push("**Per-Stage:**")
-      for (const item of tr.perStage) {
-        lines.push(`- ${item}`)
-      }
-    }
-    lines.push("")
-  }
-
   // Output location
-  lines.push("## Output Location")
-  lines.push(`Work in output directory: \`${context.outputDir}/\``)
+  lines.push(`Your working directory for creating additional documentation or scripts (if any) is: \`${context.outputDir}/\``)
   lines.push("")
 
-  // Execution instructions
-  lines.push("## Execution Instructions")
-  lines.push("1. Reference PLAN.md for context and approach")
-  lines.push("2. Complete each task in order, updating status as you progress")
-  lines.push(
-    "3. Create descriptive markdown documentation in the output directory (e.g., usage.md, schema.md)",
-  )
-  if (context.testRequirements) {
-    lines.push("4. Run tests after completion (see test requirements above)")
-    lines.push(
-      '5. Log breadcrumbs for recovery: `work update --task "<id>" --breadcrumb "..."`',
-    )
-  } else {
-    lines.push(
-      '4. Log breadcrumbs for recovery: `work update --task "<id>" --breadcrumb "..."`',
-    )
-  }
+  // Skill instruction
+  lines.push("Use the `implementing-workstream-plans` skill.")
   lines.push("")
 
   return lines.join("\n")
@@ -429,6 +368,7 @@ export function generateThreadPrompt(
 export function generateThreadPromptJson(context: PromptContext): object {
   return {
     threadId: context.threadIdString,
+    agentName: context.agentName,
     stream: {
       id: context.streamId,
       name: context.streamName,

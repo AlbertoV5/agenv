@@ -39,6 +39,11 @@ work/
     ├── TASKS.md                 # Intermediate task file (temporary)
     ├── tasks.json               # Machine-readable state (generated)
     ├── COMPLETION.md            # Final completion summary (generated at end)
+    ├── COMPLETION.md            # Final completion summary (generated at end)
+    ├── prompts/                 # Generated prompt files
+    │   └── {stage-prefix}-{stage-name}/
+    │       └── {batch-prefix}-{batch-name}/
+    │           └── {thread-name}.md
     └── files/                   # Output directory
         └── stage-{N}/
             └── {batch-prefix}-{batch-name}/
@@ -183,20 +188,23 @@ For complex workstreams with specialized agents:
 
 **Skill:** `generating-workstream-prompts`
 
-The Planner agent creates execution prompts for each thread:
+The Planner agent creates execution prompts for threads. Prompts are saved to individual files in `work/{stream}/prompts/...`.
 
 ```bash
-work prompt --stage 1 --batch 1 --thread 1
-work prompt --stage 1 --batch 1              # All threads in batch
+work prompt                                  # All threads in workstream
+work prompt --stage 1                        # All threads in stage 1
+work prompt --stage 1 --batch 1              # All threads in batch 1
+work prompt --thread "01.01.01"              # Single thread
 ```
 
 Prompts include:
+- Friendly greeting and context (Stage/Batch/Thread location)
 - Thread summary and details from PLAN.md
 - Tasks assigned to the thread
-- Stage definition context
-- List of parallel threads (for awareness)
-- `work/TESTS.md` requirements if present
-- Agent assignment information from `work/AGENTS.md`
+- Explicit working directory instruction
+- Skill instruction (`implementing-workstream-plans`)
+
+They explicitly exclude agent assignment references in the text, keeping the prompt clean for any agent to pick up.
 
 #### 2.2 Agent Execution
 
@@ -501,7 +509,9 @@ work update --task "01.01.01.01" --breadcrumb "..."
 # Agent management
 work agents                                # List agents
 work assign --thread "01.01.01" --agent "name"
-work prompt --stage 1 --batch 1 --thread 1 # Generate prompt
+work prompt                                # Generate all prompts
+work prompt --stage 1                        # Generate prompts for stage 1
+work prompt --thread "01.01.01"              # Generate prompt for single thread
 
 # Fixes
 work add-batch --stage 1 --name "fix-issue"

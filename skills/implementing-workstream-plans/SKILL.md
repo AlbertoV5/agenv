@@ -41,7 +41,6 @@ Check these files for context during execution (read-only):
 |------|---------|
 | `work/{stream}/PLAN.md` | Thread details, implementation approach |
 | `work/TESTS.md` | Test requirements (user-managed, if present) |
-| `work/AGENTS.md` | Agent definitions (user-managed, if present) |
 
 ## Adjustments (Mid-Stream)
 

@@ -4,14 +4,15 @@
  * Generates execution prompts for agents with full thread context.
  */
 
-import { join } from "path"
-import { appendFileSync } from "fs"
+import { join, dirname } from "path"
+import { appendFileSync, mkdirSync, writeFileSync } from "fs"
 import { getRepoRoot, getWorkDir } from "../lib/repo.ts"
 import { loadIndex, getResolvedStream } from "../lib/index.ts"
 import {
   getPromptContext,
   generateThreadPrompt,
   generateThreadPromptJson,
+  type PromptContext,
 } from "../lib/prompts.ts"
 
 interface PromptCliArgs {
@@ -36,10 +37,16 @@ Required:
   --thread, -t     Thread ID in "stage.batch.thread" format (e.g., "01.01.02")
   OR
   --stage, --batch Generate prompts for all threads in a batch
+  OR
+  --stage          Generate prompts for all threads in a stage
+  (No args)        Generate prompts for ENTIRE workstream
 
-Required (one of):
+Required (only if targeting specific thread):
   --thread         Thread ID
-  --stage, --batch Stage and Batch numbers
+
+Optional Scope:
+  --stage          Stage number
+  --batch          Batch number
 
 Optional:
   --stream, -s     Workstream ID or name (uses current if not specified)
@@ -67,25 +74,32 @@ Examples:
 `)
 }
 
-function appendToPromptsFile(repoRoot: string, streamId: string, content: string, title: string) {
+function savePromptToFile(repoRoot: string, context: PromptContext, content: string) {
   const workDir = getWorkDir(repoRoot)
-  const promptsPath = join(workDir, streamId, "PROMPTS.md")
-  const timestamp = new Date().toISOString()
 
-  const entry = `
-<!-- ================================================================================================= -->
-<!-- GENERATED PROMPT: ${title} -->
-<!-- TIMESTAMP: ${timestamp} -->
-<!-- ================================================================================================= -->
+  // Construct path: {workstream}/prompts/{stage-prefix}-{stage-name}/{batch-prefix}-{batch-name}/{thread-name}.md
+  const safeStageName = context.stage.name.replace(/[^a-zA-Z0-9_-]/g, "-").toLowerCase()
+  const safeBatchName = context.batch.name.replace(/[^a-zA-Z0-9_-]/g, "-").toLowerCase()
+  const safeThreadName = context.thread.name.replace(/[^a-zA-Z0-9_-]/g, "-").toLowerCase()
 
-${content}
-`
+  const stagePrefix = context.stage.id.toString().padStart(2, "0")
+
+  const relPath = join(
+    context.streamId,
+    "prompts",
+    `${stagePrefix}-${safeStageName}`,
+    `${context.batch.prefix}-${safeBatchName}`,
+    `${safeThreadName}.md`
+  )
+
+  const fullPath = join(workDir, relPath)
 
   try {
-    appendFileSync(promptsPath, entry)
-    console.warn(`Saved prompt to ${promptsPath}`)
+    mkdirSync(dirname(fullPath), { recursive: true })
+    writeFileSync(fullPath, content)
+    console.warn(`Saved prompt to ${relPath}`)
   } catch (e) {
-    console.warn(`Warning: Failed to save prompt to PROMPTS.md: ${(e as Error).message}`)
+    console.warn(`Warning: Failed to save prompt to ${relPath}: ${(e as Error).message}`)
   }
 }
 
@@ -179,11 +193,9 @@ export async function main(argv: string[] = process.argv): Promise<void> {
   }
 
   // Validate arguments
-  if (!cliArgs.threadId && (!cliArgs.stage || !cliArgs.batch)) {
-    console.error("Error: Either --thread OR (--stage AND --batch) is required")
-    console.error('Example: work prompt --thread "01.01.01"')
-    console.error('Example: work prompt --stage 1 --batch 1')
-    process.exit(1)
+  // If no arguments provided, we generate for the entire stream
+  if (cliArgs.threadId && (cliArgs.stage || cliArgs.batch)) {
+    console.warn("Warning: --thread provided, ignoring --stage/--batch")
   }
 
   // Auto-detect repo root if not provided
@@ -230,37 +242,32 @@ export async function main(argv: string[] = process.argv): Promise<void> {
         includeParallel: !cliArgs.noParallel,
       })
       console.log(prompt)
-      appendToPromptsFile(repoRoot, stream.id, prompt, cliArgs.threadId)
+      savePromptToFile(repoRoot, context, prompt)
     }
     return
   }
 
-  // Handle batch
-  if (cliArgs.stage && cliArgs.batch) {
-    // We need to find all threads in this batch to generate prompts for them
-    // Parse stage/batch numbers
-    const stageNum = parseInt(cliArgs.stage, 10)
-    const batchNum = parseInt(cliArgs.batch, 10)
-
-    if (isNaN(stageNum) || isNaN(batchNum)) {
-      console.error("Error: stage and batch must be numbers")
-      process.exit(1)
-    }
-
-    // We need to look up the stream content to find threads
-    // Since we don't have a direct "getBatch" function, we'll try to probe threads
-    // starting from 1 until we fail.
-    // A more robust way would be to parse PLAN.md, but probing is simpler given existing tools.
-    // actually, let's use getPromptContext and handle errors to stop.
-
-    // Better yet, let's look at `lib/stream-parser.ts` usage.
-    // We can read PLAN.md and parse it.
-
+  // Handle full stream or stage/batch generation
+  if (!cliArgs.threadId) {
     const { join } = await import("path")
     const { readFileSync, existsSync } = await import("fs")
     const { getWorkDir } = await import("../lib/repo.ts")
     const { parseStreamDocument } = await import("../lib/stream-parser.ts")
 
+    // Parse CLI args for filtering
+    const stageNum = cliArgs.stage ? parseInt(cliArgs.stage, 10) : undefined
+    const batchNum = cliArgs.batch ? parseInt(cliArgs.batch, 10) : undefined
+
+    if (stageNum !== undefined && isNaN(stageNum)) {
+      console.error("Error: stage must be a number")
+      process.exit(1)
+    }
+    if (batchNum !== undefined && isNaN(batchNum)) {
+      console.error("Error: batch must be a number")
+      process.exit(1)
+    }
+
+    // Load and parse PLAN.md
     const workDir = getWorkDir(repoRoot)
     const planPath = join(workDir, stream.id, "PLAN.md")
 
@@ -278,48 +285,75 @@ export async function main(argv: string[] = process.argv): Promise<void> {
       process.exit(1)
     }
 
-    const stage = doc.stages.find(s => s.id === stageNum)
-    if (!stage) {
-      console.error(`Error: Stage ${stageNum} not found`)
-      process.exit(1)
+    // Determine which stages to process
+    let stages = doc.stages
+    if (stageNum !== undefined) {
+      const stage = doc.stages.find(s => s.id === stageNum)
+      if (!stage) {
+        console.error(`Error: Stage ${stageNum} not found`)
+        process.exit(1)
+      }
+      stages = [stage]
     }
 
-    const batch = stage.batches.find(b => b.id === batchNum)
-    if (!batch) {
-      console.error(`Error: Batch ${batchNum} not found in stage ${stageNum}`)
-      process.exit(1)
-    }
-
-    // Generate prompts for all threads
     const results: any[] = []
+    let promptCount = 0
 
-    for (const thread of batch.threads) {
-      const threadIdStr = `${stageNum.toString().padStart(2, '0')}.${batchNum.toString().padStart(2, '0')}.${thread.id.toString().padStart(2, '0')}`
+    for (const stage of stages) {
+      // Determine which batches to process in this stage
+      let batches = stage.batches
 
-      try {
-        const context = getPromptContext(repoRoot, stream.id, threadIdStr)
-
-        if (cliArgs.json) {
-          results.push(generateThreadPromptJson(context))
+      if (batchNum !== undefined) {
+        // Apply batch filter if specifically requested
+        // Note: If running full stream (no stage arg), filtering by batch ID likely implies 
+        // "batch X of every stage", which is odd but consistent with args.
+        // If running specific stage, it target "batch X of stage Y".
+        const batch = stage.batches.find(b => b.id === batchNum)
+        if (batch) {
+          batches = [batch]
+        } else if (stageNum !== undefined) {
+          // If specific stage requested and batch missing, error
+          console.error(`Error: Batch ${batchNum} not found in stage ${stage.id}`)
+          process.exit(1)
         } else {
-          const prompt = generateThreadPrompt(context, {
-            includeTests: !cliArgs.noTests,
-            includeParallel: !cliArgs.noParallel,
-          })
-
-          console.log(`--- START PROMPT: ${threadIdStr} ---`)
-          console.log(prompt)
-          console.log(`--- END PROMPT: ${threadIdStr} ---\n`)
-
-          appendToPromptsFile(repoRoot, stream.id, prompt, threadIdStr)
+          // If generic run and this stage allows that batch, fine. If not, skip.
+          batches = []
         }
-      } catch (e) {
-        console.error(`Error generating prompt for ${threadIdStr}: ${(e as Error).message}`)
+      }
+
+      for (const batch of batches) {
+        for (const thread of batch.threads) {
+          const threadIdStr = `${stage.id.toString().padStart(2, '0')}.${batch.id.toString().padStart(2, '0')}.${thread.id.toString().padStart(2, '0')}`
+
+          try {
+            const context = getPromptContext(repoRoot, stream.id, threadIdStr)
+
+            if (cliArgs.json) {
+              results.push(generateThreadPromptJson(context))
+            } else {
+              const prompt = generateThreadPrompt(context, {
+                includeTests: !cliArgs.noTests,
+                includeParallel: !cliArgs.noParallel,
+              })
+
+              console.log(`--- START PROMPT: ${threadIdStr} ---`)
+              console.log(prompt)
+              console.log(`--- END PROMPT: ${threadIdStr} ---\n`)
+
+              savePromptToFile(repoRoot, context, prompt)
+            }
+            promptCount++
+          } catch (e) {
+            console.error(`Error generating prompt for ${threadIdStr}: ${(e as Error).message}`)
+          }
+        }
       }
     }
 
     if (cliArgs.json) {
       console.log(JSON.stringify(results, null, 2))
+    } else {
+      console.log(`Generated ${promptCount} prompts.`)
     }
   }
 }

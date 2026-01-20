@@ -200,9 +200,10 @@ function detectConstitutionSection(
 function detectThreadSection(
   text: string
 ): "summary" | "details" | null {
-  const lower = text.toLowerCase()
-  if (lower.includes("summary")) return "summary"
-  if (lower.includes("details")) return "details"
+  const trimmed = text.trim().toLowerCase()
+  // Match start of line, optional bold, "summary"/"details", optional bold/colon
+  if (/^\**summary/i.test(trimmed)) return "summary"
+  if (/^\**details/i.test(trimmed)) return "details"
   return null
 }
 
@@ -418,7 +419,7 @@ function parseStages(
     // Handle paragraph content
     if (token.type === "paragraph") {
       const para = token as Tokens.Paragraph
-      const text = para.text
+      let text = para.text // Use let so we can modify it if needed
 
       // Check for bold section markers in constitution (legacy support or just ignore)
       if (state.currentSection === "constitution") {
@@ -430,7 +431,15 @@ function parseStages(
         const threadSection = detectThreadSection(text)
         if (threadSection) {
           state.currentThreadSection = threadSection
-          continue
+
+          // Strip the header from the text
+          // Example: "**Summary:** Content..." -> "Content..."
+          text = text.replace(/^\s*\**\s*(summary|details)\s*:?\s*\**\s*:?\s*/i, "").trim()
+
+          // If no content remains, we can skip processing
+          if (!text) {
+            continue
+          }
         }
       }
 
