@@ -710,9 +710,9 @@ describe("formatProgress", () => {
     expect(output).toContain("001-test-stream")
     expect(output).toContain("25%")
     expect(output).toContain("[x] Stage 01: Setup")
-    expect(output).toContain("[~] Stage 2: Implementation")
-    expect(output).toContain("[!] Stage 3: Testing")
-    expect(output).toContain("[ ] Stage 4: Deploy")
+    expect(output).toContain("[~] Stage 02: Implementation")
+    expect(output).toContain("[!] Stage 03: Testing")
+    expect(output).toContain("[ ] Stage 04: Deploy")
   })
 
   test("shows progress bar", () => {
@@ -782,6 +782,6 @@ describe("formatProgress", () => {
 
     const output = formatProgress(progress)
 
-    expect(output).toContain("Stage 1")
+    expect(output).toContain("Stage 01")
   })
 })

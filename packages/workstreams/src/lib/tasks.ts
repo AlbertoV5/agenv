@@ -331,7 +331,7 @@ export function deleteTasksByStage(
   const tasksFile = readTasksFile(repoRoot, streamId)
   if (!tasksFile) return []
 
-  const stagePrefix = `${stageNumber}.`
+  const stagePrefix = `${stageNumber.toString().padStart(2, "0")}.`
   const deletedTasks: Task[] = []
 
   tasksFile.tasks = tasksFile.tasks.filter((t) => {
@@ -364,7 +364,8 @@ export function deleteTasksByThread(
   if (!tasksFile) return []
 
   const batchStr = batchNumber.toString().padStart(2, "0")
-  const threadPrefix = `${stageNumber}.${batchStr}.${threadNumber}.`
+  const stageStr = stageNumber.toString().padStart(2, "0")
+  const threadPrefix = `${stageStr}.${batchStr}.${threadNumber}.`
   const deletedTasks: Task[] = []
 
   tasksFile.tasks = tasksFile.tasks.filter((t) => {
@@ -396,7 +397,8 @@ export function deleteTasksByBatch(
   if (!tasksFile) return []
 
   const batchStr = batchNumber.toString().padStart(2, "0")
-  const batchPrefix = `${stageNumber}.${batchStr}.`
+  const stageStr = stageNumber.toString().padStart(2, "0")
+  const batchPrefix = `${stageStr}.${batchStr}.`
   const deletedTasks: Task[] = []
 
   tasksFile.tasks = tasksFile.tasks.filter((t) => {

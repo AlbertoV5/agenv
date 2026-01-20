@@ -22,7 +22,8 @@ export function generateTasksMdFromPlan(
   lines.push("")
 
   for (const stage of doc.stages) {
-    lines.push(`## Stage ${stage.id}: ${stage.name}`)
+    const stageIdPadded = stage.id.toString().padStart(2, "0")
+    lines.push(`## Stage ${stageIdPadded}: ${stage.name}`)
     lines.push("")
 
     for (const batch of stage.batches) {
@@ -30,7 +31,8 @@ export function generateTasksMdFromPlan(
       lines.push("")
 
       for (const thread of batch.threads) {
-        lines.push(`#### Thread ${thread.id}: ${thread.name}`)
+        const threadIdPadded = thread.id.toString().padStart(2, "0")
+        lines.push(`#### Thread ${threadIdPadded}: ${thread.name}`)
         // Add a placeholder task to guide the user
         const taskId = formatTaskId(stage.id, batch.id, thread.id, 1)
         lines.push(`- [ ] Task ${taskId}: `)
@@ -102,8 +104,9 @@ export function generateTasksMdFromTasks(
 
   for (const stageId of sortedStages) {
     const batches = tasksByStage.get(stageId)!
-    const stageName = stageNames.get(stageId) || `Stage ${stageId}`
-    lines.push(`## Stage ${stageId}: ${stageName}`)
+    const stageIdPadded = stageId.toString().padStart(2, "0")
+    const stageName = stageNames.get(stageId) || `Stage ${stageIdPadded}`
+    lines.push(`## Stage ${stageIdPadded}: ${stageName}`)
     lines.push("")
 
     const sortedBatches = Array.from(batches.keys()).sort() // "00", "01" sorts correctly
@@ -126,7 +129,8 @@ export function generateTasksMdFromTasks(
         const threadName =
           threadNames.get(`${stageId}.${batchKey}.${threadId}`) ||
           `Thread ${threadId}`
-        lines.push(`#### Thread ${threadId}: ${threadName}`)
+        const threadIdPadded = threadId.toString().padStart(2, "0")
+        lines.push(`#### Thread ${threadIdPadded}: ${threadName}`)
 
         for (const task of threadTasks) {
           const check =

@@ -43,12 +43,13 @@ export function appendFixBatch(
   const lastBatch = stage.batches[stage.batches.length - 1]
   const newBatchNumber = (lastBatch ? lastBatch.id : -1) + 1
   const newBatchPrefix = newBatchNumber.toString().padStart(2, "0")
+  const stageIdPadded = options.targetStage.toString().padStart(2, "0")
 
   const template = `
 ##### Batch ${newBatchPrefix}: Fix - ${options.name}
 ###### Thread 01: Fix Implementation
 **Summary:**
-Addressing issues in Stage ${options.targetStage}.
+Addressing issues in Stage ${stageIdPadded}.
 ${options.description || "Fixes and improvements."}
 
 **Details:**
@@ -138,13 +139,15 @@ export function appendFixStage(
 
   const lastStage = doc.stages[doc.stages.length - 1]
   const newStageNumber = (lastStage ? lastStage.id : 0) + 1
+  const newStagePadded = newStageNumber.toString().padStart(2, "0")
+  const targetStagePadded = options.targetStage.toString().padStart(2, "0")
 
   const template = `
 
-### Stage ${newStageNumber}: Fix - ${options.name}
+### Stage ${newStagePadded}: Fix - ${options.name}
 
 #### Definition
-Addressing issues found in Stage ${options.targetStage}.
+Addressing issues found in Stage ${targetStagePadded}.
 ${options.description || "Fixes and improvements based on evaluation."}
 
 #### Batches

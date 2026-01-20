@@ -383,7 +383,7 @@ describe("updateTask", () => {
           taskId: "1.1",
           status: "completed",
         }),
-      ).toThrow('Invalid task ID: 1.1. Expected format "stage.thread.task"')
+      ).toThrow('Invalid task ID: 1.1. Expected format "stage.batch.thread.task" (e.g., "01.00.02.03")')
     })
 
     test("throws on invalid task ID format (single number)", () => {

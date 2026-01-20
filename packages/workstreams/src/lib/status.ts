@@ -112,7 +112,8 @@ export function getStreamProgress(
 
   // Build stage summaries
   for (const stageNum of Array.from(stageNumbers).sort((a, b) => a - b)) {
-    const stageTasks = tasks.filter((t) => t.id.startsWith(`${stageNum}.`))
+    const stagePrefix = `${stageNum.toString().padStart(2, "0")}.`
+    const stageTasks = tasks.filter((t) => t.id.startsWith(stagePrefix))
     const stageName = stageTasks[0]?.stage_name || `Stage ${stageNum}`
 
     stages.push({
@@ -232,14 +233,15 @@ export function formatProgress(
             ? "[!]"
             : "[ ]"
 
-    const stageTitle = stage.title || `Stage ${stage.number}`
+    const stageNumPadded = stage.number.toString().padStart(2, "0")
+    const stageTitle = stage.title || `Stage ${stageNumPadded}`
     const taskCount = stage.tasks?.length || 0
     const completedCount = stage.tasks?.filter(
       (t) => t.status === "completed"
     ).length || 0
 
     lines.push(
-      `| ${statusIcon} Stage ${stage.number}: ${stageTitle} (${completedCount}/${taskCount})`.padEnd(
+      `| ${statusIcon} Stage ${stageNumPadded}: ${stageTitle} (${completedCount}/${taskCount})`.padEnd(
         51
       ) + "|"
     )

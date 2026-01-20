@@ -40,7 +40,7 @@ Summary text.
       join(tempDir, "work", streamId, "PLAN.md"),
       "utf-8",
     )
-    expect(newContent).toContain("### Stage 2: Fix - bug-fixes")
+    expect(newContent).toContain("### Stage 02: Fix - bug-fixes")
     expect(newContent).toContain("Addressing issues found in Stage 01")
     expect(newContent).toContain("Fixing bugs")
     expect(newContent).toContain("Batch 01: Fixes")
