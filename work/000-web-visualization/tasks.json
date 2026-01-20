@@ -1,0 +1,407 @@
+{
+  "version": "1.0.0",
+  "stream_id": "000-web-visualization",
+  "last_updated": "2026-01-20T17:01:30.001Z",
+  "tasks": [
+    {
+      "id": "01.01.01.01",
+      "name": "Create src/web/server.ts with ServerConfig interface and startServer function",
+      "stage_name": "Foundation",
+      "batch_name": "Core Server Infrastructure",
+      "thread_name": "Server Module",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "01.01.01.02",
+      "name": "Implement Bun.serve() wrapper with request handling delegation to router",
+      "stage_name": "Foundation",
+      "batch_name": "Core Server Infrastructure",
+      "thread_name": "Server Module",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "01.01.01.03",
+      "name": "Add graceful shutdown handling and error boundaries",
+      "stage_name": "Foundation",
+      "batch_name": "Core Server Infrastructure",
+      "thread_name": "Server Module",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "01.01.02.01",
+      "name": "Create src/web/router.ts with Route interface and RouteHandler type",
+      "stage_name": "Foundation",
+      "batch_name": "Core Server Infrastructure",
+      "thread_name": "Router Module",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "01.01.02.02",
+      "name": "Implement URL pattern matching with regex and path parameter extraction",
+      "stage_name": "Foundation",
+      "batch_name": "Core Server Infrastructure",
+      "thread_name": "Router Module",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "01.01.02.03",
+      "name": "Define routes for dashboard, stream detail, and API endpoints",
+      "stage_name": "Foundation",
+      "batch_name": "Core Server Infrastructure",
+      "thread_name": "Router Module",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "01.01.02.04",
+      "name": "Add 404 handler for unmatched routes",
+      "stage_name": "Foundation",
+      "batch_name": "Core Server Infrastructure",
+      "thread_name": "Router Module",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "01.01.03.01",
+      "name": "Create src/web/data.ts with DashboardData and StreamDetailData interfaces",
+      "stage_name": "Foundation",
+      "batch_name": "Core Server Infrastructure",
+      "thread_name": "Data Layer",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "01.01.03.02",
+      "name": "Implement getDashboardData using loadIndex and aggregating stream metrics",
+      "stage_name": "Foundation",
+      "batch_name": "Core Server Infrastructure",
+      "thread_name": "Data Layer",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "01.01.03.03",
+      "name": "Implement getStreamDetailData with full stream details and task groupings",
+      "stage_name": "Foundation",
+      "batch_name": "Core Server Infrastructure",
+      "thread_name": "Data Layer",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "01.02.01.01",
+      "name": "Create src/cli/serve.ts with argument parsing for port, host, open flags",
+      "stage_name": "Foundation",
+      "batch_name": "CLI Integration",
+      "thread_name": "Serve Command",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "01.02.01.02",
+      "name": "Implement main function that starts server and prints URL",
+      "stage_name": "Foundation",
+      "batch_name": "CLI Integration",
+      "thread_name": "Serve Command",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "01.02.01.03",
+      "name": "Register serve command in bin/work.ts and update help text",
+      "stage_name": "Foundation",
+      "batch_name": "CLI Integration",
+      "thread_name": "Serve Command",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "02.01.01.01",
+      "name": "Create src/web/templates/layout.ts with html tagged template literal",
+      "stage_name": "Templates",
+      "batch_name": "Base Templates",
+      "thread_name": "Layout and HTML Helper",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "02.01.01.02",
+      "name": "Implement XSS-safe value escaping in the html helper",
+      "stage_name": "Templates",
+      "batch_name": "Base Templates",
+      "thread_name": "Layout and HTML Helper",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "02.01.01.03",
+      "name": "Create layout function with header, main, footer structure",
+      "stage_name": "Templates",
+      "batch_name": "Base Templates",
+      "thread_name": "Layout and HTML Helper",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "02.01.02.01",
+      "name": "Create src/web/templates/styles.ts with CSS custom properties for status colors",
+      "stage_name": "Templates",
+      "batch_name": "Base Templates",
+      "thread_name": "CSS Styles",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "02.01.02.02",
+      "name": "Add base styles for typography, layout, and responsive grid",
+      "stage_name": "Templates",
+      "batch_name": "Base Templates",
+      "thread_name": "CSS Styles",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "02.01.02.03",
+      "name": "Add component styles for progress bars, badges, cards, and task lists",
+      "stage_name": "Templates",
+      "batch_name": "Base Templates",
+      "thread_name": "CSS Styles",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "02.01.03.01",
+      "name": "Create src/web/templates/components.ts with progressBar function",
+      "stage_name": "Templates",
+      "batch_name": "Base Templates",
+      "thread_name": "Reusable Components",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "02.01.03.02",
+      "name": "Add statusBadge function with color-coded status display",
+      "stage_name": "Templates",
+      "batch_name": "Base Templates",
+      "thread_name": "Reusable Components",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "02.01.03.03",
+      "name": "Add taskList and stageCard functions for structured content",
+      "stage_name": "Templates",
+      "batch_name": "Base Templates",
+      "thread_name": "Reusable Components",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "02.01.03.04",
+      "name": "Add metricsTable and streamCard functions",
+      "stage_name": "Templates",
+      "batch_name": "Base Templates",
+      "thread_name": "Reusable Components",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "02.02.01.01",
+      "name": "Create src/web/templates/dashboard.ts accepting DashboardData",
+      "stage_name": "Templates",
+      "batch_name": "View Templates",
+      "thread_name": "Dashboard View",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "02.02.01.02",
+      "name": "Implement overall metrics summary section",
+      "stage_name": "Templates",
+      "batch_name": "View Templates",
+      "thread_name": "Dashboard View",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "02.02.01.03",
+      "name": "Implement streams grid with streamCard components and links",
+      "stage_name": "Templates",
+      "batch_name": "View Templates",
+      "thread_name": "Dashboard View",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "02.02.02.01",
+      "name": "Create src/web/templates/stream.ts accepting StreamDetailData",
+      "stage_name": "Templates",
+      "batch_name": "View Templates",
+      "thread_name": "Stream Detail View",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "02.02.02.02",
+      "name": "Implement stream header with status, progress, and metrics",
+      "stage_name": "Templates",
+      "batch_name": "View Templates",
+      "thread_name": "Stream Detail View",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "02.02.02.03",
+      "name": "Implement stages list with nested batches, threads, and tasks",
+      "stage_name": "Templates",
+      "batch_name": "View Templates",
+      "thread_name": "Stream Detail View",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "02.02.03.01",
+      "name": "Create notFound template for 404 responses",
+      "stage_name": "Templates",
+      "batch_name": "View Templates",
+      "thread_name": "Error Pages",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "02.02.03.02",
+      "name": "Create serverError template for 500 responses",
+      "stage_name": "Templates",
+      "batch_name": "View Templates",
+      "thread_name": "Error Pages",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "03.01.01.01",
+      "name": "Implement GET /api/streams returning JSON array of all streams",
+      "stage_name": "Testing and Polish",
+      "batch_name": "JSON API",
+      "thread_name": "API Endpoints",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "03.01.01.02",
+      "name": "Implement GET /api/stream/:id returning single stream as JSON",
+      "stage_name": "Testing and Polish",
+      "batch_name": "JSON API",
+      "thread_name": "API Endpoints",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "03.01.01.03",
+      "name": "Add JSON error responses with proper status codes",
+      "stage_name": "Testing and Polish",
+      "batch_name": "JSON API",
+      "thread_name": "API Endpoints",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "03.02.01.01",
+      "name": "Create tests/web/server.test.ts with route matching tests",
+      "stage_name": "Testing and Polish",
+      "batch_name": "Testing",
+      "thread_name": "Server Tests",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "03.02.01.02",
+      "name": "Add tests for path parameter extraction and 404 handling",
+      "stage_name": "Testing and Polish",
+      "batch_name": "Testing",
+      "thread_name": "Server Tests",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "03.02.01.03",
+      "name": "Add tests for server lifecycle (start/stop)",
+      "stage_name": "Testing and Polish",
+      "batch_name": "Testing",
+      "thread_name": "Server Tests",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "03.02.02.01",
+      "name": "Create tests/web/templates.test.ts with HTML escaping tests",
+      "stage_name": "Testing and Polish",
+      "batch_name": "Testing",
+      "thread_name": "Template Tests",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "03.02.02.02",
+      "name": "Add tests for component functions with sample data",
+      "stage_name": "Testing and Polish",
+      "batch_name": "Testing",
+      "thread_name": "Template Tests",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    },
+    {
+      "id": "03.02.02.03",
+      "name": "Add tests for dashboard and stream views with mock data",
+      "stage_name": "Testing and Polish",
+      "batch_name": "Testing",
+      "thread_name": "Template Tests",
+      "status": "pending",
+      "created_at": "2026-01-20T17:01:30.001Z",
+      "updated_at": "2026-01-20T17:01:30.001Z"
+    }
+  ]
+}
