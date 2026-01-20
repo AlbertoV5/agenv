@@ -3,6 +3,7 @@
  */
 
 import { getTasks } from "./tasks.ts"
+import { getTestRequirements, type TestRequirements } from "./prompts.ts"
 import type { Task } from "./types.ts"
 
 export interface ContinueContext {
@@ -12,12 +13,13 @@ export interface ContinueContext {
   streamId: string
   streamName: string
   assignedAgent?: string // Agent assigned to active task (from task.assigned_agent)
+  testRequirements?: TestRequirements
 }
 
 export function getContinueContext(
   repoRoot: string,
   streamId: string,
-  streamName: string
+  streamName: string,
 ): ContinueContext {
   const tasks = getTasks(repoRoot, streamId)
   const activeTask = tasks.find((t) => t.status === "in_progress")
@@ -27,12 +29,18 @@ export function getContinueContext(
   const targetTask = activeTask || nextTask
   const assignedAgent = targetTask?.assigned_agent || undefined
 
+  // Load test requirements
+  const testRequirements = getTestRequirements(repoRoot) || undefined
+
   return {
     activeTask,
     nextTask,
-    lastCompletedTask: [...tasks].reverse().find((t) => t.status === "completed"),
+    lastCompletedTask: [...tasks]
+      .reverse()
+      .find((t) => t.status === "completed"),
     streamId,
     streamName,
     assignedAgent,
+    testRequirements,
   }
 }

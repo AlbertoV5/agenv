@@ -4,21 +4,16 @@
  * List and index files in a workstream's files/ directory.
  */
 
-import { existsSync, readdirSync, statSync } from "fs"
-import { join, relative } from "path"
+import { existsSync } from "fs"
+import { join } from "path"
 import { getRepoRoot, getWorkDir } from "../lib/repo.ts"
 import { loadIndex, getResolvedStream, saveIndex } from "../lib/index.ts"
+import { getFilesRecursively, type FileInfo } from "../lib/files.ts"
 
 interface FilesCliArgs {
   repoRoot?: string
   streamId?: string
   save?: boolean
-}
-
-interface FileInfo {
-  name: string
-  path: string
-  size: number
 }
 
 function printHelp(): void {
@@ -94,38 +89,6 @@ function parseCliArgs(argv: string[]): FilesCliArgs | null {
   }
 
   return parsed as FilesCliArgs
-}
-
-function getFilesRecursively(
-  dir: string,
-  baseDir: string,
-  files: FileInfo[] = []
-): FileInfo[] {
-  if (!existsSync(dir)) {
-    return files
-  }
-
-  const entries = readdirSync(dir)
-
-  for (const entry of entries) {
-    // Skip hidden files
-    if (entry.startsWith(".")) continue
-
-    const fullPath = join(dir, entry)
-    const stat = statSync(fullPath)
-
-    if (stat.isDirectory()) {
-      getFilesRecursively(fullPath, baseDir, files)
-    } else {
-      files.push({
-        name: entry,
-        path: relative(baseDir, fullPath),
-        size: stat.size,
-      })
-    }
-  }
-
-  return files
 }
 
 function formatSize(bytes: number): string {

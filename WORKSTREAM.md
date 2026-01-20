@@ -41,7 +41,7 @@ work/
         └── stage-{N}/
             └── {batch-prefix}-{batch-name}/
                 └── {thread-name}/
-                    └── thread.md
+                    └── {descriptive-name}.md
 ```
 
 ## Workflow Lifecycle: 3-Phase Model
@@ -112,7 +112,7 @@ The Planner agent creates execution prompts for each thread:
 Agents execute their assigned threads:
 
 - Reference PLAN.md for context and approach
-- Create documentation in `./files/{stage}/{batch}/{thread}/thread.md`
+- Create descriptive documentation in `./files/{stage}/{batch}/{thread}/{name}.md`
 - If `work/TESTS.md` exists, run tests and make corrections
 - Log breadcrumbs for recovery if interrupted
 
@@ -285,7 +285,7 @@ Generated in the workstream directory upon completion:
 |------|-----------------|
 | **Planner** | Creates PLAN.md, generates TASKS.md, creates execution prompts, manages fix batches/stages, generates COMPLETION.md |
 | **Reviewer** | Reviews PLAN.md for weaknesses, provides structured feedback, optional review after fixes |
-| **Executor** | Assigned to specific threads, implements tasks, creates thread.md documentation, runs tests |
+| **Executor** | Assigned to specific threads, implements tasks, creates descriptive documentation, runs tests |
 | **Documentation** | Reads COMPLETION.md and outputs, updates project docs, generates reference documentation |
 
 ## State Management

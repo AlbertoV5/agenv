@@ -6,7 +6,7 @@
 
 import { getRepoRoot } from "../lib/repo.ts"
 import { loadIndex, getResolvedStream } from "../lib/index.ts"
-import { appendFixStage } from "../lib/fix.ts"
+import { appendFixStage, appendFixBatch } from "../lib/fix.ts"
 
 interface FixCliArgs {
   repoRoot?: string
@@ -14,20 +14,22 @@ interface FixCliArgs {
   targetStage: number
   name: string
   description?: string
+  isBatch?: boolean
 }
 
 function printHelp(): void {
   console.log(`
-work fix - Append a fix stage to a workstream
+work fix - Append a fix stage or batch to a workstream
 
 Usage:
   work fix --stage <n> --name <name> [options]
 
 Required:
   --stage          The stage number being fixed (for reference)
-  --name           Name of the fix stage (e.g., "auth-race-condition")
+  --name           Name of the fix (e.g., "auth-race-condition")
 
 Optional:
+  --batch          Create a fix batch within the stage instead of a new stage
   --stream, -s     Workstream ID or name (uses current if not specified)
   --description    Description of the fix
   --repo-root, -r  Repository root (auto-detected if omitted)
@@ -35,7 +37,7 @@ Optional:
 
 Examples:
   work fix --stage 1 --name "api-error-handling"
-  work fix --stage 2 --name "layout-bugs" --description "Fix overflow issues on mobile"
+  work fix --batch --stage 2 --name "validation-logic"
 `)
 }
 
@@ -96,6 +98,10 @@ function parseCliArgs(argv: string[]): FixCliArgs | null {
         parsed.description = next
         i++
         break
+      
+      case "--batch":
+        parsed.isBatch = true
+        break
 
       case "--help":
       case "-h":
@@ -149,11 +155,21 @@ export function main(argv: string[] = process.argv): void {
   }
 
   try {
-    const result = appendFixStage(repoRoot, stream.id, {
-      targetStage: cliArgs.targetStage,
-      name: cliArgs.name,
-      description: cliArgs.description,
-    })
+    let result
+    
+    if (cliArgs.isBatch) {
+      result = appendFixBatch(repoRoot, stream.id, {
+        targetStage: cliArgs.targetStage,
+        name: cliArgs.name,
+        description: cliArgs.description,
+      })
+    } else {
+      result = appendFixStage(repoRoot, stream.id, {
+        targetStage: cliArgs.targetStage,
+        name: cliArgs.name,
+        description: cliArgs.description,
+      })
+    }
 
     if (result.success) {
       console.log(result.message)

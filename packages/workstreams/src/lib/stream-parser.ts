@@ -16,8 +16,6 @@ import type {
   ConsolidateError,
 } from "./types.ts"
 
-const lexer = new Lexer()
-
 /**
  * Parse state for tracking current position in the document
  */
@@ -244,6 +242,7 @@ export function parseStreamDocument(
   content: string,
   errors: ConsolidateError[]
 ): StreamDocument | null {
+  const lexer = new Lexer()
   const tokens = lexer.lex(content)
 
   // Extract stream name

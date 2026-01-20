@@ -40,6 +40,7 @@ import { main as fixMain } from "../src/cli/fix.ts"
 import { main as tasksMain } from "../src/cli/tasks.ts"
 import { main as agentsMain } from "../src/cli/agents.ts"
 import { main as assignMain } from "../src/cli/assign.ts"
+import { main as promptMain } from "../src/cli/prompt.ts"
 
 const SUBCOMMANDS = {
   create: createMain,
@@ -66,6 +67,7 @@ const SUBCOMMANDS = {
   tasks: tasksMain,
   agents: agentsMain,
   assign: assignMain,
+  prompt: promptMain,
 } as const
 
 type Subcommand = keyof typeof SUBCOMMANDS
@@ -85,6 +87,7 @@ Commands:
   approve     Approve or revoke plan approval (required before adding tasks)
   agents      Manage agent definitions (list, add, remove)
   assign      Assign agents to threads for batch execution
+  prompt      Generate thread execution prompt for agents
   status      Show workstream progress
   set-status  Set workstream status (pending, in_progress, completed, on_hold)
   update      Update a task's status

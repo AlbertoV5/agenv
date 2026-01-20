@@ -2,7 +2,7 @@
  * Fix stage generation logic
  */
 
-import { readFileSync, appendFileSync } from "fs"
+import { readFileSync, appendFileSync, writeFileSync } from "fs"
 import { getStreamPlanMdPath } from "./consolidate.ts"
 import { parseStreamDocument } from "./stream-parser.ts"
 import type { ConsolidateError } from "./types.ts"
@@ -11,6 +11,87 @@ export interface FixStageOptions {
   targetStage: number
   name: string
   description?: string
+}
+
+export function appendFixBatch(
+  repoRoot: string,
+  streamId: string,
+  options: FixStageOptions
+): { success: boolean; newBatchNumber: number; message: string } {
+  const planPath = getStreamPlanMdPath(repoRoot, streamId)
+  const content = readFileSync(planPath, "utf-8")
+  const errors: ConsolidateError[] = []
+  
+  const doc = parseStreamDocument(content, errors)
+  if (!doc) {
+    return { success: false, newBatchNumber: 0, message: "Failed to parse PLAN.md" }
+  }
+
+  const stage = doc.stages.find(s => s.id === options.targetStage)
+  if (!stage) {
+    return { success: false, newBatchNumber: 0, message: `Stage ${options.targetStage} not found` }
+  }
+
+  const lastBatch = stage.batches[stage.batches.length - 1]
+  const newBatchNumber = (lastBatch ? lastBatch.id : -1) + 1
+  const newBatchPrefix = newBatchNumber.toString().padStart(2, "0")
+
+  const template = `
+##### Batch ${newBatchPrefix}: Fix - ${options.name}
+###### Thread 1: Fix Implementation
+**Summary:**
+Addressing issues in Stage ${options.targetStage}.
+${options.description || "Fixes and improvements."}
+
+**Details:**
+- [ ] Analyze root cause
+- [ ] Implement fix
+- [ ] Verify fix
+`
+
+  // Find insertion point
+  // We want to insert after the current stage's content, which is before the next stage starts
+  // or at the end of the file if this is the last stage.
+  
+  const lines = content.split("\n")
+  let targetStageLineIndex = -1
+  let nextStageLineIndex = -1
+
+  // Regex to match "### Stage N: Name"
+  const stageRegex = /^### Stage\s+(\d+):/
+
+  for (let i = 0; i < lines.length; i++) {
+    const match = lines[i].match(stageRegex)
+    if (match) {
+      const stageNum = parseInt(match[1], 10)
+      if (stageNum === options.targetStage) {
+        targetStageLineIndex = i
+      } else if (targetStageLineIndex !== -1 && stageNum > options.targetStage) {
+        // Found a stage after our target
+        nextStageLineIndex = i
+        break
+      }
+    }
+  }
+
+  if (targetStageLineIndex === -1) {
+    return { success: false, newBatchNumber: 0, message: `Could not locate Stage ${options.targetStage} header in file` }
+  }
+
+  if (nextStageLineIndex !== -1) {
+    // Insert before the next stage
+    lines.splice(nextStageLineIndex, 0, template)
+    writeFileSync(planPath, lines.join("\n"))
+  } else {
+    // Append to end of file
+    appendFileSync(planPath, template)
+  }
+
+  return {
+    success: true,
+    newBatchNumber,
+    message: `Appended Batch ${newBatchPrefix} to Stage ${options.targetStage}`
+  }
 }
 
 export function appendFixStage(

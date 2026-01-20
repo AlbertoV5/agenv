@@ -110,6 +110,7 @@ export function main(argv: string[] = process.argv): void {
 
     console.log(`Marked workstream "${result.streamId}" as complete`)
     console.log(`   Completed at: ${result.completedAt}`)
+    console.log(`   Report:       ${result.completionPath}`)
   } catch (e) {
     console.error(`Error: ${(e as Error).message}`)
     process.exit(1)

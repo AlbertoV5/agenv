@@ -241,12 +241,12 @@ export interface ThreadDefinition {
 
 /**
  * Batch definition - an ordered group of threads within a stage
- * Batches use numeric prefixes for ordering (00, 01, 02...)
- * Common patterns: 00-setup, 01-implementation, 02-testing
+ * Batches use numeric prefixes for ordering (01, 02...)
+ * Common patterns: 01-implementation, 02-testing
  */
 export interface BatchDefinition {
   id: number // Batch number within stage (0, 1, 2...)
-  prefix: string // Numeric prefix string (e.g., "00", "01")
+  prefix: string // Numeric prefix string (e.g., "01")
   name: string // Batch name (e.g., "setup", "implementation")
   summary: string // Short description of the batch
   threads: ThreadDefinition[]

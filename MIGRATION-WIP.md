@@ -175,59 +175,115 @@ work assign --clear --batch "01.01" --thread "backend"  # Remove assignment
 
 **Integration:** `work continue` now shows assigned agent for active/next task.
 
+### 10. Prompt Generation
+**Requirement:** Generate execution prompts for agents with full thread context.
+**Status:** Completed.
+
+**New files:**
+- `src/lib/prompts.ts` - Thread ID parsing, context gathering, prompt generation
+- `src/cli/prompt.ts` - `work prompt` CLI command
+- `__tests__/lib/prompts.test.ts` - Unit tests (27 tests)
+
+**Types added:**
+- `ThreadId` - Parsed thread ID (stage, batch, thread)
+- `TestRequirements` - Parsed TESTS.md content
+- `PromptContext` - Full context for prompt generation
+- `GeneratePromptOptions` - Options for prompt generation
+
+**Commands:**
+```bash
+work prompt --thread "01.00.01"                # Generate prompt for thread
+work prompt --thread "01.00.02" --stream "001" # Specify workstream
+work prompt --thread "01.00.01" --json         # Output as JSON
+work prompt --thread "01.00.01" --no-tests     # Exclude test section
+work prompt --thread "01.00.01" --no-parallel  # Exclude parallel threads
+```
+
+**Prompt includes:**
+- Thread summary and details from PLAN.md
+- Tasks assigned to the thread with status
+- Stage definition and constitution
+- List of parallel threads for awareness
+- Test requirements from `work/TESTS.md` (if present)
+- Agent assignment information
+- Output directory path
+- Execution instructions
+
+### 11. Completion Summary
+**Requirement:** Auto-generate COMPLETION.md with accomplishments, insights, metrics, and file references.
+**Status:** Completed.
+
+**Features:**
+- Recursive file scanning for output directory indexing.
+- Comprehensive summary generation:
+  - List of completed tasks.
+  - Metrics (Total tasks, completion rate, status breakdown).
+  - Categorized file table with sizes and paths.
+- Automatically generated when running `work complete`.
+
+**Files:**
+- `src/lib/complete.ts` - Report generation logic
+- `src/lib/files.ts` - Refactored `getFilesRecursively` utility
+- `src/cli/complete.ts` - CLI notification of report path
+
+---
+
+### 12. Generalized Thread Documentation
+**Requirement:** Allow descriptive filenames (e.g., `schema.md`) instead of forcing `thread.md`.
+**Status:** Completed.
+
+**Changes:**
+- Updated execution prompts to instruct agents to use descriptive names.
+- Updated `WORKSTREAM.md` specification to reflect flexibility.
+- Updated file scanning logic to capture all files in the output directory regardless of name.
+
+### 13. TESTS.md Support
+**Requirement:** Define test requirements at `work/TESTS.md` (shared across all workstreams) that agents reference.
+**Status:** Completed.
+
+**Features:**
+- `parseTestsMd()` - Parses TESTS.md into structured `{ general: string[], perStage: string[] }` format
+- `getTestRequirements()` - Loads and parses TESTS.md from `work/TESTS.md`
+- Integrated with `work prompt` - Includes parsed test requirements in agent prompts
+- Integrated with `work continue` - Shows test requirements when resuming or starting a task
+
+**Types added:**
+- `TestRequirements` - Parsed test requirements structure
+
+**Files:**
+- `src/lib/prompts.ts` - Added `parseTestsMd`, `TestRequirements` type, updated `getTestRequirements`
+- `src/lib/continue.ts` - Uses `TestRequirements` type for context
+- `src/cli/continue.ts` - Formats and displays parsed test requirements
+- `__tests__/lib/prompts.test.ts` - Unit tests for parsing
+
 ---
 
 ## Test Status
-- **196 tests pass**, 0 failures
-- **TypeScript compiles** with minor pre-existing warnings in tasks-md.ts
+- **218 tests pass**, 0 failures
+- **TypeScript compiles** cleanly
 
 ---
 
 ## Remaining Gaps vs WORKSTREAM.md Spec
 
-### High Priority (Phase 1 Support)
+### Medium Priority
 
-#### 1. Prompt Generation
-**Requirement:** Generate execution prompts for agents with full thread context.
-**Current:** No prompt generation capability.
-**Work needed:**
-- New file: `src/lib/prompts.ts` - Prompt template generation
-- New command: `work prompt --thread "01.00.01"` - Generate thread execution prompt
-- Include: thread summary, tasks, PLAN.md context, parallel threads, `work/TESTS.md` requirements
-
-### Medium Priority (Phase 2-3 Support)
-
-#### 2. COMPLETION.md Generation
-**Requirement:** Auto-generate completion summary with accomplishments, insights, file references.
-**Current:** `generateReport()` and `generateSummary()` exist but output strings, not files.
-**Work needed:**
-- New command: `work complete` (or update existing) - Generate COMPLETION.md file in workstream directory
-- Include: accomplishments template, file index, metrics
-
-#### 3. Fix Batch Support
-**Requirement:** Create fix batches within a stage (not just fix batches within a stage).
+#### Fix Batch Support
+**Requirement:** Create fix batches within a stage (not just fix stages).
 **Current:** `work fix` only appends new stages.
 **Work needed:**
 - Update `src/lib/fix.ts` - Add batch insertion logic
 - Update `src/cli/fix.ts` - Add `--batch` option
 - Command: `work fix --batch --stage N --name "fix-validation"`
 
-#### 4. TESTS.md Support
-**Requirement:** Define test requirements at `work/TESTS.md` (shared across all workstreams) that agents reference.
-**Current:** No test integration.
-**Work needed:**
-- New file: `src/lib/tests-md.ts` - Parser for TESTS.md format
-- Integration with `work continue` to show test commands
-- Integration with `work prompt` to include test requirements
-
 ### Lower Priority
 
-#### 5. Status Vocabulary
+#### Status Vocabulary
 **Spec originally:** `pending | active | blocked | review | complete`
 **Current:** `pending | in_progress | completed | blocked | cancelled`
 **Decision:** Keep current vocabulary (documented in WORKSTREAM.md).
 
-#### 6. Evaluation Phase Formalization
+#### Evaluation Phase Formalization
 **Spec:** End of stage/workstream has formal evaluation gate.
 **Current:** Implicit via task completion and user testing.
 **Work needed:** Optional - could add `work evaluate` command for formal stage sign-off.
@@ -236,16 +292,14 @@ work assign --clear --batch "01.01" --thread "backend"  # Remove assignment
 
 ## Implementation Priorities
 
-Recommended order for continuing implementation:
+### Completed
+1. ~~**AGENTS.md support** - Agent configuration and assignment~~ ✅
+2. ~~**Prompt generation** - Execution prompts for agents~~ ✅
+3. ~~**COMPLETION.md generation** - Final completion summary output~~ ✅
+4. ~~**TESTS.md support** - Parsing, prompt integration, continue integration~~ ✅
 
-### Phase 1 Support (Setup Workstream)
-1. ~~**AGENTS.md support** - Agent configuration and assignment~~ ✅ Completed
-2. **Prompt generation** - Execution prompts for agents
+### Remaining
+1. **Fix batch support** - In-stage fix workflow
 
-### Phase 2-3 Support (Execute & Document)
-3. **COMPLETION.md generation** - Final completion summary output
-4. **Fix batch support** - In-stage fix workflow
-5. **TESTS.md support** - Test requirements integration (at `work/TESTS.md`)
-
-### Optional Enhancements
-6. **Evaluation command** - Formal stage sign-off
+### Optional
+1. **Evaluation command** - Formal stage sign-off
