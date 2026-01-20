@@ -11,7 +11,7 @@ import { validateStreamName } from "../lib/utils.ts"
 interface CreateStreamCliArgs {
   name: string
   repoRoot?: string
-  stages?: number
+  stages: number
 }
 
 function printHelp(): void {
@@ -19,22 +19,22 @@ function printHelp(): void {
 work create - Create a new workstream
 
 Usage:
-  work create --name <name> [--stages <n>]
+  work create --name <name> --stages <n>
 
 Required:
   --name, -n       Workstream name in kebab-case (e.g., "migrate-sql-to-orm")
+  --stages         Number of stages to generate in PLAN.md (1-20)
 
 Optional:
-  --stages         Number of stages to generate in PLAN.md (default: 1)
   --repo-root, -r  Repository root (auto-detected if omitted)
   --help, -h       Show this help message
 
 Examples:
-  # Create a new workstream with 1 stage
-  work create --name migrate-sql-to-orm
+  # Create a workstream with 3 stages
+  work create --name migrate-sql-to-orm --stages 3
 
-  # Create with 4 stages
-  work create --name refactor-auth --stages 4
+  # Create with 5 stages
+  work create --name refactor-auth --stages 5
 
 Workstream Structure:
   Creates a new workstream directory with:
@@ -122,6 +122,11 @@ function parseCliArgs(argv: string[]): CreateStreamCliArgs | null {
   // Validate required args
   if (!parsed.name) {
     console.error("Error: --name is required")
+    return null
+  }
+
+  if (!parsed.stages) {
+    console.error("Error: --stages is required")
     return null
   }
 

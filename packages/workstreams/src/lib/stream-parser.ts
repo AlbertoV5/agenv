@@ -476,15 +476,25 @@ function parseStages(
     // Handle list items
     if (token.type === "list") {
       const list = token as Tokens.List
-      const items = list.items.map((item) => item.text.trim())
 
       if (state.currentSection === "constitution" && state.currentConstitutionSection) {
+        const items = list.items.map((item) => item.text.trim())
         constitutionBuffer[state.currentConstitutionSection].push(...items)
       } else if (state.currentSection === "questions") {
-        questionsBuffer.push(...items)
+        // For questions, preserve checkbox state from marked's task list parsing
+        const questionItems = list.items.map((item) => {
+          if (item.task) {
+            // marked parsed this as a task list item - use its checked property
+            const prefix = item.checked ? "[x]" : "[ ]"
+            return `${prefix} ${item.text.trim()}`
+          }
+          return item.text.trim()
+        })
+        questionsBuffer.push(...questionItems)
       } else if (state.currentSection === "batches" && currentThread) {
         // Lists in threads go to details (any content)
         if (state.currentThreadSection === "details") {
+          const items = list.items.map((item) => item.text.trim())
           threadDetailsBuffer.push(...items.map(item => `- ${item}`))
         }
       }

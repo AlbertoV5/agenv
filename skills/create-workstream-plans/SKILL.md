@@ -16,8 +16,7 @@ description: How to create a workstream plan for development tasks. Plans are fo
 ## Create a Workstream
 
 ```bash
-work create --name "feature-name-kebab-case"
-work create --name "feature-name" --stages 4  # Multiple stages
+work create --name "feature-name" --stages 4  # Stage number required
 ```
 
 ## Structure Overview

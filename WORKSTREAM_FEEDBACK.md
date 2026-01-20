@@ -1,155 +1,181 @@
 # Workstream Planning Feedback
 
-Observations and improvement suggestions for the workstream planning workflow.
+Observations and suggestions from using the workstream planning system.
 
-## What Works Well
+## Session Context
 
-1. **Hierarchy is clear**: Stage → Batch → Thread → Task makes sense
-2. **Separation of concerns**: PLAN.md for human-readable intent, tasks.json for machine tracking
-3. **HITL approval gate**: Requiring `work approve` before adding tasks is a good checkpoint
-4. **Validation**: `work consolidate --dry-run` catches structural issues
-5. **Interactive mode**: `work add-task` without flags prompts for stage/batch/thread selection
-6. **Structure commands**: `work add-batch`, `work add-thread`, `work edit` make iterating faster
-7. **Question blocking**: Approval blocked when open questions exist, with `--force` override
+- **Date:** 2026-01-20
+- **Task:** Planning web visualization feature for workstreams package
+- **Agent:** Claude Opus 4.5 via Claude Code
 
-## Addressed Improvements
+---
 
-### 1. Heading Level Gap
+## What Worked Well
 
-The hierarchy uses H3 → H5 → H6, skipping H4:
-- `### Stage` (H3)
-- `#### Stage Definition/Constitution/Questions/Batches` (H4) - section headers
-- `##### Batch` (H5)
-- `###### Thread` (H6)
+### 1. Hierarchical Structure
+The Stage → Batch → Thread → Task hierarchy maps naturally to parallelizable work. Stages enforce sequential dependencies, while threads within a batch can run concurrently.
 
-This works but is non-intuitive. Could consider restructuring.
+### 2. CLI Workflow
+- `work create --stages N` scaffolds a complete structure
+- `work preview` provides a clear overview
+- `work consolidate` validates structure before approval
+- The commands are discoverable and well-documented
 
-**Status**: Kept as-is. The H4 level is used for stage sections (Definition, Constitution, Questions, Batches).
+### 3. Separation of Plan and Tasks
+PLAN.md holds the design/intent, tasks.json tracks execution. This separation is clean.
 
-### 2. Task Addition Friction (RESOLVED)
+---
 
-~~Currently: `work add-task --stage 1 --batch 1 --thread 2 --name "..."`~~
+## Friction Points
 
-**Implemented**: Interactive mode when flags are omitted:
+### ~~1. Question Resolution Parser Bug~~ FIXED
+
+**Problem:** Marked questions as resolved with `[x]` but they still showed as "open":
+```markdown
+- [x] Use Bun native server vs Express/Hono? (Decided: Bun native)
+```
+
+**Root Cause:** The `marked` lexer parses task list items and sets `item.checked` property, but strips the `[x]` from `item.text`. The parser was trying to regex-match `[x]` in the text where it no longer existed.
+
+**Fix Applied:** Modified `stream-parser.ts` to use `item.task` and `item.checked` properties from marked instead of parsing the checkbox from text.
+
+```typescript
+// Before: tried to parse [x] from text (already stripped by marked)
+const items = list.items.map((item) => item.text.trim())
+
+// After: use marked's task list properties
+const questionItems = list.items.map((item) => {
+  if (item.task) {
+    const prefix = item.checked ? "[x]" : "[ ]"
+    return `${prefix} ${item.text.trim()}`
+  }
+  return item.text.trim()
+})
+```
+
+### 2. Task Creation Workflow Unclear
+
+**Problem:** After approval, the workflow to add tasks wasn't clear:
+- Should tasks be derived automatically from Thread summaries?
+- Should each thread get exactly one task, or multiple?
+- What granularity is expected?
+
+**Suggestion:**
+- Add `work add-tasks-from-threads` command that auto-generates one task per thread
+- Or document the expected task granularity in SKILL.md
+- Clarify: "Each thread typically becomes 1-3 tasks"
+
+### 3. Constitution Template Too Rigid
+
+**Problem:** The Constitution section has enforced sub-structure:
+```markdown
+**Inputs:**
+- <!-- What feeds into this stage -->
+
+**Structure:**
+- <!-- Internal planning... -->
+
+**Outputs:**
+- <!-- What this stage produces -->
+```
+
+This is verbose and not always needed. For simple stages, it's overkill.
+
+**Suggestion:** Make Constitution a free-form section with guidance:
+```markdown
+#### Stage Constitution
+
+Describe how this stage operates: what it needs (inputs), how it's organized (structure), and what it produces (outputs).
+```
+
+This lets agents write naturally while covering the key points.
+
+### 4. Agent Handoff Not Documented
+
+**Problem:** The skill mentions specialized agents receive work, but doesn't explain:
+- How does a planning agent hand off to implementation agents?
+- What format do implementation agents expect?
+- How do agents report back completion?
+
+**Suggestion:** Add a section to SKILL.md on agent handoff:
+```markdown
+## Agent Handoff
+
+### For Planning Agents
+After approval, generate execution prompts:
+  work prompt --stage 1 --batch 1 --thread 1
+
+### For Implementation Agents
+Receive thread context via `work prompt`, execute, then:
+  work update --task "01.01.01.01" --status completed
+```
+
+---
+
+## Suggestions for Implementation
+
+### ~~Priority 1: Fix Question Parser~~ DONE
+- File: `src/lib/stream-parser.ts`
+- Use marked's `item.task` and `item.checked` properties instead of regex parsing
+
+### Priority 2: Simplify Constitution
+- File: `src/lib/generate.ts` (template generation)
+- Remove inner structure, use guidance comment instead
+
+### Priority 3: Auto-Task Generation
+- New command: `work generate-tasks` or flag on consolidate
+- Creates one task per thread using thread summary as task name
+
+### Priority 4: Improve SKILL Documentation
+- Add "Expected Workflow" section with numbered steps
+- Add "Agent Handoff" section
+- Add examples of good vs over-structured plans
+
+---
+
+## Ideas for Future
+
+### 1. Plan Validation Levels
+- `--strict`: All sections must be filled, no open questions
+- `--minimal`: Just needs stages and threads named
+- Default: Current behavior
+
+### 2. Thread Templates
+Pre-defined thread types for common patterns:
+- `--type test` → Thread with test-writing context
+- `--type api` → Thread with API endpoint context
+- `--type refactor` → Thread with refactoring checklist
+
+### 3. Progress Dashboard (This Workstream!)
+The web visualization we're planning would help with:
+- Seeing overall progress across workstreams
+- Identifying blocked threads
+- Tracking agent assignments
+
+### 4. Workstream Inheritance
+For related features, inherit structure from a parent:
 ```bash
-work add-task
-# > Select stage: 1
-# > Select batch: 1
-# > Select thread: 2
-# > Task name: ...
+work create --name "feature-v2" --from "000-feature-v1"
 ```
 
-### 3. Missing Commands (RESOLVED)
+---
 
-~~No `work add-batch`, `work add-thread`, `work edit` commands.~~
+## Summary
 
-**Implemented**:
-- `work add-batch --stage N --name "name"` - Add batch to stage
-- `work add-thread --stage N --batch M --name "name"` - Add thread to batch
-- `work edit` - Open PLAN.md in $EDITOR
+The workstream system has a solid foundation. Main areas for improvement:
 
-### 4. Constitution Verbosity (RESOLVED)
+1. ~~**Parser robustness** - Handle edge cases in markdown parsing~~ FIXED (question parser)
+2. **Workflow clarity** - Document the full plan → tasks → execute → report cycle
+3. **Flexibility** - Allow simpler plans without losing structure for complex ones
+4. **Agent integration** - Make handoff between planning and implementation agents seamless
 
-~~The Constitution section (Requirements, Inputs, Outputs, Flows) is comprehensive but verbose.~~
+The Constitution simplification and better SKILL docs would have the highest immediate impact on usability.
 
-**Simplified** to three optional sections:
-- **Inputs**: What this stage needs (dependencies, data, prior work)
-- **Structure**: Internal planning, architecture diagrams, component relationships
-- **Outputs**: What this stage produces (files, features, artifacts)
+---
 
-The Structure section encourages planning internals and diagrams (mermaid, ASCII art).
+## Change Log
 
-### 5. Questions Section (RESOLVED)
-
-~~Good idea but underutilized.~~
-
-**Implemented**: Open questions now block `work approve`:
-```bash
-work approve
-# Error: Cannot approve plan with open questions
-# Found 2 open question(s):
-#   Stage 1 (Setup): How should we handle auth?
-#   Stage 2 (Views): Use SSR or CSR?
-
-work approve --force  # Override if needed
-```
-
-### 6. Batch Numbering
-
-Currently batches start at 01. Documentation now consistent with 1-indexed batch numbers.
-
-### 7. Progress Visibility (RESOLVED)
-
-~~`work preview` is useful but could show more detail.~~
-
-**Implemented**: Enhanced `work preview` now shows:
-- **Task counts**: Per-thread task counts with completion status (e.g., `[2/5]`)
-- **Dependencies**: Visual indicator of stage dependencies (sequential by default)
-- **Progress bar**: Overall completion percentage per batch and stage
-
-```bash
-work preview
-# Stage 1: Setup [████████░░] 80%
-#   Batch 1: Core Config [3/3] ✓
-#   Batch 2: Dependencies [1/2]
-#     Thread 1: NPM Packages [1/1] ✓
-#     Thread 2: System Deps [0/1]
-#   ↓ depends on Stage 1
-# Stage 2: Implementation [░░░░░░░░░░] 0%
-#   (blocked by Stage 1)
-```
-
-### 8. Name-Based Addressing (RESOLVED)
-
-~~Currently: `work add-task --stage 1 --batch 1 --thread 2`~~
-
-**Implemented**: Commands now accept names or indices:
-```bash
-# By index (original behavior)
-work add-task --stage 1 --batch 1 --thread 2
-
-# By name (new)
-work add-task --stage "Core Infrastructure" --batch "Database Setup" --thread "Migrations"
-
-# Mixed (both work)
-work add-task --stage 1 --batch "Database Setup" --thread 2
-```
-
-Name matching is case-insensitive and supports partial matches:
-```bash
-work add-task --stage "core" --batch "db" --thread "mig"
-```
-
-### 9. Sequential Stage Dependencies (DOCUMENTED)
-
-**Dependency Model**: The workstream follows a strict sequential execution model:
-
-| Unit | Parallel? | Notes |
-|------|-----------|-------|
-| Stages | ❌ No | Must complete in order (Stage N blocks Stage N+1) |
-| Batches | ❌ No | Within a stage, batches are sequential |
-| Threads | ✅ Yes | Within a batch, threads can run in parallel |
-| Tasks | ❌ No | Within a thread, tasks are sequential |
-
-```
-Stage 1 ──────────────────────────────→ Stage 2 ──────────────────→ ...
-  │                                        │
-  Batch 1 ────→ Batch 2                    Batch 1 ────→ Batch 2
-    │             │                          │
-    Thread 1 ═══╗ Thread 1 ═══╗              ...
-    Thread 2 ═══╝ Thread 2 ═══╝
-      │             │
-      Task 1        Task 1
-      Task 2        Task 2
-      ↓             ↓
-```
-
-- **Why sequential stages?** Each stage typically produces outputs required by the next
-- **Why parallel threads?** Threads represent independent work within the same scope
-- **Validation**: `work consolidate` ensures no forward references exist
-
-## Remaining Ideas
-
-- Auto-create tasks from resolved questions
-- Estimated effort tracking per task
-- `work status` command for quick completion summary
+| Date | Change | Files |
+|------|--------|-------|
+| 2026-01-20 | Fixed question parser to use marked's task list properties | `src/lib/stream-parser.ts` |
+| 2026-01-20 | Made `--stages` required in `work create` | `src/cli/create.ts` |

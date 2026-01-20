@@ -1,0 +1,37 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-01-20T15:36:30.500Z",
+  "current_stream": "000-web-visualization",
+  "streams": [
+    {
+      "id": "000-web-visualization",
+      "name": "web-visualization",
+      "order": 0,
+      "size": "medium",
+      "session_estimated": {
+        "length": 4,
+        "unit": "session",
+        "session_minutes": [
+          30,
+          45
+        ],
+        "session_iterations": [
+          4,
+          8
+        ]
+      },
+      "created_at": "2026-01-20T15:35:11.263Z",
+      "updated_at": "2026-01-20T15:36:30.500Z",
+      "path": "work/000-web-visualization",
+      "generated_by": {
+        "workstreams": "0.1.0"
+      },
+      "approval": {
+        "status": "approved",
+        "approved_at": "2026-01-20T15:36:30.500Z",
+        "approved_by": "user",
+        "plan_hash": "dd7fcd795dc42c93c71d33af5457124f02d0fe324977955aba69c4251943ba34"
+      }
+    }
+  ]
+}
