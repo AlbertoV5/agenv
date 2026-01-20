@@ -233,15 +233,9 @@ export interface CompleteStreamOptions {
 /**
  * Constitution definition - the "how" of a stage
  *
- * - inputs: What feeds into this stage
- * - structure: Internal planning, architecture diagrams, component relationships
- * - outputs: What this stage produces
+ * Free-form markdown description of how the stage operates.
  */
-export interface ConstitutionDefinition {
-  inputs: string[]
-  structure: string[]
-  outputs: string[]
-}
+export type ConstitutionDefinition = string
 
 /**
  * Stage question - an unknown or research to-do

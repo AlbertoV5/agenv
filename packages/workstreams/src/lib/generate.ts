@@ -49,17 +49,7 @@ function generateStageTemplate(stageNum: number): string {
 
 #### Stage Constitution
 
-**Inputs:**
-
-- <!-- What feeds into this stage -->
-
-**Structure:**
-
-- <!-- Internal planning, architecture diagrams, component relationships -->
-
-**Outputs:**
-
-- <!-- What this stage produces -->
+Describe how this stage operates: what it needs (inputs), how it's organized (structure), and what it produces (outputs).
 
 #### Stage Questions
 

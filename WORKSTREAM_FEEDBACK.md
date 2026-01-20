@@ -90,25 +90,72 @@ Describe how this stage operates: what it needs (inputs), how it's organized (st
 
 This lets agents write naturally while covering the key points.
 
-### 4. Agent Handoff Not Documented
+### ~~4. Agent Handoff Not Documented~~ FIXED
 
-**Problem:** The skill mentions specialized agents receive work, but doesn't explain:
-- How does a planning agent hand off to implementation agents?
-- What format do implementation agents expect?
-- How do agents report back completion?
+**Problem:** The skill didn't explain the handoff workflow between planning and implementation.
 
-**Suggestion:** Add a section to SKILL.md on agent handoff:
+**Fix Applied:** Added "Workflow Overview" and "Handoff to User" sections to SKILL.md:
+- Clear 8-step workflow for planning scope
+- Explicit statement: "Your scope is **planning only**"
+- User manages agent execution
+- Handoff checklist when prompts are ready
+- Instructions for handling user feedback (blocked tasks, fix stages)
+
+### 5. AGENTS.md and TESTS.md Not Documented in Skills
+
+**Problem:** Two important configuration files are supported but not mentioned in SKILL docs:
+
+**AGENTS.md** (at `work/AGENTS.md`):
+- Defines available agents for workstream execution
+- Used by `work prompt` to include agent context in execution prompts
+- Used by `work assign` to assign agents to threads
+
+Expected format:
 ```markdown
-## Agent Handoff
+# Agents
 
-### For Planning Agents
-After approval, generate execution prompts:
-  work prompt --stage 1 --batch 1 --thread 1
+## Agent Definitions
 
-### For Implementation Agents
-Receive thread context via `work prompt`, execute, then:
-  work update --task "01.01.01.01" --status completed
+### backend-expert
+**Description:** Specializes in database schema, ORM, migrations
+**Best for:** Database setup, complex queries
+**Model:** claude-opus
+
+### frontend-specialist
+**Description:** Focuses on UI components, styling
+**Best for:** Component refactors, style fixes
+**Model:** claude-sonnet
 ```
+
+CLI commands:
+```bash
+work agents                    # List all agents
+work agents --add --name "..." --description "..." --best-for "..." --model "..."
+work agents --remove "name"
+```
+
+**TESTS.md** (at `work/TESTS.md`):
+- Defines test requirements included in agent execution prompts
+- Loaded by `work prompt` (can exclude with `--no-tests`)
+
+Expected format:
+```markdown
+# Tests
+
+## General
+- All changes must pass existing test suite
+- New functionality requires unit tests
+- Integration tests for API changes
+
+## Per-Stage
+- Stage 1: Schema changes require migration tests
+- Stage 2: API endpoints need request/response tests
+```
+
+**Suggestion:** Add these to the planning skill documentation so planning agents know to:
+1. Create AGENTS.md if specialized agents are needed
+2. Create TESTS.md with test requirements for implementation agents
+3. Use `work assign` to map agents to threads before generating prompts
 
 ---
 
@@ -126,10 +173,16 @@ Receive thread context via `work prompt`, execute, then:
 - New command: `work generate-tasks` or flag on consolidate
 - Creates one task per thread using thread summary as task name
 
-### Priority 4: Improve SKILL Documentation
-- Add "Expected Workflow" section with numbered steps
-- Add "Agent Handoff" section
-- Add examples of good vs over-structured plans
+### ~~Priority 4: Improve SKILL Documentation~~ DONE
+- Added "Workflow Overview" with 8-step planning scope
+- Added "Handoff to User" section
+- Clarified Constitution as free-form guidance
+
+### Priority 5: Document AGENTS.md and TESTS.md in Skills
+- Add section explaining AGENTS.md format and `work agents` commands
+- Add section explaining TESTS.md format
+- Show how `work assign` maps agents to threads
+- Mention these in the workflow: create before generating prompts
 
 ---
 
@@ -165,11 +218,12 @@ work create --name "feature-v2" --from "000-feature-v1"
 The workstream system has a solid foundation. Main areas for improvement:
 
 1. ~~**Parser robustness** - Handle edge cases in markdown parsing~~ FIXED (question parser)
-2. **Workflow clarity** - Document the full plan → tasks → execute → report cycle
+2. ~~**Workflow clarity** - Document the full plan → tasks → execute → report cycle~~ FIXED (SKILL.md workflow)
 3. **Flexibility** - Allow simpler plans without losing structure for complex ones
-4. **Agent integration** - Make handoff between planning and implementation agents seamless
+4. ~~**Agent integration** - Make handoff between planning and implementation agents seamless~~ FIXED (handoff section)
+5. **Configuration files undocumented** - AGENTS.md and TESTS.md exist but aren't mentioned in skills
 
-The Constitution simplification and better SKILL docs would have the highest immediate impact on usability.
+Remaining priorities: Constitution simplification, auto-task generation, and documenting AGENTS.md/TESTS.md in skills.
 
 ---
 
@@ -179,3 +233,4 @@ The Constitution simplification and better SKILL docs would have the highest imm
 |------|--------|-------|
 | 2026-01-20 | Fixed question parser to use marked's task list properties | `src/lib/stream-parser.ts` |
 | 2026-01-20 | Made `--stages` required in `work create` | `src/cli/create.ts` |
+| 2026-01-20 | Added workflow overview and handoff documentation | `skills/create-workstream-plans/SKILL.md` |

@@ -22,22 +22,17 @@ import type {
 interface ParseState {
   currentStage: number | null
   currentSection:
-    | "definition"
-    | "constitution"
-    | "questions"
-    | "batches"
-    | null
+  | "definition"
+  | "constitution"
+  | "questions"
+  | "batches"
+  | null
   currentBatch: number | null
   currentThread: number | null
   currentThreadSection:
-    | "summary"
-    | "details"
-    | null
-  currentConstitutionSection:
-    | "inputs"
-    | "structure"
-    | "outputs"
-    | null
+  | "summary"
+  | "details"
+  | null
 }
 
 /**
@@ -294,16 +289,10 @@ function parseStages(
     currentBatch: null,
     currentThread: null,
     currentThreadSection: null,
-    currentConstitutionSection: null,
   }
 
-  // Track content buffers
   let definitionBuffer: string[] = []
-  let constitutionBuffer: ConstitutionDefinition = {
-    inputs: [],
-    structure: [],
-    outputs: [],
-  }
+  let constitutionBuffer: string[] = []
   let questionsBuffer: string[] = []
   let currentBatch: BatchDefinition | null = null
   let batchSummaryBuffer: string[] = []
@@ -335,14 +324,14 @@ function parseStages(
   function saveCurrentStage() {
     if (currentStage) {
       currentStage.definition = definitionBuffer.join("\n").trim()
-      currentStage.constitution = { ...constitutionBuffer }
+      currentStage.constitution = constitutionBuffer.join("\n").trim()
       currentStage.questions = parseQuestions(questionsBuffer)
       saveCurrentBatch()
       stages.push(currentStage)
     }
     currentStage = null
     definitionBuffer = []
-    constitutionBuffer = { inputs: [], structure: [], outputs: [] }
+    constitutionBuffer = []
     questionsBuffer = []
   }
 
@@ -359,7 +348,7 @@ function parseStages(
             id: stageInfo.number,
             name: stageInfo.name,
             definition: "",
-            constitution: { inputs: [], structure: [], outputs: [] },
+            constitution: "",
             questions: [],
             batches: [],
           }
@@ -377,7 +366,6 @@ function parseStages(
           state.currentSection = "definition"
         } else if (lower.includes("constitution")) {
           state.currentSection = "constitution"
-          state.currentConstitutionSection = null
         } else if (lower.includes("questions")) {
           state.currentSection = "questions"
         } else if (lower.includes("batches") || lower.includes("threads")) {
@@ -432,13 +420,9 @@ function parseStages(
       const para = token as Tokens.Paragraph
       const text = para.text
 
-      // Check for bold section markers in constitution
+      // Check for bold section markers in constitution (legacy support or just ignore)
       if (state.currentSection === "constitution") {
-        const conSection = detectConstitutionSection(text)
-        if (conSection) {
-          state.currentConstitutionSection = conSection
-          continue
-        }
+        // Just treat everything as text
       }
 
       // Check for bold section markers in thread
@@ -455,6 +439,10 @@ function parseStages(
         // Skip HTML comments
         if (!text.startsWith("<!--")) {
           definitionBuffer.push(text)
+        }
+      } else if (state.currentSection === "constitution") {
+        if (!text.startsWith("<!--")) {
+          constitutionBuffer.push(text)
         }
       } else if (state.currentSection === "batches" && currentBatch && !currentThread) {
         // Batch summary (text before any thread)
@@ -477,9 +465,9 @@ function parseStages(
     if (token.type === "list") {
       const list = token as Tokens.List
 
-      if (state.currentSection === "constitution" && state.currentConstitutionSection) {
+      if (state.currentSection === "constitution") {
         const items = list.items.map((item) => item.text.trim())
-        constitutionBuffer[state.currentConstitutionSection].push(...items)
+        constitutionBuffer.push(...items.map((item) => `- ${item}`))
       } else if (state.currentSection === "questions") {
         // For questions, preserve checkbox state from marked's task list parsing
         const questionItems = list.items.map((item) => {

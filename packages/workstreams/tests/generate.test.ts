@@ -96,9 +96,7 @@ describe("generateStream", () => {
       expect(content).toContain("#### Stage Batches")
 
       // Constitution parts
-      expect(content).toContain("**Inputs:**")
-      expect(content).toContain("**Outputs:**")
-      expect(content).toContain("**Structure:**")
+      expect(content).toContain("Describe how this stage operates")
 
       // Batch/Thread structure (H5 for batch, H6 for thread)
       expect(content).toContain("##### Batch 01:")
