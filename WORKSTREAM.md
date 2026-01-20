@@ -8,20 +8,22 @@ The framework uses specific nouns to define the scale and relationship of work u
 
 - **Stage**: A major subdivision of a workstream. Each stage should be testable and result in a contained state of the system.
 
-- **Batch**: A group of threads within a stage that must be executed in a specific sequence (e.g., 00-setup, 01-implementation).
+- **Batch**: A group of threads within a stage that must be executed in a specific sequence (e.g., 01-setup, 02-implementation).
 
 - **Thread**: A unit of work within a batch designed for parallelism. Threads are the primary surface area for AI agents to work independently without high dependency overhead.
 
-- **Task**: The most granular action item defined within a thread.
+- **Task**: The most granular action item defined within a thread. Each thread contains as many task as required.
 
 ## Structural Hierarchy
 
-| Level | Execution Logic | Description |
-| :--- | :--- | :--- |
-| Stage | Serial | Large checkpoints; usually ends with an evaluation gate. |
-| Batch | Serial | Numeric-prefixed groups (e.g., 00, 01) to ensure order of operations. |
-| Thread | Parallel | Parallel execution units (e.g., frontend, backend, mobile). |
-| Task | Hybrid | Granular steps within a thread. |
+| Level | Execution Logic | Numbering | Description |
+| :--- | :--- | :--- | :--- |
+| Stage | Serial | 01, 02, 03... | Large checkpoints; usually ends with an evaluation gate. |
+| Batch | Serial | 01, 02, 03... | Numeric-prefixed groups to ensure order of operations. |
+| Thread | Parallel | 01, 02, 03... | Parallel execution units (e.g., frontend, backend, mobile). |
+| Task | Hybrid | 01.01.01.01 | Granular steps within a thread. Format: stage.batch.thread.task |
+
+**All numbering is 1-indexed and zero-padded to 2 digits.**
 
 ## File System Structure
 
@@ -44,11 +46,45 @@ work/
                     └── {descriptive-name}.md
 ```
 
+---
+
+## Skills System
+
+Skills provide instructions for AI agents at different phases of workstream management. Each skill is a focused guide for a specific role.
+
+### Available Skills
+
+| Skill | Purpose | Agent Role |
+|-------|---------|------------|
+| `create-workstream-plans` | Create new workstreams with PLAN.md | Planner |
+| `reviewing-workstream-plans` | Validate and approve plans | Reviewer |
+| `implementing-workstream-plans` | Execute tasks within threads | Executor |
+| `generating-workstream-prompts` | Generate context for execution | Planner |
+
+### Skill Locations
+
+Skills are stored in the repository at `skills/{skill-name}/SKILL.md`.
+
+### Skill Invocation
+
+When an agent needs to perform a workstream operation, it should reference the appropriate skill:
+
+```
+/create-workstream-plans    # Planning agent creating a new workstream
+/reviewing-workstream-plans # Reviewer validating a plan
+/implementing-workstream-plans # Executor working on tasks
+/generating-workstream-prompts # Generating execution context
+```
+
+---
+
 ## Workflow Lifecycle: 3-Phase Model
 
 Every workstream follows a three-phase progression to separate planning, execution, and documentation.
 
 ### Phase 1: Setup Workstream
+
+**Skill:** `create-workstream-plans`
 
 #### 1.1 Planning
 
@@ -56,15 +92,21 @@ The Planner agent discusses requirements with the user before creating the plan:
 
 - Ask clarifying questions about scope, constraints, and goals
 - Identify dependencies and potential risks
-- Create initial PLAN.md with stages, batches, and threads
+- Create workstream: `work create --name "feature-name" --stages N`
+- Fill out PLAN.md with stages, batches, and threads
 - Use a question-driven approach to resolve unknowns
 
+**Planner scope is planning only — no code implementation.**
+
 #### 1.2 Review
+
+**Skill:** `reviewing-workstream-plans`
 
 A Reviewer agent (or human) analyzes the PLAN.md:
 
 - Identifies weaknesses, missing considerations, or risks
 - Checks for proper stage/batch/thread breakdown
+- Validates structure: `work consolidate`
 - Provides structured feedback for revision
 - Iteration continues until plan is solid
 
@@ -77,44 +119,97 @@ Human-in-the-loop approval before execution:
 - If PLAN.md is modified after approval, approval is auto-revoked
 - Approval gates task creation
 
-#### 1.4 Task Serialization
+```bash
+work approve              # Blocked if open questions exist
+work approve --force      # Approve despite open questions
+work approve --revoke     # Revoke approval
+```
 
-After approval, tasks are created from the plan:
+#### 1.4 Task Creation
 
-- `work tasks generate` creates TASKS.md as human-readable intermediate
-- User reviews TASKS.md for accuracy
-- `work tasks serialize` converts TASKS.md to tasks.json
-- TASKS.md is auto-deleted after serialization (tasks.json is source of truth)
+After approval, create tasks using one of two workflows:
 
-#### 1.5 Agent Assignment
+**Option A: TASKS.md Workflow (Recommended for batch creation)**
 
-For each batch, agents are assigned to threads:
+```bash
+work tasks generate    # Creates TASKS.md with placeholders from PLAN.md
+# Edit TASKS.md to fill in task descriptions
+work tasks serialize   # Converts to tasks.json, deletes TASKS.md
+```
 
-- `work/AGENTS.md` defines available agents and their capabilities (shared across all workstreams)
-- User assigns agents to threads for the upcoming batch
+TASKS.md format:
+```markdown
+## Stage 01: Setup
+
+### Batch 01: Core
+
+#### Thread 01: Router
+- [ ] Task 01.01.01.01: Create route definitions
+- [ ] Task 01.01.01.02: Add middleware chain
+
+#### Thread 02: Config
+- [ ] Task 01.01.02.01: Setup environment variables
+```
+
+Status markers: `[ ]` pending, `[x]` completed, `[~]` in_progress, `[!]` blocked, `[-]` cancelled
+
+**Option B: Direct Workflow (One-by-one)**
+
+```bash
+work add-task --stage 1 --batch 1 --thread 1 --name "Create route definitions"
+work add-task   # Interactive mode
+```
+
+Each thread contains as many tasks as required. Task names should be actionable.
+
+#### 1.5 Agent Assignment (Optional)
+
+For complex workstreams with specialized agents:
+
+- Define agents in `work/AGENTS.md`
+- Assign agents to threads: `work assign --thread "01.01.01" --agent "backend-expert"`
 - Assignments are stored in tasks.json
 
 ### Phase 2: Execute Workstream
 
 #### 2.1 Prompt Generation
 
+**Skill:** `generating-workstream-prompts`
+
 The Planner agent creates execution prompts for each thread:
 
+```bash
+work prompt --stage 1 --batch 1 --thread 1
+work prompt --stage 1 --batch 1              # All threads in batch
+```
+
+Prompts include:
 - Thread summary and details from PLAN.md
 - Tasks assigned to the thread
 - Stage definition context
 - List of parallel threads (for awareness)
 - `work/TESTS.md` requirements if present
-- Agent assignment information
+- Agent assignment information from `work/AGENTS.md`
 
 #### 2.2 Agent Execution
 
+**Skill:** `implementing-workstream-plans`
+
 Agents execute their assigned threads:
 
+```bash
+work current --set "000-stream-id"
+work continue                    # Find next task
+work update --task "01.01.01.01" --status in_progress
+# ... do work ...
+work update --task "01.01.01.01" --status completed
+```
+
+Execution guidelines:
 - Reference PLAN.md for context and approach
-- Create descriptive documentation in `./files/{stage}/{batch}/{thread}/{name}.md`
+- Create descriptive documentation in `./files/{stage}/{batch}/{thread}/`
 - If `work/TESTS.md` exists, run tests and make corrections
-- Log breadcrumbs for recovery if interrupted
+- Log breadcrumbs for recovery: `work update --task "ID" --breadcrumb "..."`
 
 #### 2.3 Batch Iteration
 
@@ -128,17 +223,30 @@ Work progresses batch by batch:
 
 When issues are discovered:
 
-- **Fix Batches**: For issues within a stage, append a fix batch (e.g., `02-fix-validation`)
-- **Fix Stages**: For issues after stage completion, append a fix stage (e.g., `stage-3-fix-auth-race`)
-- Planner updates tasks.json and creates fix prompts
+- **Fix Batches**: For issues within a stage, append a fix batch
+  ```bash
+  work add-batch --stage 1 --name "fix-validation"
+  ```
+
+- **Fix Stages**: For issues after stage completion, append a fix stage
+  ```bash
+  work fix --stage 1 --name "fix-auth-race"
+  ```
+
+- Planner updates tasks and creates fix prompts
 - Fix iteration continues until user accepts
 
 ### Phase 3: Documentation & References
 
 #### 3.1 Completion Summary
 
-After all stages complete, the Planner creates COMPLETION.md in the workstream directory:
+After all stages complete:
 
+```bash
+work complete    # Generates COMPLETION.md
+```
+
+COMPLETION.md includes:
 - Key accomplishments
 - Insights and learnings
 - File references (links to outputs in `files/`)
@@ -153,13 +261,7 @@ A Documentation agent updates project documentation:
 - Updates documentation with new information
 - Maintains consistency with existing style
 
-#### 3.3 Reference Generation
-
-The Documentation agent also updates reference documentation:
-
-- API Reference style documentation
-- Generated from code outputs and implementation details
-- Stored in appropriate `docs/` subdirectory
+---
 
 ## File Format Conventions
 
@@ -168,50 +270,43 @@ The Documentation agent also updates reference documentation:
 ```markdown
 # Plan: {Stream Name}
 
+> **Stream ID:** {id} | **Created:** {date}
+
 ## Summary
 Brief overview of the workstream goals.
 
 ## References
 - Link to relevant docs or prior work
 
-### Stage {N}: {Stage Name}
-What this stage accomplishes.
+## Stages
+
+### Stage 01: {Stage Name}
 
 #### Stage Definition
-Detailed definition of scope and goals.
+What this stage accomplishes and its scope.
 
-#### Constitution
-**Requirements:** What must be true when complete
-**Inputs:** What this stage needs
-**Outputs:** What this stage produces
-**Flows:** How data/control flows through
+#### Stage Constitution
+Describe how this stage operates: what it needs (inputs), how it's organized (structure), and what it produces (outputs). This section is free-form — write naturally while covering the key points.
 
-#### Questions
-- [ ] Open questions to resolve
+#### Stage Questions
+- [ ] Open questions to resolve (blocks approval)
+- [x] Resolved questions (with decision noted)
 
-##### Batch {NN}: {Batch Name}
+#### Stage Batches
+
+##### Batch 01: {Batch Name}
 What this batch accomplishes.
 
-###### Thread {X}: {Thread Name}
-**Summary:** Thread purpose
-**Details:** Implementation approach
-```
+###### Thread 01: {Thread Name}
+**Summary:** Thread purpose in one sentence.
+**Details:** Implementation approach, dependencies, code examples.
 
-### TASKS.md Format (Temporary)
+###### Thread 02: {Thread Name}
+**Summary:** Thread purpose.
+**Details:** Implementation details.
 
-```markdown
-# Tasks: {Stream Name}
-
-## Stage 01: {Name}
-
-### Batch 01: {Name}
-
-#### Thread 01: {Name}
-- [ ] Task 01.01.01.01: Description
-- [ ] Task 01.01.01.02: Description
-
-#### Thread 02: {Name}
-- [ ] Task 01.01.02.01: Description
+##### Batch 02: {Batch Name}
+...
 ```
 
 ### AGENTS.md Format (at `work/AGENTS.md`)
@@ -221,17 +316,30 @@ Shared across all workstreams in the repository:
 ```markdown
 # Agents
 
-## Available Agents
-| Agent | Capabilities | Constraints |
-|-------|-------------|-------------|
-| claude-opus | Full codebase, complex reasoning | Rate limited |
-| claude-sonnet | Single file focus, fast | Simpler tasks |
+## Agent Definitions
 
-## Batch Assignments
-| Stream | Stage.Batch | Thread | Agent | Notes |
-|--------|-------------|--------|-------|-------|
-| 001-auth | 01.01 | backend | claude-opus | Complex setup |
-| 001-auth | 01.01 | frontend | claude-sonnet | Config only |
+### backend-expert
+**Description:** Specializes in database schema, ORM, migrations
+**Best for:** Database setup, complex queries, API design
+**Model:** claude-opus
+
+### frontend-specialist
+**Description:** Focuses on UI components, styling, state management
+**Best for:** Component refactors, style fixes, form handling
+**Model:** claude-sonnet
+
+### test-writer
+**Description:** Writes comprehensive test suites
+**Best for:** Unit tests, integration tests, E2E scenarios
+**Model:** claude-sonnet
+```
+
+CLI commands:
+```bash
+work agents                    # List all defined agents
+work agents --add --name "..." --description "..." --best-for "..." --model "..."
+work agents --remove "name"
+work assign --thread "01.01.01" --agent "backend-expert"
 ```
 
 ### TESTS.md Format (at `work/TESTS.md`)
@@ -242,14 +350,17 @@ Shared test configuration for all workstreams:
 # Test Requirements
 
 ## General
-- Test command: `bun test`
-- Type check: `bun tsc --noEmit`
+- All changes must pass existing test suite
+- New functionality requires unit tests
+- Integration tests for API changes
 
-## Per-Stage Tests
-- [ ] Unit tests: `bun test src/lib/`
-- [ ] Integration: `bun test:integration`
-- [ ] E2E tests: `bun test:e2e`
+## Per-Stage
+- Stage 1: Schema changes require migration tests
+- Stage 2: API endpoints need request/response tests
+- Stage 3: UI components need snapshot tests
 ```
+
+Test requirements are included in execution prompts generated by `work prompt`.
 
 ### COMPLETION.md Format (per workstream)
 
@@ -270,7 +381,7 @@ Generated in the workstream directory upon completion:
 ## File References
 | File | Purpose |
 |------|---------|
-| files/stage-1/00-setup/backend/thread.md | Backend setup notes |
+| files/stage-1/01-setup/backend/schema.md | Database schema design |
 | src/lib/feature.ts | Core implementation |
 
 ## Metrics
@@ -279,14 +390,28 @@ Generated in the workstream directory upon completion:
 - Fix iterations: 1
 ```
 
+---
+
 ## Agent Roles
 
-| Role | Responsibilities |
-|------|-----------------|
-| **Planner** | Creates PLAN.md, generates TASKS.md, creates execution prompts, manages fix batches/stages, generates COMPLETION.md |
-| **Reviewer** | Reviews PLAN.md for weaknesses, provides structured feedback, optional review after fixes |
-| **Executor** | Assigned to specific threads, implements tasks, creates descriptive documentation, runs tests |
-| **Documentation** | Reads COMPLETION.md and outputs, updates project docs, generates reference documentation |
+| Role | Skill | Responsibilities |
+|------|-------|-----------------|
+| **Planner** | `create-workstream-plans`, `generating-workstream-prompts` | Creates PLAN.md, adds tasks, creates execution prompts, manages fix batches/stages, generates COMPLETION.md |
+| **Reviewer** | `reviewing-workstream-plans` | Reviews PLAN.md for weaknesses, provides structured feedback, validates structure |
+| **Executor** | `implementing-workstream-plans` | Assigned to specific threads, implements tasks, creates documentation, runs tests |
+| **Documentation** | — | Reads COMPLETION.md and outputs, updates project docs |
+
+### Handoff Between Roles
+
+1. **Planner → Reviewer**: Plan created, ready for review
+2. **Reviewer → Planner**: Feedback provided, needs revision (or approved)
+3. **Planner → User**: Plan approved, prompts generated, ready for execution
+4. **User → Executor**: User starts execution agents with generated prompts
+5. **Executor → User**: Thread complete, ready for next batch
+6. **User → Planner**: Issues found, need fix batch/stage
+7. **Planner → Documentation**: All stages complete, COMPLETION.md ready
+
+---
 
 ## State Management
 
@@ -310,6 +435,8 @@ Agents log their last action in the `breadcrumb` field for recovery:
 
 If an agent fails mid-thread, a "continue" command uses breadcrumbs and existing outputs to orient a new agent instance.
 
+---
+
 ## Handling Failure & Iteration
 
 ### Recovery
@@ -322,7 +449,7 @@ If an agent fails mid-thread:
 ### Fix Batches
 
 For issues within a stage:
-1. Append a fix batch: `work fix --batch --stage N --name "fix-validation"`
+1. Append a fix batch: `work add-batch --stage N --name "fix-validation"`
 2. Creates new batch with threads to address the issue
 3. Planner generates fix prompts for assigned agents
 
@@ -332,3 +459,47 @@ For issues discovered after stage completion:
 1. Append a fix stage: `work fix --stage N --name "fix-auth-race"`
 2. Creates new stage with its own batches and threads
 3. Uses current codebase state as reference
+
+---
+
+## CLI Quick Reference
+
+```bash
+# Workstream management
+work create --name "feature" --stages N    # Create workstream (stages required)
+work current --set "000-feature"           # Set active workstream
+work preview                               # Show structure overview
+work status                                # Show progress
+
+# Structure modifications
+work add-batch --stage 1 --name "testing"
+work add-thread --stage 1 --batch 1 --name "unit-tests"
+work edit                                  # Open PLAN.md
+
+# Validation & approval
+work consolidate                           # Validate PLAN.md
+work approve                               # Approve plan
+work approve --force                       # Approve with open questions
+
+# Task creation (after approval)
+work tasks generate                        # Create TASKS.md from PLAN.md
+work tasks serialize                       # Convert TASKS.md to tasks.json
+work add-task --stage 1 --batch 1 --thread 1 --name "Task description"
+
+# Execution
+work continue                              # Find next task
+work update --task "01.01.01.01" --status completed
+work update --task "01.01.01.01" --breadcrumb "..."
+
+# Agent management
+work agents                                # List agents
+work assign --thread "01.01.01" --agent "name"
+work prompt --stage 1 --batch 1 --thread 1 # Generate prompt
+
+# Fixes
+work add-batch --stage 1 --name "fix-issue"
+work fix --stage 1 --name "fix-critical"
+
+# Completion
+work complete                              # Generate COMPLETION.md
+```

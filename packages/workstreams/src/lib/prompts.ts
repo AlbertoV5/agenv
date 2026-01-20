@@ -371,27 +371,9 @@ export function generateThreadPrompt(
   lines.push("")
 
   // Constitution
-  lines.push("### Constitution")
-  const c = context.stage.constitution
-  if (c.structure.length > 0) {
-    lines.push("**Structure:**")
-    for (const item of c.structure) {
-      lines.push(`- ${item}`)
-    }
-    lines.push("")
-  }
-  if (c.inputs.length > 0) {
-    lines.push("**Inputs:**")
-    for (const input of c.inputs) {
-      lines.push(`- ${input}`)
-    }
-    lines.push("")
-  }
-  if (c.outputs.length > 0) {
-    lines.push("**Outputs:**")
-    for (const output of c.outputs) {
-      lines.push(`- ${output}`)
-    }
+  if (context.stage.constitution) {
+    lines.push("### Constitution")
+    lines.push(context.stage.constitution)
     lines.push("")
   }
 
@@ -501,11 +483,11 @@ export function generateThreadPromptJson(context: PromptContext): object {
     })),
     assignedAgent: context.assignedAgent
       ? {
-          name: context.assignedAgent.name,
-          model: context.assignedAgent.model,
-          description: context.assignedAgent.description,
-          bestFor: context.assignedAgent.bestFor,
-        }
+        name: context.assignedAgent.name,
+        model: context.assignedAgent.model,
+        description: context.assignedAgent.description,
+        bestFor: context.assignedAgent.bestFor,
+      }
       : null,
     testRequirements: context.testRequirements || null,
     outputDir: context.outputDir,

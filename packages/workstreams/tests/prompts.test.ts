@@ -173,7 +173,6 @@ Test summary
 Setup definition
 
 #### Stage Constitution
-**Structure:**
 - Structure 1
 
 #### Stage Batches
@@ -210,7 +209,6 @@ Test summary
 Setup definition
 
 #### Stage Constitution
-**Structure:**
 - Structure 1
 
 #### Stage Batches
@@ -247,7 +245,6 @@ Test summary
 Setup definition
 
 #### Stage Constitution
-**Structure:**
 - Structure 1
 
 #### Stage Batches
@@ -387,7 +384,6 @@ Test summary
 Setup
 
 #### Stage Constitution
-**Requirements:**
 - Req
 
 #### Stage Batches
@@ -465,7 +461,7 @@ describe("generateThreadPrompt", () => {
         id: 1,
         name: "Setup",
         definition: "Setup the project",
-        constitution: "",
+        constitution: "Test constitution",
         questions: [],
         batches: [],
       },
@@ -509,6 +505,7 @@ describe("generateThreadPrompt", () => {
     expect(prompt).toContain("# Thread Execution: Backend")
     expect(prompt).toContain("Test Stream")
     expect(prompt).toContain("claude-opus")
+    expect(prompt).toContain("Test constitution")
     expect(prompt).toContain("Backend setup")
     expect(prompt).toContain("Task 1")
     expect(prompt).toContain("Frontend")
