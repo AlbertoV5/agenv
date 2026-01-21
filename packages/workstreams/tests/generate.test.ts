@@ -49,7 +49,6 @@ describe("generateStream", () => {
       expect(existsSync(streamDir)).toBe(true)
       expect(existsSync(join(streamDir, "PLAN.md"))).toBe(true)
       expect(existsSync(join(streamDir, "tasks.json"))).toBe(true)
-      expect(existsSync(join(streamDir, "files"))).toBe(true)
     })
 
     test("does not create checklist or principle directories", async () => {
@@ -155,19 +154,7 @@ describe("generateStream", () => {
     })
   })
 
-  describe("files directory", () => {
-    test("creates empty files directory", () => {
-      const args = createGenerateArgs("test-feature", tempDir)
-      generateStream(args)
 
-      const filesDir = join(tempDir, "work/000-test-feature/files")
-      expect(existsSync(filesDir)).toBe(true)
-
-      // Directory should be empty (no README.md)
-      const files = readdirSync(filesDir)
-      expect(files.length).toBe(0)
-    })
-  })
 
   describe("index.json updates", () => {
     test("updates index.json with workstream metadata", async () => {
