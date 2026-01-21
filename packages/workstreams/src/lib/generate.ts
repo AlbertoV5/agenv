@@ -131,7 +131,6 @@ function generateTasksJson(streamId: string): TasksFile {
  * Creates a new workstream with:
  * - PLAN.md at workstream root (structured markdown)
  * - tasks.json at workstream root (empty, populated by add-task)
- * - files/ (flexible space for outputs)
  */
 export function generateStream(args: GenerateStreamArgs): GenerateStreamResult {
   const workDir = getWorkDir(args.repoRoot)
@@ -158,9 +157,8 @@ export function generateStream(args: GenerateStreamArgs): GenerateStreamResult {
   const streamPath = `work/${streamId}`
   const streamDir = join(workDir, streamId)
 
-  // Create directories
+  // Create stream directory
   mkdirSync(streamDir, { recursive: true })
-  mkdirSync(join(streamDir, "files"), { recursive: true })
 
   // Generate PLAN.md
   atomicWriteFile(

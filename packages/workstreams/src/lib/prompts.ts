@@ -46,7 +46,6 @@ export interface PromptContext {
   tasks: Task[]
   parallelThreads: ThreadDefinition[]
   agentName?: string
-  outputDir: string
 }
 
 /**
@@ -190,13 +189,6 @@ export function getPromptContext(
   const assignedAgent = tasks.find((t) => t.assigned_agent)?.assigned_agent
   const agentName = assignedAgent
 
-  // Calculate output directory path
-  const safeBatchName = batch.name.replace(/[^a-zA-Z0-9_-]/g, "-").toLowerCase()
-  const safeThreadName = thread.name
-    .replace(/[^a-zA-Z0-9_-]/g, "-")
-    .toLowerCase()
-  const outputDir = `work/${streamId}/files/stage-${threadId.stage}/${batch.prefix}-${safeBatchName}/${safeThreadName}`
-
   return {
     threadId,
     threadIdString: threadIdStr,
@@ -208,7 +200,6 @@ export function getPromptContext(
     tasks,
     parallelThreads,
     agentName,
-    outputDir,
   }
 }
 
@@ -241,7 +232,7 @@ export function generateThreadPrompt(
   )
   lines.push("")
 
-  lines.push("This is the thread you are responsible for:")
+  lines.push("This is your thread:")
   lines.push("")
   // Thread title and id
   lines.push(`"${context.thread.name}" (${context.thread.id})`)
@@ -268,20 +259,26 @@ export function generateThreadPrompt(
   }
   lines.push("")
 
-  // Output location
-  lines.push(
-    `Your working directory for creating additional documentation or scripts (if any) is: \`${context.outputDir}/\``,
-  )
-  lines.push("")
-
   // Format batch ID for command suggestion
   const batchId = `${context.stage.id.toString().padStart(2, "0")}.${context.batch.id.toString().padStart(2, "0")}`
 
+  // Load additional documentation from work/DOCS.md
+  const docsPath = join(getWorkDir(process.cwd()), "DOCS.md")
+  if (!existsSync(docsPath)) {
+    throw new Error(`work/DOCS.md not found at ${docsPath}. This file is required to generate prompts.`)
+  }
+  const docsContent = readFileSync(docsPath, "utf-8")
+  lines.push("## Additional Documentation")
+  lines.push("")
+  lines.push(docsContent.trim())
+  lines.push("")
+
   // Skill instruction
-  lines.push("Use the `implementing-workstream-plans` skill.")
   lines.push(
     `When listing tasks, use \`work list --tasks --batch "${batchId}"\` to see tasks for this batch only.`,
   )
+  lines.push("")
+  lines.push("Use the `implementing-workstream-plans` skill.")
   lines.push("")
 
   return lines.join("\n")
@@ -332,6 +329,5 @@ export function generateThreadPromptJson(context: PromptContext): object {
       name: t.name,
       summary: t.summary,
     })),
-    outputDir: context.outputDir,
   }
 }

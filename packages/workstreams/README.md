@@ -74,7 +74,6 @@ work/
   └── 001-feature-name/   # Individual workstream directory
       ├── PLAN.md         # Stages, batches, threads, documentation
       ├── tasks.json      # Task tracking
-      └── files/          # Output files
 ```
 
 **Task ID Format:** `{stage}.{batch}.{thread}.{task}` (e.g., `01.01.02.03` = Stage 01, Batch 01, Thread 02, Task 03)
