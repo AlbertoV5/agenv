@@ -18,6 +18,7 @@ import { getGitHubAuth, validateAuth, ensureGitHubAuth } from "../lib/github/aut
 import { createWorkstreamBranch, formatBranchName } from "../lib/github/branches.ts"
 import { createThreadIssue, storeThreadIssueMeta, type CreateThreadIssueInput } from "../lib/github/issues.ts"
 import { ensureWorkstreamLabels } from "../lib/github/labels.ts"
+import { syncIssueStates, type SyncIssueStatesResult } from "../lib/github/sync.ts"
 import type { Task } from "../lib/types.ts"
 
 type Subcommand = "enable" | "disable" | "status" | "create-branch" | "create-issues" | "sync"
@@ -163,6 +164,37 @@ Examples:
 
   # Create branch from specific base
   work github create-branch --from develop
+`)
+}
+
+function printSyncHelp(): void {
+  console.log(`
+work github sync - Sync issue states with local task status
+
+Usage:
+  work github sync [options]
+
+Options:
+  --stream, -s   Workstream ID or name (uses current if omitted)
+  --json, -j     Output as JSON
+  --help, -h     Show this help message
+
+Description:
+  Synchronizes GitHub issue states with local task status. For completed
+  threads with open issues, this command closes the issues and updates
+  the github_issue.state in tasks.json.
+
+  Reports: "Closed N issues, M unchanged"
+
+Examples:
+  # Sync all issue states for current workstream
+  work github sync
+
+  # Sync for specific workstream
+  work github sync --stream "002-github-integration"
+
+  # Output as JSON
+  work github sync --json
 `)
 }
 
@@ -866,6 +898,176 @@ async function statusCommand(argv: string[]): Promise<void> {
 }
 
 // ============================================
+// SUBCOMMAND: sync
+// ============================================
+
+interface SyncArgs {
+  repoRoot?: string
+  streamId?: string
+  json: boolean
+}
+
+function parseSyncArgs(argv: string[]): SyncArgs | null {
+  const args = argv.slice(3) // Skip: bun, work-github, sync
+  const parsed: SyncArgs = { json: false }
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i]
+    const next = args[i + 1]
+
+    switch (arg) {
+      case "--repo-root":
+      case "-r":
+        if (!next) {
+          console.error("Error: --repo-root requires a value")
+          return null
+        }
+        parsed.repoRoot = next
+        i++
+        break
+
+      case "--stream":
+      case "-s":
+        if (!next) {
+          console.error("Error: --stream requires a value")
+          return null
+        }
+        parsed.streamId = next
+        i++
+        break
+
+      case "--json":
+      case "-j":
+        parsed.json = true
+        break
+
+      case "--help":
+      case "-h":
+        printSyncHelp()
+        process.exit(0)
+    }
+  }
+
+  return parsed
+}
+
+async function syncCommand(argv: string[]): Promise<void> {
+  const cliArgs = parseSyncArgs(argv)
+  if (!cliArgs) {
+    console.error("\nRun 'work github sync --help' for usage information.")
+    process.exit(1)
+  }
+
+  // Auto-detect repo root if not provided
+  let repoRoot: string
+  try {
+    repoRoot = cliArgs.repoRoot ?? getRepoRoot()
+  } catch (e) {
+    console.error((e as Error).message)
+    process.exit(1)
+  }
+
+  // Check if GitHub is enabled
+  const enabled = await isGitHubEnabled(repoRoot)
+  if (!enabled) {
+    console.error("Error: GitHub integration is not enabled")
+    console.error("Run 'work github enable' to enable it")
+    process.exit(1)
+  }
+
+  // Ensure auth is available
+  try {
+    await ensureGitHubAuth()
+  } catch (error) {
+    console.error(`Error: ${(error as Error).message}`)
+    process.exit(1)
+  }
+
+  // Load index and get stream
+  let index
+  try {
+    index = loadIndex(repoRoot)
+  } catch (e) {
+    console.error((e as Error).message)
+    process.exit(1)
+  }
+
+  const resolvedStreamId = resolveStreamId(index, cliArgs.streamId)
+  if (!resolvedStreamId) {
+    console.error("Error: No workstream specified and no current workstream set.")
+    console.error("Use --stream to specify a workstream, or run 'work current --set <stream>'")
+    process.exit(1)
+  }
+
+  const stream = getStream(index, resolvedStreamId)
+
+  // Sync issue states
+  if (!cliArgs.json) {
+    console.log(`Syncing issue states for workstream: ${stream.id}`)
+    console.log("")
+  }
+
+  let result: SyncIssueStatesResult
+  try {
+    result = await syncIssueStates(repoRoot, stream.id)
+  } catch (error) {
+    console.error(`Error: ${(error as Error).message}`)
+    process.exit(1)
+  }
+
+  // Output results
+  if (cliArgs.json) {
+    console.log(JSON.stringify({
+      streamId: stream.id,
+      streamName: stream.name,
+      ...result,
+    }, null, 2))
+  } else {
+    // Report closed issues
+    if (result.closed.length > 0) {
+      console.log(`Closed ${result.closed.length} issue(s):`)
+      for (const item of result.closed) {
+        console.log(`  [${item.threadKey}] ${item.threadName}`)
+        console.log(`    #${item.issueNumber}: ${item.issueUrl}`)
+      }
+      console.log("")
+    }
+
+    // Report unchanged issues
+    if (result.unchanged.length > 0) {
+      console.log(`Unchanged ${result.unchanged.length} issue(s):`)
+      for (const item of result.unchanged) {
+        console.log(`  [${item.threadKey}] ${item.threadName}: ${item.reason}`)
+      }
+      console.log("")
+    }
+
+    // Report errors
+    if (result.errors.length > 0) {
+      console.log(`Errors ${result.errors.length}:`)
+      for (const item of result.errors) {
+        console.log(`  [${item.threadKey}] ${item.threadName}: ${item.error}`)
+      }
+      console.log("")
+    }
+
+    // Summary
+    const closedCount = result.closed.length
+    const unchangedCount = result.unchanged.length
+    const errorCount = result.errors.length
+
+    if (closedCount === 0 && unchangedCount === 0 && errorCount === 0) {
+      console.log("No issues to sync (no threads have associated GitHub issues)")
+    } else {
+      console.log(`Summary: Closed ${closedCount} issues, ${unchangedCount} unchanged`)
+      if (errorCount > 0) {
+        console.log(`  ${errorCount} error(s) occurred`)
+      }
+    }
+  }
+}
+
+// ============================================
 // MAIN
 // ============================================
 
@@ -915,10 +1117,8 @@ export function main(argv: string[] = process.argv): void {
       break
 
     case "sync":
-      // TODO: Implement in later thread (04.02.03)
-      console.error(`Subcommand '${subcommand}' is not yet implemented.`)
-      console.error("This will be implemented in a later thread.")
-      process.exit(1)
+      syncCommand(argv)
+      break
   }
 }
 

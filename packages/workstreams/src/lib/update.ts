@@ -7,6 +7,7 @@
 import type { TaskStatus, StreamMetadata, Task } from "./types.ts"
 import { updateTaskStatus, getTaskById, parseTaskId } from "./tasks.ts"
 import { ensureTaskFilesDir } from "./files.ts"
+import { checkAndCloseThreadIssue } from "./github/sync.ts"
 
 export interface UpdateTaskArgs {
   repoRoot: string
@@ -69,6 +70,20 @@ export function updateTask(args: UpdateTaskArgs): UpdateTaskResult {
   // Ensure output directory exists when task is started
   if (args.status === "in_progress") {
     ensureTaskFilesDir(args.repoRoot, args.stream.id, updatedTask)
+  }
+
+  // Check if thread is complete and close GitHub issue if needed
+  if (args.status === "completed") {
+    checkAndCloseThreadIssue(args.repoRoot, args.stream.id, args.taskId)
+      .then((result) => {
+        if (result.closed && result.issueNumber) {
+          console.log(`Closed GitHub issue #${result.issueNumber} (thread complete)`)
+        }
+      })
+      .catch((error) => {
+        // Don't fail the task update if GitHub fails
+        console.error("Failed to check/close GitHub issue:", error)
+      })
   }
 
   return {
