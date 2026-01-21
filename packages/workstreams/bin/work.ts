@@ -56,6 +56,7 @@ import { main as multiNavigatorMain } from "../src/cli/multi-navigator.ts"
 import { main as multiGridMain } from "../src/cli/multi-grid.ts"
 import { main as serveMain } from "../src/cli/serve.ts"
 import { main as treeMain } from "../src/cli/tree.ts"
+import { main as githubMain } from "../src/cli/github.ts"
 
 const SUBCOMMANDS = {
   init: initMain,
@@ -95,6 +96,7 @@ const SUBCOMMANDS = {
   "multi-grid": multiGridMain,
   serve: serveMain,
   tree: treeMain,
+  github: githubMain,
 } as const
 
 type Subcommand = keyof typeof SUBCOMMANDS
@@ -142,6 +144,7 @@ Commands:
   export      Export workstream data (md, csv, json)
   serve       Launch web visualization server
   tree        Show workstream structure tree
+  github      Manage GitHub integration (enable, create-branch, etc.)
 
 Options:
   --help, -h    Show this help message

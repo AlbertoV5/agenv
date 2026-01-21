@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "stream_id": "002-github-integration",
-  "last_updated": "2026-01-21T19:48:16.600Z",
+  "last_updated": "2026-01-21T20:02:13.672Z",
   "tasks": [
     {
       "id": "01.01.01.01",
@@ -609,10 +609,11 @@
       "stage_name": "CLI Commands",
       "batch_name": "Core Commands",
       "thread_name": "GitHub CLI Entry Point",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-21T17:35:00.745Z",
-      "updated_at": "2026-01-21T17:35:22.661Z",
-      "assigned_agent": "backend-heavy-hitter"
+      "updated_at": "2026-01-21T19:59:59.136Z",
+      "assigned_agent": "backend-heavy-hitter",
+      "report": "Subcommand router already existed with create-branch implemented. Added enable, disable, status subcommands and stubs for create-issues and sync."
     },
     {
       "id": "04.01.01.02",
@@ -620,10 +621,11 @@
       "stage_name": "CLI Commands",
       "batch_name": "Core Commands",
       "thread_name": "GitHub CLI Entry Point",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-21T17:35:00.745Z",
-      "updated_at": "2026-01-21T17:35:22.661Z",
-      "assigned_agent": "backend-heavy-hitter"
+      "updated_at": "2026-01-21T20:00:00.230Z",
+      "assigned_agent": "backend-heavy-hitter",
+      "report": "Implemented enableCommand() which calls enableGitHub() from config.ts, auto-detects repo from git remote origin."
     },
     {
       "id": "04.01.01.03",
@@ -631,10 +633,11 @@
       "stage_name": "CLI Commands",
       "batch_name": "Core Commands",
       "thread_name": "GitHub CLI Entry Point",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-21T17:35:00.745Z",
-      "updated_at": "2026-01-21T17:35:22.662Z",
-      "assigned_agent": "backend-heavy-hitter"
+      "updated_at": "2026-01-21T20:00:00.864Z",
+      "assigned_agent": "backend-heavy-hitter",
+      "report": "Implemented disableCommand() which calls disableGitHub() from config.ts."
     },
     {
       "id": "04.01.01.04",
@@ -642,10 +645,11 @@
       "stage_name": "CLI Commands",
       "batch_name": "Core Commands",
       "thread_name": "GitHub CLI Entry Point",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-21T17:35:00.745Z",
-      "updated_at": "2026-01-21T17:35:22.662Z",
-      "assigned_agent": "backend-heavy-hitter"
+      "updated_at": "2026-01-21T20:00:01.756Z",
+      "assigned_agent": "backend-heavy-hitter",
+      "report": "Implemented statusCommand() showing enabled status, repository, branch prefix, auth status/source, and label configuration."
     },
     {
       "id": "04.01.01.05",
@@ -653,10 +657,11 @@
       "stage_name": "CLI Commands",
       "batch_name": "Core Commands",
       "thread_name": "GitHub CLI Entry Point",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-21T17:35:00.745Z",
-      "updated_at": "2026-01-21T17:35:22.662Z",
-      "assigned_agent": "backend-heavy-hitter"
+      "updated_at": "2026-01-21T20:00:02.917Z",
+      "assigned_agent": "backend-heavy-hitter",
+      "report": "Already implemented - github command was already added to bin/work.ts SUBCOMMANDS and help text."
     },
     {
       "id": "04.01.02.01",
@@ -664,10 +669,11 @@
       "stage_name": "CLI Commands",
       "batch_name": "Core Commands",
       "thread_name": "Issue Commands",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-21T17:35:00.745Z",
-      "updated_at": "2026-01-21T17:35:22.698Z",
-      "assigned_agent": "backend-heavy-hitter"
+      "updated_at": "2026-01-21T20:01:32.938Z",
+      "assigned_agent": "backend-heavy-hitter",
+      "report": "Implemented create-issues subcommand with --batch flag in src/cli/github.ts. Added parseCreateIssuesArgs, createIssuesCommand, ThreadInfo interface, and helper functions for grouping/filtering threads."
     },
     {
       "id": "04.01.02.02",
@@ -675,10 +681,11 @@
       "stage_name": "CLI Commands",
       "batch_name": "Core Commands",
       "thread_name": "Issue Commands",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-21T17:35:00.745Z",
-      "updated_at": "2026-01-21T17:35:22.699Z",
-      "assigned_agent": "backend-heavy-hitter"
+      "updated_at": "2026-01-21T20:01:47.635Z",
+      "assigned_agent": "backend-heavy-hitter",
+      "report": "The --stage flag was implemented as part of 04.01.02.01. It filters threads by stage number via filterThreadsByStage function."
     },
     {
       "id": "04.01.02.03",
@@ -686,10 +693,11 @@
       "stage_name": "CLI Commands",
       "batch_name": "Core Commands",
       "thread_name": "Issue Commands",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-21T17:35:00.745Z",
-      "updated_at": "2026-01-21T17:35:22.699Z",
-      "assigned_agent": "backend-heavy-hitter"
+      "updated_at": "2026-01-21T20:02:01.471Z",
+      "assigned_agent": "backend-heavy-hitter",
+      "report": "No-args mode implemented as part of 04.01.02.01. When no filter is specified, filterPendingThreads is used to create issues for all threads that don't have issues yet."
     },
     {
       "id": "04.01.02.04",
@@ -697,10 +705,11 @@
       "stage_name": "CLI Commands",
       "batch_name": "Core Commands",
       "thread_name": "Issue Commands",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-21T17:35:00.745Z",
-      "updated_at": "2026-01-21T17:35:22.699Z",
-      "assigned_agent": "backend-heavy-hitter"
+      "updated_at": "2026-01-21T20:02:13.672Z",
+      "assigned_agent": "backend-heavy-hitter",
+      "report": "Issue URLs displayed in output: for text output shows URL under each thread, for JSON output includes issueUrl in created array. Implemented in createIssuesCommand."
     },
     {
       "id": "04.01.03.01",
@@ -708,10 +717,11 @@
       "stage_name": "CLI Commands",
       "batch_name": "Core Commands",
       "thread_name": "Branch Commands",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-21T17:35:00.745Z",
-      "updated_at": "2026-01-21T17:35:22.736Z",
-      "assigned_agent": "backend-heavy-hitter"
+      "updated_at": "2026-01-21T19:59:22.386Z",
+      "assigned_agent": "backend-heavy-hitter",
+      "report": "Created src/cli/github.ts with create-branch subcommand and router infrastructure. Added github command to bin/work.ts."
     },
     {
       "id": "04.01.03.02",
@@ -719,10 +729,11 @@
       "stage_name": "CLI Commands",
       "batch_name": "Core Commands",
       "thread_name": "Branch Commands",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-21T17:35:00.745Z",
-      "updated_at": "2026-01-21T17:35:22.736Z",
-      "assigned_agent": "backend-heavy-hitter"
+      "updated_at": "2026-01-21T19:59:23.404Z",
+      "assigned_agent": "backend-heavy-hitter",
+      "report": "Implemented --stream/-s flag to specify workstream ID for branch creation."
     },
     {
       "id": "04.01.03.03",
@@ -730,10 +741,11 @@
       "stage_name": "CLI Commands",
       "batch_name": "Core Commands",
       "thread_name": "Branch Commands",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-21T17:35:00.745Z",
-      "updated_at": "2026-01-21T17:35:22.737Z",
-      "assigned_agent": "backend-heavy-hitter"
+      "updated_at": "2026-01-21T19:59:24.168Z",
+      "assigned_agent": "backend-heavy-hitter",
+      "report": "Implemented --from/-f flag to specify base branch (uses default detection when omitted)."
     },
     {
       "id": "04.01.03.04",
@@ -741,10 +753,11 @@
       "stage_name": "CLI Commands",
       "batch_name": "Core Commands",
       "thread_name": "Branch Commands",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-21T17:35:00.745Z",
-      "updated_at": "2026-01-21T17:35:22.737Z",
-      "assigned_agent": "backend-heavy-hitter"
+      "updated_at": "2026-01-21T19:59:24.902Z",
+      "assigned_agent": "backend-heavy-hitter",
+      "report": "Output shows branch name, SHA, URL, and checkout confirmation message."
     },
     {
       "id": "04.02.01.01",
