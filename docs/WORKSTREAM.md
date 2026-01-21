@@ -111,7 +111,7 @@ A Reviewer agent (or human) analyzes the PLAN.md:
 
 - Identifies weaknesses, missing considerations, or risks
 - Checks for proper stage/batch/thread breakdown
-- Validates structure: `work consolidate`
+- Validates structure: `work validate plan`
 - Provides structured feedback for revision
 - Iteration continues until plan is solid
 
@@ -488,6 +488,7 @@ work create --name "feature" --stages N    # Create workstream (stages required)
 work current --set "000-feature"           # Set active workstream
 work preview                               # Show structure overview
 work status                                # Show progress
+work list                                  # List tasks and status
 
 # Structure modifications
 work add-batch --stage 1 --name "testing"
@@ -495,7 +496,8 @@ work add-thread --stage 1 --batch 1 --name "unit-tests"
 work edit                                  # Open PLAN.md
 
 # Validation & approval
-work consolidate                           # Validate PLAN.md
+work validate plan                       # Validate PLAN.md schema
+work check plan                            # Check for errors and open questions
 work approve                               # Approve plan
 work approve --force                       # Approve with open questions
 
@@ -505,6 +507,7 @@ work tasks serialize                       # Convert TASKS.md to tasks.json
 work add-task --stage 1 --batch 1 --thread 1 --name "Task description"
 
 # Execution
+work multi --batch "01.01"                 # Execute batch in parallel (tmux)
 work continue                              # Find next task
 work update --task "01.01.01.01" --status completed
 work update --task "01.01.01.01" --breadcrumb "..."

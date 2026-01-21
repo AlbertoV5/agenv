@@ -108,10 +108,9 @@ work edit       # Open PLAN.md in editor
 
 ```bash
 work preview      # Shows structure with progress
-work validate plan  # Validates PLAN.md structure and reports open questions
-work check plan     # Lists all unchecked items with line numbers
+work validate plan  # Validates PLAN.md structure (schema only)
+work check plan     # Comprehensive check (schema, open questions, missing inputs)
 work approve      # Approve plan (blocked if open questions)
-work approve --force  # Approve with open questions
 ```
 
 ## Review Checkpoint: PLAN.md

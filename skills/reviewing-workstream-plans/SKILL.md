@@ -17,8 +17,8 @@ work edit                # Open PLAN.md to read details
 ## Validate Structure
 
 ```bash
-work validate plan       # Checks for schema errors, open questions, missing inputs
-work check plan          # Lists all unchecked [ ] items with line numbers
+work validate plan       # Checks for schema errors
+work check plan          # Check for open questions, missing inputs, and schema errors
 ```
 
 ## Manage Approval
