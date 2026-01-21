@@ -329,6 +329,9 @@ export function generateThreadPrompt(
 
   lines.push("This is the thread you are responsible for:")
   lines.push("")
+  // Thread title and id
+  lines.push(`"${context.thread.name}" (${context.thread.id})`)
+  lines.push("")
 
   // Thread summary
   lines.push("## Thread Summary")

@@ -550,7 +550,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
 
         console.log("# Create tmux session (Window 0: Dashboard)")
         const firstThread = threads[0]!
-        const firstCmd = buildRunCommand(port, firstThread.model, firstThread.promptPath)
+        const firstCmd = buildRunCommand(port, firstThread.model, firstThread.promptPath, firstThread.threadName)
         console.log(buildCreateSessionCommand(sessionName, "Dashboard", firstCmd))
         console.log("")
 
@@ -558,7 +558,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
         if (threads.length > 1) {
             for (let i = 1; i < threads.length; i++) {
                 const thread = threads[i]!
-                const cmd = buildRunCommand(port, thread.model, thread.promptPath)
+                const cmd = buildRunCommand(port, thread.model, thread.promptPath, thread.threadName)
                 // Use thread ID as window name
                 console.log(buildAddWindowCommand(sessionName, thread.threadId, cmd))
             }
@@ -623,7 +623,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     // Windows 1+: Hidden windows for threads 5+ (for pagination)
 
     const firstThread = threads[0]!
-    const firstCmd = buildRunCommand(port, firstThread.model, firstThread.promptPath)
+    const firstCmd = buildRunCommand(port, firstThread.model, firstThread.promptPath, firstThread.threadName)
 
     // Create session with first thread in Window 0
     createSession(sessionName, "Grid", firstCmd)
@@ -639,7 +639,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     const gridCommands = [firstCmd]
     for (let i = 1; i < Math.min(4, threads.length); i++) {
         const thread = threads[i]!
-        const cmd = buildRunCommand(port, thread.model, thread.promptPath)
+        const cmd = buildRunCommand(port, thread.model, thread.promptPath, thread.threadName)
         gridCommands.push(cmd)
         console.log(`  Grid: Thread ${i + 1} - ${thread.threadName}`)
     }
@@ -655,7 +655,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
         console.log("  Creating hidden windows for pagination...")
         for (let i = 4; i < threads.length; i++) {
             const thread = threads[i]!
-            const cmd = buildRunCommand(port, thread.model, thread.promptPath)
+            const cmd = buildRunCommand(port, thread.model, thread.promptPath, thread.threadName)
             const windowName = `T${i + 1}`
             addWindow(sessionName, windowName, cmd)
             console.log(`  Hidden: ${windowName} - ${thread.threadName}`)
@@ -671,7 +671,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
 
         // Build thread command environment variables for respawn
         const threadCmdEnv = threads.map((t, i) => {
-            const cmd = buildRunCommand(port, t.model, t.promptPath)
+            const cmd = buildRunCommand(port, t.model, t.promptPath, t.threadName)
             return `THREAD_CMD_${i + 1}="${cmd}"`
         }).join(" ")
 

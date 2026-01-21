@@ -1,8 +1,5 @@
 # Test Requirements
 
 ## General
-- All changes must pass existing test suite
-- New functionality requires tests
-
-## Per-Stage
-- (Add stage-specific test requirements here)
+- Tests are under ./packages/{package}/tests/*
+- Run tests with `bun run test` inside the package.

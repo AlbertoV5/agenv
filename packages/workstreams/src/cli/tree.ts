@@ -12,6 +12,7 @@ import type { Task, TaskStatus } from "../lib/types.ts"
 interface TreeCliArgs {
     repoRoot?: string
     streamId?: string
+    batchId?: string
 }
 
 function printHelp(): void {
@@ -19,16 +20,18 @@ function printHelp(): void {
 work tree - Show workstream structure tree
 
 Usage:
-  work tree [--stream <stream-id>]
+  work tree [--stream <stream-id>] [--batch <batch-id>]
 
 Options:
   --repo-root, -r  Repository root (auto-detected if omitted)
   --stream, -s     Workstream ID or name (uses current if not specified)
+  --batch, -b      Filter to a specific batch (e.g., "01.01")
   --help, -h       Show this help message
 
 Examples:
   work tree
   work tree --stream "001-migration"
+  work tree --batch "01.01"
 `)
 }
 
@@ -58,6 +61,16 @@ function parseCliArgs(argv: string[]): TreeCliArgs | null {
                     return null
                 }
                 parsed.streamId = next
+                i++
+                break
+
+            case "--batch":
+            case "-b":
+                if (!next) {
+                    console.error("Error: --batch requires a value")
+                    return null
+                }
+                parsed.batchId = next
                 i++
                 break
 
@@ -140,10 +153,26 @@ export function main(argv: string[] = process.argv): void {
     }
 
     // Get tasks and group them
-    const tasks = getTasks(repoRoot, stream.id)
+    let tasks = getTasks(repoRoot, stream.id)
     if (tasks.length === 0) {
         console.log(`Workstream: ${stream.id} (Empty)`)
         return
+    }
+
+    // Filter by batch if --batch is specified
+    if (cliArgs.batchId) {
+        const [stageNum, batchNum] = cliArgs.batchId.split('.')
+        if (!stageNum || !batchNum) {
+            console.error(`Error: Invalid batch ID format "${cliArgs.batchId}". Expected format: "01.01"`)
+            process.exit(1)
+        }
+        const stagePrefix = stageNum.padStart(2, '0')
+        const batchPrefix = `${stagePrefix}.${batchNum.padStart(2, '0')}`
+        tasks = tasks.filter(t => t.id.startsWith(batchPrefix + '.'))
+        if (tasks.length === 0) {
+            console.log(`Batch ${cliArgs.batchId}: No tasks found`)
+            return
+        }
     }
 
     const grouped = groupTasksByStageAndBatchAndThread(tasks)

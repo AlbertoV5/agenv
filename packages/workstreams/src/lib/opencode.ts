@@ -83,19 +83,68 @@ export async function waitForServer(
 }
 
 /**
- * Build the opencode run command with --attach flag
+ * Truncate a string to maxLen chars, adding ellipsis if truncated
+ */
+function truncateTitle(title: string, maxLen: number = 32): string {
+    if (title.length <= maxLen) return title
+    return title.slice(0, maxLen - 1) + "…"
+}
+
+/**
+ * Escape a string for use in shell double quotes
+ */
+function escapeForShell(str: string): string {
+    return str.replace(/"/g, '\\"').replace(/\$/g, '\\$').replace(/`/g, '\\`')
+}
+
+/**
+ * Build the opencode run command with --title flag and session resume logic
  * Wrapped in sh -c to properly handle piped commands in tmux
+ *
+ * The command:
+ * 1. Generates a unique tracking ID
+ * 2. Runs opencode with a title containing the tracking ID
+ * 3. After completion, searches for the session by tracking ID
+ * 4. Resumes the session with opencode TUI if found
  */
 export function buildRunCommand(
     port: number,
     model: string,
-    promptPath: string
+    promptPath: string,
+    threadTitle: string
 ): string {
     // Escape single quotes in paths by replacing ' with '\''
     const escapedPath = promptPath.replace(/'/g, "'\\''")
-    // Wrap in sh -c with single quotes so the pipe works in tmux
-    // We add a read command at the end to keep the pane open after execution (Dead Pane Prevention)
-    return `sh -c 'cat "${escapedPath}" | opencode run --port ${port} --model "${model}"; echo "\\nThread finished. Press Enter to close."; read'`
+    // Truncate and escape the title for shell safety
+    const truncated = truncateTitle(threadTitle, 32)
+    const escapedTitle = escapeForShell(truncated)
+
+    // Build a shell script that:
+    // 1. Generates a unique tracking ID (16 chars from nanosecond timestamp)
+    // 2. Runs opencode run with the title containing the tracking ID
+    // 3. After completion, searches for the session by tracking ID using jq
+    // 4. Resumes the session with opencode TUI if found
+    return `sh -c '
+TRACK_ID=$(date +%s%N | head -c 16)
+TITLE="${escapedTitle}__id=$TRACK_ID"
+cat "${escapedPath}" | opencode run --port ${port} --model "${model}" --title "$TITLE"
+echo ""
+echo "Thread finished. Looking for session to resume..."
+if command -v jq >/dev/null 2>&1; then
+  SESSION_ID=$(opencode session list --max-count 10 --format json 2>/dev/null | jq -r ".[] | select(.title | contains(\\"__id=$TRACK_ID\\")) | .id" | head -1)
+  if [ -n "$SESSION_ID" ]; then
+    echo "Resuming session $SESSION_ID..."
+    opencode --session "$SESSION_ID"
+  else
+    echo "Session not found. Press Enter to close."
+    read
+  fi
+else
+  echo "jq not found - install jq to enable session resume"
+  echo "Press Enter to close."
+  read
+fi
+'`
 }
 
 /**

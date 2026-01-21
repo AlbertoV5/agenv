@@ -421,6 +421,10 @@ work delete --stream "001-my-feature" --batch "01.01"
 work delete --stream "001-my-feature" --stage 2
 work delete --stream "001-my-feature" --force  # delete entire workstream
 
+# Check tree structure
+work tree
+work tree --batch "01.01"           # Filter to specific batch
+
 # Check status
 work status
 work status --stream "001-my-feature"

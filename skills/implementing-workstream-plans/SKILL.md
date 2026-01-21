@@ -12,8 +12,8 @@ description: How to execute an existing workstream plan. Focuses on finding task
 
 ```bash
 work status             # High-level progress & current stage
-work tree               # Structure view - use this to see what's done/pending
-work list --tasks --batch "01.01" # List tasks for the batch your thread is in
+work tree --batch "01.01" # Structure view for the batch your thread is in
+work list --tasks --thread "01.01.01" # List tasks for your thread
 work read --task "ID"   # Read specific task details
 ```
 
@@ -56,3 +56,4 @@ Check these files for context during execution (read-only):
 |------|---------|
 | `work/{stream}/PLAN.md` | Thread details, implementation approach |
 | `work/TESTS.md` | Test requirements (user-managed, if present) |
+| `work/STRUCTURE.md` | Repository structure |
