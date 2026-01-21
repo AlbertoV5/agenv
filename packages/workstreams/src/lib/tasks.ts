@@ -251,9 +251,42 @@ export function groupTasksByStageAndThread(
 }
 
 /**
- * Parse task ID into components
- * Returns { stage, batch, thread, task } numbers
- * Supports both legacy 3-part format (treated as batch 0) and new 4-part format
+ * Get GitHub metadata for a task
+ */
+export function getTaskGitHubMeta(
+  repoRoot: string,
+  streamId: string,
+  taskId: string,
+): Task["github_issue"] | undefined {
+  const task = getTaskById(repoRoot, streamId, taskId)
+  return task?.github_issue
+}
+
+/**
+ * Set GitHub metadata for a task
+ */
+export function setTaskGitHubMeta(
+  repoRoot: string,
+  streamId: string,
+  taskId: string,
+  meta: NonNullable<Task["github_issue"]>,
+): Task | null {
+  const tasksFile = readTasksFile(repoRoot, streamId)
+  if (!tasksFile) return null
+
+  const taskIndex = tasksFile.tasks.findIndex((t) => t.id === taskId)
+  if (taskIndex === -1) return null
+
+  const task = tasksFile.tasks[taskIndex]!
+  task.github_issue = meta
+  task.updated_at = new Date().toISOString()
+
+  writeTasksFile(repoRoot, streamId, tasksFile)
+  return task
+}
+
+/**
+ * Parse a task ID into components
  */
 export function parseTaskId(taskId: string): {
   stage: number
@@ -262,20 +295,15 @@ export function parseTaskId(taskId: string): {
   task: number
 } {
   const parts = taskId.split(".")
-
-  // New 4-part format: stage.batch.thread.task
   if (parts.length === 4) {
     const parsed = parts.map((p) => parseInt(p, 10))
-    if (parsed.some(isNaN)) {
-      throw new Error(
-        `Invalid task ID format: ${taskId}. Expected "stage.batch.thread.task" (e.g., "01.01.02.03")`,
-      )
-    }
-    return {
-      stage: parsed[0]!,
-      batch: parsed[1]!,
-      thread: parsed[2]!,
-      task: parsed[3]!,
+    if (parsed.every((n) => !isNaN(n))) {
+      return {
+        stage: parsed[0]!,
+        batch: parsed[1]!,
+        thread: parsed[2]!,
+        task: parsed[3]!,
+      }
     }
   }
 

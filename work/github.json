@@ -1,0 +1,24 @@
+{
+  "enabled": true,
+  "owner": "AlbertoV5",
+  "repo": "agenv",
+  "branch_prefix": "workstream/",
+  "label_config": {
+    "workstream": {
+      "prefix": "stream:",
+      "color": "5319e7"
+    },
+    "thread": {
+      "prefix": "thread:",
+      "color": "0e8a16"
+    },
+    "batch": {
+      "prefix": "batch:",
+      "color": "0e8a16"
+    },
+    "stage": {
+      "prefix": "stage:",
+      "color": "1d76db"
+    }
+  }
+}

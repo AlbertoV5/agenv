@@ -96,6 +96,9 @@ export interface StreamMetadata {
   generated_by: GeneratedBy // versions of tools that created this workstream
   files?: string[] // list of file names in the files/ directory
   current_batch?: string // ID of the current batch (e.g. "01.01")
+  github?: {
+    branch?: string
+  }
 }
 
 // The index.json structure

@@ -15,7 +15,7 @@
 ### backend-heavy-hitter
 **Description:** Good backend implementer
 **Best for:** Complex backend tasks
-**Model:** openrouter/google/gemini-3-pro-preview
+**Model:** anthropic/claude-opus-4-5
 
 ### code-reviewer
 **Description:** Specialized on code analysis

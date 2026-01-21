@@ -15,6 +15,10 @@
 - [ ] ENHANCE: We need to make it so the opencode sessions remain open after agent is finished to write instructions. Use `--title` and set thread name + uid for easy retrieval.
 
 - [ ] BUG: Update the Reviewer skill to include to check for if threads are actually parallelizable. Update planner skill doc to reinforce that.
+  
+- [ ] ENHANCE: Tooling prompt, eg: ```Can you create a test script file in ./scripts so I can run `bun run ./scripts/check-github-*.ts` So I Can test auth, config, label, and issue?``` 
+
+- [ ] ENHANCE: Integrate constant documentation agent that will document tooling and the latest status (apart from the regular docs one).
 
 ## Human Workflow notes
 

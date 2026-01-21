@@ -327,3 +327,37 @@ export async function deleteStream(
     }
   })
 }
+
+/**
+ * Set the GitHub metadata for a stream
+ */
+export function setStreamGitHubMeta(
+  repoRoot: string,
+  streamIdOrName: string,
+  meta: { branch?: string } | undefined
+): StreamMetadata {
+  const index = loadIndex(repoRoot)
+  const streamIndex = index.streams.findIndex(
+    (s) => s.id === streamIdOrName || s.name === streamIdOrName
+  )
+
+  if (streamIndex === -1) {
+    throw new Error(`Workstream "${streamIdOrName}" not found`)
+  }
+
+  const stream = index.streams[streamIndex]!
+
+  if (meta === undefined) {
+    delete stream.github
+  } else {
+    stream.github = {
+      ...stream.github,
+      ...meta,
+    }
+  }
+
+  stream.updated_at = new Date().toISOString()
+  saveIndex(repoRoot, index)
+
+  return stream
+}
