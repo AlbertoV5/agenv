@@ -7,7 +7,6 @@ import { join } from "path"
 import { getRepoRoot, getWorkDir, getIndexPath } from "../lib/repo.ts"
 import { getOrCreateIndex, saveIndex } from "../lib/index.ts"
 import { getAgentsMdPath } from "../lib/agents.ts"
-import { getTestsMdPath } from "../lib/prompts.ts"
 import { saveGitHubConfig, getGitHubConfigPath } from "../lib/github/config.ts"
 import { DEFAULT_GITHUB_CONFIG } from "../lib/github/types.ts"
 
@@ -32,7 +31,7 @@ const DEFAULT_TESTS_MD = `# Test Requirements
 `
 
 function printHelp(): void {
-    console.log(`
+  console.log(`
 Usage: work init [options]
 
 Initialize work/ directory with default configuration files.
@@ -44,69 +43,68 @@ Options:
 }
 
 export async function main(argv: string[]): Promise<void> {
-    const args = argv.slice(2)
-    const force = args.includes("--force")
+  const args = argv.slice(2)
+  const force = args.includes("--force")
 
-    const repoRootIdx = args.indexOf("--repo-root")
-    let repoRootArg: string | undefined
-    if (repoRootIdx !== -1 && repoRootIdx + 1 < args.length) {
-        repoRootArg = args[repoRootIdx + 1]
+  const repoRootIdx = args.indexOf("--repo-root")
+  let repoRootArg: string | undefined
+  if (repoRootIdx !== -1 && repoRootIdx + 1 < args.length) {
+    repoRootArg = args[repoRootIdx + 1]
+  }
+
+  if (args.includes("--help") || args.includes("-h")) {
+    printHelp()
+    return
+  }
+
+  try {
+    const repoRoot = getRepoRoot(repoRootArg)
+    const workDir = getWorkDir(repoRoot)
+
+    if (!existsSync(workDir)) {
+      console.log(`Creating ${workDir}/...`)
+      mkdirSync(workDir, { recursive: true })
     }
 
-    if (args.includes("--help") || args.includes("-h")) {
-        printHelp()
-        return
+    // 1. Initialize github.json
+    const githubConfigPath = getGitHubConfigPath(repoRoot)
+    if (!existsSync(githubConfigPath) || force) {
+      console.log(
+        `${force && existsSync(githubConfigPath) ? "Overwriting" : "Creating"} github.json (disabled by default)...`,
+      )
+      await saveGitHubConfig(repoRoot, DEFAULT_GITHUB_CONFIG)
+    } else {
+      console.log("github.json already exists, skipping.")
     }
 
-    try {
-        const repoRoot = getRepoRoot(repoRootArg)
-        const workDir = getWorkDir(repoRoot)
-
-        if (!existsSync(workDir)) {
-            console.log(`Creating ${workDir}/...`)
-            mkdirSync(workDir, { recursive: true })
-        }
-
-        // 1. Initialize github.json
-        const githubConfigPath = getGitHubConfigPath(repoRoot)
-        if (!existsSync(githubConfigPath) || force) {
-            console.log(`${force && existsSync(githubConfigPath) ? "Overwriting" : "Creating"} github.json (disabled by default)...`)
-            await saveGitHubConfig(repoRoot, DEFAULT_GITHUB_CONFIG)
-        } else {
-            console.log("github.json already exists, skipping.")
-        }
-
-        // 2. Initialize index.json
-        const indexPath = getIndexPath(repoRoot)
-        if (!existsSync(indexPath) || force) {
-            console.log(`${force && existsSync(indexPath) ? "Overwriting" : "Initializing"} index.json...`)
-            const index = getOrCreateIndex(repoRoot)
-            saveIndex(repoRoot, index)
-        } else {
-            console.log("index.json already exists, skipping.")
-        }
-
-        // 3. Initialize AGENTS.md
-        const agentsPath = getAgentsMdPath(repoRoot)
-        if (!existsSync(agentsPath) || force) {
-            console.log(`${force && existsSync(agentsPath) ? "Overwriting" : "Initializing"} AGENTS.md...`)
-            writeFileSync(agentsPath, DEFAULT_AGENTS_MD, "utf-8")
-        } else {
-            console.log("AGENTS.md already exists, skipping.")
-        }
-
-        // 4. Initialize TESTS.md
-        const testsPath = getTestsMdPath(repoRoot)
-        if (!existsSync(testsPath) || force) {
-            console.log(`${force && existsSync(testsPath) ? "Overwriting" : "Initializing"} TESTS.md...`)
-            writeFileSync(testsPath, DEFAULT_TESTS_MD, "utf-8")
-        } else {
-            console.log("TESTS.md already exists, skipping.")
-        }
-
-        console.log("\nInitialization complete.")
-    } catch (error) {
-        console.error(`Error: ${error instanceof Error ? error.message : String(error)}`)
-        process.exit(1)
+    // 2. Initialize index.json
+    const indexPath = getIndexPath(repoRoot)
+    if (!existsSync(indexPath) || force) {
+      console.log(
+        `${force && existsSync(indexPath) ? "Overwriting" : "Initializing"} index.json...`,
+      )
+      const index = getOrCreateIndex(repoRoot)
+      saveIndex(repoRoot, index)
+    } else {
+      console.log("index.json already exists, skipping.")
     }
+
+    // 3. Initialize AGENTS.md
+    const agentsPath = getAgentsMdPath(repoRoot)
+    if (!existsSync(agentsPath) || force) {
+      console.log(
+        `${force && existsSync(agentsPath) ? "Overwriting" : "Initializing"} AGENTS.md...`,
+      )
+      writeFileSync(agentsPath, DEFAULT_AGENTS_MD, "utf-8")
+    } else {
+      console.log("AGENTS.md already exists, skipping.")
+    }
+
+    console.log("\nInitialization complete.")
+  } catch (error) {
+    console.error(
+      `Error: ${error instanceof Error ? error.message : String(error)}`,
+    )
+    process.exit(1)
+  }
 }

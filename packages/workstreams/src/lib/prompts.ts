@@ -33,14 +33,6 @@ export interface ThreadId {
 }
 
 /**
- * Parsed test requirements from TESTS.md
- */
-export interface TestRequirements {
-  general: string[]
-  perStage: string[]
-}
-
-/**
  * Context gathered for generating a thread execution prompt
  */
 export interface PromptContext {
@@ -54,7 +46,6 @@ export interface PromptContext {
   tasks: Task[]
   parallelThreads: ThreadDefinition[]
   agentName?: string
-  testRequirements?: TestRequirements
   outputDir: string
 }
 
@@ -109,77 +100,6 @@ export function formatThreadId(
 }
 
 // ============================================
-// TESTS.MD LOADING
-// ============================================
-
-/**
- * Get the TESTS.md file path
- */
-export function getTestsMdPath(repoRoot: string): string {
-  return join(getWorkDir(repoRoot), "TESTS.md")
-}
-
-/**
- * Parse TESTS.md content into structured requirements
- */
-export function parseTestsMd(content: string): TestRequirements {
-  const result: TestRequirements = {
-    general: [],
-    perStage: [],
-  }
-
-  if (!content.trim()) {
-    return result
-  }
-
-  const lines = content.split("\n")
-  let currentSection: "general" | "perStage" | null = null
-
-  for (const line of lines) {
-    const trimmed = line.trim()
-
-    // Detect section headers
-    if (/^##\s+General/i.test(trimmed)) {
-      currentSection = "general"
-      continue
-    }
-    if (/^##\s+Per-Stage/i.test(trimmed)) {
-      currentSection = "perStage"
-      continue
-    }
-    // Reset on other H2 headers
-    if (/^##\s+/.test(trimmed) && currentSection) {
-      currentSection = null
-      continue
-    }
-
-    // Capture list items in current section
-    if (currentSection && /^-\s+/.test(trimmed)) {
-      const item = trimmed.replace(/^-\s+\[[ x]?\]\s*/, "").replace(/^-\s+/, "")
-      if (item) {
-        result[currentSection].push(item)
-      }
-    }
-  }
-
-  return result
-}
-
-/**
- * Load test requirements from work/TESTS.md
- * Returns null if file doesn't exist
- */
-export function getTestRequirements(repoRoot: string): TestRequirements | null {
-  const path = getTestsMdPath(repoRoot)
-  if (!existsSync(path)) {
-    return null
-  }
-
-  const content = readFileSync(path, "utf-8")
-  return parseTestsMd(content)
-}
-
-// ============================================
 // CONTEXT GATHERING
 // ============================================
 
@@ -192,7 +112,6 @@ export function getTestRequirements(repoRoot: string): TestRequirements | null {
  * - Tasks from tasks.json filtered to this thread
  * - Parallel threads in the same batch
  * - Agent assignment (if any)
- * - Test requirements (if TESTS.md exists)
  *
  * Throws if thread not found or PLAN.md parsing fails
  */
@@ -271,9 +190,6 @@ export function getPromptContext(
   const assignedAgent = tasks.find((t) => t.assigned_agent)?.assigned_agent
   const agentName = assignedAgent
 
-  // Load test requirements
-  const testRequirements = getTestRequirements(repoRoot) || undefined
-
   // Calculate output directory path
   const safeBatchName = batch.name.replace(/[^a-zA-Z0-9_-]/g, "-").toLowerCase()
   const safeThreadName = thread.name
@@ -292,7 +208,6 @@ export function getPromptContext(
     tasks,
     parallelThreads,
     agentName,
-    testRequirements,
     outputDir,
   }
 }
@@ -417,7 +332,6 @@ export function generateThreadPromptJson(context: PromptContext): object {
       name: t.name,
       summary: t.summary,
     })),
-    testRequirements: context.testRequirements || null,
     outputDir: context.outputDir,
   }
 }

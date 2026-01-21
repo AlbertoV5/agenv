@@ -63,7 +63,6 @@ Description:
   - Tasks assigned to the thread
   - Stage definition and constitution
   - Parallel threads for awareness
-  - Test requirements from work/TESTS.md (if present)
 
 Examples:
   work prompt --thread "01.01.01"

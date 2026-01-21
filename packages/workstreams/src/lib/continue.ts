@@ -3,7 +3,6 @@
  */
 
 import { getTasks } from "./tasks.ts"
-import { getTestRequirements, type TestRequirements } from "./prompts.ts"
 import type { Task } from "./types.ts"
 
 export interface ContinueContext {
@@ -13,7 +12,6 @@ export interface ContinueContext {
   streamId: string
   streamName: string
   assignedAgent?: string // Agent assigned to active task (from task.assigned_agent)
-  testRequirements?: TestRequirements
 }
 
 export function getContinueContext(
@@ -29,9 +27,6 @@ export function getContinueContext(
   const targetTask = activeTask || nextTask
   const assignedAgent = targetTask?.assigned_agent || undefined
 
-  // Load test requirements
-  const testRequirements = getTestRequirements(repoRoot) || undefined
-
   return {
     activeTask,
     nextTask,
@@ -41,6 +36,5 @@ export function getContinueContext(
     streamId,
     streamName,
     assignedAgent,
-    testRequirements,
   }
 }

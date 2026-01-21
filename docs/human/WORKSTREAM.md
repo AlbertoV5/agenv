@@ -33,13 +33,10 @@ Workstreams live at the repository root in the `work/` directory:
 work/
 ├── index.json                   # Global registry of all workstreams
 ├── AGENTS.md                    # Agent definitions (shared across workstreams)
-├── TESTS.md                     # Test requirements (shared across workstreams)
 └── {stream-id}/
     ├── PLAN.md                  # Human-readable intent (required)
     ├── TASKS.md                 # Intermediate task file (temporary)
     ├── tasks.json               # Machine-readable state (generated)
-    ├── COMPLETION.md            # Final completion summary (generated at end)
-    ├── COMPLETION.md            # Final completion summary (generated at end)
     ├── prompts/                 # Generated prompt files
     │   └── {stage-prefix}-{stage-name}/
     │       └── {batch-prefix}-{batch-name}/

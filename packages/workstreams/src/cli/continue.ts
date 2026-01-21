@@ -7,24 +7,6 @@
 import { getRepoRoot } from "../lib/repo.ts"
 import { loadIndex, getResolvedStream } from "../lib/index.ts"
 import { getContinueContext } from "../lib/continue.ts"
-import type { TestRequirements } from "../lib/prompts.ts"
-
-function formatTestRequirements(tr: TestRequirements): string {
-  const lines: string[] = []
-  if (tr.general.length > 0) {
-    lines.push("General:")
-    for (const item of tr.general) {
-      lines.push(`  - ${item}`)
-    }
-  }
-  if (tr.perStage.length > 0) {
-    lines.push("Per-Stage:")
-    for (const item of tr.perStage) {
-      lines.push(`  - ${item}`)
-    }
-  }
-  return lines.join("\n")
-}
 
 interface ContinueCliArgs {
   repoRoot?: string
@@ -130,7 +112,7 @@ export function main(argv: string[] = process.argv): void {
   }
 
   const ctx = getContinueContext(repoRoot, stream.id, stream.name)
-  
+
   console.log(`\n# Resume: ${ctx.streamId} (${ctx.streamName})\n`)
 
   if (ctx.activeTask) {
@@ -138,7 +120,9 @@ export function main(argv: string[] = process.argv): void {
     console.log(`## Status: Active Task in Progress`)
     console.log(`Task ID: ${t.id}`)
     console.log(`Description: ${t.name}`)
-    console.log(`Location: Stage ${t.stage_name} > Batch ${t.batch_name} > Thread ${t.thread_name}`)
+    console.log(
+      `Location: Stage ${t.stage_name} > Batch ${t.batch_name} > Thread ${t.thread_name}`,
+    )
 
     if (ctx.assignedAgent) {
       console.log(`Assigned Agent: ${ctx.assignedAgent}`)
@@ -153,21 +137,18 @@ export function main(argv: string[] = process.argv): void {
     }
 
     console.log(`\n## Action Required`)
-    console.log(`Resume execution of this task. Check the last breadcrumb for context.`)
-
-    if (ctx.testRequirements) {
-      console.log(`\n## Test Requirements`)
-      console.log(formatTestRequirements(ctx.testRequirements))
-    }
+    console.log(
+      `Resume execution of this task. Check the last breadcrumb for context.`,
+    )
   } else {
     // No active task, look for next pending
     if (ctx.lastCompletedTask) {
-        const t = ctx.lastCompletedTask
-        console.log(`## Previous Context`)
-        console.log(`Last Completed Task: ${t.id} - ${t.name}`)
-        if (t.breadcrumb) {
-            console.log(`Last Breadcrumb: ${t.breadcrumb}`)
-        }
+      const t = ctx.lastCompletedTask
+      console.log(`## Previous Context`)
+      console.log(`Last Completed Task: ${t.id} - ${t.name}`)
+      if (t.breadcrumb) {
+        console.log(`Last Breadcrumb: ${t.breadcrumb}`)
+      }
     }
 
     if (ctx.nextTask) {
@@ -175,22 +156,23 @@ export function main(argv: string[] = process.argv): void {
       console.log(`\n## Status: Ready to Start New Task`)
       console.log(`Next Task ID: ${t.id}`)
       console.log(`Description: ${t.name}`)
-      console.log(`Location: Stage ${t.stage_name} > Batch ${t.batch_name} > Thread ${t.thread_name}`)
+      console.log(
+        `Location: Stage ${t.stage_name} > Batch ${t.batch_name} > Thread ${t.thread_name}`,
+      )
 
       if (ctx.assignedAgent) {
         console.log(`Assigned Agent: ${ctx.assignedAgent}`)
       }
 
       console.log(`\n## Action Required`)
-      console.log(`Start this task using: work update --task "${t.id}" --status in_progress`)
-
-      if (ctx.testRequirements) {
-        console.log(`\n## Test Requirements`)
-        console.log(formatTestRequirements(ctx.testRequirements))
-      }
+      console.log(
+        `Start this task using: work update --task "${t.id}" --status in_progress`,
+      )
     } else {
       console.log(`\n## Status: All Tasks Completed`)
-      console.log(`No pending tasks found. The workstream appears to be complete.`)
+      console.log(
+        `No pending tasks found. The workstream appears to be complete.`,
+      )
     }
   }
 }
