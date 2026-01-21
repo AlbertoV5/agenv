@@ -1,11 +1,9 @@
-import { exec } from "node:child_process";
-import { promisify } from "node:util";
 import { type GitHubConfig } from "./types";
 import { loadGitHubConfig, isGitHubEnabled } from "./config";
 import { loadIndex, getStream } from "../index";
 import { readTasksFile, parseTaskId } from "../tasks";
-
-const execAsync = promisify(exec);
+import { createGitHubClient } from "./client";
+import { ensureGitHubAuth } from "./auth";
 
 /**
  * Formats a label with the given prefix and value.
@@ -45,23 +43,6 @@ export function getThreadLabels(
 }
 
 /**
- * Helper to create or update a GitHub label.
- */
-async function ensureLabel(name: string, color: string, description: string): Promise<void> {
-  const safeName = name.replace(/"/g, '\\"');
-  const safeDesc = description.replace(/"/g, '\\"');
-  
-  try {
-    // gh label create --force updates the label if it exists
-    await execAsync(`gh label create "${safeName}" --color "${color}" --description "${safeDesc}" --force`);
-  } catch (error) {
-    // If it fails, we assume it's a real error (e.g. auth, network) and propagate it
-    // unless we want to suppress it. For now, let's propagate to surface issues.
-    throw error;
-  }
-}
-
-/**
  * Creates all labels needed for a workstream (workstream, stages, batches).
  * @param repoRoot The root directory of the repository
  * @param streamId The ID of the workstream
@@ -72,50 +53,74 @@ export async function ensureWorkstreamLabels(repoRoot: string, streamId: string)
   }
 
   const config = await loadGitHubConfig(repoRoot);
+  // Ensure we have owner/repo
+  if (!config.owner || !config.repo) {
+      throw new Error("GitHub integration enabled but owner/repo not configured");
+  }
+
+  const token = await ensureGitHubAuth();
+  const client = createGitHubClient(token, config.owner, config.repo);
+
   const index = loadIndex(repoRoot);
   const stream = getStream(index, streamId);
   
-  // 1. Create Workstream Label
+  const labelsToCreate: { name: string; color: string; description: string }[] = [];
+
+  // 1. Workstream Label
   const streamLabel = formatLabel(config.label_config.workstream.prefix, stream.name);
-  await ensureLabel(streamLabel, config.label_config.workstream.color, `Workstream: ${stream.name}`);
+  labelsToCreate.push({
+      name: streamLabel, 
+      color: config.label_config.workstream.color, 
+      description: `Workstream: ${stream.name}`
+  });
   
   // 2. Load Tasks to find Stages and Batches
   const tasksFile = readTasksFile(repoRoot, streamId);
-  if (!tasksFile) return;
-  
-  const stages = new Map<string, {id: string, name: string}>();
-  const batches = new Map<string, {id: string, name: string}>();
-  
-  for (const task of tasksFile.tasks) {
-    try {
-      const { stage, batch } = parseTaskId(task.id);
-      const stageId = stage.toString().padStart(2, '0');
-      const batchId = `${stageId}.${batch.toString().padStart(2, '0')}`;
-      
-      // Stage
-      if (!stages.has(stageId)) {
-        stages.set(stageId, { id: stageId, name: task.stage_name });
+  if (tasksFile) {
+    const stages = new Map<string, {id: string, name: string}>();
+    const batches = new Map<string, {id: string, name: string}>();
+    
+    for (const task of tasksFile.tasks) {
+      try {
+        const { stage, batch } = parseTaskId(task.id);
+        const stageId = stage.toString().padStart(2, '0');
+        const batchId = `${stageId}.${batch.toString().padStart(2, '0')}`;
+        
+        // Stage
+        if (!stages.has(stageId)) {
+          stages.set(stageId, { id: stageId, name: task.stage_name });
+        }
+        
+        // Batch
+        if (!batches.has(batchId)) {
+          batches.set(batchId, { id: batchId, name: task.batch_name });
+        }
+      } catch (e) {
+        // Ignore invalid task IDs
+        continue;
       }
-      
-      // Batch
-      if (!batches.has(batchId)) {
-        batches.set(batchId, { id: batchId, name: task.batch_name });
-      }
-    } catch (e) {
-      // Ignore invalid task IDs
-      continue;
+    }
+    
+    // 3. Stage Labels
+    for (const {id, name} of stages.values()) {
+      const labelName = formatLabel(config.label_config.stage.prefix, `${id}-${name}`);
+      labelsToCreate.push({
+          name: labelName, 
+          color: config.label_config.stage.color, 
+          description: `Stage ${id}: ${name}`
+      });
+    }
+    
+    // 4. Batch Labels
+    for (const {id, name} of batches.values()) {
+      const labelName = formatLabel(config.label_config.batch.prefix, `${id}-${name}`);
+      labelsToCreate.push({
+          name: labelName, 
+          color: config.label_config.batch.color, 
+          description: `Batch ${id}: ${name}`
+      });
     }
   }
-  
-  // 3. Create Stage Labels
-  for (const {id, name} of stages.values()) {
-    const labelName = formatLabel(config.label_config.stage.prefix, `${id}-${name}`);
-    await ensureLabel(labelName, config.label_config.stage.color, `Stage ${id}: ${name}`);
-  }
-  
-  // 4. Create Batch Labels
-  for (const {id, name} of batches.values()) {
-    const labelName = formatLabel(config.label_config.batch.prefix, `${id}-${name}`);
-    await ensureLabel(labelName, config.label_config.batch.color, `Batch ${id}: ${name}`);
-  }
+
+  await client.ensureLabels(labelsToCreate);
 }

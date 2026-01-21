@@ -48,6 +48,15 @@ work update --task "01.01.01.01" --status completed \
   --report "Added hono@4.0.0 to package.json. Fixed peer dependency warning by also adding @hono/node-server."
 ```
 
+## Work continuation
+
+In case of finding an in-progress thread, make sure to review all files that were edited, look at the incomplete tasks report and determine best course of action.
+
+In case the previous agent finished all the work and failed to mark as completed just update the task status.
+
+In case the task is impossible to solve, stop and notify the user in your response. 
+
+
 ## Reference Files
 
 Check these files for context during execution (read-only):
