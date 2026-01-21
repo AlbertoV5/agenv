@@ -433,8 +433,12 @@ work status --stream "001-my-feature"
 work set-status on_hold --stream "001-my-feature"
 work set-status --clear --stream "001-my-feature"
 
-# Complete a workstream
+# Complete a workstream (with GitHub: commits, pushes, and creates PR)
 work complete --stream "001-my-feature"
+work complete --no-commit            # Skip git add/commit
+work complete --no-pr                # Skip PR creation
+work complete --target develop       # PR target branch (default: main)
+work complete --draft                # Create draft PR
 
 # Update metadata
 work index --stream "001-my-feature" --field "status" --value "on_hold"
@@ -540,7 +544,7 @@ work github sync --stream "002-my-feature"
 work github sync --json
 ```
 
-The sync command closes GitHub issues for completed threads and updates the local task metadata.
+The sync command updates issue bodies with task completion status and reports, closes GitHub issues for completed threads, and updates the local task metadata.
 
 ### Automation
 
@@ -551,8 +555,12 @@ When GitHub integration is enabled, the following automations are triggered:
 After running `work approve`, issues are automatically created for all threads in the workstream:
 
 ```bash
-work approve  # Creates GitHub issues if integration is enabled
+work approve  # Creates GitHub issues for all threads
+
+work approve --stage 3  # Creates GitHub issues only for threads in stage 3
 ```
+
+This also works when approving individual stages (e.g., fix stages added later).
 
 Issues are created with:
 - Title based on thread name
@@ -568,7 +576,23 @@ work update --task "01.01.01.05" --status completed
 # If this was the last task in thread 01.01.01, the issue is auto-closed
 ```
 
+When closing, the issue body is automatically updated to show:
+- All tasks marked as checked (`- [x] Task name`)
+- Task reports included as blockquotes (if present)
+- Cancelled tasks marked with `*(cancelled)*`
+
 The issue state is updated both on GitHub and in the local `tasks.json` file.
+
+#### Auto-Reopen Issues on Status Change
+
+If a task status changes from `completed` back to `in_progress` or `blocked`, the thread's GitHub issue is automatically reopened:
+
+```bash
+work update --task "01.01.01.05" --status in_progress
+# If the thread's issue was closed, it will be reopened
+```
+
+This ensures GitHub issues accurately reflect the current state of work.
 
 ### Label Conventions
 
@@ -607,6 +631,44 @@ The GitHub configuration is stored in `work/github.json`:
 ```
 
 You can manually edit this file to customize label prefixes and colors.
+
+### Workstream Completion
+
+When you're ready to complete a workstream and create a pull request, use the `work complete` command:
+
+```bash
+work complete
+```
+
+This command performs the following steps:
+
+1. **Validates** all stages are approved
+2. **Verifies** you're on the workstream branch (if GitHub integration is enabled)
+3. **Commits** all changes with message "Completed workstream: {stream-name}"
+4. **Pushes** to the remote branch
+5. **Creates a PR** to the target branch (default: `main`)
+6. **Stores** completion metadata (PR number, completion timestamp) in index.json
+
+#### Options
+
+```bash
+work complete                     # Full workflow: commit, push, create PR
+work complete --no-commit         # Skip git add/commit (changes already committed)
+work complete --no-pr             # Skip PR creation
+work complete --target develop    # Create PR against 'develop' instead of 'main'
+work complete --draft             # Create a draft PR
+work complete --stream "002-..."  # Complete a specific workstream
+```
+
+#### Configuration
+
+Set a default PR target branch in `work/github.json`:
+
+```json
+{
+  "default_pr_target": "develop"
+}
+```
 
 ## TypeScript
 

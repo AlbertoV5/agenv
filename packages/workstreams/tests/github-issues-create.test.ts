@@ -3,7 +3,20 @@ import { describe, it, expect, mock } from "bun:test";
 // Mocks must be defined before imports
 mock.module("../src/lib/github/config", () => ({
   isGitHubEnabled: async () => true,
-  loadGitHubConfig: async () => ({ owner: "owner", repo: "repo", enabled: true }),
+  loadGitHubConfig: async () => ({ 
+    owner: "owner", 
+    repo: "repo", 
+    enabled: true,
+    label_config: {
+      workstream: { prefix: "stream:", color: "0366d6" },
+      stage: { prefix: "stage:", color: "0e8a16" },
+      batch: { prefix: "batch:", color: "fbca04" }
+    }
+  }),
+}));
+
+mock.module("../src/lib/github/labels", () => ({
+  getThreadLabels: () => ["stream:Stream", "stage:01-Stage", "batch:01-Batch"],
 }));
 
 mock.module("../src/lib/github/auth", () => ({
@@ -50,6 +63,29 @@ describe("createThreadIssue", () => {
     expect(result).toEqual({ issue_number: 123, issue_url: "http://url" });
     expect(mockCreateIssue).toHaveBeenCalled();
   });
+
+  it("passes labels to createIssue", async () => {
+    mockCreateIssue.mockClear();
+    
+    const input: CreateThreadIssueInput = {
+      summary: "Summary",
+      details: "Details",
+      streamId: "stream1",
+      streamName: "Stream",
+      stageId: "01",
+      stageName: "Stage",
+      batchId: "01",
+      batchName: "Batch",
+      threadId: "01",
+      threadName: "Thread"
+    };
+
+    await createThreadIssue("/root", input);
+
+    const call = mockCreateIssue.mock.calls[0] as unknown[];
+    const labels = call[2] as string[];
+    expect(labels).toEqual(["stream:Stream", "stage:01-Stage", "batch:01-Batch"]);
+  });
 });
 
 describe("closeThreadIssue", () => {
@@ -63,7 +99,8 @@ describe("storeThreadIssueMeta", () => {
   it("stores issue meta in tasks file", () => {
     storeThreadIssueMeta("/root", "stream1", "task1", { issue_number: 99, issue_url: "url" });
     expect(mockWriteTasksFile).toHaveBeenCalled();
-    const [repoRoot, streamId, file] = mockWriteTasksFile.mock.calls[0];
-    expect(file.tasks[0].github_issue).toEqual({ number: 99, url: "url", state: "open" });
+    const call = mockWriteTasksFile.mock.calls[0] as unknown[];
+    const file = call[2] as { tasks: Array<{ github_issue?: { number: number; url: string; state: string } }> };
+    expect(file.tasks[0]?.github_issue).toEqual({ number: 99, url: "url", state: "open" });
   });
 });

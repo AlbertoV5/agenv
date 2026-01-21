@@ -17,6 +17,7 @@ export interface GitHubConfig {
   repo: string
   branch_prefix: string // Prefix for feature branches (e.g., "workstream/")
   auto_create_issues: boolean // Auto-create issues for threads on approval
+  default_pr_target?: string // Default target branch for PRs (e.g., "main")
   label_config: {
     workstream: LabelConfig
     thread: LabelConfig

@@ -4,6 +4,8 @@ import { getGitHubAuth } from "./auth";
 import { createGitHubClient } from "./client";
 import type { ThreadGitHubMeta } from "./types";
 import { readTasksFile, writeTasksFile } from "../tasks";
+import { getThreadLabels } from "./labels";
+import type { Task } from "../types";
 
 export interface CreateThreadIssueInput {
   summary: string
@@ -72,8 +74,14 @@ export async function createThreadIssue(
 
   const body = formatIssueBody(input);
 
-  // TODO: Add labels when implemented in Thread 02
-  const labels: string[] = [];
+  const labels = getThreadLabels(
+    config,
+    input.streamName,
+    input.stageId,
+    input.stageName,
+    input.batchId,
+    input.batchName
+  );
 
   const issue = await client.createIssue(title, body, labels);
 
@@ -102,6 +110,24 @@ export async function closeThreadIssue(
   await client.closeIssue(issueNumber);
 }
 
+export async function reopenThreadIssue(
+  repoRoot: string,
+  streamId: string,
+  issueNumber: number
+): Promise<void> {
+  const enabled = await isGitHubEnabled(repoRoot);
+  if (!enabled) return;
+
+  const config = await loadGitHubConfig(repoRoot);
+  if (!config.owner || !config.repo) return;
+
+  const token = getGitHubAuth();
+  if (!token) return;
+
+  const client = createGitHubClient(token, config.owner, config.repo);
+  await client.reopenIssue(issueNumber);
+}
+
 export function storeThreadIssueMeta(
   repoRoot: string,
   streamId: string,
@@ -122,4 +148,81 @@ export function storeThreadIssueMeta(
     };
     writeTasksFile(repoRoot, streamId, tasksFile);
   }
+}
+
+/**
+ * Format the completed issue body with checked tasks and reports.
+ *
+ * - All tasks are shown as checked: `- [x] Task name`
+ * - If a task has a report, include it as a blockquote: `> Report: ...`
+ * - Cancelled tasks are marked with `*(cancelled)*`
+ *
+ * @param input - The original issue input data
+ * @param tasks - The tasks in this thread
+ * @returns Formatted markdown body for the completed issue
+ */
+export function formatCompletedIssueBody(
+  input: CreateThreadIssueInput,
+  tasks: Task[]
+): string {
+  const taskList = tasks
+    .map((t) => {
+      // Format task line with checkmark
+      let taskLine = `- [x] ${t.name}`;
+
+      // Add cancelled indicator if applicable
+      if (t.status === "cancelled") {
+        taskLine += " *(cancelled)*";
+      }
+
+      // Add report as blockquote if present
+      if (t.report) {
+        taskLine += `\n  > Report: ${t.report}`;
+      }
+
+      return taskLine;
+    })
+    .join("\n");
+
+  return `**Workstream:** ${input.streamName} (\`${input.streamId}\`)
+**Stage:** ${input.stageName}
+**Batch:** ${input.batchName}
+
+## Summary
+${input.summary}
+
+## Tasks
+
+${taskList}
+`;
+}
+
+/**
+ * Update the issue body for a completed thread.
+ *
+ * @param repoRoot - Repository root path
+ * @param streamId - Workstream ID
+ * @param issueNumber - GitHub issue number
+ * @param input - The original issue input data
+ * @param tasks - The tasks in this thread
+ */
+export async function updateThreadIssueBody(
+  repoRoot: string,
+  streamId: string,
+  issueNumber: number,
+  input: CreateThreadIssueInput,
+  tasks: Task[]
+): Promise<void> {
+  const enabled = await isGitHubEnabled(repoRoot);
+  if (!enabled) return;
+
+  const config = await loadGitHubConfig(repoRoot);
+  if (!config.owner || !config.repo) return;
+
+  const token = getGitHubAuth();
+  if (!token) return;
+
+  const client = createGitHubClient(token, config.owner, config.repo);
+  const body = formatCompletedIssueBody(input, tasks);
+  await client.updateIssue(issueNumber, { body });
 }

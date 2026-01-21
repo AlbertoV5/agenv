@@ -39,6 +39,25 @@ export interface GitHubRef {
   };
 }
 
+export interface GitHubPullRequest {
+  number: number;
+  title: string;
+  body: string;
+  state: "open" | "closed";
+  html_url: string;
+  head: {
+    ref: string;
+    sha: string;
+  };
+  base: {
+    ref: string;
+    sha: string;
+  };
+  draft: boolean;
+  merged: boolean;
+  mergeable: boolean | null;
+}
+
 export class GitHubClient {
   private token: string;
   private repository: GitHubRepository;
@@ -117,6 +136,10 @@ export class GitHubClient {
     return this.updateIssue(issueNumber, { state: "closed" });
   }
 
+  async reopenIssue(issueNumber: number): Promise<GitHubIssue> {
+    return this.updateIssue(issueNumber, { state: "open" });
+  }
+
   async getIssue(issueNumber: number): Promise<GitHubIssue> {
     return this.request<GitHubIssue>(
       `/repos/${this.repository.owner}/${this.repository.repo}/issues/${issueNumber}`
@@ -167,6 +190,22 @@ export class GitHubClient {
           ref: `refs/heads/${name}`,
           sha: base.commit.sha,
         },
+      }
+    );
+  }
+
+  async createPullRequest(
+    title: string,
+    body: string,
+    head: string,
+    base: string,
+    draft: boolean = false
+  ): Promise<GitHubPullRequest> {
+    return this.request<GitHubPullRequest>(
+      `/repos/${this.repository.owner}/${this.repository.repo}/pulls`,
+      {
+        method: "POST",
+        body: { title, body, head, base, draft },
       }
     );
   }

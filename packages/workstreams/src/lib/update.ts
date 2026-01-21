@@ -7,7 +7,7 @@
 import type { TaskStatus, StreamMetadata, Task } from "./types.ts"
 import { updateTaskStatus, getTaskById, parseTaskId } from "./tasks.ts"
 import { ensureTaskFilesDir } from "./files.ts"
-import { checkAndCloseThreadIssue } from "./github/sync.ts"
+import { checkAndCloseThreadIssue, checkAndReopenThreadIssue } from "./github/sync.ts"
 
 export interface UpdateTaskArgs {
   repoRoot: string
@@ -41,7 +41,7 @@ export function updateTask(args: UpdateTaskArgs): UpdateTaskResult {
     )
   }
 
-  // Check if task exists
+  // Check if task exists and track previous status
   const existingTask = getTaskById(args.repoRoot, args.stream.id, args.taskId)
   if (!existingTask) {
     throw new Error(
@@ -49,6 +49,7 @@ export function updateTask(args: UpdateTaskArgs): UpdateTaskResult {
       `Run "work add-task" to add tasks, or "work validate plan" to check the plan.`,
     )
   }
+  const previousStatus = existingTask.status
 
   // Update the task
   const updatedTask = updateTaskStatus(
@@ -83,6 +84,20 @@ export function updateTask(args: UpdateTaskArgs): UpdateTaskResult {
       .catch((error) => {
         // Don't fail the task update if GitHub fails
         console.error("Failed to check/close GitHub issue:", error)
+      })
+  }
+
+  // Check if task changed from completed to in_progress/blocked and reopen issue if needed
+  if (previousStatus === "completed" && (args.status === "in_progress" || args.status === "blocked")) {
+    checkAndReopenThreadIssue(args.repoRoot, args.stream.id, args.taskId)
+      .then((result) => {
+        if (result.reopened && result.issueNumber) {
+          console.log(`Reopened GitHub issue #${result.issueNumber} (task no longer completed)`)
+        }
+      })
+      .catch((error) => {
+        // Don't fail the task update if GitHub fails
+        console.error("Failed to check/reopen GitHub issue:", error)
       })
   }
 
