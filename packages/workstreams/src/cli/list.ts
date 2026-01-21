@@ -6,7 +6,7 @@
 
 import { getRepoRoot } from "../lib/repo.ts"
 import { loadIndex, getResolvedStream } from "../lib/index.ts"
-import { getTasks, getTaskCounts, groupTasksByStageAndThread } from "../lib/tasks.ts"
+import { getTasks, getTaskCounts, groupTasksByStageAndBatchAndThread } from "../lib/tasks.ts"
 import type { Task, TaskStatus } from "../lib/types.ts"
 
 interface ListCliArgs {
@@ -170,6 +170,10 @@ function statusToIcon(status: TaskStatus): string {
   }
 }
 
+// ... imports remain the same, just updated groupTasks import above
+
+// ... (skipping to formatTaskList replacement)
+
 function formatTaskList(streamId: string, tasks: Task[]): string {
   const lines: string[] = []
   const counts = {
@@ -186,56 +190,76 @@ function formatTaskList(streamId: string, tasks: Task[]): string {
   )
   lines.push("")
 
-  // Group tasks by stage and thread
-  const grouped = groupTasksByStageAndThread(tasks)
+  // Group tasks by stage, batch, and thread
+  const grouped = groupTasksByStageAndBatchAndThread(tasks)
 
-  // Sort stages by extracting stage number from first task
+  // Sort stages
   const stageEntries = Array.from(grouped.entries())
   stageEntries.sort((a, b) => {
-    const aFirst = a[1].values().next().value
-    const bFirst = b[1].values().next().value
-    if (!aFirst || !bFirst) return 0
-    const aTask = aFirst[0] as Task
-    const bTask = bFirst[0] as Task
-    if (!aTask || !bTask) return 0
-    const aStage = parseInt(aTask.id.split(".")[0]!, 10)
-    const bStage = parseInt(bTask.id.split(".")[0]!, 10)
-    return aStage - bStage
+    const aFirstTask = getFirstTaskFromStage(a[1])
+    const bFirstTask = getFirstTaskFromStage(b[1])
+    if (!aFirstTask || !bFirstTask) return 0
+    return parseInt(aFirstTask.id.split(".")[0]!, 10) - parseInt(bFirstTask.id.split(".")[0]!, 10)
   })
 
-  for (const [stageName, threadMap] of stageEntries) {
-    // Get stage number from first task
-    const firstThread = threadMap.values().next().value
-    const firstTask = firstThread?.[0]
+  for (const [stageName, batchMap] of stageEntries) {
+    const firstTask = getFirstTaskFromStage(batchMap)
     const stageNum = firstTask ? firstTask.id.split(".")[0] : "?"
 
     lines.push(`Stage ${stageNum}: ${stageName}`)
 
-    // Sort threads by thread number
-    const threadEntries = Array.from(threadMap.entries())
-    threadEntries.sort((a, b) => {
-      const aTask = a[1][0]
-      const bTask = b[1][0]
-      if (!aTask || !bTask) return 0
-      const aThread = parseInt(aTask.id.split(".")[1]!, 10)
-      const bThread = parseInt(bTask.id.split(".")[1]!, 10)
-      return aThread - bThread
+    // Sort batches
+    const batchEntries = Array.from(batchMap.entries())
+    batchEntries.sort((a, b) => {
+      const aFirst = getFirstTaskFromBatch(a[1])
+      const bFirst = getFirstTaskFromBatch(b[1])
+      if (!aFirst || !bFirst) return 0
+      return parseInt(aFirst.id.split(".")[1]!, 10) - parseInt(bFirst.id.split(".")[1]!, 10)
     })
 
-    for (const [threadName, threadTasks] of threadEntries) {
-      const threadNum = threadTasks[0]?.id.split(".")[1] ?? "?"
-      lines.push(`  Thread ${threadNum}: ${threadName}`)
+    for (const [batchName, threadMap] of batchEntries) {
+      // Get batch number from first task
+      const firstBatchTask = getFirstTaskFromBatch(threadMap)
+      const batchNum = firstBatchTask ? firstBatchTask.id.split(".")[1] : "?"
 
-      for (const task of threadTasks) {
-        const icon = statusToIcon(task.status)
-        lines.push(`    ${icon} ${task.id} ${task.name}`)
+      lines.push(`  Batch ${batchNum}: ${batchName}`)
+
+      // Sort threads
+      const threadEntries = Array.from(threadMap.entries())
+      threadEntries.sort((a, b) => {
+        const aTask = a[1][0]
+        const bTask = b[1][0]
+        if (!aTask || !bTask) return 0
+        return parseInt(aTask.id.split(".")[2]!, 10) - parseInt(bTask.id.split(".")[2]!, 10)
+      })
+
+      for (const [threadName, threadTasks] of threadEntries) {
+        // Thread is index 2 in "stage.batch.thread.task"
+        const threadNum = threadTasks[0]?.id.split(".")[2] ?? "?"
+        lines.push(`    Thread ${threadNum}: ${threadName}`)
+
+        for (const task of threadTasks) {
+          const icon = statusToIcon(task.status)
+          lines.push(`      ${icon} ${task.id} ${task.name}`)
+        }
       }
     }
-
     lines.push("")
   }
 
   return lines.join("\n").trimEnd()
+}
+
+// Helper to get first task from nested maps structure for sorting
+function getFirstTaskFromStage(batchMap: Map<string, Map<string, Task[]>>): Task | undefined {
+  const firstBatch = batchMap.values().next().value
+  return getFirstTaskFromBatch(firstBatch)
+}
+
+function getFirstTaskFromBatch(threadMap: Map<string, Task[]> | undefined): Task | undefined {
+  if (!threadMap) return undefined
+  const firstThread = threadMap.values().next().value
+  return firstThread?.[0]
 }
 
 export function main(argv: string[] = process.argv): void {

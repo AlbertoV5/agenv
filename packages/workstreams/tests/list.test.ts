@@ -165,4 +165,21 @@ describe("CLI: List Tasks with Filtering", () => {
 
         expect(logOutput[0] || "").toContain("No tasks found");
     });
+
+    test("should display correct hierarchy in text output", () => {
+        main([
+            "node", "work", "list",
+            "--repo-root", REPO_ROOT,
+            "--stream", STREAM_ID
+            // no --json tag to get text output
+        ]);
+
+        const output = logOutput.join("\n");
+        expect(output).toContain("Stage 01: Stage 1");
+        expect(output).toContain("  Batch 01: Batch 1");
+        expect(output).toContain("    Thread 01: Thread 1");
+        expect(output).toContain("    Thread 02: Thread 2"); // ID 01.01.02.xx
+        expect(output).toContain("  Batch 02: Batch 2");
+        expect(output).toContain("    Thread 01: Thread 1 of Batch 2"); // ID 01.02.01.xx
+    });
 });

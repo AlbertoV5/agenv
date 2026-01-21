@@ -11,6 +11,10 @@
 - [~] BUG: When creating a fix stage, the planner agent geenerates a new TASKS.md file which doesn't have the "report" field, so when serializing back to tasks.json, we lose the report.
 
 - [ ] ENHANCE: After PLAN.md is created, have "assistant" agent read it for you (TTS), include `work preview` command output + reference to plan so assistant synthesizes.
+  
+- [ ] ENHANCE: We need to make it so the opencode sessions remain open after agent is finished to write instructions. Use `--title` and set thread name + uid for easy retrieval.
+
+- [ ] BUG: Update the Reviewer skill to include to check for if threads are actually parallelizable. Update planner skill doc to reinforce that.
 
 ## Human Workflow notes
 
