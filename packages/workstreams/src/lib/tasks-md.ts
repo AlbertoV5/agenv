@@ -145,6 +145,9 @@ export function generateTasksMdFromTasks(
                     : " "
 
           lines.push(`- [${check}] Task ${task.id}: ${task.name}`)
+          if (task.report) {
+            lines.push(`  > Report: ${task.report}`)
+          }
         }
         lines.push("")
       }
@@ -239,67 +242,81 @@ export function parseTasksMd(
           }
         }
 
-        // Now parse "Task ID: Desc" from text
-        const contentMatch = text?.match(/^\s*(?:Task\s+([\d\.]+):\s*)?(.*)$/i)
+        if (text) {
+          // Check for report in text
+          let report: string | undefined
+          const reportMatch = text.match(/>\s*Report:\s*(.*)/i)
+          if (reportMatch) {
+            report = reportMatch[1]!.trim()
+            // Remove report from text for description parsing, assuming it's at the end
+            text = text.replace(/>\s*Report:\s*.*$/i, "").trim()
+          }
 
-        if (contentMatch) {
-          const idString = contentMatch[1]
-          const description = contentMatch[2]?.trim()
+          // Now parse "Task ID: Desc" from text
+          // Use 'm' flag to handle multiline if marked preserves it, but we cleaned it above check
+          // We'll just take the first line as description if there are newlines still
+          const contentMatch = text.match(/^\s*(?:Task\s+([\d\.]+):\s*)?([^\n]*)/i)
 
-          if (!description) continue // Skip empty items
+          if (contentMatch) {
+            const idString = contentMatch[1]
+            const description = contentMatch[2]?.trim()
 
-          // Determine status
-          const status =
-            statusChar === "x"
-              ? "completed"
-              : statusChar === "~"
-                ? "in_progress"
-                : statusChar === "!"
-                  ? "blocked"
-                  : statusChar === "-"
-                    ? "cancelled"
-                    : "pending"
+            if (description) {
+              // Determine status
+              const status =
+                statusChar === "x"
+                  ? "completed"
+                  : statusChar === "~"
+                    ? "in_progress"
+                    : statusChar === "!"
+                      ? "blocked"
+                      : statusChar === "-"
+                        ? "cancelled"
+                        : "pending"
 
-          let taskId = idString
+              let taskId = idString
 
-          if (taskId) {
-            // Validate ID matches hierarchy
-            try {
-              const parsed = parseTaskId(taskId)
-              if (
-                parsed.stage !== currentStage.id ||
-                parsed.batch !== currentBatch.id ||
-                parsed.thread !== currentThread.id
-              ) {
+              if (taskId) {
+                // Validate ID matches hierarchy
+                try {
+                  const parsed = parseTaskId(taskId)
+                  if (
+                    parsed.stage !== currentStage.id ||
+                    parsed.batch !== currentBatch.id ||
+                    parsed.thread !== currentThread.id
+                  ) {
+                    errors.push(
+                      `Task ID ${taskId} does not match hierarchy (Stage ${currentStage.id}, Batch ${currentBatch.id}, Thread ${currentThread.id})`,
+                    )
+                    continue
+                  }
+                } catch (e) {
+                  errors.push(`Invalid task ID format: ${taskId}`)
+                  continue
+                }
+              } else {
                 errors.push(
-                  `Task ID ${taskId} does not match hierarchy (Stage ${currentStage.id}, Batch ${currentBatch.id}, Thread ${currentThread.id})`,
+                  `Task missing ID: "${description}". Format should be "- [ ] Task 01.01.01.01: Description"`,
                 )
                 continue
               }
-            } catch (e) {
-              errors.push(`Invalid task ID format: ${taskId}`)
-              continue
+
+              const now = new Date().toISOString()
+              const task: Task = {
+                id: taskId!,
+                name: description,
+                stage_name: currentStage.name,
+                batch_name: currentBatch.name,
+                thread_name: currentThread.name,
+                status,
+                created_at: now,
+                updated_at: now,
+                report,
+              }
+
+              tasks.push(task)
             }
-          } else {
-            errors.push(
-              `Task missing ID: "${description}". Format should be "- [ ] Task 01.01.01.01: Description"`,
-            )
-            continue
           }
-
-          const now = new Date().toISOString()
-          const task: Task = {
-            id: taskId!,
-            name: description,
-            stage_name: currentStage.name,
-            batch_name: currentBatch.name,
-            thread_name: currentThread.name,
-            status,
-            created_at: now,
-            updated_at: now,
-          }
-
-          tasks.push(task)
         }
       }
     }

@@ -13,6 +13,9 @@ import {
   getApprovalStatus,
   formatApprovalStatus,
   checkOpenQuestions,
+  approveStage,
+  revokeStageApproval,
+  getStageApprovalStatus,
 } from "../lib/approval.ts"
 
 interface ApproveCliArgs {
@@ -22,6 +25,7 @@ interface ApproveCliArgs {
   reason?: string
   force: boolean
   json: boolean
+  stage?: number
 }
 
 function printHelp(): void {
@@ -29,12 +33,13 @@ function printHelp(): void {
 work approve - Approve or revoke workstream plan approval
 
 Usage:
-  work approve [--stream <id>] [--force]
-  work approve --revoke [--stream <id>] [--reason "reason"]
+  work approve [--stream <id>] [--stage <n>] [--force]
+  work approve --revoke [--stream <id>] [--stage <n>] [--reason "reason"]
 
 Options:
   --repo-root, -r  Repository root (auto-detected if omitted)
   --stream, -s     Workstream ID or name (uses current if not specified)
+  --stage, -st     Stage number to approve/revoke (optional)
   --revoke         Revoke existing approval
   --reason         Reason for revoking approval
   --force, -f      Approve even with validation warnings
@@ -45,6 +50,9 @@ Description:
   Plans must be approved before tasks can be created with 'work add-task'.
   This creates a human-in-the-loop checkpoint for AI-generated plans.
 
+  Approvals can be at the Stream level (approving the PLAN.md) or at
+  the Stage level (approving the outputs of a previous stage before continuing).
+
   Approval is blocked if there are open questions ([ ] checkboxes) in PLAN.md.
   Resolve questions by marking them with [x], or use --force to approve anyway.
 
@@ -53,14 +61,20 @@ Description:
   'work add-task' attempt.
 
 Examples:
-  # Approve current workstream
+  # Approve current workstream plan
   work approve
+
+  # Approve specific stage
+  work approve --stage 1
 
   # Approve specific workstream
   work approve --stream "001-my-feature"
 
   # Revoke approval (e.g., to make changes)
   work approve --revoke --reason "Need to revise stage 2"
+
+  # Revoke stage approval
+  work approve --revoke --stage 1 --reason "Bug found in stage 1 output"
 `)
 }
 
@@ -118,6 +132,20 @@ function parseCliArgs(argv: string[]): ApproveCliArgs | null {
         parsed.json = true
         break
 
+      case "--stage":
+      case "-st":
+        if (!next) {
+          console.error("Error: --stage requires a value")
+          return null
+        }
+        parsed.stage = parseInt(next, 10)
+        if (isNaN(parsed.stage)) {
+          console.error("Error: --stage must be a number")
+          return null
+        }
+        i++
+        break
+
       case "--help":
       case "-h":
         printHelp()
@@ -159,6 +187,81 @@ export function main(argv: string[] = process.argv): void {
   } catch (e) {
     console.error((e as Error).message)
     process.exit(1)
+  }
+
+  // Handle Stage-level operations
+  if (cliArgs.stage !== undefined) {
+    const stageNum = cliArgs.stage
+
+    if (cliArgs.revoke) {
+      try {
+        // Check if stage is approved
+        const stageStatus = getStageApprovalStatus(stream, stageNum)
+        if (stageStatus !== "approved") {
+          console.error(`Error: Stage ${stageNum} is not approved, nothing to revoke`)
+          process.exit(1)
+        }
+
+        const updatedStream = revokeStageApproval(repoRoot, stream.id, stageNum, cliArgs.reason)
+
+        if (cliArgs.json) {
+          console.log(JSON.stringify({
+            action: "revoked",
+            scope: "stage",
+            stage: stageNum,
+            streamId: updatedStream.id,
+            reason: cliArgs.reason,
+            approval: updatedStream.approval?.stages?.[stageNum]
+          }, null, 2))
+        } else {
+          console.log(`Revoked approval for Stage ${stageNum} of workstream "${updatedStream.name}"`)
+          if (cliArgs.reason) {
+            console.log(`  Reason: ${cliArgs.reason}`)
+          }
+        }
+      } catch (e) {
+        console.error((e as Error).message)
+        process.exit(1)
+      }
+      return
+    }
+
+    // Handle Stage Approve
+    const stageStatus = getStageApprovalStatus(stream, stageNum)
+    if (stageStatus === "approved" && !cliArgs.force) {
+      if (cliArgs.json) {
+        console.log(JSON.stringify({
+          action: "already_approved",
+          scope: "stage",
+          stage: stageNum,
+          streamId: stream.id,
+          approval: stream.approval?.stages?.[stageNum]
+        }, null, 2))
+      } else {
+        console.log(`Stage ${stageNum} of workstream "${stream.name}" is already approved`)
+      }
+      return
+    }
+
+    try {
+      const updatedStream = approveStage(repoRoot, stream.id, stageNum, "user")
+
+      if (cliArgs.json) {
+        console.log(JSON.stringify({
+          action: "approved",
+          scope: "stage",
+          stage: stageNum,
+          streamId: updatedStream.id,
+          approval: updatedStream.approval?.stages?.[stageNum]
+        }, null, 2))
+      } else {
+        console.log(`Approved Stage ${stageNum} of workstream "${updatedStream.name}"`)
+      }
+    } catch (e) {
+      console.error((e as Error).message)
+      process.exit(1)
+    }
+    return
   }
 
   // Handle revoke

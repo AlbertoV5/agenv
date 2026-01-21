@@ -51,6 +51,7 @@ import { main as multiMain } from "../src/cli/multi.ts"
 import { main as multiNavigatorMain } from "../src/cli/multi-navigator.ts"
 import { main as multiGridMain } from "../src/cli/multi-grid.ts"
 import { main as serveMain } from "../src/cli/serve.ts"
+import { main as treeMain } from "../src/cli/tree.ts"
 
 const SUBCOMMANDS = {
   init: initMain,
@@ -87,6 +88,7 @@ const SUBCOMMANDS = {
   "multi-navigator": multiNavigatorMain,
   "multi-grid": multiGridMain,
   serve: serveMain,
+  tree: treeMain,
 } as const
 
 type Subcommand = keyof typeof SUBCOMMANDS
@@ -131,6 +133,7 @@ Commands:
   changelog   Generate changelog from completed tasks
   export      Export workstream data (md, csv, json)
   serve       Launch web visualization server
+  tree        Show workstream structure tree
 
 Options:
   --help, -h    Show this help message

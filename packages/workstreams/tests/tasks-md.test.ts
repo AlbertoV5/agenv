@@ -143,4 +143,25 @@ describe("tasks-md", () => {
     expect(md).toContain("#### Thread 02: Thread Two")
     expect(md).toContain("- [x] Task 01.01.02.01: Second task")
   })
+  test("preserve report field in round trip", () => {
+    const originalTasks: Task[] = [
+      {
+        id: "01.01.01.01",
+        name: "Task with report",
+        status: "completed",
+        stage_name: "Stage One",
+        batch_name: "Batch One",
+        thread_name: "Thread One",
+        report: "This is a completion report.",
+        created_at: "",
+        updated_at: "",
+      },
+    ]
+
+    const md = generateTasksMdFromTasks("Test Stream", originalTasks)
+    expect(md).toContain("> Report: This is a completion report.")
+
+    const { tasks } = parseTasksMd(md, "stream-id")
+    expect(tasks[0]?.report).toBe("This is a completion report.")
+  })
 })

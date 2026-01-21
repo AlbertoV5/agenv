@@ -183,6 +183,16 @@ export interface ApprovalMetadata {
   revoked_at?: string // ISO date when revoked (if status changed after approval)
   revoked_reason?: string // Optional: why it was revoked
   plan_hash?: string // SHA-256 hash of PLAN.md at approval time for modification detection
+  stages?: Record<
+    number,
+    {
+      status: ApprovalStatus
+      approved_at?: string
+      approved_by?: string
+      revoked_at?: string
+      revoked_reason?: string
+    }
+  >
 }
 
 // Stage status summary

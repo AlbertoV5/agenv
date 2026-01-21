@@ -12,13 +12,14 @@ description: How to execute an existing workstream plan. Focuses on finding task
 
 ```bash
 work status             # High-level progress & current stage
-work list --tasks       # List all tasks with status
+work tree               # Structure view - use this to see what's done/pending
+work list --tasks --batch "01.01" # List tasks for the batch your thread is in
 work read --task "ID"   # Read specific task details
 ```
 
 ## Task Workflow
 
-1. **Find Task**: Pick from `work list`
+1. **Find Task**: Pick from `work list --batch "ID"`
 2. **Start**: `work update --task "01.01.01.01" --status in_progress`
 3. **Work**: Implement changes defined in `PLAN.md` (read via `work edit`)
 4. **Test**: If `work/TESTS.md` exists, run tests and fix any failures

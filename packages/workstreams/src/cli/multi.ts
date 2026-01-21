@@ -30,6 +30,7 @@ import {
     createGridLayout,
     listPaneIds,
 } from "../lib/tmux.ts"
+import { getStageApprovalStatus } from "../lib/approval.ts"
 import {
     isServerRunning,
     startServer,
@@ -435,6 +436,20 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     if (!batchParsed) {
         console.error(`Error: Invalid batch ID "${batchId}". Expected format: "SS.BB" (e.g., "01.02")`)
         process.exit(1)
+    }
+
+    // Check Previous Stage Approval
+    // If we are running a batch in stage N (where N > 1), stage N-1 must be approved
+    if (batchParsed.stage > 1) {
+        const prevStageNum = batchParsed.stage - 1
+        const approvalStatus = getStageApprovalStatus(stream, prevStageNum)
+
+        if (approvalStatus !== "approved") {
+            console.error(`Error: Previous stage (Stage ${prevStageNum}) is not approved.`)
+            console.error(`\nYou must approve the outputs of Stage ${prevStageNum} before proceeding to Stage ${batchParsed.stage}.`)
+            console.error(`Run: work approve --stage ${prevStageNum}`)
+            process.exit(1)
+        }
     }
 
     // Load and parse PLAN.md

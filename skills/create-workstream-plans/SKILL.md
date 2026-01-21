@@ -108,6 +108,7 @@ work edit       # Open PLAN.md in editor
 
 ```bash
 work preview      # Shows structure with progress
+work tree         # Shows high-level structure (useful for quick verification)
 work consolidate  # Validates PLAN.md structure
 work approve      # Approve plan (blocked if open questions)
 work approve --force  # Approve with open questions
@@ -118,7 +119,7 @@ work approve --force  # Approve with open questions
 After filling out PLAN.md, you MUST pause and ask for user review:
 
 1. Run `work consolidate` to validate structure
-2. Run `work preview` to show the plan hierarchy
+2. Run `work preview` (detailed) and `work tree` (high-level) to show the plan hierarchy
 3. Present the preview output to the user
 4. Ask: "Does this plan structure look correct? Any changes needed before approval?"
 5. **Wait for explicit confirmation** — do not proceed until user confirms

@@ -15,4 +15,4 @@
 ### backend-heavy-hitter
 **Description:** Deep thinker for complex backend work
 **Best for:** Backend tasks
-**Model:** openrouter/anthropic/claude-opus-4.5
+**Model:** openrouter/google/gemini-3-pro-preview
