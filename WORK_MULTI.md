@@ -358,7 +358,7 @@ packages/workstreams/src/
 5. **Batch detection** - implement `findNextIncompleteBatch()`
 6. **Update on completion** - update `current_batch` after batch finishes
 
-### Phase 4: Navigator (Optional Enhancement)
+### Phase 4: Navigator
 
 7. **`cli/multi-navigator.ts`** - SST-style navigation panel
    - List all threads with status indicators
@@ -711,13 +711,13 @@ After the final stage:
 
 ### CLI Commands
 - [x] Update `work update` to accept `--report` flag
-- [ ] Create `work multi` command (`cli/multi.ts`)
+- [x] Create `work multi` command (`cli/multi.ts`)
 - [x] Update `work report` with `--stage` flag
 - [x] Update `work complete` to use aggregated reports
 
 ### Libraries
-- [ ] Create `lib/tmux.ts` for tmux management
-- [ ] Create `lib/opencode.ts` for opencode serve
+- [x] Create `lib/tmux.ts` for tmux management
+- [x] Create `lib/opencode.ts` for opencode serve
 - [x] Create `lib/reports.ts` for report generation
 
 ### Skills

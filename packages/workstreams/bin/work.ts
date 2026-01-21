@@ -48,6 +48,7 @@ import { main as editMain } from "../src/cli/edit.ts"
 import { main as initMain } from "../src/cli/init.ts"
 import { main as executeMain } from "../src/cli/execute.ts"
 import { main as multiMain } from "../src/cli/multi.ts"
+import { main as multiNavigatorMain } from "../src/cli/multi-navigator.ts"
 
 const SUBCOMMANDS = {
   init: initMain,
@@ -81,6 +82,7 @@ const SUBCOMMANDS = {
   prompt: promptMain,
   execute: executeMain,
   multi: multiMain,
+  "multi-navigator": multiNavigatorMain,
 } as const
 
 type Subcommand = keyof typeof SUBCOMMANDS

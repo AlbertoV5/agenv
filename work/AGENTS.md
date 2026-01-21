@@ -5,14 +5,14 @@
 ### default
 **Description:** General-purpose implementation agent
 **Best for:** Standard development tasks
-**Model:** anthropic/claude-opus-4.5
+**Model:** openrouter/anthropic/claude-sonnet-4.5
 
 ### frontend-speedster
 **Description:** Very efficient and effective frontend coder
 **Best for:** Frontend tasks
-**Model:** openrouter/gemini-flash-03-preview
+**Model:** google/gemini-3-flash-preview
 
-### backend-heavy-hittera
+### backend-heavy-hitter
 **Description:** Deep thinker for complex backend work
 **Best for:** Backend tasks
-**Model:** anthropic/claude-opus-4.5
+**Model:** openrouter/anthropic/claude-opus-4.5

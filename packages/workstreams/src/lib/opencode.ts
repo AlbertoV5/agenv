@@ -84,15 +84,18 @@ export async function waitForServer(
 
 /**
  * Build the opencode run command with --attach flag
+ * Wrapped in sh -c to properly handle piped commands in tmux
  */
 export function buildRunCommand(
     port: number,
     model: string,
     promptPath: string
 ): string {
-    const serverUrl = getServerUrl(port)
-    // Use cat to pipe prompt content to opencode run
-    return `cat "${promptPath}" | opencode run --attach "${serverUrl}" --model "${model}"`
+    // Escape single quotes in paths by replacing ' with '\''
+    const escapedPath = promptPath.replace(/'/g, "'\\''")
+    // Wrap in sh -c with single quotes so the pipe works in tmux
+    // We add a read command at the end to keep the pane open after execution (Dead Pane Prevention)
+    return `sh -c 'cat "${escapedPath}" | opencode run --port ${port} --model "${model}"; echo "\\nThread finished. Press Enter to close."; read'`
 }
 
 /**

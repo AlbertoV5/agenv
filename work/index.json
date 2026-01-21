@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-01-20T21:13:00.962Z",
+  "last_updated": "2026-01-21T00:44:35.880Z",
   "current_stream": "001-workstream-viz",
   "streams": [
     {
@@ -51,7 +51,7 @@
         ]
       },
       "created_at": "2026-01-20T17:28:30.014Z",
-      "updated_at": "2026-01-20T21:04:31.740Z",
+      "updated_at": "2026-01-21T00:44:35.880Z",
       "path": "work/001-workstream-viz",
       "generated_by": {
         "workstreams": "0.1.0"

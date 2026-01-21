@@ -30,11 +30,18 @@ export function createSession(
     windowName: string,
     command: string
 ): void {
-    // Create session with first window
-    execSync(
-        `tmux new-session -d -s "${sessionName}" -n "${windowName}" "${command}"`,
-        { stdio: "pipe" }
-    )
+    // Use spawn with arguments to avoid shell quoting issues
+    const result = Bun.spawnSync([
+        "tmux",
+        "new-session",
+        "-d",
+        "-s", sessionName,
+        "-n", windowName,
+        command
+    ])
+    if (result.exitCode !== 0) {
+        throw new Error(`Failed to create tmux session: ${result.stderr.toString()}`)
+    }
 }
 
 /**
@@ -45,10 +52,111 @@ export function addWindow(
     windowName: string,
     command: string
 ): void {
-    execSync(
-        `tmux new-window -t "${sessionName}" -n "${windowName}" "${command}"`,
-        { stdio: "pipe" }
-    )
+    // Use spawn with arguments to avoid shell quoting issues
+    const result = Bun.spawnSync([
+        "tmux",
+        "new-window",
+        "-t", sessionName,
+        "-n", windowName,
+        command
+    ])
+    if (result.exitCode !== 0) {
+        throw new Error(`Failed to add tmux window: ${result.stderr.toString()}`)
+    }
+}
+
+/**
+ * Get the current pane ID for a target (session:window.pane)
+ */
+export function getPaneId(target: string): string {
+    try {
+        const output = execSync(
+            `tmux list-panes -t "${target}" -F "#{pane_id}"`,
+            { stdio: "pipe", encoding: "utf-8" }
+        )
+        return output.trim().split("\n")[0] || ""
+    } catch {
+        return ""
+    }
+}
+
+/**
+ * Split a window/pane
+ */
+export function splitWindow(
+    target: string,
+    command: string,
+    size?: number,
+    direction: 'h' | 'v' = 'h'
+): void {
+    const args = [
+        "split-window",
+        "-t", target,
+        direction === 'h' ? "-h" : "-v",
+    ]
+
+    if (size) {
+        args.push("-l", size.toString() + "%")
+    } else {
+        // If no size specified, default behavior (usually 50%)
+    }
+
+    args.push(command)
+
+    const result = Bun.spawnSync(["tmux", ...args])
+    if (result.exitCode !== 0) {
+        throw new Error(`Failed to split window: ${result.stderr.toString()}`)
+    }
+}
+
+/**
+ * Join a pane from src to dst
+ */
+export function joinPane(src: string, dst: string, size?: number, direction: 'h' | 'v' = 'h'): void {
+    const args = [
+        "join-pane",
+        "-s", src,
+        "-t", dst,
+        direction === 'h' ? "-h" : "-v"
+    ]
+
+    if (size) {
+        args.push("-l", size.toString() + "%")
+    }
+
+    const result = Bun.spawnSync(["tmux", ...args])
+    if (result.exitCode !== 0) {
+        throw new Error(`Failed to join pane: ${result.stderr.toString()}`)
+    }
+}
+
+
+/**
+ * Break a pane out of its window into a new window (effectively hiding it from the dashboard)
+ */
+export function breakPane(src: string): void {
+    const result = Bun.spawnSync([
+        "tmux",
+        "break-pane",
+        "-s", src,
+        "-d" // detached
+    ])
+
+    // We ignore errors here because sometimes the pane might already be broken or invalid
+    // and we don't want to crash the navigator
+}
+
+/**
+ * Resize a pane
+ */
+export function resizePane(target: string, size: number, direction: 'x' | 'y' = 'x'): void {
+    const result = Bun.spawnSync([
+        "tmux",
+        "resize-pane",
+        "-t", target,
+        direction === 'x' ? "-x" : "-y",
+        size.toString() + "%"
+    ])
 }
 
 /**
@@ -166,4 +274,21 @@ export function buildAddWindowCommand(
  */
 export function buildAttachCommand(sessionName: string): string {
     return `tmux attach -t "${sessionName}"`
+}
+
+/**
+ * Set a global option for a tmux session
+ */
+export function setGlobalOption(sessionName: string, option: string, value: string): void {
+    const result = Bun.spawnSync([
+        "tmux",
+        "set-option",
+        "-t", sessionName,
+        option,
+        value
+    ])
+    if (result.exitCode !== 0) {
+        // Warning only, don't crash
+        console.warn(`Warning: Failed to set tmux option ${option}: ${result.stderr.toString()}`)
+    }
 }

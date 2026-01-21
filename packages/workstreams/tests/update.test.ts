@@ -194,6 +194,47 @@ describe("updateTask", () => {
       const tasks = getTasks(tempDir, "001-test-stream")
       expect(tasks[0]?.status).toBe("cancelled")
     })
+
+    test("updates task with report", async () => {
+      const tasksFile: TasksFile = {
+        version: "1.0.0",
+        stream_id: "001-test-stream",
+        last_updated: new Date().toISOString(),
+        tasks: [
+          {
+            id: "01.01.01.01",
+            name: "First task",
+            thread_name: "T1",
+            batch_name: "B01",
+            stage_name: "S1",
+            created_at: "",
+            updated_at: "",
+            status: "pending",
+          },
+        ],
+      }
+
+      await writeFile(
+        join(tempDir, "work/001-test-stream/tasks.json"),
+        JSON.stringify(tasksFile, null, 2),
+      )
+
+      const reportText = "Completed the task successfully"
+      const result = updateTask({
+        repoRoot: tempDir,
+        stream: baseStream,
+        taskId: "01.01.01.01",
+        status: "completed",
+        report: reportText,
+      })
+
+      expect(result.updated).toBe(true)
+      expect(result.status).toBe("completed")
+      expect(result.task?.report).toBe(reportText)
+
+      const tasks = getTasks(tempDir, "001-test-stream")
+      expect(tasks[0]?.report).toBe(reportText)
+    })
   })
 
   describe("task selection", () => {
