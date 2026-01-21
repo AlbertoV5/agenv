@@ -8,6 +8,8 @@ import { getRepoRoot, getWorkDir, getIndexPath } from "../lib/repo.ts"
 import { getOrCreateIndex, saveIndex } from "../lib/index.ts"
 import { getAgentsMdPath } from "../lib/agents.ts"
 import { getTestsMdPath } from "../lib/prompts.ts"
+import { saveGitHubConfig, getGitHubConfigPath } from "../lib/github/config.ts"
+import { DEFAULT_GITHUB_CONFIG } from "../lib/github/types.ts"
 
 const DEFAULT_AGENTS_MD = `# Agents
 
@@ -65,7 +67,16 @@ export async function main(argv: string[]): Promise<void> {
             mkdirSync(workDir, { recursive: true })
         }
 
-        // 1. Initialize index.json
+        // 1. Initialize github.json
+        const githubConfigPath = getGitHubConfigPath(repoRoot)
+        if (!existsSync(githubConfigPath) || force) {
+            console.log(`${force && existsSync(githubConfigPath) ? "Overwriting" : "Creating"} github.json (disabled by default)...`)
+            await saveGitHubConfig(repoRoot, DEFAULT_GITHUB_CONFIG)
+        } else {
+            console.log("github.json already exists, skipping.")
+        }
+
+        // 2. Initialize index.json
         const indexPath = getIndexPath(repoRoot)
         if (!existsSync(indexPath) || force) {
             console.log(`${force && existsSync(indexPath) ? "Overwriting" : "Initializing"} index.json...`)
@@ -75,7 +86,7 @@ export async function main(argv: string[]): Promise<void> {
             console.log("index.json already exists, skipping.")
         }
 
-        // 2. Initialize AGENTS.md
+        // 3. Initialize AGENTS.md
         const agentsPath = getAgentsMdPath(repoRoot)
         if (!existsSync(agentsPath) || force) {
             console.log(`${force && existsSync(agentsPath) ? "Overwriting" : "Initializing"} AGENTS.md...`)
@@ -84,7 +95,7 @@ export async function main(argv: string[]): Promise<void> {
             console.log("AGENTS.md already exists, skipping.")
         }
 
-        // 3. Initialize TESTS.md
+        // 4. Initialize TESTS.md
         const testsPath = getTestsMdPath(repoRoot)
         if (!existsSync(testsPath) || force) {
             console.log(`${force && existsSync(testsPath) ? "Overwriting" : "Initializing"} TESTS.md...`)

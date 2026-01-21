@@ -17,6 +17,8 @@ import {
   revokeStageApproval,
   getStageApprovalStatus,
 } from "../lib/approval.ts"
+import { isGitHubEnabled, loadGitHubConfig } from "../lib/github/config.ts"
+import { createIssuesForWorkstream, type CreateIssuesResult } from "../lib/github/sync.ts"
 
 interface ApproveCliArgs {
   repoRoot?: string
@@ -156,6 +158,66 @@ function parseCliArgs(argv: string[]): ApproveCliArgs | null {
   return parsed
 }
 
+/**
+ * Handles GitHub issue creation after workstream approval.
+ * This function is designed to fail gracefully - it never throws.
+ * @param repoRoot Repository root path
+ * @param streamId Workstream ID
+ * @param json Whether to output JSON
+ * @param stageFilter Optional stage number to filter (only create issues for this stage)
+ * @returns Created issues result or null if GitHub is not enabled
+ */
+async function handleGitHubIssueCreation(
+  repoRoot: string,
+  streamId: string,
+  json: boolean,
+  stageFilter?: number
+): Promise<CreateIssuesResult | null> {
+  try {
+    // Check if GitHub is enabled
+    const enabled = await isGitHubEnabled(repoRoot)
+    if (!enabled) {
+      return null
+    }
+
+    // Check if auto_create_issues is enabled
+    const config = await loadGitHubConfig(repoRoot)
+    if (!config.auto_create_issues) {
+      return null
+    }
+
+    // Create issues for the workstream (optionally filtered by stage)
+    const result = await createIssuesForWorkstream(repoRoot, streamId, stageFilter)
+
+    // Log results (only in non-JSON mode)
+    if (!json) {
+      if (result.created.length > 0) {
+        console.log("\nGitHub Issues Created:")
+        for (const issue of result.created) {
+          console.log(`  ${issue.threadName}: ${issue.issueUrl}`)
+        }
+      }
+
+      if (result.errors.length > 0) {
+        console.log("\nGitHub Issue Errors:")
+        for (const err of result.errors) {
+          console.log(`  ${err.threadName}: ${err.error}`)
+        }
+      }
+    }
+
+    return result
+  } catch (error) {
+    // Never fail the approval due to GitHub errors
+    if (!json) {
+      console.log(
+        `\nWarning: Failed to create GitHub issues: ${(error as Error).message}`
+      )
+    }
+    return null
+  }
+}
+
 export function main(argv: string[] = process.argv): void {
   const cliArgs = parseCliArgs(argv)
   if (!cliArgs) {
@@ -247,15 +309,43 @@ export function main(argv: string[] = process.argv): void {
       const updatedStream = approveStage(repoRoot, stream.id, stageNum, "user")
 
       if (cliArgs.json) {
-        console.log(JSON.stringify({
-          action: "approved",
-          scope: "stage",
-          stage: stageNum,
-          streamId: updatedStream.id,
-          approval: updatedStream.approval?.stages?.[stageNum]
-        }, null, 2))
+        // In JSON mode, wait for GitHub issues to be created and include in output
+        handleGitHubIssueCreation(repoRoot, stream.id, true, stageNum)
+          .then((githubResult) => {
+            console.log(JSON.stringify({
+              action: "approved",
+              scope: "stage",
+              stage: stageNum,
+              streamId: updatedStream.id,
+              approval: updatedStream.approval?.stages?.[stageNum],
+              github: githubResult
+                ? {
+                    issues_created: githubResult.created.length,
+                    issues_skipped: githubResult.skipped.length,
+                    issues_errors: githubResult.errors.length,
+                    created: githubResult.created,
+                  }
+                : null,
+            }, null, 2))
+          })
+          .catch(() => {
+            // GitHub errors should not fail the approval
+            console.log(JSON.stringify({
+              action: "approved",
+              scope: "stage",
+              stage: stageNum,
+              streamId: updatedStream.id,
+              approval: updatedStream.approval?.stages?.[stageNum],
+              github: null,
+            }, null, 2))
+          })
       } else {
         console.log(`Approved Stage ${stageNum} of workstream "${updatedStream.name}"`)
+
+        // Create GitHub issues for threads in this stage (fire and wait)
+        handleGitHubIssueCreation(repoRoot, stream.id, false, stageNum).catch(() => {
+          // Errors are already handled inside the function
+        })
       }
     } catch (e) {
       console.error((e as Error).message)
@@ -373,27 +463,65 @@ export function main(argv: string[] = process.argv): void {
     const updatedStream = approveStream(repoRoot, stream.id, "user")
 
     if (cliArgs.json) {
-      console.log(
-        JSON.stringify(
-          {
-            action: "approved",
-            streamId: updatedStream.id,
-            streamName: updatedStream.name,
-            approval: updatedStream.approval,
-            openQuestions: questionsResult.hasOpenQuestions
-              ? questionsResult.openCount
-              : 0,
-            forcedApproval: questionsResult.hasOpenQuestions && cliArgs.force,
-          },
-          null,
-          2,
-        ),
-      )
+      // In JSON mode, we need to wait for GitHub issues to be created
+      // so we can include them in the output
+      handleGitHubIssueCreation(repoRoot, stream.id, true)
+        .then((githubResult) => {
+          console.log(
+            JSON.stringify(
+              {
+                action: "approved",
+                streamId: updatedStream.id,
+                streamName: updatedStream.name,
+                approval: updatedStream.approval,
+                openQuestions: questionsResult.hasOpenQuestions
+                  ? questionsResult.openCount
+                  : 0,
+                forcedApproval: questionsResult.hasOpenQuestions && cliArgs.force,
+                github: githubResult
+                  ? {
+                      issues_created: githubResult.created.length,
+                      issues_skipped: githubResult.skipped.length,
+                      issues_errors: githubResult.errors.length,
+                      created: githubResult.created,
+                    }
+                  : null,
+              },
+              null,
+              2,
+            ),
+          )
+        })
+        .catch(() => {
+          // GitHub errors should not fail the approval
+          console.log(
+            JSON.stringify(
+              {
+                action: "approved",
+                streamId: updatedStream.id,
+                streamName: updatedStream.name,
+                approval: updatedStream.approval,
+                openQuestions: questionsResult.hasOpenQuestions
+                  ? questionsResult.openCount
+                  : 0,
+                forcedApproval: questionsResult.hasOpenQuestions && cliArgs.force,
+                github: null,
+              },
+              null,
+              2,
+            ),
+          )
+        })
     } else {
       console.log(
         `Approved workstream "${updatedStream.name}" (${updatedStream.id})`,
       )
       console.log(`  Status: ${formatApprovalStatus(updatedStream)}`)
+
+      // Create GitHub issues after approval (fire and wait)
+      handleGitHubIssueCreation(repoRoot, stream.id, false).catch(() => {
+        // Errors are already handled inside the function
+      })
     }
   } catch (e) {
     console.error((e as Error).message)

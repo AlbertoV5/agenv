@@ -98,6 +98,8 @@ export interface StreamMetadata {
   current_batch?: string // ID of the current batch (e.g. "01.01")
   github?: {
     branch?: string
+    completed_at?: string
+    pr_number?: number
   }
 }
 

@@ -49,7 +49,7 @@ Workflow:
 
 function parseCliArgs(argv: string[]): TasksCliArgs | null {
   const args = argv.slice(2)
-  
+
   if (args.length === 0) return null
 
   const command = args[0]
@@ -63,7 +63,7 @@ function parseCliArgs(argv: string[]): TasksCliArgs | null {
   }
 
   const parsed: Partial<TasksCliArgs> = { command }
-  
+
   for (let i = 1; i < args.length; i++) {
     const arg = args[i]
     const next = args[i + 1]
@@ -87,7 +87,7 @@ function parseCliArgs(argv: string[]): TasksCliArgs | null {
         parsed.repoRoot = next
         i++
         break
-        
+
       case "--help":
       case "-h":
         printHelp()
@@ -131,7 +131,7 @@ export function main(argv: string[] = process.argv): void {
 
     if (cliArgs.command === "generate") {
       // GENERATE TASKS.md
-      
+
       // Check if TASKS.md already exists
       if (existsSync(tasksMdPath)) {
         console.error(`Error: TASKS.md already exists at ${tasksMdPath}`)
@@ -141,7 +141,7 @@ export function main(argv: string[] = process.argv): void {
 
       // Check if tasks.json exists and has tasks
       const existingTasks = getTasks(repoRoot, stream.id)
-      
+
       let content: string
       if (existingTasks.length > 0) {
         console.log(`Generating TASKS.md from ${existingTasks.length} existing tasks...`)
@@ -151,20 +151,20 @@ export function main(argv: string[] = process.argv): void {
         console.log("Generating TASKS.md from PLAN.md structure...")
         const planPath = getStreamPlanMdPath(repoRoot, stream.id)
         if (!existsSync(planPath)) {
-            console.error(`Error: PLAN.md not found at ${planPath}`)
-            process.exit(1)
+          console.error(`Error: PLAN.md not found at ${planPath}`)
+          process.exit(1)
         }
-        
+
         const planContent = readFileSync(planPath, "utf-8")
         const errors: any[] = []
         const doc = parseStreamDocument(planContent, errors)
-        
+
         if (!doc) {
-            console.error("Error parsing PLAN.md:")
-            errors.forEach(e => console.error(`- ${e.message}`))
-            process.exit(1)
+          console.error("Error parsing PLAN.md:")
+          errors.forEach(e => console.error(`- ${e.message}`))
+          process.exit(1)
         }
-        
+
         content = generateTasksMdFromPlan(stream.name, doc)
       }
 
@@ -197,10 +197,10 @@ export function main(argv: string[] = process.argv): void {
       // Merge with existing tasks? 
       // The strategy is to overwrite tasks.json with what's in TASKS.md, 
       // but preserving created_at/updated_at if IDs match?
-      
+
       const existingTasks = getTasks(repoRoot, stream.id)
       const existingMap = new Map(existingTasks.map(t => [t.id, t]))
-      
+
       const mergedTasks = newTasks.map(newTask => {
         const existing = existingMap.get(newTask.id)
         if (existing) {
@@ -211,11 +211,12 @@ export function main(argv: string[] = process.argv): void {
             ...newTask,
             created_at: existing.created_at,
             // updated_at is already set to now() in parseTasksMd
-            // assigned_agent? breadcrumb? 
-            // We should probably preserve fields that are not in TASKS.md 
-            // (assigned_agent, breadcrumb, etc.)
+            // Preserve fields that are not in TASKS.md (assigned_agent, breadcrumb, etc.)
+            // For report: use newTask.report if present (parsed from TASKS.md), 
+            // otherwise preserve existing.report
             assigned_agent: existing.assigned_agent,
-            breadcrumb: existing.breadcrumb
+            breadcrumb: existing.breadcrumb,
+            report: newTask.report ?? existing.report
           }
         }
         return newTask
@@ -230,7 +231,7 @@ export function main(argv: string[] = process.argv): void {
 
       atomicWriteFile(tasksJsonPath, JSON.stringify(tasksFile, null, 2))
       console.log(`Updated: ${tasksJsonPath}`)
-      
+
       unlinkSync(tasksMdPath)
       console.log("Deleted TASKS.md")
     }

@@ -16,6 +16,8 @@ export interface GitHubConfig {
   owner: string
   repo: string
   branch_prefix: string // Prefix for feature branches (e.g., "workstream/")
+  auto_create_issues: boolean // Auto-create issues for threads on approval
+  default_pr_target?: string // Default target branch for PRs (e.g., "main")
   label_config: {
     workstream: LabelConfig
     thread: LabelConfig
@@ -151,6 +153,7 @@ export const DEFAULT_GITHUB_CONFIG: GitHubConfig = {
   owner: "",
   repo: "",
   branch_prefix: "workstream/",
+  auto_create_issues: true, // Create issues automatically on approval
   label_config: {
     workstream: { prefix: "stream:", color: "5319e7" }, // Purple
     thread: { prefix: "thread:", color: "0e8a16" },     // Green
