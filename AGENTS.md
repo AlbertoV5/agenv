@@ -2,13 +2,6 @@
 
 This is a CLI tool for managing workstreams. It is a monorepo with packages under ./packages.
 
-## Structure
-
-- docs/
-- packages/
-- packages/workstreams/src
-- packages/workstreams/tests
-
 ## Dependencies
 
 We use `bun` for package management.
@@ -17,3 +10,10 @@ We use `bun` for package management.
 
 - Tests are under ./packages/{package}/tests/*
 - Run tests with `bun run test` inside the package.
+
+## Important Directories
+
+- docs/
+- packages/
+- packages/workstreams/src
+- packages/workstreams/tests
