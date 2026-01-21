@@ -194,7 +194,7 @@ work prompt --stage 1    # Generate all prompts for stage 1
 
 ## Handoff to User
 
-When prompts are ready notify the user that prompts were generated, explain which threads can run in parallel (same batch). Ask user to execute with their implementation agents. Wait for user to report completion or issues
+When prompts are ready notify the user that prompts were generated, ask user to start the agents and wait for user to report completion or issues
 
 After a stage completes, generate a stage report with `work report --stage N` to review progress before proceeding to the next stage.
 ---
@@ -209,7 +209,6 @@ work current --set "000-feature-name"
 # Structure
 work add-batch --stage "setup" --name "batch-name"
 work add-thread --stage "setup" --batch "core" --name "thread-name"
-work edit
 
 # Validate & approve
 work preview
@@ -217,25 +216,23 @@ work validate plan
 work check plan
 work approve
 
-# Tasks (required workflow after approval)
+# Tasks (required workflow after plan approval)
 work tasks generate              # Create TASKS.md from PLAN.md
 work tasks serialize             # Convert TASKS.md to tasks.json
 work add-task --stage 1 --batch 1 --thread 1 --name "..."  # Only for mid-execution additions
 
-# Agent assignment (if work/AGENTS.md exists)
+# Agent assignment
 work agents                      # List available agents
 work assign --thread "01.01.01" --agent "backend-expert"
 
 # Agent prompts
-work prompt --stage 1 --batch 1 --thread 1
+work prompt --stage 1 --batch 1
 
 # Status updates (after user feedback)
-work update --task "01.01.01.01" --status completed --report "Summary of work done"
-work update --task "01.01.01.01" --status blocked
 work fix   # Add fix stage
 work approve --revoke --reason "Fix stage"
 
 # Reports & completion
 work report --stage 1            # Generate stage report
-work complete                    # Generate COMPLETION.md
+work report
 ```
