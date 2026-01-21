@@ -599,27 +599,25 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     const firstThread = threads[0]!
     const firstCmd = buildRunCommand(port, firstThread.model, firstThread.promptPath)
 
-    // Name window 0 "dashboard" or similarly generic, as it will contain the navigator
-    // But initially it contains Thread 1 content.
-    // Actually, to make swapping easier, we want Window 0 to be the "Dashboard" window.
-    createSession(sessionName, "Dashboard", firstCmd)
+    // Name window "T1" to match navigator's windowName for thread index 0
+    createSession(sessionName, "T1", firstCmd)
 
     // Keep windows open after exit for debugging
     setGlobalOption(sessionName, "remain-on-exit", "on")
     // Enable mouse support for scrolling
     setGlobalOption(sessionName, "mouse", "on")
 
-    console.log(`  Window: Dashboard - ${firstThread.threadName}`)
+    console.log(`  Window: T1 - ${firstThread.threadName}`)
 
     // Create background windows for OTHER threads (2..N)
     // These start detached.
     for (let i = 1; i < threads.length; i++) {
         const thread = threads[i]!
         const cmd = buildRunCommand(port, thread.model, thread.promptPath)
-        // Use thread ID as window name so we can find it later for swapping
-        // Prefix with 'thread-' to prevent tmux from interpreting as pane index
-        addWindow(sessionName, `thread-${thread.threadId}`, cmd)
-        console.log(`  Window: thread-${thread.threadId} - ${thread.threadName}`)
+        // Use simple T{N} window name to avoid tmux parsing issues
+        const windowName = `T${i + 1}`
+        addWindow(sessionName, windowName, cmd)
+        console.log(`  Window: ${windowName} - ${thread.threadName}`)
     }
 
     // Now setup the Dashboard layout in Window 0

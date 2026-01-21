@@ -10,7 +10,7 @@
 ### frontend-speedster
 **Description:** Very efficient and effective frontend coder
 **Best for:** Frontend tasks
-**Model:** google/gemini-3-flash-preview
+**Model:** openrouter/google/gemini-3-flash-preview
 
 ### backend-heavy-hitter
 **Description:** Deep thinker for complex backend work

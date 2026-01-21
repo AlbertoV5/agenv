@@ -2,6 +2,8 @@ import { Hono } from "hono"
 import { logger } from "hono/logger"
 import { serveStatic } from "hono/bun"
 import { serve, type ServerType } from "@hono/node-server"
+import { createApiRoutes } from "./routes/api"
+import { createUiRoutes } from "./routes/ui"
 
 export interface ServerOptions {
   port?: number
@@ -25,6 +27,12 @@ export function createApp(): Hono {
 
   // Health check endpoint
   app.get("/health", (c) => c.json({ status: "ok" }))
+
+  // API Routes
+  app.route("/api", createApiRoutes())
+
+  // UI Routes
+  app.route("/", createUiRoutes())
 
   return app
 }

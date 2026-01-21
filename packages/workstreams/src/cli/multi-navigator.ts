@@ -156,8 +156,7 @@ class Navigator {
         if (newIndex >= 0 && newIndex < this.threads.length) {
             this.selectedIndex = newIndex
             this.render()
-            // Auto-activate for "SST-like" feel.
-            this.activateThread(this.selectedIndex)
+            // User must press Enter to actually switch windows
         }
     }
 
@@ -218,64 +217,31 @@ class Navigator {
 
         if (!myPaneId) return
 
-        // Get all panes in current window
-        let allPanes: string[] = []
-        try {
-            const output = Bun.spawnSync(["tmux", "list-panes", "-F", "#{pane_id}"])
-            allPanes = (await new Response(output.stdout).text()).trim().split("\n")
-            this.log(`allPanes=${JSON.stringify(allPanes)}`)
-        } catch (e) {
-            this.log(`Error listing panes: ${e}`)
-            return
-        }
-
-        const contentPaneId = allPanes.find(p => p !== myPaneId)
-        this.log(`contentPaneId=${contentPaneId}`)
-
         if (this.activeThreadIndex === index) {
             this.log(`Already active index ${index}`)
             return
         }
 
-        const oldThread = this.threads[this.activeThreadIndex]!
         const newThread = this.threads[index]!
-        this.log(`Switching from ${oldThread.id} to ${newThread.id} (Window: ${newThread.windowName})`)
+        this.log(`Switching to ${newThread.id} (Window: ${newThread.windowName})`)
 
-        // Perform Swap
+        // Simple approach: just switch to the target window
+        // The navigator stays visible in current window but focus moves to thread window
         try {
-            // 1. Break current pane to background
-            if (contentPaneId) {
-                // We name the new window match the thread ID so we can find it later
-                // Check if window already exists? "break-pane" creates a NEW window.
-                // If we name it "SS.BB.TT", and that window ALREADY exists (empty?), tmux might error or rename.
-                // Use -d (detached).
-                this.log(`Breaking pane ${contentPaneId} to window ${oldThread.windowName}`)
-                const breakCmd = ["tmux", "break-pane", "-s", contentPaneId, "-d", "-n", oldThread.windowName]
-                const res = Bun.spawnSync(breakCmd)
-                if (res.exitCode !== 0) this.log(`break-pane failed: ${await new Response(res.stderr).text()}`)
-            }
-
-            // 2. Join new thread pane
-            this.log(`Joining window ${newThread.windowName} to ${myPaneId}`)
-            const joinCmd = ["tmux", "join-pane", "-s", `${newThread.windowName}`, "-t", myPaneId, "-h"]
-            const res = Bun.spawnSync(joinCmd)
+            // Use select-window to switch to the target thread's window
+            const selectCmd = ["tmux", "select-window", "-t", `${this.sessionName}:${newThread.windowName}`]
+            this.log(`Running: ${selectCmd.join(" ")}`)
+            const res = Bun.spawnSync(selectCmd)
             if (res.exitCode !== 0) {
-                this.log(`join-pane failed: ${await new Response(res.stderr).text()}`)
-                // If join fails, we might be left with just navigator.
-                // But user sees Thread taking whole window.
-                // This implies myPaneId is lost?
+                this.log(`select-window failed: ${await new Response(res.stderr).text()}`)
             }
-
-            // 3. Resize sidebar back to ~25%
-            this.log(`Resizing ${myPaneId}`)
-            Bun.spawnSync(["tmux", "resize-pane", "-t", myPaneId, "-x", "30%"])
 
             this.activeThreadIndex = index
             this.render()
             this.log(`Switch complete`)
 
         } catch (e) {
-            this.log(`Exception during swap: ${e}`)
+            this.log(`Exception during switch: ${e}`)
         }
     }
 
@@ -413,12 +379,12 @@ export async function main(argv: string[] = process.argv) {
 
     if (!batch) process.exit(1)
 
-    const threads: ThreadItem[] = batch.threads.map(t => {
+    const threads: ThreadItem[] = batch.threads.map((t, idx) => {
         const tId = `${sStr}.${bStr}.${t.id.toString().padStart(2, '0')}`
         return {
             id: tId,
             name: t.name,
-            windowName: `thread-${tId}`, // Prefixed for tmux compatibility
+            windowName: `T${idx + 1}`, // Simple generic names: T1, T2, T3...
             status: 'pending' // will update
         }
     })

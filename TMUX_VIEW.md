@@ -23,6 +23,22 @@ Window 0: "Dashboard"
 └──────────────────┴──────────────────────────────────────────┘
 ```
 
+### Keyboard Shortcuts
+
+| Key | Action |
+|-----|--------|
+| `j` / `↓` | Move selection down |
+| `k` / `↑` | Move selection up |
+| `Enter` | Switch to selected thread's window |
+| `i` | Enter interactive mode (focus content pane) |
+| `q` | Quit navigator |
+| `x` | Kill session (only when all threads done) |
+| `Ctrl-b 0` | Return to navigator window (tmux shortcut) |
+| `Ctrl-b n` | Next window |
+| `Ctrl-b p` | Previous window |
+
+> **Note**: When you switch to a thread window with Enter, use `Ctrl-b 0` to return to the navigator sidebar.
+
 - **Sidebar**: Runs `work multi-navigator`. It is a TUI that lists threads and listens for key events (`j`/`k`/`Enter`).
 - **Main Content**: Displays the output of the currently selected thread.
 - **Background Threads**: All other threads run in detached windows (indexes 1..N).
