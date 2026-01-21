@@ -67,6 +67,15 @@ export const DEFAULT_STRUCTURE: Record<
   long: { stages: 4, supertasks: 3, subtasks: 4 },
 }
 
+/**
+ * Maximum threads per batch for the 2x2 grid TUI
+ *
+ * The `work multi` command displays threads in a 2x2 grid layout.
+ * With pagination, we support 2 pages of 4 threads each = 8 max.
+ * Batches with more threads should be split into multiple batches.
+ */
+export const MAX_THREADS_PER_BATCH = 8
+
 // Version info for generated workstreams
 export interface GeneratedBy {
   workstreams: string // @agenv/workstreams version

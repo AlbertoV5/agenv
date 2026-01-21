@@ -14,6 +14,7 @@ import { getAgentsConfig, getAgent } from "../lib/agents.ts"
 import { readTasksFile, parseTaskId } from "../lib/tasks.ts"
 import { parseStreamDocument } from "../lib/stream-parser.ts"
 import type { StreamDocument, BatchDefinition, StageDefinition, ThreadDefinition } from "../lib/types.ts"
+import { MAX_THREADS_PER_BATCH } from "../lib/types.ts"
 import {
     sessionExists,
     createSession,
@@ -26,6 +27,8 @@ import {
     buildAddWindowCommand,
     buildAttachCommand,
     setGlobalOption,
+    createGridLayout,
+    listPaneIds,
 } from "../lib/tmux.ts"
 import {
     isServerRunning,
@@ -478,6 +481,12 @@ export async function main(argv: string[] = process.argv): Promise<void> {
         process.exit(1)
     }
 
+    if (batch.threads.length > MAX_THREADS_PER_BATCH) {
+        console.error(`Error: Batch has ${batch.threads.length} threads, but max is ${MAX_THREADS_PER_BATCH}`)
+        console.error(`\\nHint: Split this batch into smaller batches or increase MAX_THREADS_PER_BATCH.`)
+        process.exit(1)
+    }
+
     // Load agents config
     const agentsConfig = getAgentsConfig(repoRoot)
     if (!agentsConfig) {
@@ -594,76 +603,81 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     // Create tmux session with first thread
     console.log(`Creating tmux session "${sessionName}"...`)
 
-    // We start with Thread 1 in the main window (Window 0)
-    // Later we will split this window to add the navigator
+    // === 2x2 GRID LAYOUT ===
+    // Window 0: Grid with up to 4 visible threads
+    // Windows 1+: Hidden windows for threads 5+ (for pagination)
+
     const firstThread = threads[0]!
     const firstCmd = buildRunCommand(port, firstThread.model, firstThread.promptPath)
 
-    // Name window "T1" to match navigator's windowName for thread index 0
-    createSession(sessionName, "T1", firstCmd)
+    // Create session with first thread in Window 0
+    createSession(sessionName, "Grid", firstCmd)
 
     // Keep windows open after exit for debugging
     setGlobalOption(sessionName, "remain-on-exit", "on")
     // Enable mouse support for scrolling
     setGlobalOption(sessionName, "mouse", "on")
 
-    console.log(`  Window: T1 - ${firstThread.threadName}`)
+    console.log(`  Grid: Thread 1 - ${firstThread.threadName}`)
 
-    // Create background windows for OTHER threads (2..N)
-    // These start detached.
-    for (let i = 1; i < threads.length; i++) {
+    // Build commands for threads 2-4 (remaining visible grid panes)
+    const gridCommands = [firstCmd]
+    for (let i = 1; i < Math.min(4, threads.length); i++) {
         const thread = threads[i]!
         const cmd = buildRunCommand(port, thread.model, thread.promptPath)
-        // Use simple T{N} window name to avoid tmux parsing issues
-        const windowName = `T${i + 1}`
-        addWindow(sessionName, windowName, cmd)
-        console.log(`  Window: ${windowName} - ${thread.threadName}`)
+        gridCommands.push(cmd)
+        console.log(`  Grid: Thread ${i + 1} - ${thread.threadName}`)
     }
 
-    // Now setup the Dashboard layout in Window 0
-    // Current state: Window 0 has [Thread 1] (100%)
-    // Goal: Window 0 has [Navigator](30%) | [Thread 1](70%)
+    // Create the grid layout (splits panes for threads 2-4)
+    if (gridCommands.length > 1) {
+        console.log("  Setting up 2x2 grid layout...")
+        createGridLayout(`${sessionName}:0`, gridCommands)
+    }
 
-    // We split Window 0 to the LEFT (-b) to create the sidebar
-    console.log("  Setting up navigator sidebar...")
-    const navigatorCmd = `bun work multi-navigator --session "${sessionName}" --batch "${batchId}" --repo-root "${repoRoot}" --stream "${stream.id}"`
+    // Create hidden windows for threads 5+ (used by pagination)
+    if (threads.length > 4) {
+        console.log("  Creating hidden windows for pagination...")
+        for (let i = 4; i < threads.length; i++) {
+            const thread = threads[i]!
+            const cmd = buildRunCommand(port, thread.model, thread.promptPath)
+            const windowName = `T${i + 1}`
+            addWindow(sessionName, windowName, cmd)
+            console.log(`  Hidden: ${windowName} - ${thread.threadName}`)
+        }
+    }
 
-    // We targeting session:0
-    // -h for horizontal split
-    // -b for "before" (left side)
-    // -l 30% for breadth
-    // We allow user implementation details in tmux.ts or use raw command here?
-    // tmux.ts splitWindow has been updated to basic args.
-    // Let's use raw spawn/exec for specific flag combo if tmux.ts is limited,
-    // OR we update tmux.ts earlier. I recall I didn't add -b support explicitly in the plan step?
-    // Actually I updated tmux.ts but I don't recall adding -b support in the `splitWindow` function signature.
-    // I will check `tmux.ts` content or just assume I need to use `execSync` here if `splitWindow` is insufficient.
-    // Or I just use `splitWindow` effectively.
+    // Add status bar at bottom for grid controller (if >4 threads for pagination)
+    if (threads.length > 4) {
+        console.log("  Setting up grid controller for pagination...")
+        const bunPath = process.execPath
+        const { resolve } = await import("path")
+        const binPath = resolve(import.meta.dir, "../../bin/work.ts")
 
-    // Wrap using sh -c loop to restart if it crashes (Navigator Survival)
-    // We explicitly use the current bun executable path to ensure consistency
-    // We also resolve the absolute path to bin/work.ts to avoid "script not found" errors
-    const bunPath = process.execPath
-    const { resolve } = await import("path")
-    const binPath = resolve(import.meta.dir, "../../bin/work.ts")
-    // Exit code 42 = intentional quit (don't restart), other codes = crash (restart)
-    const loopCmd = `while true; do "${bunPath}" "${binPath}" multi-navigator --session "${sessionName}" --batch "${batchId}" --repo-root "${repoRoot}" --stream "${stream.id}"; exitCode=$?; if [ $exitCode -eq 42 ]; then exit 0; fi; echo "Navigator crashed. Restarting in 1s..."; sleep 1; done`
+        // Build thread command environment variables for respawn
+        const threadCmdEnv = threads.map((t, i) => {
+            const cmd = buildRunCommand(port, t.model, t.promptPath)
+            return `THREAD_CMD_${i + 1}="${cmd}"`
+        }).join(" ")
 
-    const splitArgs = [
-        "tmux", "split-window",
-        "-t", `${sessionName}:0`,
-        "-h", "-b", "-l", "25%",
-        loopCmd
-    ]
-    Bun.spawnSync(splitArgs)
+        // Exit code 42 = intentional quit (don't restart)
+        const loopCmd = `while true; do ${threadCmdEnv} "${bunPath}" "${binPath}" multi-grid --session "${sessionName}" --batch "${batchId}" --repo-root "${repoRoot}" --stream "${stream.id}"; exitCode=$?; if [ $exitCode -eq 42 ]; then exit 0; fi; echo "Controller crashed. Restarting in 1s..."; sleep 1; done`
 
-    // Select the navigator pane (it should be selected by default after split, but let's be sure)
-    // Actually, usually the new pane becomes active.
+        // Create a small pane at the bottom for the grid controller
+        const splitArgs = [
+            "tmux", "split-window",
+            "-t", `${sessionName}:0`,
+            "-v", "-l", "3",  // 3 lines at bottom
+            loopCmd
+        ]
+        Bun.spawnSync(splitArgs)
+    }
 
-    // Ensure the Right Pane (Thread 1) has the correct ID/Name association?
-    // The navigator will assume the "other" pane is the content.
+    console.log(`
+Layout: ${threads.length <= 4 ? "2x2 Grid (all visible)" : `2x2 Grid with pagination (${threads.length} threads, use n/p to page)`}
+`)
 
-    console.log(`\nAttaching to session "${sessionName}"...`)
+    console.log(`Attaching to session "${sessionName}"...`)
 
     // Attach to session (this takes over the terminal)
     const child = attachSession(sessionName)

@@ -292,3 +292,127 @@ export function setGlobalOption(sessionName: string, option: string, value: stri
         console.warn(`Warning: Failed to set tmux option ${option}: ${result.stderr.toString()}`)
     }
 }
+
+/**
+ * Create a 2x2 grid layout in a window
+ * Returns the 4 pane IDs in order: [TL, TR, BL, BR]
+ *
+ * Layout creation sequence:
+ * 1. Start with single pane (pane 0)
+ * 2. Split horizontally → [Left, Right]
+ * 3. Split left vertically → [TL, BL, Right]
+ * 4. Split right vertically → [TL, BL, TR, BR]
+ */
+export function createGridLayout(
+    sessionWindow: string,
+    commands: string[]
+): string[] {
+    // Ensure we have at least 1 command
+    if (commands.length === 0) {
+        throw new Error("createGridLayout requires at least 1 command")
+    }
+
+    // For 1 command, just return the existing pane
+    if (commands.length === 1) {
+        const paneIds = listPaneIds(sessionWindow)
+        return paneIds.length > 0 ? [paneIds[0]!] : []
+    }
+
+    // For 2 commands, just split horizontally
+    if (commands.length === 2) {
+        // Split horizontally for second pane
+        const splitResult = Bun.spawnSync([
+            "tmux", "split-window",
+            "-t", sessionWindow,
+            "-h",
+            commands[1]!
+        ])
+        if (splitResult.exitCode !== 0) {
+            throw new Error(`Failed to create 2-pane layout: ${splitResult.stderr.toString()}`)
+        }
+        return listPaneIds(sessionWindow)
+    }
+
+    // For 3+ commands, create grid
+    // Step 1: Split horizontally (creates right pane)
+    Bun.spawnSync([
+        "tmux", "split-window",
+        "-t", `${sessionWindow}.0`,
+        "-h",
+        commands[1]!
+    ])
+
+    // Step 2: Split left pane vertically (creates bottom-left)
+    Bun.spawnSync([
+        "tmux", "split-window",
+        "-t", `${sessionWindow}.0`,
+        "-v",
+        commands[2]!
+    ])
+
+    // Step 3: Split right pane vertically (creates bottom-right) if we have 4 commands
+    if (commands.length >= 4) {
+        Bun.spawnSync([
+            "tmux", "split-window",
+            "-t", `${sessionWindow}.1`,
+            "-v",
+            commands[3]!
+        ])
+    }
+
+    return listPaneIds(sessionWindow)
+}
+
+/**
+ * Respawn a pane with a new command
+ * This replaces the command running in the pane, losing scrollback
+ */
+export function respawnPane(paneId: string, command: string): void {
+    // First kill the pane's process
+    Bun.spawnSync(["tmux", "respawn-pane", "-t", paneId, "-k", command])
+}
+
+/**
+ * Get all pane IDs in a window
+ */
+export function listPaneIds(sessionWindow: string): string[] {
+    try {
+        const output = execSync(
+            `tmux list-panes -t "${sessionWindow}" -F "#{pane_id}"`,
+            { stdio: "pipe", encoding: "utf-8" }
+        )
+        return output.trim().split("\n").filter(Boolean)
+    } catch {
+        return []
+    }
+}
+
+/**
+ * Send keys to a pane
+ */
+export function sendKeys(target: string, keys: string): void {
+    Bun.spawnSync(["tmux", "send-keys", "-t", target, keys])
+}
+
+/**
+ * Get the current pane index within a window
+ */
+export function getPaneIndex(paneId: string): number | null {
+    try {
+        const output = execSync(
+            `tmux display-message -p -t "${paneId}" "#{pane_index}"`,
+            { stdio: "pipe", encoding: "utf-8" }
+        )
+        return parseInt(output.trim(), 10)
+    } catch {
+        return null
+    }
+}
+
+/**
+ * Focus (select) a specific pane
+ */
+export function selectPane(target: string): void {
+    Bun.spawnSync(["tmux", "select-pane", "-t", target])
+}
+

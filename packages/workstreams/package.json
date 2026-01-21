@@ -1,10 +1,17 @@
 {
   "name": "@agenv/workstreams",
+  "version": "0.1.0",
   "module": "src/index.ts",
   "type": "module",
   "bin": {
     "work": "./bin/work.ts"
   },
+  "files": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "bin/**/*.ts",
+    "README.md"
+  ],
   "exports": {
     ".": "./src/index.ts",
     "./types": "./src/lib/types.ts",

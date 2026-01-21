@@ -74,13 +74,23 @@ Examples:
 `)
 }
 
-function savePromptToFile(repoRoot: string, context: PromptContext, content: string) {
+function savePromptToFile(
+  repoRoot: string,
+  context: PromptContext,
+  content: string,
+) {
   const workDir = getWorkDir(repoRoot)
 
   // Construct path: {workstream}/prompts/{stage-prefix}-{stage-name}/{batch-prefix}-{batch-name}/{thread-name}.md
-  const safeStageName = context.stage.name.replace(/[^a-zA-Z0-9_-]/g, "-").toLowerCase()
-  const safeBatchName = context.batch.name.replace(/[^a-zA-Z0-9_-]/g, "-").toLowerCase()
-  const safeThreadName = context.thread.name.replace(/[^a-zA-Z0-9_-]/g, "-").toLowerCase()
+  const safeStageName = context.stage.name
+    .replace(/[^a-zA-Z0-9_-]/g, "-")
+    .toLowerCase()
+  const safeBatchName = context.batch.name
+    .replace(/[^a-zA-Z0-9_-]/g, "-")
+    .toLowerCase()
+  const safeThreadName = context.thread.name
+    .replace(/[^a-zA-Z0-9_-]/g, "-")
+    .toLowerCase()
 
   const stagePrefix = context.stage.id.toString().padStart(2, "0")
 
@@ -89,7 +99,7 @@ function savePromptToFile(repoRoot: string, context: PromptContext, content: str
     "prompts",
     `${stagePrefix}-${safeStageName}`,
     `${context.batch.prefix}-${safeBatchName}`,
-    `${safeThreadName}.md`
+    `${safeThreadName}.md`,
   )
 
   const fullPath = join(workDir, relPath)
@@ -99,7 +109,9 @@ function savePromptToFile(repoRoot: string, context: PromptContext, content: str
     writeFileSync(fullPath, content)
     console.warn(`Saved prompt to ${relPath}`)
   } catch (e) {
-    console.warn(`Warning: Failed to save prompt to ${relPath}: ${(e as Error).message}`)
+    console.warn(
+      `Warning: Failed to save prompt to ${relPath}: ${(e as Error).message}`,
+    )
   }
 }
 
@@ -241,7 +253,6 @@ export async function main(argv: string[] = process.argv): Promise<void> {
         includeTests: !cliArgs.noTests,
         includeParallel: !cliArgs.noParallel,
       })
-      console.log(prompt)
       savePromptToFile(repoRoot, context, prompt)
     }
     return
@@ -288,7 +299,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     // Determine which stages to process
     let stages = doc.stages
     if (stageNum !== undefined) {
-      const stage = doc.stages.find(s => s.id === stageNum)
+      const stage = doc.stages.find((s) => s.id === stageNum)
       if (!stage) {
         console.error(`Error: Stage ${stageNum} not found`)
         process.exit(1)
@@ -305,15 +316,17 @@ export async function main(argv: string[] = process.argv): Promise<void> {
 
       if (batchNum !== undefined) {
         // Apply batch filter if specifically requested
-        // Note: If running full stream (no stage arg), filtering by batch ID likely implies 
+        // Note: If running full stream (no stage arg), filtering by batch ID likely implies
         // "batch X of every stage", which is odd but consistent with args.
         // If running specific stage, it target "batch X of stage Y".
-        const batch = stage.batches.find(b => b.id === batchNum)
+        const batch = stage.batches.find((b) => b.id === batchNum)
         if (batch) {
           batches = [batch]
         } else if (stageNum !== undefined) {
           // If specific stage requested and batch missing, error
-          console.error(`Error: Batch ${batchNum} not found in stage ${stage.id}`)
+          console.error(
+            `Error: Batch ${batchNum} not found in stage ${stage.id}`,
+          )
           process.exit(1)
         } else {
           // If generic run and this stage allows that batch, fine. If not, skip.
@@ -323,7 +336,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
 
       for (const batch of batches) {
         for (const thread of batch.threads) {
-          const threadIdStr = `${stage.id.toString().padStart(2, '0')}.${batch.id.toString().padStart(2, '0')}.${thread.id.toString().padStart(2, '0')}`
+          const threadIdStr = `${stage.id.toString().padStart(2, "0")}.${batch.id.toString().padStart(2, "0")}.${thread.id.toString().padStart(2, "0")}`
 
           try {
             const context = getPromptContext(repoRoot, stream.id, threadIdStr)
@@ -335,16 +348,13 @@ export async function main(argv: string[] = process.argv): Promise<void> {
                 includeTests: !cliArgs.noTests,
                 includeParallel: !cliArgs.noParallel,
               })
-
-              console.log(`--- START PROMPT: ${threadIdStr} ---`)
-              console.log(prompt)
-              console.log(`--- END PROMPT: ${threadIdStr} ---\n`)
-
               savePromptToFile(repoRoot, context, prompt)
             }
             promptCount++
           } catch (e) {
-            console.error(`Error generating prompt for ${threadIdStr}: ${(e as Error).message}`)
+            console.error(
+              `Error generating prompt for ${threadIdStr}: ${(e as Error).message}`,
+            )
           }
         }
       }

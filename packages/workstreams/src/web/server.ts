@@ -1,9 +1,11 @@
 import { Hono } from "hono"
 import { logger } from "hono/logger"
 import { serveStatic } from "hono/bun"
-import { serve, type ServerType } from "@hono/node-server"
+
 import { createApiRoutes } from "./routes/api"
 import { createUiRoutes } from "./routes/ui"
+
+type BunServer = ReturnType<typeof Bun.serve>
 
 export interface ServerOptions {
   port?: number
@@ -41,49 +43,25 @@ export function createApp(): Hono {
  * Start the HTTP server with graceful shutdown handling
  */
 export async function startServer(
-  options: ServerOptions = {}
-): Promise<{ server: ServerType; shutdown: () => Promise<void> }> {
+  options: ServerOptions = {},
+): Promise<{ server: BunServer; shutdown: () => Promise<void> }> {
   const port = options.port ?? DEFAULT_PORT
   const hostname = options.host ?? DEFAULT_HOST
 
   const app = createApp()
 
-  const server = serve({
+  const server = Bun.serve({
     fetch: app.fetch,
     port,
     hostname,
-  })
-
-  // Track active connections for graceful shutdown
-  const connections = new Set<any>()
-
-  server.on("connection", (conn: any) => {
-    connections.add(conn)
-    conn.on("close", () => connections.delete(conn))
   })
 
   /**
    * Graceful shutdown handler
    */
   const shutdown = async (): Promise<void> => {
-    return new Promise((resolve) => {
-      // Stop accepting new connections
-      server.close(() => {
-        resolve()
-      })
-
-      // Force close existing connections after timeout
-      const forceCloseTimeout = setTimeout(() => {
-        for (const conn of connections) {
-          conn.destroy()
-        }
-      }, 5000)
-
-      // Clear timeout if server closes gracefully
-      server.once("close", () => {
-        clearTimeout(forceCloseTimeout)
-      })
-    })
+    // Stop accepting new connections and close existing ones
+    server.stop()
   }
 
   // Register signal handlers for graceful shutdown

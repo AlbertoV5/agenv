@@ -61,6 +61,7 @@ Shared configuration files in `./work/` (user-managed, read-only for planning ag
 
 **Hierarchy:** Stage → Batch → Thread → Task
 **Execution:** Stages/batches run serially; threads run in parallel within a batch.
+**Thread Limit:** Each batch supports up to **8 threads**
 
 ## Fill in PLAN.md
 
@@ -249,6 +250,7 @@ work prompt --stage 1 --batch 1 --thread 1
 work update --task "01.01.01.01" --status completed --report "Summary of work done"
 work update --task "01.01.01.01" --status blocked
 work fix   # Add fix stage
+work approve --revoke --reason "Fix stage"
 
 # Reports & completion
 work report --stage 1            # Generate stage report

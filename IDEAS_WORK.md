@@ -1,10 +1,10 @@
 ## Notes
 
-- Make so TASKS.md doesn't include index, just `- [ ] Task description`
 - Add review command, `review plan` for printing the current plan's PLAN.md and `review tasks` for printing the current plan's TASKS.md
 - Add prompt templates to top-level agent, defined in AGENTS.md, "use x skill, your role is of"
 
 - Add "tree" view command, showing number of batches per stages and number of threads per batch, and number of tasks per thread.
+- Make it so the implementing skills agent only lists tasks for the current stage.
 
 
 ## Human Workflow notes

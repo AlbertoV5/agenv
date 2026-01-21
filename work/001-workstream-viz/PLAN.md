@@ -225,3 +225,38 @@ Update package configuration for web assets.
 ---
 
 *Last updated: 2026-01-20*
+
+### Stage 04: Fix - bun-native-server
+
+#### Stage Definition
+
+Fix Chrome compatibility issue by switching from `@hono/node-server` to Bun's native `Bun.serve()`.
+
+#### Stage Constitution
+
+**Inputs:** Existing server.ts using @hono/node-server
+**Structure:** Replace Node.js HTTP adapter with Bun native serve
+**Outputs:** Server works correctly in all browsers including Chrome
+
+#### Stage Questions
+
+- [x] Root cause: Mixing @hono/node-server with Bun runtime causes Chrome-specific 500 errors
+- [x] Solution: Use Bun.serve() directly with Hono's fetch handler
+
+#### Stage Batches
+
+##### Batch 01: Server Migration
+
+###### Thread 01: Bun Native Server
+
+**Summary:**
+Replace @hono/node-server with Bun.serve() for native Bun HTTP serving.
+
+**Details:**
+- Update `src/web/server.ts`:
+  - Remove `@hono/node-server` import
+  - Use `Bun.serve({ fetch: app.fetch, port, hostname })`
+  - Update ServerType to use Bun's Server type
+  - Adjust graceful shutdown for Bun.serve API
+- Remove `@hono/node-server` from package.json dependencies
+- Test in Chrome to verify fix

@@ -49,6 +49,8 @@ import { main as initMain } from "../src/cli/init.ts"
 import { main as executeMain } from "../src/cli/execute.ts"
 import { main as multiMain } from "../src/cli/multi.ts"
 import { main as multiNavigatorMain } from "../src/cli/multi-navigator.ts"
+import { main as multiGridMain } from "../src/cli/multi-grid.ts"
+import { main as serveMain } from "../src/cli/serve.ts"
 
 const SUBCOMMANDS = {
   init: initMain,
@@ -83,6 +85,8 @@ const SUBCOMMANDS = {
   execute: executeMain,
   multi: multiMain,
   "multi-navigator": multiNavigatorMain,
+  "multi-grid": multiGridMain,
+  serve: serveMain,
 } as const
 
 type Subcommand = keyof typeof SUBCOMMANDS
@@ -126,6 +130,7 @@ Commands:
   report      Generate progress report
   changelog   Generate changelog from completed tasks
   export      Export workstream data (md, csv, json)
+  serve       Launch web visualization server
 
 Options:
   --help, -h    Show this help message

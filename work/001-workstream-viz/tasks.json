@@ -1,127 +1,127 @@
 {
   "version": "1.0.0",
   "stream_id": "001-workstream-viz",
-  "last_updated": "2026-01-21T01:23:43.874Z",
+  "last_updated": "2026-01-21T14:05:48.777Z",
   "tasks": [
     {
       "id": "01.01.01.01",
       "name": "Add hono and @hono/node-server dependencies to package.json",
       "stage_name": "Foundation",
-      "batch_name": "Setup",
+      "batch_name": "CLI Command",
       "thread_name": "Dependencies & Config",
       "status": "completed",
       "created_at": "2026-01-20T17:47:41.066Z",
-      "updated_at": "2026-01-20T21:04:24.608Z",
+      "updated_at": "2026-01-21T13:59:56.888Z",
       "assigned_agent": "default"
     },
     {
       "id": "01.01.01.02",
       "name": "Update tsconfig.json with JSX settings for Hono (jsx: react-jsx, jsxImportSource: hono/jsx)",
       "stage_name": "Foundation",
-      "batch_name": "Setup",
+      "batch_name": "CLI Command",
       "thread_name": "Dependencies & Config",
       "status": "completed",
       "created_at": "2026-01-20T17:47:41.066Z",
-      "updated_at": "2026-01-20T21:04:31.705Z",
+      "updated_at": "2026-01-21T13:59:56.888Z",
       "assigned_agent": "default"
     },
     {
       "id": "01.02.01.01",
       "name": "Create src/web/server.ts with Hono app and middleware setup",
       "stage_name": "Foundation",
-      "batch_name": "Server Infrastructure",
+      "batch_name": "Page Views",
       "thread_name": "Server Module",
       "status": "completed",
       "created_at": "2026-01-20T17:47:41.066Z",
-      "updated_at": "2026-01-21T00:10:03.572Z",
+      "updated_at": "2026-01-21T13:59:56.888Z",
       "assigned_agent": "backend-heavy-hitter"
     },
     {
       "id": "01.02.01.02",
       "name": "Export startServer(options) and createApp() functions",
       "stage_name": "Foundation",
-      "batch_name": "Server Infrastructure",
+      "batch_name": "Page Views",
       "thread_name": "Server Module",
       "status": "completed",
       "created_at": "2026-01-20T17:47:41.066Z",
-      "updated_at": "2026-01-21T00:10:15.427Z",
+      "updated_at": "2026-01-21T13:59:56.888Z",
       "assigned_agent": "backend-heavy-hitter"
     },
     {
       "id": "01.02.01.03",
       "name": "Add graceful shutdown handling",
       "stage_name": "Foundation",
-      "batch_name": "Server Infrastructure",
+      "batch_name": "Page Views",
       "thread_name": "Server Module",
       "status": "completed",
       "created_at": "2026-01-20T17:47:41.066Z",
-      "updated_at": "2026-01-21T00:10:24.929Z",
+      "updated_at": "2026-01-21T13:59:56.888Z",
       "assigned_agent": "backend-heavy-hitter"
     },
     {
       "id": "01.02.02.01",
       "name": "Create src/web/routes/api.ts with route definitions",
       "stage_name": "Foundation",
-      "batch_name": "Server Infrastructure",
+      "batch_name": "Page Views",
       "thread_name": "API Routes",
       "status": "completed",
       "created_at": "2026-01-20T17:47:41.066Z",
-      "updated_at": "2026-01-21T00:10:18.486Z",
+      "updated_at": "2026-01-21T13:59:56.888Z",
       "assigned_agent": "backend-heavy-hitter"
     },
     {
       "id": "01.02.02.02",
       "name": "Implement GET /api/workstreams endpoint (list all)",
       "stage_name": "Foundation",
-      "batch_name": "Server Infrastructure",
+      "batch_name": "Page Views",
       "thread_name": "API Routes",
       "status": "completed",
       "created_at": "2026-01-20T17:47:41.066Z",
-      "updated_at": "2026-01-21T00:10:40.638Z",
+      "updated_at": "2026-01-21T13:59:56.888Z",
       "assigned_agent": "backend-heavy-hitter"
     },
     {
       "id": "01.02.02.03",
       "name": "Implement GET /api/workstreams/:id endpoint (single workstream)",
       "stage_name": "Foundation",
-      "batch_name": "Server Infrastructure",
+      "batch_name": "Page Views",
       "thread_name": "API Routes",
       "status": "completed",
       "created_at": "2026-01-20T17:47:41.066Z",
-      "updated_at": "2026-01-21T00:10:40.671Z",
+      "updated_at": "2026-01-21T13:59:56.888Z",
       "assigned_agent": "backend-heavy-hitter"
     },
     {
       "id": "01.02.02.04",
       "name": "Implement GET /api/workstreams/:id/tasks endpoint",
       "stage_name": "Foundation",
-      "batch_name": "Server Infrastructure",
+      "batch_name": "Page Views",
       "thread_name": "API Routes",
       "status": "completed",
       "created_at": "2026-01-20T17:47:41.066Z",
-      "updated_at": "2026-01-21T00:10:40.700Z",
+      "updated_at": "2026-01-21T13:59:56.888Z",
       "assigned_agent": "backend-heavy-hitter"
     },
     {
       "id": "01.02.02.05",
       "name": "Implement GET /api/workstreams/:id/progress endpoint",
       "stage_name": "Foundation",
-      "batch_name": "Server Infrastructure",
+      "batch_name": "Page Views",
       "thread_name": "API Routes",
       "status": "completed",
       "created_at": "2026-01-20T17:47:41.066Z",
-      "updated_at": "2026-01-21T00:10:40.729Z",
+      "updated_at": "2026-01-21T13:59:56.888Z",
       "assigned_agent": "backend-heavy-hitter"
     },
     {
       "id": "01.02.02.06",
       "name": "Implement GET /api/workstreams/:id/plan endpoint",
       "stage_name": "Foundation",
-      "batch_name": "Server Infrastructure",
+      "batch_name": "Page Views",
       "thread_name": "API Routes",
       "status": "completed",
       "created_at": "2026-01-20T17:47:41.066Z",
-      "updated_at": "2026-01-21T00:10:40.758Z",
+      "updated_at": "2026-01-21T13:59:56.888Z",
       "assigned_agent": "backend-heavy-hitter"
     },
     {
@@ -132,7 +132,7 @@
       "thread_name": "Data Service",
       "status": "completed",
       "created_at": "2026-01-20T17:47:41.066Z",
-      "updated_at": "2026-01-21T00:25:44.038Z",
+      "updated_at": "2026-01-21T13:59:56.888Z",
       "assigned_agent": "backend-heavy-hitter"
     },
     {
@@ -143,7 +143,7 @@
       "thread_name": "Data Service",
       "status": "completed",
       "created_at": "2026-01-20T17:47:41.066Z",
-      "updated_at": "2026-01-21T00:25:44.070Z",
+      "updated_at": "2026-01-21T13:59:56.888Z",
       "assigned_agent": "backend-heavy-hitter"
     },
     {
@@ -154,7 +154,7 @@
       "thread_name": "Data Service",
       "status": "completed",
       "created_at": "2026-01-20T17:47:41.066Z",
-      "updated_at": "2026-01-21T00:25:44.100Z",
+      "updated_at": "2026-01-21T13:59:56.888Z",
       "assigned_agent": "backend-heavy-hitter"
     },
     {
@@ -165,7 +165,7 @@
       "thread_name": "Data Service",
       "status": "completed",
       "created_at": "2026-01-20T17:47:41.066Z",
-      "updated_at": "2026-01-21T00:25:44.130Z",
+      "updated_at": "2026-01-21T13:59:56.888Z",
       "assigned_agent": "backend-heavy-hitter"
     },
     {
@@ -176,44 +176,41 @@
       "thread_name": "Data Service",
       "status": "completed",
       "created_at": "2026-01-20T17:47:41.066Z",
-      "updated_at": "2026-01-21T00:25:44.160Z",
+      "updated_at": "2026-01-21T13:59:56.888Z",
       "assigned_agent": "backend-heavy-hitter"
     },
     {
       "id": "02.01.01.01",
       "name": "Create src/web/views/layout.tsx with base HTML structure",
       "stage_name": "UI Views",
-      "batch_name": "Layout & Navigation",
+      "batch_name": "CLI Command",
       "thread_name": "Base Layout",
       "status": "completed",
       "created_at": "2026-01-20T17:47:41.066Z",
-      "updated_at": "2026-01-21T00:44:15.118Z",
-      "assigned_agent": "frontend-speedster",
-      "report": "Created src/web/views/layout.tsx with base HTML5 structure using Hono html helper and JSX components."
+      "updated_at": "2026-01-21T13:59:56.888Z",
+      "assigned_agent": "frontend-speedster"
     },
     {
       "id": "02.01.01.02",
       "name": "Create src/web/views/styles.ts with CSS (status colors, grid, typography)",
       "stage_name": "UI Views",
-      "batch_name": "Layout & Navigation",
+      "batch_name": "CLI Command",
       "thread_name": "Base Layout",
       "status": "completed",
       "created_at": "2026-01-20T17:47:41.066Z",
-      "updated_at": "2026-01-21T00:43:21.658Z",
-      "assigned_agent": "frontend-speedster",
-      "report": "Created src/web/views/styles.ts with status colors, grid, and typography using template literals."
+      "updated_at": "2026-01-21T13:59:56.888Z",
+      "assigned_agent": "frontend-speedster"
     },
     {
       "id": "02.01.01.03",
       "name": "Add header component with navigation links",
       "stage_name": "UI Views",
-      "batch_name": "Layout & Navigation",
+      "batch_name": "CLI Command",
       "thread_name": "Base Layout",
       "status": "completed",
       "created_at": "2026-01-20T17:47:41.066Z",
-      "updated_at": "2026-01-21T00:44:15.150Z",
-      "assigned_agent": "frontend-speedster",
-      "report": "Added Header component to layout with navigation links to Dashboard and About."
+      "updated_at": "2026-01-21T13:59:56.888Z",
+      "assigned_agent": "frontend-speedster"
     },
     {
       "id": "02.02.01.01",
@@ -223,9 +220,8 @@
       "thread_name": "Dashboard View",
       "status": "completed",
       "created_at": "2026-01-20T17:47:41.066Z",
-      "updated_at": "2026-01-21T01:21:43.337Z",
-      "assigned_agent": "frontend-speedster",
-      "report": "Dashboard view already exists in packages/workstreams/src/web/views/dashboard.tsx."
+      "updated_at": "2026-01-21T13:59:56.888Z",
+      "assigned_agent": "frontend-speedster"
     },
     {
       "id": "02.02.01.02",
@@ -235,9 +231,8 @@
       "thread_name": "Dashboard View",
       "status": "completed",
       "created_at": "2026-01-20T17:47:41.066Z",
-      "updated_at": "2026-01-21T01:21:43.369Z",
-      "assigned_agent": "frontend-speedster",
-      "report": "WorkstreamCard component with progress bar is implemented in dashboard.tsx."
+      "updated_at": "2026-01-21T13:59:56.888Z",
+      "assigned_agent": "frontend-speedster"
     },
     {
       "id": "02.02.01.03",
@@ -247,9 +242,8 @@
       "thread_name": "Dashboard View",
       "status": "completed",
       "created_at": "2026-01-20T17:47:41.066Z",
-      "updated_at": "2026-01-21T01:21:43.398Z",
-      "assigned_agent": "frontend-speedster",
-      "report": "Status badges and current workstream indicator are implemented in dashboard.tsx."
+      "updated_at": "2026-01-21T13:59:56.888Z",
+      "assigned_agent": "frontend-speedster"
     },
     {
       "id": "02.02.01.04",
@@ -259,9 +253,8 @@
       "thread_name": "Dashboard View",
       "status": "completed",
       "created_at": "2026-01-20T17:47:41.066Z",
-      "updated_at": "2026-01-21T01:22:40.904Z",
-      "assigned_agent": "frontend-speedster",
-      "report": "Wired up GET / route to render dashboard in packages/workstreams/src/web/server.ts by adding createUiRoutes() to the Hono app."
+      "updated_at": "2026-01-21T13:59:56.888Z",
+      "assigned_agent": "frontend-speedster"
     },
     {
       "id": "02.02.02.01",
@@ -271,9 +264,8 @@
       "thread_name": "Workstream Detail View",
       "status": "completed",
       "created_at": "2026-01-20T17:47:41.066Z",
-      "updated_at": "2026-01-21T01:22:52.525Z",
-      "assigned_agent": "frontend-speedster",
-      "report": "Created packages/workstreams/src/web/views/workstream.tsx with comprehensive detail view."
+      "updated_at": "2026-01-21T13:59:56.888Z",
+      "assigned_agent": "frontend-speedster"
     },
     {
       "id": "02.02.02.02",
@@ -283,9 +275,8 @@
       "thread_name": "Workstream Detail View",
       "status": "completed",
       "created_at": "2026-01-20T17:47:41.066Z",
-      "updated_at": "2026-01-21T01:22:52.556Z",
-      "assigned_agent": "frontend-speedster",
-      "report": "Implemented collapsible stages using semantic details/summary elements with custom styling."
+      "updated_at": "2026-01-21T13:59:56.888Z",
+      "assigned_agent": "frontend-speedster"
     },
     {
       "id": "02.02.02.03",
@@ -295,9 +286,8 @@
       "thread_name": "Workstream Detail View",
       "status": "completed",
       "created_at": "2026-01-20T17:47:41.066Z",
-      "updated_at": "2026-01-21T01:22:52.586Z",
-      "assigned_agent": "frontend-speedster",
-      "report": "Added BatchItem, ThreadItem, and TaskItem components with status indicators and progress bars."
+      "updated_at": "2026-01-21T13:59:56.888Z",
+      "assigned_agent": "frontend-speedster"
     },
     {
       "id": "02.02.02.04",
@@ -307,9 +297,8 @@
       "thread_name": "Workstream Detail View",
       "status": "completed",
       "created_at": "2026-01-20T17:47:41.066Z",
-      "updated_at": "2026-01-21T01:22:52.615Z",
-      "assigned_agent": "frontend-speedster",
-      "report": "Wired up GET /workstream/:id route in ui.tsx and integrated with DataService."
+      "updated_at": "2026-01-21T13:59:56.888Z",
+      "assigned_agent": "frontend-speedster"
     },
     {
       "id": "02.02.03.01",
@@ -319,9 +308,8 @@
       "thread_name": "Task List View",
       "status": "completed",
       "created_at": "2026-01-20T17:47:41.066Z",
-      "updated_at": "2026-01-21T01:23:43.783Z",
-      "assigned_agent": "frontend-speedster",
-      "report": "Created packages/workstreams/src/web/views/tasks.tsx with a TasksView component."
+      "updated_at": "2026-01-21T13:59:56.888Z",
+      "assigned_agent": "frontend-speedster"
     },
     {
       "id": "02.02.03.02",
@@ -331,9 +319,8 @@
       "thread_name": "Task List View",
       "status": "completed",
       "created_at": "2026-01-20T17:47:41.066Z",
-      "updated_at": "2026-01-21T01:23:43.813Z",
-      "assigned_agent": "frontend-speedster",
-      "report": "Implemented task table with ID, Name, Stage, Batch, Thread, Status, and Updated columns in TasksView."
+      "updated_at": "2026-01-21T13:59:56.888Z",
+      "assigned_agent": "frontend-speedster"
     },
     {
       "id": "02.02.03.03",
@@ -343,9 +330,8 @@
       "thread_name": "Task List View",
       "status": "completed",
       "created_at": "2026-01-20T17:47:41.066Z",
-      "updated_at": "2026-01-21T01:23:43.844Z",
-      "assigned_agent": "frontend-speedster",
-      "report": "Added status filtering buttons and logic to the TasksView component."
+      "updated_at": "2026-01-21T13:59:56.888Z",
+      "assigned_agent": "frontend-speedster"
     },
     {
       "id": "02.02.03.04",
@@ -355,9 +341,8 @@
       "thread_name": "Task List View",
       "status": "completed",
       "created_at": "2026-01-20T17:47:41.066Z",
-      "updated_at": "2026-01-21T01:23:43.874Z",
-      "assigned_agent": "frontend-speedster",
-      "report": "Wired up GET /workstream/:id/tasks route in packages/workstreams/src/web/routes/ui.tsx."
+      "updated_at": "2026-01-21T13:59:56.888Z",
+      "assigned_agent": "frontend-speedster"
     },
     {
       "id": "03.01.01.01",
@@ -365,9 +350,9 @@
       "stage_name": "CLI Integration",
       "batch_name": "CLI Command",
       "thread_name": "Serve Command",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-20T17:47:41.066Z",
-      "updated_at": "2026-01-20T17:47:54.276Z",
+      "updated_at": "2026-01-21T13:59:56.888Z",
       "assigned_agent": "default"
     },
     {
@@ -376,9 +361,9 @@
       "stage_name": "CLI Integration",
       "batch_name": "CLI Command",
       "thread_name": "Serve Command",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-20T17:47:41.066Z",
-      "updated_at": "2026-01-20T17:47:54.276Z",
+      "updated_at": "2026-01-21T13:59:56.888Z",
       "assigned_agent": "default"
     },
     {
@@ -387,9 +372,9 @@
       "stage_name": "CLI Integration",
       "batch_name": "CLI Command",
       "thread_name": "Serve Command",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-20T17:47:41.066Z",
-      "updated_at": "2026-01-20T17:47:54.276Z",
+      "updated_at": "2026-01-21T13:59:56.888Z",
       "assigned_agent": "default"
     },
     {
@@ -398,9 +383,9 @@
       "stage_name": "CLI Integration",
       "batch_name": "CLI Command",
       "thread_name": "Build Configuration",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-20T17:47:41.066Z",
-      "updated_at": "2026-01-20T17:47:54.351Z",
+      "updated_at": "2026-01-21T13:59:56.888Z",
       "assigned_agent": "default"
     },
     {
@@ -409,10 +394,82 @@
       "stage_name": "CLI Integration",
       "batch_name": "CLI Command",
       "thread_name": "Build Configuration",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-20T17:47:41.066Z",
-      "updated_at": "2026-01-20T17:47:54.352Z",
+      "updated_at": "2026-01-21T13:59:56.888Z",
       "assigned_agent": "default"
+    },
+    {
+      "id": "04.01.01.01",
+      "name": "Remove @hono/node-server import from server.ts",
+      "stage_name": "Fix - bun-native-server",
+      "batch_name": "Server Migration",
+      "thread_name": "Bun Native Server",
+      "status": "completed",
+      "created_at": "2026-01-21T13:59:56.888Z",
+      "updated_at": "2026-01-21T14:03:55.185Z",
+      "assigned_agent": "backend-heavy-hitter",
+      "report": "Removed @hono/node-server import from server.ts"
+    },
+    {
+      "id": "04.01.01.02",
+      "name": "Replace serve() with Bun.serve() using app.fetch handler",
+      "stage_name": "Fix - bun-native-server",
+      "batch_name": "Server Migration",
+      "thread_name": "Bun Native Server",
+      "status": "completed",
+      "created_at": "2026-01-21T13:59:56.888Z",
+      "updated_at": "2026-01-21T14:04:04.556Z",
+      "assigned_agent": "backend-heavy-hitter",
+      "report": "Replaced serve() with Bun.serve() using app.fetch handler"
+    },
+    {
+      "id": "04.01.01.03",
+      "name": "Update ServerType to Bun's Server type",
+      "stage_name": "Fix - bun-native-server",
+      "batch_name": "Server Migration",
+      "thread_name": "Bun Native Server",
+      "status": "completed",
+      "created_at": "2026-01-21T13:59:56.888Z",
+      "updated_at": "2026-01-21T14:04:43.560Z",
+      "assigned_agent": "backend-heavy-hitter",
+      "report": "Updated ServerType to BunServer using ReturnType<typeof Bun.serve>"
+    },
+    {
+      "id": "04.01.01.04",
+      "name": "Adjust graceful shutdown for Bun.serve API",
+      "stage_name": "Fix - bun-native-server",
+      "batch_name": "Server Migration",
+      "thread_name": "Bun Native Server",
+      "status": "completed",
+      "created_at": "2026-01-21T13:59:56.888Z",
+      "updated_at": "2026-01-21T14:05:03.283Z",
+      "assigned_agent": "backend-heavy-hitter",
+      "report": "Replaced Node.js event-based shutdown with Bun's server.stop() method"
+    },
+    {
+      "id": "04.01.01.05",
+      "name": "Remove @hono/node-server from package.json",
+      "stage_name": "Fix - bun-native-server",
+      "batch_name": "Server Migration",
+      "thread_name": "Bun Native Server",
+      "status": "completed",
+      "created_at": "2026-01-21T13:59:56.888Z",
+      "updated_at": "2026-01-21T14:05:20.882Z",
+      "assigned_agent": "backend-heavy-hitter",
+      "report": "Removed @hono/node-server from package.json and ran bun install to update lockfile"
+    },
+    {
+      "id": "04.01.01.06",
+      "name": "Test in Chrome to verify fix",
+      "stage_name": "Fix - bun-native-server",
+      "batch_name": "Server Migration",
+      "thread_name": "Bun Native Server",
+      "status": "completed",
+      "created_at": "2026-01-21T13:59:56.888Z",
+      "updated_at": "2026-01-21T14:05:48.777Z",
+      "assigned_agent": "backend-heavy-hitter",
+      "report": "Verified server starts and responds correctly - tested /health, /, and /api/workstreams endpoints"
     }
   ]
 }
