@@ -194,20 +194,9 @@ work prompt --stage 1    # Generate all prompts for stage 1
 
 ## Handoff to User
 
-When prompts are ready:
-
-1. Show the user the generated prompts
-2. Explain which threads can run in parallel (same batch)
-3. Ask user to execute with their implementation agents
-4. Wait for user to report completion or issues
-
-If the user reports problems:
-- Use `work update --task "01.01.01.01" --status blocked` to mark issues
-- Add fix stages with `work fix` if needed
-- Regenerate prompts after adjustments
+When prompts are ready notify the user that prompts were generated, explain which threads can run in parallel (same batch). Ask user to execute with their implementation agents. Wait for user to report completion or issues
 
 After a stage completes, generate a stage report with `work report --stage N` to review progress before proceeding to the next stage.
-
 ---
 
 ## CLI Reference
