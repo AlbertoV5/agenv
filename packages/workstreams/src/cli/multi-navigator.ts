@@ -148,7 +148,7 @@ class Navigator {
 
     private exit() {
         console.clear()
-        process.exit(0)
+        process.exit(42)  // Special code for intentional quit (recognized by restart loop)
     }
 
     private moveSelection(delta: number) {
@@ -203,9 +203,19 @@ class Navigator {
         }
     }
 
+    // Simple file-based logger for debugging
+    private log(msg: string) {
+        const fs = typeof require !== 'undefined' ? require('fs') : null
+        if (fs) {
+            fs.appendFileSync("/tmp/work-navigator.log", `[${new Date().toISOString()}] ${msg}\n`)
+        }
+    }
+
     private async activateThread(index: number) {
         const targetThread = this.threads[index]!
         const myPaneId = process.env.TMUX_PANE
+        this.log(`activateThread(${index}): myPaneId=${myPaneId}`)
+
         if (!myPaneId) return
 
         // Get all panes in current window
@@ -213,36 +223,59 @@ class Navigator {
         try {
             const output = Bun.spawnSync(["tmux", "list-panes", "-F", "#{pane_id}"])
             allPanes = (await new Response(output.stdout).text()).trim().split("\n")
-        } catch (e) { return }
+            this.log(`allPanes=${JSON.stringify(allPanes)}`)
+        } catch (e) {
+            this.log(`Error listing panes: ${e}`)
+            return
+        }
 
         const contentPaneId = allPanes.find(p => p !== myPaneId)
+        this.log(`contentPaneId=${contentPaneId}`)
 
-        if (this.activeThreadIndex === index) return
+        if (this.activeThreadIndex === index) {
+            this.log(`Already active index ${index}`)
+            return
+        }
 
         const oldThread = this.threads[this.activeThreadIndex]!
         const newThread = this.threads[index]!
+        this.log(`Switching from ${oldThread.id} to ${newThread.id} (Window: ${newThread.windowName})`)
 
         // Perform Swap
         try {
             // 1. Break current pane to background
             if (contentPaneId) {
                 // We name the new window match the thread ID so we can find it later
+                // Check if window already exists? "break-pane" creates a NEW window.
+                // If we name it "SS.BB.TT", and that window ALREADY exists (empty?), tmux might error or rename.
+                // Use -d (detached).
+                this.log(`Breaking pane ${contentPaneId} to window ${oldThread.windowName}`)
                 const breakCmd = ["tmux", "break-pane", "-s", contentPaneId, "-d", "-n", oldThread.windowName]
-                Bun.spawnSync(breakCmd)
+                const res = Bun.spawnSync(breakCmd)
+                if (res.exitCode !== 0) this.log(`break-pane failed: ${await new Response(res.stderr).text()}`)
             }
 
             // 2. Join new thread pane
+            this.log(`Joining window ${newThread.windowName} to ${myPaneId}`)
             const joinCmd = ["tmux", "join-pane", "-s", `${newThread.windowName}`, "-t", myPaneId, "-h"]
             const res = Bun.spawnSync(joinCmd)
+            if (res.exitCode !== 0) {
+                this.log(`join-pane failed: ${await new Response(res.stderr).text()}`)
+                // If join fails, we might be left with just navigator.
+                // But user sees Thread taking whole window.
+                // This implies myPaneId is lost?
+            }
 
             // 3. Resize sidebar back to ~25%
+            this.log(`Resizing ${myPaneId}`)
             Bun.spawnSync(["tmux", "resize-pane", "-t", myPaneId, "-x", "30%"])
 
             this.activeThreadIndex = index
             this.render()
+            this.log(`Switch complete`)
 
         } catch (e) {
-            // log error
+            this.log(`Exception during swap: ${e}`)
         }
     }
 
@@ -385,7 +418,7 @@ export async function main(argv: string[] = process.argv) {
         return {
             id: tId,
             name: t.name,
-            windowName: tId, // Standard window naming
+            windowName: `thread-${tId}`, // Prefixed for tmux compatibility
             status: 'pending' // will update
         }
     })

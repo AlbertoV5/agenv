@@ -617,8 +617,9 @@ export async function main(argv: string[] = process.argv): Promise<void> {
         const thread = threads[i]!
         const cmd = buildRunCommand(port, thread.model, thread.promptPath)
         // Use thread ID as window name so we can find it later for swapping
-        addWindow(sessionName, thread.threadId, cmd)
-        console.log(`  Window: ${thread.threadId} - ${thread.threadName}`)
+        // Prefix with 'thread-' to prevent tmux from interpreting as pane index
+        addWindow(sessionName, `thread-${thread.threadId}`, cmd)
+        console.log(`  Window: thread-${thread.threadId} - ${thread.threadName}`)
     }
 
     // Now setup the Dashboard layout in Window 0
@@ -647,7 +648,8 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     const bunPath = process.execPath
     const { resolve } = await import("path")
     const binPath = resolve(import.meta.dir, "../../bin/work.ts")
-    const loopCmd = `while true; do "${bunPath}" "${binPath}" multi-navigator --session "${sessionName}" --batch "${batchId}" --repo-root "${repoRoot}" --stream "${stream.id}"; echo "Navigator crashed. Restarting in 1s..."; sleep 1; done`
+    // Exit code 42 = intentional quit (don't restart), other codes = crash (restart)
+    const loopCmd = `while true; do "${bunPath}" "${binPath}" multi-navigator --session "${sessionName}" --batch "${batchId}" --repo-root "${repoRoot}" --stream "${stream.id}"; exitCode=$?; if [ $exitCode -eq 42 ]; then exit 0; fi; echo "Navigator crashed. Restarting in 1s..."; sleep 1; done`
 
     const splitArgs = [
         "tmux", "split-window",
