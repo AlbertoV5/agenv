@@ -107,7 +107,7 @@ function savePromptToFile(
   try {
     mkdirSync(dirname(fullPath), { recursive: true })
     writeFileSync(fullPath, content)
-    console.warn(`Saved prompt to ${relPath}`)
+    // console.warn(`Saved prompt to ${relPath}`)
   } catch (e) {
     console.warn(
       `Warning: Failed to save prompt to ${relPath}: ${(e as Error).message}`,
