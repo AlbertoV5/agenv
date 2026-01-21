@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-01-21T19:59:09.579Z",
+  "last_updated": "2026-01-21T20:19:30.749Z",
   "current_stream": "002-github-integration",
   "streams": [
     {
@@ -82,7 +82,7 @@
         ]
       },
       "created_at": "2026-01-21T16:52:43.899Z",
-      "updated_at": "2026-01-21T19:59:09.579Z",
+      "updated_at": "2026-01-21T20:19:30.749Z",
       "path": "work/002-github-integration",
       "generated_by": {
         "workstreams": "0.1.0"
@@ -106,6 +106,11 @@
           "3": {
             "status": "approved",
             "approved_at": "2026-01-21T19:57:12.104Z",
+            "approved_by": "user"
+          },
+          "4": {
+            "status": "approved",
+            "approved_at": "2026-01-21T20:19:30.749Z",
             "approved_by": "user"
           }
         }

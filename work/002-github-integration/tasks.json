@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "stream_id": "002-github-integration",
-  "last_updated": "2026-01-21T20:08:20.878Z",
+  "last_updated": "2026-01-21T20:21:44.194Z",
   "tasks": [
     {
       "id": "01.01.01.01",
@@ -909,10 +909,16 @@
       "stage_name": "Integration and Polish",
       "batch_name": "Integration Points",
       "thread_name": "Init Integration",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-21T17:35:00.746Z",
-      "updated_at": "2026-01-21T17:35:26.332Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-21T20:20:40.197Z",
+      "assigned_agent": "default",
+      "github_issue": {
+        "number": 3,
+        "url": "https://github.com/AlbertoV5/agenv/issues/3",
+        "state": "closed"
+      },
+      "report": "Modified init.ts to import github config functions and create github.json with DEFAULT_GITHUB_CONFIG (enabled: false) after work/ directory creation"
     },
     {
       "id": "05.01.01.02",
@@ -920,10 +926,11 @@
       "stage_name": "Integration and Polish",
       "batch_name": "Integration Points",
       "thread_name": "Init Integration",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-21T17:35:00.746Z",
-      "updated_at": "2026-01-21T17:35:26.332Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-21T20:20:39.388Z",
+      "assigned_agent": "default",
+      "report": "Added console.log message 'Creating github.json (disabled by default)...' during init process"
     },
     {
       "id": "05.01.02.01",
@@ -931,10 +938,16 @@
       "stage_name": "Integration and Polish",
       "batch_name": "Integration Points",
       "thread_name": "Multi Integration",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-21T17:35:00.746Z",
-      "updated_at": "2026-01-21T17:35:26.368Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-21T20:21:44.194Z",
+      "assigned_agent": "default",
+      "github_issue": {
+        "number": 4,
+        "url": "https://github.com/AlbertoV5/agenv/issues/4",
+        "state": "closed"
+      },
+      "report": "Modified ThreadInfo interface to include githubIssue field and updated collectThreadInfo to fetch github_issue data from tasks"
     },
     {
       "id": "05.01.02.02",
@@ -942,10 +955,11 @@
       "stage_name": "Integration and Polish",
       "batch_name": "Integration Points",
       "thread_name": "Multi Integration",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-21T17:35:00.746Z",
-      "updated_at": "2026-01-21T17:35:26.369Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-21T20:21:41.947Z",
+      "assigned_agent": "default",
+      "report": "Added issue URL display in dry-run thread details section when github_issue is present"
     },
     {
       "id": "05.01.02.03",
@@ -953,10 +967,11 @@
       "stage_name": "Integration and Polish",
       "batch_name": "Integration Points",
       "thread_name": "Multi Integration",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-21T17:35:00.746Z",
-      "updated_at": "2026-01-21T17:35:26.369Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-21T20:21:43.124Z",
+      "assigned_agent": "default",
+      "report": "Created buildPaneTitle helper and updated all buildRunCommand calls to include issue number in tmux pane titles"
     },
     {
       "id": "05.02.01.01",
@@ -967,7 +982,12 @@
       "status": "pending",
       "created_at": "2026-01-21T17:35:00.746Z",
       "updated_at": "2026-01-21T17:35:26.404Z",
-      "assigned_agent": "default"
+      "assigned_agent": "default",
+      "github_issue": {
+        "number": 5,
+        "url": "https://github.com/AlbertoV5/agenv/issues/5",
+        "state": "open"
+      }
     },
     {
       "id": "05.02.01.02",
