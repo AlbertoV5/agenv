@@ -262,17 +262,6 @@ export function generateThreadPrompt(
   // Format batch ID for command suggestion
   const batchId = `${context.stage.id.toString().padStart(2, "0")}.${context.batch.id.toString().padStart(2, "0")}`
 
-  // Load additional documentation from work/DOCS.md
-  const docsPath = join(getWorkDir(process.cwd()), "DOCS.md")
-  if (!existsSync(docsPath)) {
-    throw new Error(`work/DOCS.md not found at ${docsPath}. This file is required to generate prompts.`)
-  }
-  const docsContent = readFileSync(docsPath, "utf-8")
-  lines.push("## Additional Documentation")
-  lines.push("")
-  lines.push(docsContent.trim())
-  lines.push("")
-
   // Skill instruction
   lines.push(
     `When listing tasks, use \`work list --tasks --batch "${batchId}"\` to see tasks for this batch only.`,
