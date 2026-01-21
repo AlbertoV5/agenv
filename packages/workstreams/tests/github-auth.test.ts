@@ -97,7 +97,9 @@ describe("GitHub Auth", () => {
     })
 
     it("should return false on network error", async () => {
-      global.fetch = mock(() => Promise.reject(new Error("Network error"))) as any
+      global.fetch = mock(() =>
+        Promise.reject(new Error("Network error")),
+      ) as any
       const isValid = await validateAuth("token")
       expect(isValid).toBe(false)
     })

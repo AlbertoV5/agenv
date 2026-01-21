@@ -329,6 +329,11 @@ export interface Task {
   breadcrumb?: string // Last action/status for recovery
   report?: string // Completion summary (for COMPLETION.md aggregation)
   assigned_agent?: string // Agent assigned to this task
+  github_issue?: {
+    number: number
+    url: string
+    state: "open" | "closed"
+  }
 }
 
 /**

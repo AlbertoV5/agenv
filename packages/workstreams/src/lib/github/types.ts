@@ -152,9 +152,9 @@ export const DEFAULT_GITHUB_CONFIG: GitHubConfig = {
   repo: "",
   branch_prefix: "workstream/",
   label_config: {
-    workstream: { prefix: "stream:", color: "1d76db" }, // Blue
+    workstream: { prefix: "stream:", color: "5319e7" }, // Purple
     thread: { prefix: "thread:", color: "0e8a16" },     // Green
-    batch: { prefix: "batch:", color: "d93f0b" },       // Red/Orange
-    stage: { prefix: "stage:", color: "5319e7" },       // Purple
+    batch: { prefix: "batch:", color: "0e8a16" },       // Green
+    stage: { prefix: "stage:", color: "1d76db" },       // Blue
   },
 }

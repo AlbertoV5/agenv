@@ -18,7 +18,7 @@ description: How to create a workstream plan for development tasks. Plans are fo
 Your scope is **planning only** — you do not implement code. Follow this workflow:
 
 1. **Create workstream** — `work create --name "feature" --stages N`
-2. **Fill out PLAN.md** — Define stages, batches, threads, and resolve questions
+2. **Fill out PLAN.md** — Define stages, batches, threads, and resolve questions. Include working packages in details.
 3. **Ask user to review PLAN.md** — Present `work preview` output and **wait for confirmation** before proceeding
 4. **User approves plan** — Tell user to run `work approve` (you MUST NOT run this yourself)
 5. **Generate TASKS.md** — Run `work tasks generate`, then fill in task descriptions
@@ -89,9 +89,18 @@ Describe inputs (what this stage needs), structure (how it's organized), and out
 
 ##### Batch 01: {Batch Name}
 
+Batch purpose description.
+
 ###### Thread 01: {Thread Name}
-**Summary:** Short description
-**Details:** Implementation notes, dependencies, code examples
+
+**Summary:**
+Short description of what this thread accomplishes.
+
+**Details:**
+- Working packages: `./packages/my-app`, `./packages/core`
+- Implementation notes
+- Dependencies and requirements
+- Code examples if needed
 ```
 
 ## Add Structure
