@@ -271,7 +271,6 @@ export function getPromptContext(
   const assignedAgent = tasks.find((t) => t.assigned_agent)?.assigned_agent
   const agentName = assignedAgent
 
-
   // Load test requirements
   const testRequirements = getTestRequirements(repoRoot) || undefined
 
@@ -355,7 +354,9 @@ export function generateThreadPrompt(
   lines.push("")
 
   // Output location
-  lines.push(`Your working directory for creating additional documentation or scripts (if any) is: \`${context.outputDir}/\``)
+  lines.push(
+    `Your working directory for creating additional documentation or scripts (if any) is: \`${context.outputDir}/\``,
+  )
   lines.push("")
 
   // Format batch ID for command suggestion
@@ -363,7 +364,9 @@ export function generateThreadPrompt(
 
   // Skill instruction
   lines.push("Use the `implementing-workstream-plans` skill.")
-  lines.push(`When listing tasks, use \`work list --tasks --batch "${batchId}"\` to see tasks for this batch only.`)
+  lines.push(
+    `When listing tasks, use \`work list --tasks --batch "${batchId}"\` to see tasks for this batch only.`,
+  )
   lines.push("")
 
   return lines.join("\n")

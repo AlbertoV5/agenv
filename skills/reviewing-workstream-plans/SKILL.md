@@ -10,6 +10,7 @@ description: How to review, validate, and approve workstream plans.
 To view and edit the current plan:
 
 ```bash
+work review plan         # Prints the entire PLAN.md to console
 work preview             # Shows structure, progress, and dependencies
 work edit                # Open PLAN.md to read details
 ```

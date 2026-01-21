@@ -201,7 +201,9 @@ export function main(argv: string[] = process.argv): void {
       }
 
       if (cliArgs.json) {
-        console.log(JSON.stringify({ action: "removed", agent: cliArgs.remove }, null, 2))
+        console.log(
+          JSON.stringify({ action: "removed", agent: cliArgs.remove }, null, 2),
+        )
       } else {
         console.log(`Removed agent "${cliArgs.remove}"`)
       }
@@ -230,7 +232,7 @@ export function main(argv: string[] = process.argv): void {
         console.log(`Added agent "${agent.name}"`)
         console.log(`  Description: ${agent.description}`)
         console.log(`  Best for: ${agent.bestFor}`)
-        console.log(`  Model: ${agent.model}`)
+        // console.log(`  Model: ${agent.model}`)
       }
     } catch (e) {
       console.error((e as Error).message)
@@ -248,7 +250,9 @@ export function main(argv: string[] = process.argv): void {
     } else {
       console.log("No agents defined.")
       console.log("")
-      console.log(`Add agents with: work agents --add --name "agent-name" --description "..." --best-for "..." --model "claude-opus"`)
+      console.log(
+        `Add agents with: work agents --add --name "agent-name" --description "..." --best-for "..." --model "claude-opus"`,
+      )
       console.log(`Config file: ${getAgentsMdPath(repoRoot)}`)
     }
     return
@@ -265,7 +269,7 @@ export function main(argv: string[] = process.argv): void {
       console.log(`  ${agent.name}`)
       console.log(`    Description: ${agent.description}`)
       console.log(`    Best for: ${agent.bestFor}`)
-      console.log(`    Model: ${agent.model}`)
+      // console.log(`    Model: ${agent.model}`)
       console.log("")
     }
     console.log(`Config file: ${getAgentsMdPath(repoRoot)}`)

@@ -7,23 +7,18 @@ description: How to execute an existing workstream plan. Focuses on finding task
 
 ## Execution Context
 
-**Rule:** Batches run serially; threads within a batch run in parallel.
-*Complete all threads in the current batch before moving to the next.*
-
 ```bash
 work status             # High-level progress & current stage
 work tree --batch "01.01" # Structure view for the batch your thread is in
 work list --tasks --thread "01.01.01" # List tasks for your thread
-work read --task "ID"   # Read specific task details
 ```
 
-## Task Workflow
+## Thread Workflow
 
-1. **Find Task**: Pick from `work list --batch "ID"`
-2. **Start**: `work update --task "01.01.01.01" --status in_progress`
-3. **Work**: Implement changes defined in `PLAN.md` (read via `work edit`)
-4. **Test**: If `work/TESTS.md` exists, run tests and fix any failures
-5. **Finish**: `work update --task "01.01.01.01" --status completed --report "Brief summary"`
+1. **Find Task**: View current working batch via `work list --batch "ID"`
+2. **Work on your task**: Implement the task for your thread only
+3. **Start**: `work update --task "01.01.01.01" --status in_progress`
+4. **Finish**: `work update --task "01.01.01.01" --status completed --report "Brief summary"`
 
 **Status options:** `in_progress`, `completed`, `blocked`, `cancelled`
 
@@ -64,13 +59,6 @@ In case of requiring a functionality that may currently be worked on in a parall
 2. If not done yet you can implement a placeholder to continue your work, or mark the task as blocked.
 3. If you include a placeholder mask the task as in_progress and include details in the task "report".
 
+## Additional Resources
 
-## Reference Files
-
-Check these files for context during execution (read-only):
-
-| File | Purpose |
-|------|---------|
-| `work/{stream}/PLAN.md` | Thread details, implementation approach |
-| `work/TESTS.md` | Test requirements (user-managed, if present) |
-| `work/STRUCTURE.md` | Repository structure |
+If you have questions you can check the plan using `work plan review`.

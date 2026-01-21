@@ -5,14 +5,6 @@ description: How to create a workstream plan for development tasks. Plans are fo
 
 # Creating Workstream Plans
 
-## When to Create
-
-- Medium to large features
-- Multi-stage implementations
-- Tasks spanning multiple sessions
-
-**Not needed for:** Small fixes, single-file changes.
-
 ## Workflow Overview
 
 Your scope is **planning only** — you do not implement code. Follow this workflow:
@@ -21,11 +13,11 @@ Your scope is **planning only** — you do not implement code. Follow this workf
 2. **Fill out PLAN.md** — Define stages, batches, threads, and resolve questions. Include working packages in details.
 3. **Ask user to review PLAN.md** — Present `work preview` output and **wait for confirmation** before proceeding
 4. **User approves plan** — Tell user to run `work approve` (you MUST NOT run this yourself)
-5. **Generate TASKS.md** — Run `work tasks generate`, then fill in task descriptions
+5. **Generate TASKS.md** — Once approved, run `work tasks generate`, then fill in task descriptions
 6. **Ask user to review TASKS.md** — Present the tasks and **wait for confirmation** before serializing
 7. **Serialize tasks** — Run `work tasks serialize` only after user confirms
-8. **Assign agents** — Use `work assign` to map agents to threads (if `work/AGENTS.md` exists)
-9. **Generate prompts** — Use `work prompt` to create execution context
+8. **Assign agents** — Use `work agents` to view available agents and `work assign` to map agents to threads
+9. **Generate prompts** — Use `work prompt` to create execution context for the agents to work
 10. **Ask user to run agents** — Hand off prompts to user for execution
 11. **Wait for instructions** — User may request fixes, additional stages, or adjustments
 
@@ -52,12 +44,11 @@ Workstreams live in `./work/{id}/`:
 | `TASKS.md` | Intermediate task file (temporary, during task creation) |
 | `tasks.json` | Task tracking (CLI managed) |
 
-Shared configuration files in `./work/` (user-managed, read-only for planning agent):
+Reference files for planning:
 
 | File | Purpose |
 |------|---------|
 | `AGENTS.md` | Agent definitions for assignment and prompts |
-| `TESTS.md` | Test requirements included in execution prompts |
 
 **Hierarchy:** Stage → Batch → Thread → Task
 **Execution:** Stages/batches run serially; threads run in parallel within a batch.
@@ -184,9 +175,7 @@ Use `work add-task` only for tasks discovered during execution:
 work add-task --stage 1 --batch 1 --thread 1 --name "Handle edge case"
 ```
 
-## Assign Agents to Threads (Optional)
-
-If `work/AGENTS.md` exists, assign agents to threads before generating prompts:
+## Assign Agents to Threads
 
 ```bash
 work agents                                      # List available agents
@@ -194,20 +183,14 @@ work assign --thread "01.01.01" --agent "backend-expert"
 work assign --thread "01.01.02" --agent "frontend-specialist"
 ```
 
-Assignments are stored in tasks.json.
-
-**Note:** `work/AGENTS.md` and `work/TESTS.md` are user-managed configuration files. The planning agent does not create or edit them—only reads them for agent assignment and prompt generation.
-
 ## Generate Agent Prompts
 
 Create execution prompts for implementation agents:
 
 ```bash
-work prompt                                  # Generate ALL prompts for the workstream (Recommended)
-work prompt --stage 1                        # Generate all prompts for stage 1
+work prompt              # Generate ALL prompts for the workstream (Recommended)
+work prompt --stage 1    # Generate all prompts for stage 1
 ```
-
-Prompts are saved to structured directories: `work/{stream-id}/prompts/{stage}/{batch}/{thread}.md`.
 
 ## Handoff to User
 
