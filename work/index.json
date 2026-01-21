@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-01-21T13:59:25.494Z",
-  "current_stream": "001-workstream-viz",
+  "last_updated": "2026-01-21T17:01:48.171Z",
+  "current_stream": "002-github-integration",
   "streams": [
     {
       "id": "000-web-visualization",
@@ -63,6 +63,36 @@
         "plan_hash": "ee4daec8c8d5dc1232aaf90d6bd074968ad81fb42f4c14d7e3414f4fd7547b7e"
       },
       "status": "completed"
+    },
+    {
+      "id": "002-github-integration",
+      "name": "github-integration",
+      "order": 2,
+      "size": "medium",
+      "session_estimated": {
+        "length": 4,
+        "unit": "session",
+        "session_minutes": [
+          30,
+          45
+        ],
+        "session_iterations": [
+          4,
+          8
+        ]
+      },
+      "created_at": "2026-01-21T16:52:43.899Z",
+      "updated_at": "2026-01-21T17:01:48.171Z",
+      "path": "work/002-github-integration",
+      "generated_by": {
+        "workstreams": "0.1.0"
+      },
+      "approval": {
+        "status": "approved",
+        "approved_at": "2026-01-21T17:01:48.171Z",
+        "approved_by": "user",
+        "plan_hash": "d905701443fd74c6ea4f61f659d9acbd7b4a919220c2edbcea55c51d2139d32d"
+      }
     }
   ]
 }

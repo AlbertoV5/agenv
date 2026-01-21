@@ -7,18 +7,18 @@ description: How to review, validate, and approve workstream plans.
 
 ## Inspect Plan
 
+To view and edit the current plan:
+
 ```bash
-work current --set "000-stream-id"
 work preview             # Shows structure, progress, and dependencies
-work status              # Shows overall status & open questions
 work edit                # Open PLAN.md to read details
 ```
 
 ## Validate Structure
 
 ```bash
-work consolidate         # Checks for schema errors, missing links
-work consolidate --dry-run
+work validate plan       # Checks for schema errors, open questions, missing inputs
+work check plan          # Lists all unchecked [ ] items with line numbers
 ```
 
 ## Manage Approval

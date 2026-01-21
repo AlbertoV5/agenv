@@ -16,3 +16,8 @@
 **Description:** Deep thinker for complex backend work
 **Best for:** Backend tasks
 **Model:** openrouter/google/gemini-3-pro-preview
+
+### code-reviewer
+**Description:** Specialized on code analysis
+**Best for:** Debugging, testing, reviews.
+**Model:** openrouter/openai/gpt-5.2-codex

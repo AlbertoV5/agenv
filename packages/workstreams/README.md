@@ -382,9 +382,12 @@ work create --name my-feature --stages 3
 # Set current workstream
 work current --set "001-my-feature"
 
-# Preview and validate PLAN.md
+# Preview, validate, and check PLAN.md
 work preview --stream "001-my-feature"
-work consolidate --stream "001-my-feature"
+work validate plan
+work check plan
+work review plan
+work review tasks
 
 # Open PLAN.md in editor
 work edit

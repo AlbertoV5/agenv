@@ -12,7 +12,9 @@
  *   list        - List tasks in a workstream
  *   add-task    - Add a task to a workstream
  *   delete      - Delete workstreams, stages, threads, or tasks
- *   consolidate - Validate PLAN.md structure
+ *   review      - Review plan or tasks
+ *   validate    - Validate PLAN.md structure
+ *   check       - Find unchecked items in plan
  *   preview     - Show PLAN.md structure
  *   init        - Initialize work/ directory with default config files
  */
@@ -27,7 +29,9 @@ import { main as listMain } from "../src/cli/list.ts"
 import { main as addTaskMain } from "../src/cli/add-task.ts"
 import { main as addBatchMain } from "../src/cli/add-batch.ts"
 import { main as addThreadMain } from "../src/cli/add-thread.ts"
-import { main as consolidateMain } from "../src/cli/consolidate.ts"
+import { main as reviewMain } from "../src/cli/review.ts"
+import { main as validateMain } from "../src/cli/validate.ts"
+import { main as checkMain } from "../src/cli/check.ts"
 import { main as previewMain } from "../src/cli/preview.ts"
 import { main as deleteMain } from "../src/cli/delete.ts"
 import { main as filesMain } from "../src/cli/files.ts"
@@ -71,7 +75,9 @@ const SUBCOMMANDS = {
   "add-batch": addBatchMain,
   "add-thread": addThreadMain,
   edit: editMain,
-  consolidate: consolidateMain,
+  review: reviewMain,
+  validate: validateMain,
+  check: checkMain,
   preview: previewMain,
   delete: deleteMain,
   files: filesMain,
@@ -126,7 +132,9 @@ Commands:
   delete      Delete workstreams, stages, threads, or tasks
   files       List and index files in files/ directory
   tasks       Manage TASKS.md intermediate file (generate/serialize)
-  consolidate Validate PLAN.md structure
+  review      Review plan or tasks (plan, tasks)
+  validate    Validate plan structure and content
+  check       Find unchecked items in plan
   preview     Show PLAN.md structure
   metrics     Evaluate workstream metrics and task analysis
   report      Generate progress report

@@ -98,7 +98,7 @@ function parseCliArgs(argv: string[]): FixCliArgs | null {
         parsed.description = next
         i++
         break
-      
+
       case "--batch":
         parsed.isBatch = true
         break
@@ -156,7 +156,7 @@ export function main(argv: string[] = process.argv): void {
 
   try {
     let result
-    
+
     if (cliArgs.isBatch) {
       result = appendFixBatch(repoRoot, stream.id, {
         targetStage: cliArgs.targetStage,
@@ -173,7 +173,7 @@ export function main(argv: string[] = process.argv): void {
 
     if (result.success) {
       console.log(result.message)
-      console.log(`\nRun 'work consolidate' to generate the new tasks.`)
+      console.log(`\nRun 'work validate plan' to validate the new stage.`)
     } else {
       console.error(`Error: ${result.message}`)
       process.exit(1)

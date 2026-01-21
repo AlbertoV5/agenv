@@ -45,7 +45,7 @@ export function updateTask(args: UpdateTaskArgs): UpdateTaskResult {
   if (!existingTask) {
     throw new Error(
       `Task "${args.taskId}" not found in workstream "${args.stream.id}". ` +
-      `Run "work consolidate --stream ${args.stream.id}" first to generate tasks from PLAN.md.`,
+      `Run "work add-task" to add tasks, or "work validate plan" to check the plan.`,
     )
   }
 

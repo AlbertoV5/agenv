@@ -108,8 +108,8 @@ work edit       # Open PLAN.md in editor
 
 ```bash
 work preview      # Shows structure with progress
-work tree         # Shows high-level structure (useful for quick verification)
-work consolidate  # Validates PLAN.md structure
+work validate plan  # Validates PLAN.md structure and reports open questions
+work check plan     # Lists all unchecked items with line numbers
 work approve      # Approve plan (blocked if open questions)
 work approve --force  # Approve with open questions
 ```
@@ -118,8 +118,8 @@ work approve --force  # Approve with open questions
 
 After filling out PLAN.md, you MUST pause and ask for user review:
 
-1. Run `work consolidate` to validate structure
-2. Run `work preview` (detailed) and `work tree` (high-level) to show the plan hierarchy
+1. Run `work validate plan` to validate structure
+2. Run `work preview` (detailed)
 3. Present the preview output to the user
 4. Ask: "Does this plan structure look correct? Any changes needed before approval?"
 5. **Wait for explicit confirmation** — do not proceed until user confirms
@@ -167,6 +167,7 @@ After filling in task descriptions, you MUST pause and ask for user review:
 3. **Wait for explicit confirmation** — do not serialize until user confirms
 4. If user requests changes, make edits and repeat from step 1
 5. Once confirmed, run `work tasks serialize`
+6. Run `work tree` to view the current stream structure with task count
 
 **Do not serialize tasks without user review.** Task descriptions drive agent execution.
 
@@ -232,7 +233,8 @@ work edit
 
 # Validate & approve
 work preview
-work consolidate
+work validate plan
+work check plan
 work approve
 
 # Tasks (required workflow after approval)
