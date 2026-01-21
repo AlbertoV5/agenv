@@ -6,6 +6,7 @@
       "name": ".agenv",
       "dependencies": {
         "@types/node": "^25.0.9",
+        "hono": "^4.11.4",
       },
       "devDependencies": {
         "@types/bun": "^1.3.6",
@@ -27,16 +28,19 @@
         "typescript": "^5",
       },
     },
-    "packages/planning": {
-      "name": "@agenv/planning",
+    "packages/workstreams": {
+      "name": "@agenv/workstreams",
+      "version": "0.1.0",
       "bin": {
-        "plan": "./bin/plan.ts",
+        "work": "./bin/work.ts",
       },
       "dependencies": {
+        "marked": "^17.0.1",
         "proper-lockfile": "^4.1.2",
       },
       "devDependencies": {
         "@types/bun": "^1.3.6",
+        "@types/marked": "^6.0.0",
         "@types/proper-lockfile": "^4.1.4",
       },
       "peerDependencies": {
@@ -47,9 +51,11 @@
   "packages": {
     "@agenv/cli": ["@agenv/cli@workspace:packages/cli"],
 
-    "@agenv/planning": ["@agenv/planning@workspace:packages/planning"],
+    "@agenv/workstreams": ["@agenv/workstreams@workspace:packages/workstreams"],
 
     "@types/bun": ["@types/bun@1.3.6", "", { "dependencies": { "bun-types": "1.3.6" } }, "sha512-uWCv6FO/8LcpREhenN1d1b6fcspAB+cefwD7uti8C8VffIv0Um08TKMn98FynpTiU38+y2dUO55T11NgDt8VAA=="],
+
+    "@types/marked": ["@types/marked@6.0.0", "", { "dependencies": { "marked": "*" } }, "sha512-jmjpa4BwUsmhxcfsgUit/7A9KbrC48Q0q8KvnY107ogcjGgTFDlIL3RpihNpx2Mu1hM4mdFQjoVc4O6JoGKHsA=="],
 
     "@types/node": ["@types/node@25.0.9", "", { "dependencies": { "undici-types": "~7.16.0" } }, "sha512-/rpCXHlCWeqClNBwUhDcusJxXYDjZTyE8v5oTO7WbL8eij2nKhUeU89/6xgjU7N4/Vh3He0BtyhJdQbDyhiXAw=="],
 
@@ -60,6 +66,10 @@
     "bun-types": ["bun-types@1.3.6", "", { "dependencies": { "@types/node": "*" } }, "sha512-OlFwHcnNV99r//9v5IIOgQ9Uk37gZqrNMCcqEaExdkVq3Avwqok1bJFmvGMCkCE0FqzdY8VMOZpfpR3lwI+CsQ=="],
 
     "graceful-fs": ["graceful-fs@4.2.11", "", {}, "sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ=="],
+
+    "hono": ["hono@4.11.4", "", {}, "sha512-U7tt8JsyrxSRKspfhtLET79pU8K+tInj5QZXs1jSugO1Vq5dFj3kmZsRldo29mTBfcjDRVRXrEZ6LS63Cog9ZA=="],
+
+    "marked": ["marked@17.0.1", "", { "bin": { "marked": "bin/marked.js" } }, "sha512-boeBdiS0ghpWcSwoNm/jJBwdpFaMnZWRzjA6SkUMYb40SVaN1x7mmfGKp0jvexGcx+7y2La5zRZsYFZI6Qpypg=="],
 
     "proper-lockfile": ["proper-lockfile@4.1.2", "", { "dependencies": { "graceful-fs": "^4.2.4", "retry": "^0.12.0", "signal-exit": "^3.0.2" } }, "sha512-TjNPblN4BwAWMXU8s9AEz4JmQxnD1NNL7bNOY/AKUzyamc379FWASUhc/K1pL2noVb+XmZKLL68cjzLsiOAMaA=="],
 

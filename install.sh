@@ -58,17 +58,31 @@ echo "Installing AgEnv..."
 # Create bin directory
 mkdir -p "$AGENV_BIN"
 
+# Remove legacy 'plan' symlink if it exists (migration from planning package)
+if [ -L "$AGENV_BIN/plan" ]; then
+    echo "Removing legacy plan symlink..."
+    rm -f "$AGENV_BIN/plan"
+fi
+
 # Create symlink for the main `ag` command from cli package
 echo "Creating ag command symlink..."
 chmod +x "$AGENV_HOME/packages/cli/bin/ag.ts"
 ln -sf "$AGENV_HOME/packages/cli/bin/ag.ts" "$AGENV_BIN/ag"
 echo "  ag -> $AGENV_HOME/packages/cli/bin/ag.ts"
 
+# Create symlink for the standalone `work` command from workstreams package
+echo "Creating work command symlink..."
+chmod +x "$AGENV_HOME/packages/workstreams/bin/work.ts"
+ln -sf "$AGENV_HOME/packages/workstreams/bin/work.ts" "$AGENV_BIN/work"
+echo "  work -> $AGENV_HOME/packages/workstreams/bin/work.ts"
+
 # Detect shell and config file
 detect_shell_config() {
-    if [ -n "$ZSH_VERSION" ] || [ "$SHELL" = "/bin/zsh" ]; then
+    # Check for zsh (supports /bin/zsh, /usr/bin/zsh, etc.)
+    if [ -n "$ZSH_VERSION" ] || [[ "$SHELL" == *zsh ]]; then
         echo "$HOME/.zshrc"
-    elif [ -n "$BASH_VERSION" ] || [ "$SHELL" = "/bin/bash" ]; then
+    # Check for bash (supports /bin/bash, /usr/bin/bash, etc.)
+    elif [ -n "$BASH_VERSION" ] || [[ "$SHELL" == *bash ]]; then
         if [ -f "$HOME/.bash_profile" ]; then
             echo "$HOME/.bash_profile"
         else
@@ -103,8 +117,9 @@ echo "AgEnv installed successfully!"
 echo ""
 echo "Available commands:"
 echo "  ag                  - Main CLI entry point"
-echo "  ag plan             - Plan management"
+echo "  ag work             - Workstream management"
 echo "  ag install skills   - Install skills to agent directories"
+echo "  work                - Standalone workstream CLI"
 
 # Install skills if requested
 if [ "$INSTALL_SKILLS" = "true" ]; then

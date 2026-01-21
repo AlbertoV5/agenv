@@ -5,11 +5,11 @@
  * Root command for all AgEnv tools.
  *
  * Subcommands:
- *   plan       - Plan management (create, status, update, complete, index)
+ *   work       - Workstream management (create, status, update, complete, index)
  *   install    - Installation management (skills)
  */
 
-import { main as planMain } from "../../planning/bin/plan.ts"
+import { main as workMain } from "../../workstreams/bin/work.ts"
 import { main as installMain } from "../src/commands/install.ts"
 import { VERSION } from "../src/version.ts"
 
@@ -18,7 +18,7 @@ interface SubcommandModule {
 }
 
 const SUBCOMMANDS: Record<string, SubcommandModule> = {
-  plan: { main: planMain },
+  work: { main: workMain },
   install: { main: installMain },
 }
 
@@ -30,7 +30,7 @@ Usage:
   ag <command> [subcommand] [options]
 
 Commands:
-  plan       Plan management (create, status, update, complete, index)
+  work       Workstream management (create, status, update, complete, index)
   install    Installation management (skills)
 
 Options:
@@ -38,8 +38,8 @@ Options:
   --version, -v   Show version
 
 Examples:
-  ag plan create --name my-feature --size medium
-  ag plan status
+  ag work create --name my-feature
+  ag work status
   ag install skills --claude
   ag install skills --all
 
@@ -84,10 +84,10 @@ async function main(): Promise<void> {
 
   // Call the subcommand
   // We pass [bun, ag-subcommand, ...rest] to match expected argv format
-  // For plan commands, inject the cli version for tracking
+  // For work commands, inject the cli version for tracking
   let subcommandArgs = ["bun", `ag-${command}`, ...args.slice(1)]
-  if (command === "plan") {
-    // Inject cli version for plan create command
+  if (command === "work") {
+    // Inject cli version for work create command
     subcommandArgs = [...subcommandArgs, "--cli-version", VERSION]
   }
 

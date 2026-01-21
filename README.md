@@ -12,7 +12,9 @@ A centralized Python+Bun environment for AI agents. This monorepo provides share
 ├── skills/             # Shared agent skills
 │   ├── creating-plans/
 │   ├── implementing-plans/
-│   └── synthesizing-plans/
+│   ├── evaluating-plans/
+│   ├── documenting-plans/
+│   └── reviewing-plans/
 ├── libraries/          # Python libraries (uv workspace)
 └── services/           # Long-running services
 ```
@@ -33,24 +35,79 @@ A centralized Python+Bun environment for AI agents. This monorepo provides share
 source ~/.zshrc  # or ~/.bashrc
 ```
 
-This adds `~/.agenv/bin` to your PATH and creates the `ag` command.
+This adds `~/.agenv/bin` to your PATH and creates the `plan` command.
 
 ## CLI
 
-AgEnv provides a unified `ag` command with subcommands:
+AgEnv provides the `plan` command for plan management:
 
 ```bash
 # Show help
-ag --help
+plan --help
 
-# Plan management
-ag plan create --name my-feature --size medium
-ag plan status [--plan "plan-id"]
-ag plan update --plan "plan-id" --task "1.2" --status completed
-ag plan complete --plan "plan-id"
-ag plan index --plan "plan-id" --list
+# Create a new plan
+plan create --name my-feature
 
-# Skills installation
+# Set current plan (avoids --plan on every command)
+plan current --set "001-my-feature"
+plan current                          # Show current plan
+plan current --clear                  # Clear current plan
+
+# Once current plan is set, all commands use it by default:
+plan preview                          # Show PLAN.md structure
+plan consolidate                      # Validate PLAN.md structure
+plan add-task --stage 01 --Batch 01 --thread 01 --name "Task description"
+plan list --tasks                     # List tasks with status
+plan read --task "01.01.01.01"        # Read task details
+plan update --task "01.01.01.01" --status completed
+plan status                           # Show plan progress
+plan complete                         # Mark plan as complete
+plan view --open                      # Generate HTML visualization
+
+# Metrics and analysis
+plan metrics                          # Show plan metrics
+plan metrics --blockers               # Show blocked tasks
+plan metrics --filter "api"           # Filter tasks by pattern
+
+# Reports and exports
+plan report                           # Generate progress report
+plan changelog --since-days 7         # Changelog from completed tasks
+plan export --format csv              # Export to CSV
+
+# Or specify a plan explicitly:
+plan status --plan "001-my-feature"
+```
+
+### Task Statuses
+
+| Status | Meaning |
+|--------|---------|
+| `pending` | Not started |
+| `in_progress` | Currently working on |
+| `completed` | Done |
+| `blocked` | Cannot proceed (add note) |
+| `cancelled` | Dropped (add reason) |
+
+### Plan Statuses
+
+| Status | Meaning | Set by |
+|--------|---------|--------|
+| `pending` | No tasks started | Computed |
+| `in_progress` | Has tasks in progress | Computed |
+| `completed` | All tasks completed | Computed |
+| `on_hold` | Paused, won't work on for now | Manual |
+
+```bash
+# Put plan on hold
+plan set-status on_hold
+
+# Clear manual status (use computed)
+plan set-status --clear
+```
+
+### Skills Installation
+
+```bash
 ag install skills --list              # List available skills
 ag install skills --claude            # Install to ~/.claude/skills (default)
 ag install skills --gemini            # Install to ~/.gemini/skills
@@ -64,17 +121,22 @@ ag install skills --dry-run --all     # Preview what would be installed
 
 ### @agenv/cli
 
-The main CLI package that provides the `ag` command. Routes to subcommands:
-- `ag plan` - Plan management (delegates to @agenv/planning)
-- `ag install` - Installation management (skills)
+The main CLI package that provides the `plan` command for plan management (delegates to @agenv/planning).
 
 ### @agenv/planning
 
 Plan management library for AI agents - create, track, and complete implementation plans.
 
-Generated plans include version tracking in both the markdown templates and `index.json` metadata, making it easy to identify which tool versions created each plan.
+**Plan Structure:**
 
-**Library Usage**:
+Each plan consists of:
+- `PLAN.md` - Structured markdown document defining stages, threads, and documentation
+- `tasks.json` - JSON file tracking task status (separate from PLAN.md)
+- `reference/` - Directory for supplementary documentation
+
+**Task ID Format:** `{stage}.{batch}.{thread}.{task}` (e.g., `01.01.02.03` = Stage 01, Batch 01, Thread 02, Task 03)
+
+**Library Usage:**
 
 ```typescript
 import {
@@ -84,21 +146,38 @@ import {
   updateTask,
   completePlan,
   deletePlan,
-  modifyIndex
+  modifyIndex,
+  generateVisualization,
+  addTasks,
+  getTasks,
+  consolidatePlan
 } from "@agenv/planning"
 
 // Auto-detect repo root
 const repoRoot = getRepoRoot()
 
-// Create a plan
+// Create a plan (generates PLAN.md template and empty tasks.json)
 const result = generatePlan({
   name: "my-feature",
-  size: "medium",
-  repoRoot,
-  stages: 3,
-  supertasks: 2,
-  subtasks: 3
+  repoRoot
 })
+
+// Add tasks to a plan
+addTasks(repoRoot, "001-my-feature", [
+  {
+    id: "01.01.01.01",
+    name: "Implement feature",
+    thread_name: "Thread 01",
+    batch_name: "Batch 01",
+    stage_name: "Stage 01",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    status: "pending"
+  }
+])
+
+// Get tasks
+const tasks = getTasks(repoRoot, "001-my-feature")
 
 // Delete a plan (with file locking for concurrent safety)
 await deletePlan(repoRoot, "001-my-feature", { deleteFiles: true })
@@ -108,7 +187,15 @@ await modifyIndex(repoRoot, (index) => {
   // Modify index safely
   return index.plans.length
 })
+
+// Generate HTML visualization
+const { html, planCount } = generateVisualization({
+  repoRoot,
+  title: "My Plans"
+})
 ```
+
+Generated plans include version tracking in both the markdown templates and `index.json` metadata, making it easy to identify which tool versions created each plan.
 
 ## Skills
 
@@ -118,7 +205,9 @@ Skills are agent-specific instructions stored in `~/.agenv/skills/`. Each skill 
 |-------|-------------|
 | `creating-plans` | How to create implementation plans for tasks |
 | `implementing-plans` | How to follow and update plans during implementation |
-| `synthesizing-plans` | How to synthesize plan reference docs into global docs |
+| `evaluating-plans` | How to analyze plan metrics and identify blockers |
+| `documenting-plans` | How to generate reports, changelogs, and exports |
+| `reviewing-plans` | How to review and manage plan structure |
 
 Skills are installed to agent directories using `ag install skills`.
 
@@ -126,7 +215,7 @@ Skills are installed to agent directories using `ag install skills`.
 
 Agent skills can use agenv packages by:
 
-1. **CLI tools**: Use the `ag` command (available after `install.sh`)
+1. **CLI tools**: Use the `plan` command (available after `install.sh`)
 2. **Library imports**: Use `import { ... } from "@agenv/planning"` (requires path mapping)
 
 This centralizes dependencies and logic while keeping skill directories simple.

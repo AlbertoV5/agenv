@@ -1,0 +1,418 @@
+/**
+ * tmux session management utilities
+ *
+ * Provides functions for creating, managing, and attaching to tmux sessions
+ * for parallel thread execution.
+ */
+
+import { execSync, spawn, type ChildProcess } from "child_process"
+
+/**
+ * Check if a tmux session exists
+ */
+export function sessionExists(name: string): boolean {
+    try {
+        execSync(`tmux has-session -t "${name}" 2>/dev/null`, {
+            stdio: "pipe",
+        })
+        return true
+    } catch {
+        return false
+    }
+}
+
+/**
+ * Create a new tmux session with an initial window
+ * The session is created detached (-d) so we can add more windows before attaching
+ */
+export function createSession(
+    sessionName: string,
+    windowName: string,
+    command: string
+): void {
+    // Use spawn with arguments to avoid shell quoting issues
+    const result = Bun.spawnSync([
+        "tmux",
+        "new-session",
+        "-d",
+        "-s", sessionName,
+        "-n", windowName,
+        command
+    ])
+    if (result.exitCode !== 0) {
+        throw new Error(`Failed to create tmux session: ${result.stderr.toString()}`)
+    }
+}
+
+/**
+ * Add a new window to an existing tmux session
+ */
+export function addWindow(
+    sessionName: string,
+    windowName: string,
+    command: string
+): void {
+    // Use spawn with arguments to avoid shell quoting issues
+    const result = Bun.spawnSync([
+        "tmux",
+        "new-window",
+        "-t", sessionName,
+        "-n", windowName,
+        command
+    ])
+    if (result.exitCode !== 0) {
+        throw new Error(`Failed to add tmux window: ${result.stderr.toString()}`)
+    }
+}
+
+/**
+ * Get the current pane ID for a target (session:window.pane)
+ */
+export function getPaneId(target: string): string {
+    try {
+        const output = execSync(
+            `tmux list-panes -t "${target}" -F "#{pane_id}"`,
+            { stdio: "pipe", encoding: "utf-8" }
+        )
+        return output.trim().split("\n")[0] || ""
+    } catch {
+        return ""
+    }
+}
+
+/**
+ * Split a window/pane
+ */
+export function splitWindow(
+    target: string,
+    command: string,
+    size?: number,
+    direction: 'h' | 'v' = 'h'
+): void {
+    const args = [
+        "split-window",
+        "-t", target,
+        direction === 'h' ? "-h" : "-v",
+    ]
+
+    if (size) {
+        args.push("-l", size.toString() + "%")
+    } else {
+        // If no size specified, default behavior (usually 50%)
+    }
+
+    args.push(command)
+
+    const result = Bun.spawnSync(["tmux", ...args])
+    if (result.exitCode !== 0) {
+        throw new Error(`Failed to split window: ${result.stderr.toString()}`)
+    }
+}
+
+/**
+ * Join a pane from src to dst
+ */
+export function joinPane(src: string, dst: string, size?: number, direction: 'h' | 'v' = 'h'): void {
+    const args = [
+        "join-pane",
+        "-s", src,
+        "-t", dst,
+        direction === 'h' ? "-h" : "-v"
+    ]
+
+    if (size) {
+        args.push("-l", size.toString() + "%")
+    }
+
+    const result = Bun.spawnSync(["tmux", ...args])
+    if (result.exitCode !== 0) {
+        throw new Error(`Failed to join pane: ${result.stderr.toString()}`)
+    }
+}
+
+
+/**
+ * Break a pane out of its window into a new window (effectively hiding it from the dashboard)
+ */
+export function breakPane(src: string): void {
+    const result = Bun.spawnSync([
+        "tmux",
+        "break-pane",
+        "-s", src,
+        "-d" // detached
+    ])
+
+    // We ignore errors here because sometimes the pane might already be broken or invalid
+    // and we don't want to crash the navigator
+}
+
+/**
+ * Resize a pane
+ */
+export function resizePane(target: string, size: number, direction: 'x' | 'y' = 'x'): void {
+    const result = Bun.spawnSync([
+        "tmux",
+        "resize-pane",
+        "-t", target,
+        direction === 'x' ? "-x" : "-y",
+        size.toString() + "%"
+    ])
+}
+
+/**
+ * Select a specific window in a session (0-indexed)
+ */
+export function selectWindow(sessionName: string, windowIndex: number): void {
+    execSync(`tmux select-window -t "${sessionName}:${windowIndex}"`, {
+        stdio: "pipe",
+    })
+}
+
+/**
+ * Attach to a tmux session
+ * This spawns tmux in the foreground and takes over the terminal
+ */
+export function attachSession(sessionName: string): ChildProcess {
+    const child = spawn("tmux", ["attach", "-t", sessionName], {
+        stdio: "inherit",
+    })
+    return child
+}
+
+/**
+ * Kill a tmux session
+ */
+export function killSession(sessionName: string): void {
+    try {
+        execSync(`tmux kill-session -t "${sessionName}"`, { stdio: "pipe" })
+    } catch {
+        // Session might not exist, ignore
+    }
+}
+
+/**
+ * List windows in a session
+ * Returns array of window names
+ */
+export function listWindows(sessionName: string): string[] {
+    try {
+        const output = execSync(
+            `tmux list-windows -t "${sessionName}" -F "#{window_name}"`,
+            { stdio: "pipe", encoding: "utf-8" }
+        )
+        return output.trim().split("\n").filter(Boolean)
+    } catch {
+        return []
+    }
+}
+
+/**
+ * Get session info for a session
+ * Returns null if session doesn't exist
+ */
+export function getSessionInfo(sessionName: string): {
+    name: string
+    windows: number
+    attached: boolean
+} | null {
+    try {
+        const output = execSync(
+            `tmux list-sessions -F "#{session_name}:#{session_windows}:#{session_attached}" 2>/dev/null`,
+            { stdio: "pipe", encoding: "utf-8" }
+        )
+        const lines = output.trim().split("\n")
+        for (const line of lines) {
+            const [name, windows, attached] = line.split(":")
+            if (name === sessionName) {
+                return {
+                    name,
+                    windows: parseInt(windows || "0", 10),
+                    attached: attached === "1",
+                }
+            }
+        }
+        return null
+    } catch {
+        return null
+    }
+}
+
+/**
+ * Generate the session name for a workstream
+ */
+export function getWorkSessionName(streamId: string): string {
+    // Truncate if too long for tmux
+    const maxLen = 20
+    const truncated = streamId.length > maxLen ? streamId.slice(0, maxLen) : streamId
+    return `work-${truncated}`
+}
+
+/**
+ * Build a tmux command string for display (dry-run mode)
+ */
+export function buildCreateSessionCommand(
+    sessionName: string,
+    windowName: string,
+    command: string
+): string {
+    return `tmux new-session -d -s "${sessionName}" -n "${windowName}" "${command}"`
+}
+
+/**
+ * Build a tmux new-window command string for display (dry-run mode)
+ */
+export function buildAddWindowCommand(
+    sessionName: string,
+    windowName: string,
+    command: string
+): string {
+    return `tmux new-window -t "${sessionName}" -n "${windowName}" "${command}"`
+}
+
+/**
+ * Build a tmux attach command string for display (dry-run mode)
+ */
+export function buildAttachCommand(sessionName: string): string {
+    return `tmux attach -t "${sessionName}"`
+}
+
+/**
+ * Set a global option for a tmux session
+ */
+export function setGlobalOption(sessionName: string, option: string, value: string): void {
+    const result = Bun.spawnSync([
+        "tmux",
+        "set-option",
+        "-t", sessionName,
+        option,
+        value
+    ])
+    if (result.exitCode !== 0) {
+        // Warning only, don't crash
+        console.warn(`Warning: Failed to set tmux option ${option}: ${result.stderr.toString()}`)
+    }
+}
+
+/**
+ * Create a 2x2 grid layout in a window
+ * Returns the 4 pane IDs in order: [TL, TR, BL, BR]
+ *
+ * Layout creation sequence:
+ * 1. Start with single pane (pane 0)
+ * 2. Split horizontally → [Left, Right]
+ * 3. Split left vertically → [TL, BL, Right]
+ * 4. Split right vertically → [TL, BL, TR, BR]
+ */
+export function createGridLayout(
+    sessionWindow: string,
+    commands: string[]
+): string[] {
+    // Ensure we have at least 1 command
+    if (commands.length === 0) {
+        throw new Error("createGridLayout requires at least 1 command")
+    }
+
+    // For 1 command, just return the existing pane
+    if (commands.length === 1) {
+        const paneIds = listPaneIds(sessionWindow)
+        return paneIds.length > 0 ? [paneIds[0]!] : []
+    }
+
+    // For 2 commands, just split horizontally
+    if (commands.length === 2) {
+        // Split horizontally for second pane
+        const splitResult = Bun.spawnSync([
+            "tmux", "split-window",
+            "-t", sessionWindow,
+            "-h",
+            commands[1]!
+        ])
+        if (splitResult.exitCode !== 0) {
+            throw new Error(`Failed to create 2-pane layout: ${splitResult.stderr.toString()}`)
+        }
+        return listPaneIds(sessionWindow)
+    }
+
+    // For 3+ commands, create grid
+    // Step 1: Split horizontally (creates right pane)
+    Bun.spawnSync([
+        "tmux", "split-window",
+        "-t", `${sessionWindow}.0`,
+        "-h",
+        commands[1]!
+    ])
+
+    // Step 2: Split left pane vertically (creates bottom-left)
+    Bun.spawnSync([
+        "tmux", "split-window",
+        "-t", `${sessionWindow}.0`,
+        "-v",
+        commands[2]!
+    ])
+
+    // Step 3: Split right pane vertically (creates bottom-right) if we have 4 commands
+    if (commands.length >= 4) {
+        Bun.spawnSync([
+            "tmux", "split-window",
+            "-t", `${sessionWindow}.1`,
+            "-v",
+            commands[3]!
+        ])
+    }
+
+    return listPaneIds(sessionWindow)
+}
+
+/**
+ * Respawn a pane with a new command
+ * This replaces the command running in the pane, losing scrollback
+ */
+export function respawnPane(paneId: string, command: string): void {
+    // First kill the pane's process
+    Bun.spawnSync(["tmux", "respawn-pane", "-t", paneId, "-k", command])
+}
+
+/**
+ * Get all pane IDs in a window
+ */
+export function listPaneIds(sessionWindow: string): string[] {
+    try {
+        const output = execSync(
+            `tmux list-panes -t "${sessionWindow}" -F "#{pane_id}"`,
+            { stdio: "pipe", encoding: "utf-8" }
+        )
+        return output.trim().split("\n").filter(Boolean)
+    } catch {
+        return []
+    }
+}
+
+/**
+ * Send keys to a pane
+ */
+export function sendKeys(target: string, keys: string): void {
+    Bun.spawnSync(["tmux", "send-keys", "-t", target, keys])
+}
+
+/**
+ * Get the current pane index within a window
+ */
+export function getPaneIndex(paneId: string): number | null {
+    try {
+        const output = execSync(
+            `tmux display-message -p -t "${paneId}" "#{pane_index}"`,
+            { stdio: "pipe", encoding: "utf-8" }
+        )
+        return parseInt(output.trim(), 10)
+    } catch {
+        return null
+    }
+}
+
+/**
+ * Focus (select) a specific pane
+ */
+export function selectPane(target: string): void {
+    Bun.spawnSync(["tmux", "select-pane", "-t", target])
+}
+
