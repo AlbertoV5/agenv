@@ -409,3 +409,150 @@ Update `packages/workstreams/README.md`:
 ---
 
 *Last updated: 2026-01-21*
+
+### Stage 06: Issue Lifecycle and Workstream Completion
+
+#### Stage Definition
+
+Fix issue body updates on completion, connect labels to issues, add issue reopening on status change, and implement workstream completion command with PR creation.
+
+#### Stage Constitution
+
+**Inputs:** Existing GitHub integration from Stages 01-05, git CLI, `work complete` placeholder
+**Structure:** Two batches - issue lifecycle fixes and completion workflow
+**Outputs:** Complete issue lifecycle (create → update → close → reopen) and streamlined PR workflow
+
+#### Stage Questions
+
+- [x] Update issue body at thread completion (not per-task)
+- [x] Include task reports in updated issue body
+- [x] Check all stages approved before completing workstream
+
+#### Stage Batches
+
+##### Batch 01: Issue Lifecycle
+
+Fix issue lifecycle: body updates, labels, and reopening.
+
+###### Thread 01: Update Issue Body on Completion
+
+**Summary:**
+Update GitHub issue body when thread completes to show checked tasks with reports.
+
+**Details:**
+Modify `src/lib/github/issues.ts`:
+- Add `formatCompletedIssueBody(input, tasks[])` function
+  - Format tasks as `- [x] Task name` (checked)
+  - Include report as blockquote if present: `> Report: ...`
+  - Mark cancelled tasks with `*(cancelled)*`
+- Add `updateThreadIssueBody(repoRoot, streamId, issueNumber, tasks[])` function
+  - Use `client.updateIssue()` with new body
+
+Modify `src/lib/github/sync.ts`:
+- In `checkAndCloseThreadIssue()`: call `updateThreadIssueBody()` before closing
+- In `syncIssueStates()`: call `updateThreadIssueBody()` before closing
+
+###### Thread 02: Apply Labels to Issues
+
+**Summary:**
+Connect label creation to issue creation - labels are created but not attached.
+
+**Details:**
+Review `src/lib/github/issues.ts`:
+- Line 76 has `const labels: string[] = []` with TODO
+- Call `getThreadLabels()` from labels.ts to get label names
+- Pass labels array to `client.createIssue()`
+
+Verify in `src/lib/github/labels.ts`:
+- Ensure `getThreadLabels()` returns correct label names
+- Labels should already exist via `ensureWorkstreamLabels()`
+
+###### Thread 03: Reopen Issues on Status Change
+
+**Summary:**
+Reopen GitHub issue when task status changes from completed back to in_progress or blocked.
+
+**Details:**
+Modify `src/lib/github/sync.ts`:
+- Add `reopenThreadIssue(repoRoot, streamId, issueNumber)` function
+- Add `checkAndReopenThreadIssue(repoRoot, streamId, taskId)` function
+  - Called when task changes FROM completed TO in_progress/blocked
+  - Check if thread was complete, now incomplete
+  - Reopen issue if github_issue.state is "closed"
+
+Modify `src/cli/update.ts`:
+- After task status change, if previous status was "completed":
+  - Call `checkAndReopenThreadIssue()`
+- Track previous status before update
+
+Add to `src/lib/github/client.ts`:
+- Add `reopenIssue(number)` method (use updateIssue with state: "open")
+
+##### Batch 02: Workstream Completion
+
+Implement `work complete` command for PR workflow.
+
+###### Thread 01: Complete Command Foundation
+
+**Summary:**
+Create `work complete` command that validates and prepares for PR.
+
+**Details:**
+Create `src/cli/complete.ts`:
+- Check all stages are approved (`work check approval` logic)
+- Check GitHub is enabled and branch exists
+- Verify we're on the workstream branch
+- Display summary: tasks completed, branch name, target branch
+- Store completion metadata in stream (index.json):
+  ```typescript
+  github?: {
+    branch?: string
+    completed_at?: string
+    pr_number?: number
+  }
+  ```
+
+Update `bin/work.ts`:
+- Add `complete` to command router
+
+###### Thread 02: Git Operations
+
+**Summary:**
+Auto-add, commit, and push changes on completion.
+
+**Details:**
+In `src/cli/complete.ts`:
+- Add `--commit` flag (default: true, use `--no-commit` to skip)
+- Run `git add -A` to stage all changes
+- Run `git commit -m "Completed workstream: {stream-name}"`
+  - Include stream ID and summary in commit body
+- Run `git push origin {branch-name}`
+- Handle already-pushed case gracefully
+- Show pushed commit SHA
+
+###### Thread 03: PR Creation
+
+**Summary:**
+Create pull request to target branch with configurable defaults.
+
+**Details:**
+In `src/cli/complete.ts`:
+- Add `--pr` flag (default: true, use `--no-pr` to skip)
+- Add `--target <branch>` option for PR target (default from config or "main")
+- Add `--draft` flag for draft PR
+
+In `src/lib/github/config.ts`:
+- Add `default_pr_target?: string` to GitHubConfig
+
+PR creation:
+- Use GitHub API POST /repos/{owner}/{repo}/pulls
+- Title: `[{stream-id}] {stream-name}`
+- Body: Include summary, link to PLAN.md, task counts
+- If no `--target` and no config default, prompt user to select
+
+In `src/lib/github/client.ts`:
+- Add `createPullRequest(title, body, head, base, draft?)` method
+
+Output:
+- Show PR URL
+- Store PR number in stream metadata
