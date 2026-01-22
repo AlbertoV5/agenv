@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-01-22T16:30:56.825Z",
-  "current_stream": "003-stage-commit-tracking",
+  "last_updated": "2026-01-22T16:54:02.965Z",
+  "current_stream": "004-streamlined-workflow",
   "streams": [
     {
       "id": "000-web-visualization",
@@ -190,6 +190,56 @@
         "pr_number": 7
       },
       "status": "completed"
+    },
+    {
+      "id": "004-streamlined-workflow",
+      "name": "streamlined-workflow",
+      "order": 4,
+      "size": "medium",
+      "session_estimated": {
+        "length": 4,
+        "unit": "session",
+        "session_minutes": [
+          30,
+          45
+        ],
+        "session_iterations": [
+          4,
+          8
+        ]
+      },
+      "created_at": "2026-01-22T16:44:10.635Z",
+      "updated_at": "2026-01-22T16:54:02.965Z",
+      "path": "work/004-streamlined-workflow",
+      "generated_by": {
+        "workstreams": "0.1.0"
+      },
+      "approval": {
+        "status": "approved",
+        "approved_at": "2026-01-22T16:45:52.961Z",
+        "approved_by": "user",
+        "plan_hash": "d45821f88713b0e8a20981a51080de242beb860f748ae7ced703c3934d87c68b",
+        "tasks": {
+          "status": "approved",
+          "approved_at": "2026-01-22T16:48:02.528Z",
+          "task_count": 48
+        },
+        "prompts": {
+          "status": "approved",
+          "approved_at": "2026-01-22T16:48:57.281Z",
+          "prompt_count": 9
+        },
+        "stages": {
+          "1": {
+            "status": "approved",
+            "approved_at": "2026-01-22T16:54:02.965Z",
+            "approved_by": "user"
+          }
+        }
+      },
+      "github": {
+        "branch": "workstream/004-streamlined-workflow"
+      }
     }
   ]
 }
