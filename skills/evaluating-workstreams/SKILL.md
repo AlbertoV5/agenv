@@ -29,7 +29,7 @@ work preview             # Shows structure, progress, and dependencies
 - Ask the user for feedback on the implementation and for any bugs and issues found.
 - Once the user has given you feedback, create a .md file to document the status, issues, and the evaluation result:
 
-The evaluation result should contain the following:
+The evaluation result should contain the following sections:
 
 ```md
 # Evaluation Result
