@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-01-22T19:16:08.865Z",
+  "last_updated": "2026-01-22T19:21:59.322Z",
   "current_stream": "005-session-tracking",
   "streams": [
     {
@@ -276,7 +276,7 @@
         ]
       },
       "created_at": "2026-01-22T17:55:05.797Z",
-      "updated_at": "2026-01-22T19:16:08.865Z",
+      "updated_at": "2026-01-22T19:21:59.322Z",
       "path": "work/005-session-tracking",
       "generated_by": {
         "workstreams": "0.1.0"
@@ -315,8 +315,10 @@
         }
       },
       "github": {
-        "branch": "workstream/005-session-tracking"
-      }
+        "branch": "workstream/005-session-tracking",
+        "completed_at": "2026-01-22T19:21:59.322Z"
+      },
+      "status": "completed"
     }
   ]
 }
