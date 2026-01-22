@@ -11,6 +11,8 @@
 - [ ] ENHANCE: Keep track of the opencode sessions per thread so we are able to resume work on incomplete work or small fixes. So when we do `work fix` we have the option to go back to specific threads or create new stages.
 
 - [ ] ENHANCE: Improve the tmux to auto kill tmux session when both opencode sessions end.
+- [ ] BUG: Force `work approve stage` to validate that all batches and all threads of the stage are completed before moving onto it.
+- [ ] ENHANCE: Rename `work multi --continue` to `work continue` and that it default sto batch level work
 
 ## Notes prompts
 
