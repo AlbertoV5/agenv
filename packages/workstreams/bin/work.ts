@@ -61,6 +61,7 @@ import { main as multiGridMain } from "../src/cli/multi-grid.ts"
 import { main as treeMain } from "../src/cli/tree.ts"
 import { main as githubMain } from "../src/cli/github.ts"
 import { main as startMain } from "../src/cli/start.ts"
+import { main as sessionMain } from "../src/cli/session.ts"
 
 // Lazy loader for serve command (has JSX/React dependency)
 const serveMain = async (argv: string[]) => {
@@ -110,6 +111,7 @@ const SUBCOMMANDS = {
   serve: serveMain,
   tree: treeMain,
   github: githubMain,
+  session: sessionMain,
 } as const
 
 type Subcommand = keyof typeof SUBCOMMANDS
@@ -161,6 +163,7 @@ Commands:
   serve       Launch web visualization server
   tree        Show workstream structure tree
   github      Manage GitHub integration (enable, create-branch, etc.)
+  session     Manage agent sessions (complete stale sessions)
 
 Options:
   --help, -h    Show this help message

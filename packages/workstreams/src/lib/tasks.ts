@@ -869,17 +869,135 @@ export function groupTasksByStageAndThread(
   return grouped
 }
 
+// ============================================
+// THREAD DISCOVERY FROM TASKS.JSON
+// ============================================
+
 /**
- * Get GitHub metadata for a task
+ * Discovered thread metadata from tasks.json
+ * Contains all info needed to spawn thread execution
  */
-export function getTaskGitHubMeta(
+export interface DiscoveredThread {
+  threadId: string // Format: "SS.BB.TT" (e.g., "01.01.02")
+  threadNum: number // Thread number within batch
+  threadName: string // Thread name from first task
+  stageName: string // Stage name from first task
+  batchName: string // Batch name from first task
+  stageNum: number // Stage number
+  batchNum: number // Batch number
+  firstTaskId: string // ID of first task in thread (for session tracking)
+  assignedAgent?: string // Agent assignment from first task
+  githubIssue?: Task["github_issue"] // GitHub issue from first task (if any)
+  taskCount: number // Number of tasks in this thread
+}
+
+/**
+ * Discover threads in a batch from tasks.json
+ * Groups tasks by thread ID pattern (SS.BB.TT.*) and extracts metadata from first task
+ * 
+ * @param repoRoot - Repository root path
+ * @param streamId - Workstream ID
+ * @param stageNum - Stage number to filter (1-99)
+ * @param batchNum - Batch number to filter (1-99)
+ * @returns Array of discovered threads sorted by thread number, or null if tasks file not found
+ */
+export function discoverThreadsInBatch(
   repoRoot: string,
   streamId: string,
-  taskId: string,
-): Task["github_issue"] | undefined {
-  const task = getTaskById(repoRoot, streamId, taskId)
-  return task?.github_issue
+  stageNum: number,
+  batchNum: number,
+): DiscoveredThread[] | null {
+  const tasksFile = readTasksFile(repoRoot, streamId)
+  if (!tasksFile) return null
+
+  // Build the batch prefix for filtering
+  const stageStr = stageNum.toString().padStart(2, "0")
+  const batchStr = batchNum.toString().padStart(2, "0")
+  const batchPrefix = `${stageStr}.${batchStr}.`
+
+  // Group tasks by thread ID (SS.BB.TT)
+  const threadMap = new Map<string, Task[]>()
+
+  for (const task of tasksFile.tasks) {
+    if (!task.id.startsWith(batchPrefix)) continue
+
+    try {
+      const parsed = parseTaskId(task.id)
+      const threadId = formatThreadId(parsed.stage, parsed.batch, parsed.thread)
+
+      if (!threadMap.has(threadId)) {
+        threadMap.set(threadId, [])
+      }
+      threadMap.get(threadId)!.push(task)
+    } catch {
+      // Skip invalid task IDs
+    }
+  }
+
+  // Convert to DiscoveredThread array
+  const threads: DiscoveredThread[] = []
+
+  for (const [threadId, tasks] of threadMap) {
+    // Sort tasks by ID to get first task
+    tasks.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }))
+    const firstTask = tasks[0]!
+
+    const parsed = parseTaskId(firstTask.id)
+
+    threads.push({
+      threadId,
+      threadNum: parsed.thread,
+      threadName: firstTask.thread_name,
+      stageName: firstTask.stage_name,
+      batchName: firstTask.batch_name,
+      stageNum: parsed.stage,
+      batchNum: parsed.batch,
+      firstTaskId: firstTask.id,
+      assignedAgent: firstTask.assigned_agent,
+      githubIssue: firstTask.github_issue,
+      taskCount: tasks.length,
+    })
+  }
+
+  // Sort by thread number
+  threads.sort((a, b) => a.threadNum - b.threadNum)
+
+  return threads
 }
+
+/**
+ * Get batch metadata from tasks.json
+ * Returns stage and batch names derived from tasks in the batch
+ * 
+ * @param repoRoot - Repository root path
+ * @param streamId - Workstream ID  
+ * @param stageNum - Stage number
+ * @param batchNum - Batch number
+ * @returns Object with stageName and batchName, or null if no tasks found
+ */
+export function getBatchMetadata(
+  repoRoot: string,
+  streamId: string,
+  stageNum: number,
+  batchNum: number,
+): { stageName: string; batchName: string } | null {
+  const tasksFile = readTasksFile(repoRoot, streamId)
+  if (!tasksFile) return null
+
+  const stageStr = stageNum.toString().padStart(2, "0")
+  const batchStr = batchNum.toString().padStart(2, "0")
+  const batchPrefix = `${stageStr}.${batchStr}.`
+
+  // Find first task in batch
+  const firstTask = tasksFile.tasks.find((t) => t.id.startsWith(batchPrefix))
+  if (!firstTask) return null
+
+  return {
+    stageName: firstTask.stage_name,
+    batchName: firstTask.batch_name,
+  }
+}
+
 
 /**
  * Set GitHub metadata for a task
