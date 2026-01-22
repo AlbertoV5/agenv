@@ -391,10 +391,28 @@ work review tasks
 # Open PLAN.md in editor
 work edit
 
-# Approve plan (blocked if open questions exist)
+# Human-In-The-Loop Approvals
+# Three approvals are required before starting the workstream:
+# 1. Plan approval - Validates PLAN.md structure and questions
+work approve plan
+work approve plan --force         # Approve with open questions
+
+# 2. Tasks approval - Validates tasks.json existence
+work approve tasks
+
+# 3. Prompts approval - Validates agent assignments and prompt files
+work approve prompts
+
+# Check approval status
 work approve
-work approve --force              # Approve with open questions
-work approve --revoke             # Revoke to make changes
+
+# Revoke approval
+work approve plan --revoke --reason "Need to revise stage 2"
+
+# Start Execution
+# Requires all 3 approvals. Creates GitHub branch and issues.
+work start
+work start --stream "001-my-feature"
 
 # Add structure
 work add-batch --stage 1 --name "testing"

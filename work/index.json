@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-01-21T21:36:25.685Z",
-  "current_stream": "002-github-integration",
+  "last_updated": "2026-01-22T14:11:11.217Z",
+  "current_stream": "003-stage-commit-tracking",
   "streams": [
     {
       "id": "000-web-visualization",
@@ -131,6 +131,36 @@
         "pr_number": 6
       },
       "status": "completed"
+    },
+    {
+      "id": "003-stage-commit-tracking",
+      "name": "stage-commit-tracking",
+      "order": 3,
+      "size": "medium",
+      "session_estimated": {
+        "length": 4,
+        "unit": "session",
+        "session_minutes": [
+          30,
+          45
+        ],
+        "session_iterations": [
+          4,
+          8
+        ]
+      },
+      "created_at": "2026-01-22T14:08:34.163Z",
+      "updated_at": "2026-01-22T14:11:11.217Z",
+      "path": "work/003-stage-commit-tracking",
+      "generated_by": {
+        "workstreams": "0.1.0"
+      },
+      "approval": {
+        "status": "approved",
+        "approved_at": "2026-01-22T14:11:11.217Z",
+        "approved_by": "user",
+        "plan_hash": "15da1de57f0adff23dc7f420dd739df4d0085c688ea7584316fb76f2497a1aad"
+      }
     }
   ]
 }

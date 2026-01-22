@@ -13,6 +13,7 @@ agents:
     models: [
       { model: google/antigravity-gemini-3-flash, variant: low },
       { model: google/antigravity-gemini-3-flash, variant: high },
+      google/gemini-3-flash-preview,
     ]
 
   - name: systems-engineer

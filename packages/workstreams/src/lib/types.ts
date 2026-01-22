@@ -179,7 +179,10 @@ export type ApprovalStatus = "draft" | "approved" | "revoked"
 
 /**
  * Approval metadata for human-in-the-loop gate
- * Plans must be approved before tasks can be created
+ * Workstreams require 3 approvals before starting:
+ * 1. Plan approval (PLAN.md structure is correct)
+ * 2. Tasks approval (tasks.json exists with tasks)
+ * 3. Prompts approval (all tasks have agents + prompt files exist)
  */
 export interface ApprovalMetadata {
   status: ApprovalStatus
@@ -198,6 +201,18 @@ export interface ApprovalMetadata {
       revoked_reason?: string
     }
   >
+  // Tasks approval gate
+  tasks?: {
+    status: ApprovalStatus
+    approved_at?: string
+    task_count?: number // snapshot of task count at approval time
+  }
+  // Prompts approval gate
+  prompts?: {
+    status: ApprovalStatus
+    approved_at?: string
+    prompt_count?: number // snapshot of prompt file count at approval time
+  }
 }
 
 // Stage status summary

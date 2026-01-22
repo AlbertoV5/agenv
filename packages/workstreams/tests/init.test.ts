@@ -33,7 +33,7 @@ describe("work init", () => {
 
     expect(existsSync(workDir)).toBe(true)
     expect(existsSync(join(workDir, "index.json"))).toBe(true)
-    expect(existsSync(join(workDir, "AGENTS.md"))).toBe(true)
+    expect(existsSync(join(workDir, "agents.yaml"))).toBe(true)
 
     const indexContent = JSON.parse(
       readFileSync(join(workDir, "index.json"), "utf-8"),
@@ -41,31 +41,32 @@ describe("work init", () => {
     expect(indexContent.version).toBe("1.0.0")
     expect(indexContent.streams).toEqual([])
 
-    const agentsContent = readFileSync(join(workDir, "AGENTS.md"), "utf-8")
-    expect(agentsContent).toContain("# Agents")
-    expect(agentsContent).toContain("### default")
+    const agentsContent = readFileSync(join(workDir, "agents.yaml"), "utf-8")
+    expect(agentsContent).toContain("agents:")
+    expect(agentsContent).toContain("name: default")
   })
 
   it("should not overwrite existing files without --force", async () => {
     mkdirSync(workDir, { recursive: true })
     const customContent = "custom content"
-    writeFileSync(join(workDir, "AGENTS.md"), customContent)
+    writeFileSync(join(workDir, "agents.yaml"), customContent)
 
     await initMain(["bun", "work", "init", "--repo-root", tempDir])
 
-    const agentsContent = readFileSync(join(workDir, "AGENTS.md"), "utf-8")
+    const agentsContent = readFileSync(join(workDir, "agents.yaml"), "utf-8")
     expect(agentsContent).toBe(customContent)
   })
 
   it("should overwrite existing files with --force", async () => {
     mkdirSync(workDir, { recursive: true })
     const customContent = "custom content"
-    writeFileSync(join(workDir, "AGENTS.md"), customContent)
+    writeFileSync(join(workDir, "agents.yaml"), customContent)
 
     await initMain(["bun", "work", "init", "--repo-root", tempDir, "--force"])
 
-    const agentsContent = readFileSync(join(workDir, "AGENTS.md"), "utf-8")
+    const agentsContent = readFileSync(join(workDir, "agents.yaml"), "utf-8")
     expect(agentsContent).not.toBe(customContent)
-    expect(agentsContent).toContain("# Agents")
+    expect(agentsContent).toContain("agents:")
   })
 })
+

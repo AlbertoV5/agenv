@@ -58,6 +58,7 @@ import { main as multiGridMain } from "../src/cli/multi-grid.ts"
 // requiring react/jsx-dev-runtime in all contexts
 import { main as treeMain } from "../src/cli/tree.ts"
 import { main as githubMain } from "../src/cli/github.ts"
+import { main as startMain } from "../src/cli/start.ts"
 
 // Lazy loader for serve command (has JSX/React dependency)
 const serveMain = async (argv: string[]) => {
@@ -72,6 +73,7 @@ const SUBCOMMANDS = {
   continue: continueMain,
   fix: fixMain,
   approve: approveMain,
+  start: startMain,
   status: statusMain,
   "set-status": setStatusMain,
   update: updateTaskMain,
@@ -121,7 +123,9 @@ Commands:
   current     Get or set the current workstream
   continue    Resume work on a workstream (shows context & breadcrumbs)
   fix         Append a fix stage to a workstream
-  approve     Approve or revoke plan approval (required before adding tasks)
+  fix         Append a fix stage to a workstream
+  approve     Approve workstream plan/tasks/prompts (subcommands: plan, tasks, prompts)
+  start       Start execution (requires all approvals, creates GitHub branch/issues)
   agents      Manage agent definitions (list, add, remove)
   assign      Assign agents to threads for batch execution
   prompt      Generate thread execution prompt for agents

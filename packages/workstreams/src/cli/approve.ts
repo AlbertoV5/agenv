@@ -1,8 +1,8 @@
 /**
- * CLI: Approve Workstream Plan
+ * CLI: Approve Workstream Gates
  *
- * Approve or revoke a workstream plan approval.
- * Plans must be approved before tasks can be created.
+ * Approve or revoke workstream approvals for plan, tasks, or prompts.
+ * All 3 must be approved before running `work start`.
  */
 
 import { getRepoRoot } from "../lib/repo.ts"
@@ -16,13 +16,21 @@ import {
   approveStage,
   revokeStageApproval,
   getStageApprovalStatus,
+  approveTasks,
+  approvePrompts,
+  getTasksApprovalStatus,
+  getPromptsApprovalStatus,
+  checkTasksApprovalReady,
+  checkPromptsApprovalReady,
+  getFullApprovalStatus,
 } from "../lib/approval.ts"
-import { isGitHubEnabled, loadGitHubConfig } from "../lib/github/config.ts"
-import { createIssuesForWorkstream, type CreateIssuesResult } from "../lib/github/sync.ts"
+
+type ApproveTarget = "plan" | "tasks" | "prompts"
 
 interface ApproveCliArgs {
   repoRoot?: string
   streamId?: string
+  target?: ApproveTarget
   revoke: boolean
   reason?: string
   force: boolean
@@ -32,16 +40,23 @@ interface ApproveCliArgs {
 
 function printHelp(): void {
   console.log(`
-work approve - Approve or revoke workstream plan approval
+work approve - Human-in-the-loop approval gates for workstreams
 
 Usage:
-  work approve [--stream <id>] [--stage <n>] [--force]
-  work approve --revoke [--stream <id>] [--stage <n>] [--reason "reason"]
+  work approve plan [--stream <id>] [--force]
+  work approve tasks [--stream <id>]
+  work approve prompts [--stream <id>]
+  work approve [--stream <id>]  # Show status of all approvals
+
+Targets:
+  plan      Approve the PLAN.md structure (blocks if open questions exist)
+  tasks     Approve tasks (requires TASKS.md with tasks)
+  prompts   Approve prompts (requires all tasks have agents + prompt files)
 
 Options:
   --repo-root, -r  Repository root (auto-detected if omitted)
   --stream, -s     Workstream ID or name (uses current if not specified)
-  --stage, -st     Stage number to approve/revoke (optional)
+  --stage, -st     Stage number to approve/revoke (only for plan approval)
   --revoke         Revoke existing approval
   --reason         Reason for revoking approval
   --force, -f      Approve even with validation warnings
@@ -49,34 +64,31 @@ Options:
   --help, -h       Show this help message
 
 Description:
-  Plans must be approved before tasks can be created with 'work add-task'.
-  This creates a human-in-the-loop checkpoint for AI-generated plans.
+  Workstreams require 3 approvals before starting:
+  1. Plan approval - validates PLAN.md structure, no open questions
+  2. Tasks approval - ensures tasks.json exists with tasks
+  3. Prompts approval - ensures all tasks have agents + prompt files exist
 
-  Approvals can be at the Stream level (approving the PLAN.md) or at
-  the Stage level (approving the outputs of a previous stage before continuing).
-
-  Approval is blocked if there are open questions ([ ] checkboxes) in PLAN.md.
-  Resolve questions by marking them with [x], or use --force to approve anyway.
-
-  When approved, a hash of the PLAN.md is stored. If the PLAN.md is modified
-  after approval, the approval is automatically revoked on the next
-  'work add-task' attempt.
+  Run 'work start' after all 3 approvals to create the GitHub branch and issues.
 
 Examples:
-  # Approve current workstream plan
+  # Show approval status
   work approve
 
-  # Approve specific stage
-  work approve --stage 1
+  # Approve plan
+  work approve plan
 
-  # Approve specific workstream
-  work approve --stream "001-my-feature"
+  # Approve tasks
+  work approve tasks
 
-  # Revoke approval (e.g., to make changes)
-  work approve --revoke --reason "Need to revise stage 2"
+  # Approve prompts  
+  work approve prompts
 
-  # Revoke stage approval
-  work approve --revoke --stage 1 --reason "Bug found in stage 1 output"
+  # Revoke plan approval
+  work approve plan --revoke --reason "Need to revise stage 2"
+
+  # Approve specific stage (advanced)
+  work approve plan --stage 1
 `)
 }
 
@@ -87,6 +99,12 @@ function parseCliArgs(argv: string[]): ApproveCliArgs | null {
   for (let i = 0; i < args.length; i++) {
     const arg = args[i]
     const next = args[i + 1]
+
+    // Check for target subcommand
+    if (arg === "plan" || arg === "tasks" || arg === "prompts") {
+      parsed.target = arg as ApproveTarget
+      continue
+    }
 
     switch (arg) {
       case "--repo-root":
@@ -158,63 +176,14 @@ function parseCliArgs(argv: string[]): ApproveCliArgs | null {
   return parsed
 }
 
-/**
- * Handles GitHub issue creation after workstream approval.
- * This function is designed to fail gracefully - it never throws.
- * @param repoRoot Repository root path
- * @param streamId Workstream ID
- * @param json Whether to output JSON
- * @param stageFilter Optional stage number to filter (only create issues for this stage)
- * @returns Created issues result or null if GitHub is not enabled
- */
-async function handleGitHubIssueCreation(
-  repoRoot: string,
-  streamId: string,
-  json: boolean,
-  stageFilter?: number
-): Promise<CreateIssuesResult | null> {
-  try {
-    // Check if GitHub is enabled
-    const enabled = await isGitHubEnabled(repoRoot)
-    if (!enabled) {
-      return null
-    }
-
-    // Check if auto_create_issues is enabled
-    const config = await loadGitHubConfig(repoRoot)
-    if (!config.auto_create_issues) {
-      return null
-    }
-
-    // Create issues for the workstream (optionally filtered by stage)
-    const result = await createIssuesForWorkstream(repoRoot, streamId, stageFilter)
-
-    // Log results (only in non-JSON mode)
-    if (!json) {
-      if (result.created.length > 0) {
-        console.log("\nGitHub Issues Created:")
-        for (const issue of result.created) {
-          console.log(`  ${issue.threadName}: ${issue.issueUrl}`)
-        }
-      }
-
-      if (result.errors.length > 0) {
-        console.log("\nGitHub Issue Errors:")
-        for (const err of result.errors) {
-          console.log(`  ${err.threadName}: ${err.error}`)
-        }
-      }
-    }
-
-    return result
-  } catch (error) {
-    // Never fail the approval due to GitHub errors
-    if (!json) {
-      console.log(
-        `\nWarning: Failed to create GitHub issues: ${(error as Error).message}`
-      )
-    }
-    return null
+function formatApprovalIcon(status: string): string {
+  switch (status) {
+    case "approved":
+      return "✅"
+    case "revoked":
+      return "⚠️"
+    default:
+      return "📝"
   }
 }
 
@@ -251,6 +220,50 @@ export function main(argv: string[] = process.argv): void {
     process.exit(1)
   }
 
+  // No target specified = show status
+  if (!cliArgs.target) {
+    const fullStatus = getFullApprovalStatus(stream)
+
+    if (cliArgs.json) {
+      console.log(JSON.stringify({
+        streamId: stream.id,
+        streamName: stream.name,
+        ...fullStatus,
+      }, null, 2))
+    } else {
+      console.log(`Approval Status for "${stream.name}" (${stream.id})\n`)
+      console.log(`  ${formatApprovalIcon(fullStatus.plan)} Plan:    ${fullStatus.plan}`)
+      console.log(`  ${formatApprovalIcon(fullStatus.tasks)} Tasks:   ${fullStatus.tasks}`)
+      console.log(`  ${formatApprovalIcon(fullStatus.prompts)} Prompts: ${fullStatus.prompts}`)
+      console.log("")
+      if (fullStatus.fullyApproved) {
+        console.log("All approvals complete. Run 'work start' to begin.")
+      } else {
+        console.log("Pending approvals. Run 'work approve <target>' to approve.")
+      }
+    }
+    return
+  }
+
+  // Handle specific target
+  switch (cliArgs.target) {
+    case "plan":
+      handlePlanApproval(repoRoot, stream, cliArgs)
+      break
+    case "tasks":
+      handleTasksApproval(repoRoot, stream, cliArgs)
+      break
+    case "prompts":
+      handlePromptsApproval(repoRoot, stream, cliArgs)
+      break
+  }
+}
+
+function handlePlanApproval(
+  repoRoot: string,
+  stream: ReturnType<typeof getResolvedStream>,
+  cliArgs: ApproveCliArgs
+): void {
   // Handle Stage-level operations
   if (cliArgs.stage !== undefined) {
     const stageNum = cliArgs.stage
@@ -342,6 +355,7 @@ export function main(argv: string[] = process.argv): void {
           JSON.stringify(
             {
               action: "revoked",
+              target: "plan",
               streamId: updatedStream.id,
               streamName: updatedStream.name,
               reason: cliArgs.reason,
@@ -353,7 +367,7 @@ export function main(argv: string[] = process.argv): void {
         )
       } else {
         console.log(
-          `Revoked approval for workstream "${updatedStream.name}" (${updatedStream.id})`,
+          `Revoked plan approval for workstream "${updatedStream.name}" (${updatedStream.id})`,
         )
         if (cliArgs.reason) {
           console.log(`  Reason: ${cliArgs.reason}`)
@@ -375,6 +389,7 @@ export function main(argv: string[] = process.argv): void {
         JSON.stringify(
           {
             action: "already_approved",
+            target: "plan",
             streamId: stream.id,
             streamName: stream.name,
             approval: stream.approval,
@@ -384,7 +399,7 @@ export function main(argv: string[] = process.argv): void {
         ),
       )
     } else {
-      console.log(`Workstream "${stream.name}" is already approved`)
+      console.log(`Plan for workstream "${stream.name}" is already approved`)
       console.log(`  Status: ${formatApprovalStatus(stream)}`)
     }
     return
@@ -399,6 +414,7 @@ export function main(argv: string[] = process.argv): void {
         JSON.stringify(
           {
             action: "blocked",
+            target: "plan",
             reason: "open_questions",
             streamId: stream.id,
             streamName: stream.name,
@@ -435,65 +451,175 @@ export function main(argv: string[] = process.argv): void {
     const updatedStream = approveStream(repoRoot, stream.id, "user")
 
     if (cliArgs.json) {
-      // In JSON mode, we need to wait for GitHub issues to be created
-      // so we can include them in the output
-      handleGitHubIssueCreation(repoRoot, stream.id, true)
-        .then((githubResult) => {
-          console.log(
-            JSON.stringify(
-              {
-                action: "approved",
-                streamId: updatedStream.id,
-                streamName: updatedStream.name,
-                approval: updatedStream.approval,
-                openQuestions: questionsResult.hasOpenQuestions
-                  ? questionsResult.openCount
-                  : 0,
-                forcedApproval: questionsResult.hasOpenQuestions && cliArgs.force,
-                github: githubResult
-                  ? {
-                    issues_created: githubResult.created.length,
-                    issues_skipped: githubResult.skipped.length,
-                    issues_errors: githubResult.errors.length,
-                    created: githubResult.created,
-                  }
-                  : null,
-              },
-              null,
-              2,
-            ),
-          )
-        })
-        .catch(() => {
-          // GitHub errors should not fail the approval
-          console.log(
-            JSON.stringify(
-              {
-                action: "approved",
-                streamId: updatedStream.id,
-                streamName: updatedStream.name,
-                approval: updatedStream.approval,
-                openQuestions: questionsResult.hasOpenQuestions
-                  ? questionsResult.openCount
-                  : 0,
-                forcedApproval: questionsResult.hasOpenQuestions && cliArgs.force,
-                github: null,
-              },
-              null,
-              2,
-            ),
-          )
-        })
+      console.log(
+        JSON.stringify(
+          {
+            action: "approved",
+            target: "plan",
+            streamId: updatedStream.id,
+            streamName: updatedStream.name,
+            approval: updatedStream.approval,
+            openQuestions: questionsResult.hasOpenQuestions
+              ? questionsResult.openCount
+              : 0,
+            forcedApproval: questionsResult.hasOpenQuestions && cliArgs.force,
+          },
+          null,
+          2,
+        ),
+      )
     } else {
       console.log(
-        `Approved workstream "${updatedStream.name}" (${updatedStream.id})`,
+        `Approved plan for workstream "${updatedStream.name}" (${updatedStream.id})`,
       )
       console.log(`  Status: ${formatApprovalStatus(updatedStream)}`)
+    }
+  } catch (e) {
+    console.error((e as Error).message)
+    process.exit(1)
+  }
+}
 
-      // Create GitHub issues after approval (fire and wait)
-      handleGitHubIssueCreation(repoRoot, stream.id, false).catch(() => {
-        // Errors are already handled inside the function
-      })
+function handleTasksApproval(
+  repoRoot: string,
+  stream: ReturnType<typeof getResolvedStream>,
+  cliArgs: ApproveCliArgs
+): void {
+  const currentStatus = getTasksApprovalStatus(stream)
+
+  // Handle revoke (for future use, not commonly needed for tasks)
+  if (cliArgs.revoke) {
+    console.error("Error: Tasks approval revocation is not supported")
+    process.exit(1)
+  }
+
+  if (currentStatus === "approved") {
+    if (cliArgs.json) {
+      console.log(JSON.stringify({
+        action: "already_approved",
+        target: "tasks",
+        streamId: stream.id,
+        streamName: stream.name,
+        approval: stream.approval?.tasks,
+      }, null, 2))
+    } else {
+      console.log(`Tasks for workstream "${stream.name}" are already approved`)
+    }
+    return
+  }
+
+  // Check readiness
+  const readyCheck = checkTasksApprovalReady(repoRoot, stream.id)
+  if (!readyCheck.ready) {
+    if (cliArgs.json) {
+      console.log(JSON.stringify({
+        action: "blocked",
+        target: "tasks",
+        reason: readyCheck.reason,
+        streamId: stream.id,
+        streamName: stream.name,
+      }, null, 2))
+    } else {
+      console.error(`Error: ${readyCheck.reason}`)
+    }
+    process.exit(1)
+  }
+
+  try {
+    const updatedStream = approveTasks(repoRoot, stream.id)
+
+    if (cliArgs.json) {
+      console.log(JSON.stringify({
+        action: "approved",
+        target: "tasks",
+        streamId: updatedStream.id,
+        streamName: updatedStream.name,
+        taskCount: readyCheck.taskCount,
+        approval: updatedStream.approval?.tasks,
+      }, null, 2))
+    } else {
+      console.log(`Approved tasks for workstream "${updatedStream.name}"`)
+      console.log(`  Task count: ${readyCheck.taskCount}`)
+    }
+  } catch (e) {
+    console.error((e as Error).message)
+    process.exit(1)
+  }
+}
+
+function handlePromptsApproval(
+  repoRoot: string,
+  stream: ReturnType<typeof getResolvedStream>,
+  cliArgs: ApproveCliArgs
+): void {
+  const currentStatus = getPromptsApprovalStatus(stream)
+
+  // Handle revoke (for future use, not commonly needed for prompts)
+  if (cliArgs.revoke) {
+    console.error("Error: Prompts approval revocation is not supported")
+    process.exit(1)
+  }
+
+  if (currentStatus === "approved") {
+    if (cliArgs.json) {
+      console.log(JSON.stringify({
+        action: "already_approved",
+        target: "prompts",
+        streamId: stream.id,
+        streamName: stream.name,
+        approval: stream.approval?.prompts,
+      }, null, 2))
+    } else {
+      console.log(`Prompts for workstream "${stream.name}" are already approved`)
+    }
+    return
+  }
+
+  // Check readiness
+  const readyCheck = checkPromptsApprovalReady(repoRoot, stream.id)
+  if (!readyCheck.ready) {
+    if (cliArgs.json) {
+      console.log(JSON.stringify({
+        action: "blocked",
+        target: "prompts",
+        reason: readyCheck.reason,
+        streamId: stream.id,
+        streamName: stream.name,
+        missingAgents: readyCheck.missingAgents,
+        missingPrompts: readyCheck.missingPrompts,
+      }, null, 2))
+    } else {
+      console.error(`Error: ${readyCheck.reason}`)
+      if (readyCheck.missingAgents.length > 0) {
+        console.error(`\nMissing agents for tasks:`)
+        for (const taskId of readyCheck.missingAgents.slice(0, 5)) {
+          console.error(`  - ${taskId}`)
+        }
+        if (readyCheck.missingAgents.length > 5) {
+          console.error(`  ... and ${readyCheck.missingAgents.length - 5} more`)
+        }
+      }
+    }
+    process.exit(1)
+  }
+
+  try {
+    const updatedStream = approvePrompts(repoRoot, stream.id)
+
+    if (cliArgs.json) {
+      console.log(JSON.stringify({
+        action: "approved",
+        target: "prompts",
+        streamId: updatedStream.id,
+        streamName: updatedStream.name,
+        promptCount: readyCheck.promptCount,
+        taskCount: readyCheck.taskCount,
+        approval: updatedStream.approval?.prompts,
+      }, null, 2))
+    } else {
+      console.log(`Approved prompts for workstream "${updatedStream.name}"`)
+      console.log(`  Prompt files: ${readyCheck.promptCount}`)
+      console.log(`  Task count: ${readyCheck.taskCount}`)
     }
   } catch (e) {
     console.error((e as Error).message)
