@@ -54,9 +54,16 @@ import { main as executeMain } from "../src/cli/execute.ts"
 import { main as multiMain } from "../src/cli/multi.ts"
 import { main as multiNavigatorMain } from "../src/cli/multi-navigator.ts"
 import { main as multiGridMain } from "../src/cli/multi-grid.ts"
-import { main as serveMain } from "../src/cli/serve.ts"
+// NOTE: serveMain uses JSX/React, so it must be dynamically imported to avoid
+// requiring react/jsx-dev-runtime in all contexts
 import { main as treeMain } from "../src/cli/tree.ts"
 import { main as githubMain } from "../src/cli/github.ts"
+
+// Lazy loader for serve command (has JSX/React dependency)
+const serveMain = async (argv: string[]) => {
+  const { main } = await import("../src/cli/serve.ts")
+  return main(argv)
+}
 
 const SUBCOMMANDS = {
   init: initMain,

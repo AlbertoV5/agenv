@@ -15,19 +15,29 @@ const DEFAULT_AGENTS_MD = `# Agents
 ## Agent Definitions
 
 ### default
-**Description:** General-purpose implementation agent
-**Best for:** Standard development tasks
-**Model:** anthropic/claude-sonnet-4
-`
+**Description:** General-purpose implementation agent.
+**Best for:** Standard development tasks.
+**Model:** anthropic/claude-sonnet-4-5
 
-const DEFAULT_TESTS_MD = `# Test Requirements
+### frontend-speedster
+**Description:** Very efficient and effective frontend coder.
+**Best for:** Straight-forward frontend tasks.
+**Model:** openrouter/google/gemini-3-flash-preview
 
-## General
-- All changes must pass existing test suite
-- New functionality requires tests
+### systems-engineer
+**Description:** Good for complex multi-faceted work.
+**Best for:** Architecture, complex systems, solving engineering problems.
+**Model:** anthropic/claude-opus-4-5
 
-## Per-Stage
-- (Add stage-specific test requirements here)
+### code-reviewer
+**Description:** Specialized on code analysis.
+**Best for:** Debugging, testing, code reviews.
+**Model:** openrouter/openai/gpt-5.2-codex
+
+### documentation-minimalist
+**Description:** Model that creates short and sweet docs.
+**Best for:** Documentation, reviews.
+**Model:** openrouter/google/gemini-3-pro-preview
 `
 
 function printHelp(): void {
