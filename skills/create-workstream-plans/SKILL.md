@@ -44,12 +44,6 @@ Workstreams live in `./work/{id}/`:
 | `TASKS.md` | Intermediate task file (temporary, during task creation) |
 | `tasks.json` | Task tracking (CLI managed) |
 
-Reference files for planning:
-
-| File | Purpose |
-|------|---------|
-| `AGENTS.md` | Agent definitions for assignment and prompts |
-
 **Hierarchy:** Stage → Batch → Thread → Task
 **Execution:** Stages/batches run serially; threads run in parallel within a batch.
 **Thread Limit:** Each batch supports up to **8 threads**
