@@ -267,7 +267,7 @@ export function generateThreadPrompt(
     `When listing tasks, use \`work list --tasks --batch "${batchId}"\` to see tasks for this batch only.`,
   )
   lines.push("")
-  lines.push("Use the `implementing-workstream-plans` skill.")
+  lines.push("Use the `implementing-workstreams` skill.")
   lines.push("")
 
   return lines.join("\n")

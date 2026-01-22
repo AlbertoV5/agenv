@@ -22,5 +22,5 @@ Your tasks are:
 
 Your working directory for creating additional documentation or scripts (if any) is: `work/002-github-integration/files/stage-4/02-automation-hooks/sync-command/`
 
-Use the `implementing-workstream-plans` skill.
+Use the `implementing-workstreams` skill.
 When listing tasks, use `work list --tasks --batch "04.02"` to see tasks for this batch only.

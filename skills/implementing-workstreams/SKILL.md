@@ -1,5 +1,5 @@
 ---
-name: implementing-workstream-plans
+name: implementing-workstreams
 description: How to execute an existing workstream plan. Focuses on finding tasks, updating status, and maintaining context.
 ---
 

@@ -24,4 +24,4 @@ Your tasks are:
 
 Your working directory for creating additional documentation or scripts (if any) is: `work/001-workstream-viz/files/stage-1/03-data-layer/data-service/`
 
-Use the `implementing-workstream-plans` skill.
+Use the `implementing-workstreams` skill.

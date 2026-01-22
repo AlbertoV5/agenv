@@ -32,5 +32,5 @@ Your tasks are:
 
 Your working directory for creating additional documentation or scripts (if any) is: `work/002-github-integration/files/stage-2/02-metadata-storage/task-metadata-extension/`
 
-Use the `implementing-workstream-plans` skill.
+Use the `implementing-workstreams` skill.
 When listing tasks, use `work list --tasks --batch "02.02"` to see tasks for this batch only.

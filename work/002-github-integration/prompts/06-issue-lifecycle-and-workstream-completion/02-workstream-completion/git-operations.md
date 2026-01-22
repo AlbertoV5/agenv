@@ -29,5 +29,5 @@ Your tasks are:
 
 Your working directory for creating additional documentation or scripts (if any) is: `work/002-github-integration/files/stage-6/02-workstream-completion/git-operations/`
 
-Use the `implementing-workstream-plans` skill.
+Use the `implementing-workstreams` skill.
 When listing tasks, use `work list --tasks --batch "06.02"` to see tasks for this batch only.

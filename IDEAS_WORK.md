@@ -4,9 +4,9 @@
 
 - [ ] ENHANCE: After PLAN.md is created, have "assistant" agent read it for you (TTS), include `work preview` command output + reference to plan so assistant synthesizes.
   
-- [ ] ENHANCE: We need to make it so the opencode sessions remain open after agent is finished to write instructions. Use `--title` and set thread name + uid for easy retrieval.
-
 - [ ] BUG: Update the Reviewer skill to include to check for if threads are actually parallelizable. Update planner skill doc to reinforce that.
+
+- [ ] ENHANCE: We need to replace the AGENTS.md with agents.yaml so we can add more info, example use "models" instead of "model" so we can run the first choice, and if it fails, run the following ones, and so on.
   
 - [ ] ENHANCE: Tooling prompt, eg: ```Can you create a test script file in ./scripts so I can run `bun run ./scripts/check-github-*.ts` So I Can test auth, config, label, and issue?``` 
 

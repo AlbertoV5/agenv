@@ -1,9 +1,9 @@
 ---
-name: reviewing-workstream-plans
+name: documenting-workstreams
 description: How to review, validate, and approve workstream plans.
 ---
 
-# Reviewing Workstream Plans
+# Documenting Workstreams
 
 ## Inspect Plan
 

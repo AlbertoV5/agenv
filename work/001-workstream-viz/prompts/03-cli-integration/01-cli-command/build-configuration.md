@@ -18,4 +18,4 @@ Your tasks are:
 
 Your working directory for creating additional documentation or scripts (if any) is: `work/001-workstream-viz/files/stage-3/01-cli-command/build-configuration/`
 
-Use the `implementing-workstream-plans` skill.
+Use the `implementing-workstreams` skill.

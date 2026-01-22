@@ -1,5 +1,5 @@
 ---
-name: create-workstream-plans
+name: planning-workstreams
 description: How to create a workstream plan for development tasks. Plans are for medium to large tasks or multi-session work. Not needed for small fixes.
 ---
 

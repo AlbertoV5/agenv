@@ -35,5 +35,5 @@ Your tasks are:
 
 Your working directory for creating additional documentation or scripts (if any) is: `work/002-github-integration/files/stage-1/02-authentication-and-client/github-api-client/`
 
-Use the `implementing-workstream-plans` skill.
+Use the `implementing-workstreams` skill.
 When listing tasks, use `work list --tasks --batch "01.02"` to see tasks for this batch only.

@@ -26,4 +26,4 @@ Your tasks are:
 
 Your working directory for creating additional documentation or scripts (if any) is: `work/001-workstream-viz/files/stage-4/01-server-migration/bun-native-server/`
 
-Use the `implementing-workstream-plans` skill.
+Use the `implementing-workstreams` skill.

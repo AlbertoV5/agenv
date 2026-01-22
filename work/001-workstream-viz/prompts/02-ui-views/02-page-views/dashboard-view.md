@@ -23,4 +23,4 @@ Your tasks are:
 
 Your working directory for creating additional documentation or scripts (if any) is: `work/001-workstream-viz/files/stage-2/02-page-views/dashboard-view/`
 
-Use the `implementing-workstream-plans` skill.
+Use the `implementing-workstreams` skill.

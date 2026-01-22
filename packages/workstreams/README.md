@@ -127,9 +127,9 @@ Workstreams progress through these stages:
 
 | Stage | Skill | Description |
 |-------|-------|-------------|
-| **Create** | `/create-workstream-plans` | Generate workstream structure, define stages/threads/tasks |
-| **Review** | `/reviewing-workstream-plans` | Read workstreams, add/remove tasks, reorganize structure |
-| **Implement** | `/implementing-workstream-plans` | Execute tasks, track progress, update statuses |
+| **Create** | `/planning-workstreams` | Generate workstream structure, define stages/threads/tasks |
+| **Review** | `/reviewing-workstreams` | Read workstreams, add/remove tasks, reorganize structure |
+| **Implement** | `/implementing-workstreams` | Execute tasks, track progress, update statuses |
 | **Evaluate** | `/evaluating-workstream-outputs` | Review completed work, gather metrics |
 | **Document** | `/documenting-workstream-outputs` | Generate reports, changelogs, exports |
 

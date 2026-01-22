@@ -27,5 +27,5 @@ Your tasks are:
 
 Your working directory for creating additional documentation or scripts (if any) is: `work/002-github-integration/files/stage-3/01-branch-operations/branch-creation-and-checkout/`
 
-Use the `implementing-workstream-plans` skill.
+Use the `implementing-workstreams` skill.
 When listing tasks, use `work list --tasks --batch "03.01"` to see tasks for this batch only.

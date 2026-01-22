@@ -58,9 +58,9 @@ Skills provide instructions for AI agents at different phases of workstream mana
 
 | Skill | Purpose | Agent Role |
 |-------|---------|------------|
-| `create-workstream-plans` | Create new workstreams with PLAN.md | Planner |
-| `reviewing-workstream-plans` | Validate and approve plans | Reviewer |
-| `implementing-workstream-plans` | Execute tasks within threads | Executor |
+| `planning-workstreams` | Create new workstreams with PLAN.md | Planner |
+| `reviewing-workstreams` | Validate and approve plans | Reviewer |
+| `implementing-workstreams` | Execute tasks within threads | Executor |
 | `generating-workstream-prompts` | Generate context for execution | Planner |
 
 ### Skill Locations
@@ -72,9 +72,9 @@ Skills are stored in the repository at `skills/{skill-name}/SKILL.md`.
 When an agent needs to perform a workstream operation, it should reference the appropriate skill:
 
 ```
-/create-workstream-plans    # Planning agent creating a new workstream
-/reviewing-workstream-plans # Reviewer validating a plan
-/implementing-workstream-plans # Executor working on tasks
+/planning-workstreams    # Planning agent creating a new workstream
+/reviewing-workstreams # Reviewer validating a plan
+/implementing-workstreams # Executor working on tasks
 /generating-workstream-prompts # Generating execution context
 ```
 
@@ -86,7 +86,7 @@ Every workstream follows a three-phase progression to separate planning, executi
 
 ### Phase 1: Setup Workstream
 
-**Skill:** `create-workstream-plans`
+**Skill:** `planning-workstreams`
 
 #### 1.1 Planning
 
@@ -102,7 +102,7 @@ The Planner agent discusses requirements with the user before creating the plan:
 
 #### 1.2 Review
 
-**Skill:** `reviewing-workstream-plans`
+**Skill:** `reviewing-workstreams`
 
 A Reviewer agent (or human) analyzes the PLAN.md:
 
@@ -199,13 +199,13 @@ Prompts include:
 - Thread summary and details from PLAN.md
 - Tasks assigned to the thread
 - Explicit working directory instruction
-- Skill instruction (`implementing-workstream-plans`)
+- Skill instruction (`implementing-workstreams`)
 
 They explicitly exclude agent assignment references in the text, keeping the prompt clean for any agent to pick up.
 
 #### 2.2 Agent Execution
 
-**Skill:** `implementing-workstream-plans`
+**Skill:** `implementing-workstreams`
 
 Agents execute their assigned threads:
 
@@ -389,9 +389,9 @@ Generated in the workstream directory upon completion:
 
 | Role | Skill | Responsibilities |
 |------|-------|-----------------|
-| **Planner** | `create-workstream-plans`, `generating-workstream-prompts` | Creates PLAN.md, adds tasks, creates execution prompts, manages fix batches/stages, generates COMPLETION.md |
-| **Reviewer** | `reviewing-workstream-plans` | Reviews PLAN.md for weaknesses, provides structured feedback, validates structure |
-| **Executor** | `implementing-workstream-plans` | Assigned to specific threads, implements tasks, creates documentation, runs tests |
+| **Planner** | `planning-workstreams`, `generating-workstream-prompts` | Creates PLAN.md, adds tasks, creates execution prompts, manages fix batches/stages, generates COMPLETION.md |
+| **Reviewer** | `reviewing-workstreams` | Reviews PLAN.md for weaknesses, provides structured feedback, validates structure |
+| **Executor** | `implementing-workstreams` | Assigned to specific threads, implements tasks, creates documentation, runs tests |
 | **Documentation** | — | Reads COMPLETION.md and outputs, updates project docs |
 
 ### Handoff Between Roles

@@ -232,7 +232,7 @@ work complete  # Generates COMPLETION.md from task reports
 
 ### Prompt Instructions Update
 
-Update the `implementing-workstream-plans` skill to instruct agents:
+Update the `implementing-workstreams` skill to instruct agents:
 
 ```markdown
 ## Task Completion
@@ -257,7 +257,7 @@ Reports should be:
 2. [ ] Update `work update` command to accept `--report` flag
 3. [ ] Update `updateTaskStatus()` in `tasks.ts` to handle report field
 4. [ ] Update `work complete` to aggregate reports into COMPLETION.md
-5. [ ] Update `implementing-workstream-plans` skill with report instructions
+5. [ ] Update `implementing-workstreams` skill with report instructions
 6. [ ] Add tests for report field handling
 
 ## Implementation Details
@@ -557,7 +557,7 @@ The planner agent follows this sequence:
 
 ## Skill Updates Required
 
-### 1. Update `skills/implementing-workstream-plans/SKILL.md`
+### 1. Update `skills/implementing-workstreams/SKILL.md`
 
 Add task report instructions for executor agents:
 
@@ -586,7 +586,7 @@ work update --task "01.01.01.01" --status completed \\
 \`\`\`
 ```
 
-### 2. Update `skills/create-workstream-plans/SKILL.md`
+### 2. Update `skills/planning-workstreams/SKILL.md`
 
 Add stage report workflow and lifecycle management:
 
@@ -689,8 +689,8 @@ After the final stage:
 
 ### Phase 7: Skill Updates (Partial) ✅
 
-14. ~~**Update `implementing-workstream-plans`** - add report instructions~~
-15. **Update `create-workstream-plans`** with full lifecycle - deferred to Phase 9
+14. ~~**Update `implementing-workstreams`** - add report instructions~~
+15. **Update `planning-workstreams`** with full lifecycle - deferred to Phase 9
 
 ### Phase 8: Navigator (Optional)
 
@@ -698,8 +698,8 @@ After the final stage:
 
 ### Phase 9: Skill Docs (After Multi Implementation)
 
-17. **Update `create-workstream-plans`** - add full stage lifecycle workflow with `work multi`
-18. **Update `implementing-workstream-plans`** - add multi execution context
+17. **Update `planning-workstreams`** - add full stage lifecycle workflow with `work multi`
+18. **Update `implementing-workstreams`** - add multi execution context
 
 ---
 
@@ -721,8 +721,8 @@ After the final stage:
 - [x] Create `lib/reports.ts` for report generation
 
 ### Skills
-- [x] Update `skills/implementing-workstream-plans/SKILL.md` with `--report` flag
-- [ ] Update `skills/create-workstream-plans/SKILL.md` with full lifecycle (Phase 9)
+- [x] Update `skills/implementing-workstreams/SKILL.md` with `--report` flag
+- [ ] Update `skills/planning-workstreams/SKILL.md` with full lifecycle (Phase 9)
 
 ### Tests
 - [ ] Add `tests/multi.test.ts`
@@ -759,6 +759,6 @@ After the final stage:
 
 | Skill | File | Changes |
 |-------|------|---------|
-| Executor | `skills/implementing-workstream-plans/SKILL.md` | Add multi execution context |
-| Planner | `skills/create-workstream-plans/SKILL.md` | Add full stage lifecycle with `work multi` |
+| Executor | `skills/implementing-workstreams/SKILL.md` | Add multi execution context |
+| Planner | `skills/planning-workstreams/SKILL.md` | Add full stage lifecycle with `work multi` |
 
