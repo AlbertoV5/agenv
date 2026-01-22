@@ -121,18 +121,55 @@ async function getDefaultBranch(repoRoot: string): Promise<string> {
 }
 
 /**
+ * Commits any uncommitted changes to the current branch.
+ * @param repoRoot The root directory of the repository
+ * @returns True if changes were committed, false if working tree was clean
+ */
+function commitPendingChanges(repoRoot: string): boolean {
+  // Check if there are any changes (staged or unstaged)
+  const status = execSync("git status --porcelain", {
+    cwd: repoRoot,
+    encoding: "utf-8",
+    stdio: ["pipe", "pipe", "pipe"],
+  }).trim();
+
+  if (!status) {
+    return false; // Working tree is clean
+  }
+
+  // Stage all changes
+  execSync("git add -A", {
+    cwd: repoRoot,
+    encoding: "utf-8",
+    stdio: ["pipe", "pipe", "pipe"],
+  });
+
+  // Commit with workstream start message
+  execSync('git commit -m "workstream start"', {
+    cwd: repoRoot,
+    encoding: "utf-8",
+    stdio: ["pipe", "pipe", "pipe"],
+  });
+
+  return true;
+}
+
+/**
  * Fetches from origin and checks out the branch locally.
  * @param repoRoot The root directory of the repository
  * @param branchName The branch name to checkout
  */
 async function checkoutBranchLocally(repoRoot: string, branchName: string): Promise<void> {
+  // Commit any pending changes before switching branches
+  commitPendingChanges(repoRoot);
+
   // Fetch the new branch from origin
   execSync("git fetch origin", {
     cwd: repoRoot,
     encoding: "utf-8",
     stdio: ["pipe", "pipe", "pipe"],
   });
-  
+
   // Checkout the branch
   execSync(`git checkout ${branchName}`, {
     cwd: repoRoot,

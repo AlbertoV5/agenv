@@ -38,7 +38,6 @@ import {
   listPaneIds,
   getSessionPaneStatuses,
   waitForAllPanesExit,
-  setPaneTitle,
   THREAD_START_DELAY_MS,
   type PaneStatus,
 } from "../lib/tmux.ts"
@@ -267,8 +266,6 @@ export function findNextIncompleteBatch(tasks: Task[]): string | null {
   return null
 }
 
-
-
 /**
  * Build the prompt file path for a thread using metadata strings
  * Used when discovering threads from tasks.json instead of PLAN.md
@@ -286,7 +283,9 @@ function getPromptFilePathFromMetadata(
 
   const safeStageName = stageName.replace(/[^a-zA-Z0-9_-]/g, "-").toLowerCase()
   const safeBatchName = batchName.replace(/[^a-zA-Z0-9_-]/g, "-").toLowerCase()
-  const safeThreadName = threadName.replace(/[^a-zA-Z0-9_-]/g, "-").toLowerCase()
+  const safeThreadName = threadName
+    .replace(/[^a-zA-Z0-9_-]/g, "-")
+    .toLowerCase()
 
   const stagePrefix = stageNum.toString().padStart(2, "0")
   const batchPrefix = batchNum.toString().padStart(2, "0")
@@ -322,7 +321,12 @@ function collectThreadInfoFromTasks(
   batchNum: number,
   agentsConfig: ReturnType<typeof loadAgentsConfig>,
 ): ThreadInfo[] {
-  const discoveredThreads = discoverThreadsInBatch(repoRoot, streamId, stageNum, batchNum)
+  const discoveredThreads = discoverThreadsInBatch(
+    repoRoot,
+    streamId,
+    stageNum,
+    batchNum,
+  )
   if (!discoveredThreads || discoveredThreads.length === 0) {
     return []
   }
@@ -368,8 +372,6 @@ function collectThreadInfoFromTasks(
 
   return threads
 }
-
-
 
 export async function main(argv: string[] = process.argv): Promise<void> {
   const cliArgs = parseCliArgs(argv)
@@ -481,7 +483,9 @@ export async function main(argv: string[] = process.argv): Promise<void> {
   )
 
   if (threads.length === 0) {
-    console.error(`Error: No tasks found for batch ${batchId} in stream ${stream.id}`)
+    console.error(
+      `Error: No tasks found for batch ${batchId} in stream ${stream.id}`,
+    )
     console.error(`\nHint: Make sure tasks.json has tasks for this batch.`)
     process.exit(1)
   }
@@ -497,7 +501,12 @@ export async function main(argv: string[] = process.argv): Promise<void> {
   }
 
   // Get batch metadata for display (stage/batch names)
-  const batchMeta = getBatchMetadata(repoRoot, stream.id, batchParsed.stage, batchParsed.batch)
+  const batchMeta = getBatchMetadata(
+    repoRoot,
+    stream.id,
+    batchParsed.stage,
+    batchParsed.batch,
+  )
   const stageName = batchMeta?.stageName || `Stage ${batchParsed.stage}`
   const batchName = batchMeta?.batchName || `Batch ${batchParsed.batch}`
 
@@ -775,8 +784,13 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     Bun.spawnSync(splitArgs)
   }
 
+  // === KEYBINDING TO KILL SESSION ===
+  // Bind Ctrl+b X to kill the session instantly (capital X)
+  Bun.spawnSync(["tmux", "bind-key", "X", "kill-session"])
+
   console.log(`
 Layout: ${threads.length <= 4 ? "2x2 Grid (all visible)" : `2x2 Grid with pagination (${threads.length} threads, use n/p to page)`}
+Press Ctrl+b X to kill the session when done.
 `)
 
   console.log(`Attaching to session "${sessionName}"...`)
@@ -785,9 +799,7 @@ Layout: ${threads.length <= 4 ? "2x2 Grid (all visible)" : `2x2 Grid with pagina
   const child = attachSession(sessionName)
 
   child.on("close", async (code) => {
-    console.log(
-      `\nSession detached. Checking thread statuses...`,
-    )
+    console.log(`\nSession detached. Checking thread statuses...`)
 
     // Update session statuses based on pane exit codes
     if (threadSessionMap.length > 0 && sessionExists(sessionName)) {
@@ -810,7 +822,9 @@ Layout: ${threads.length <= 4 ? "2x2 Grid (all visible)" : `2x2 Grid with pagina
             status,
             exitCode,
           })
-          console.log(`  Thread ${mapping.threadId}: ${status}${exitCode !== undefined ? ` (exit ${exitCode})` : ""}`)
+          console.log(
+            `  Thread ${mapping.threadId}: ${status}${exitCode !== undefined ? ` (exit ${exitCode})` : ""}`,
+          )
         } else if (paneStatus && !paneStatus.paneDead) {
           console.log(`  Thread ${mapping.threadId}: still running`)
         } else {
@@ -820,19 +834,29 @@ Layout: ${threads.length <= 4 ? "2x2 Grid (all visible)" : `2x2 Grid with pagina
             sessionId: mapping.sessionId,
             status: "interrupted",
           })
-          console.log(`  Thread ${mapping.threadId}: interrupted (pane not found)`)
+          console.log(
+            `  Thread ${mapping.threadId}: interrupted (pane not found)`,
+          )
         }
       }
 
       if (completions.length > 0) {
-        console.log(`\nUpdating ${completions.length} session statuses in tasks.json...`)
+        console.log(
+          `\nUpdating ${completions.length} session statuses in tasks.json...`,
+        )
         await completeMultipleSessionsLocked(repoRoot, stream.id, completions)
       }
     }
 
     console.log(`\nWindows remain in tmux session "${sessionName}".`)
     console.log(`To reattach: tmux attach -t "${sessionName}"`)
-    console.log(`To kill: tmux kill-session -t "${sessionName}"`)
+
+    // Check if session still exists (it might have been auto-killed)
+    if (!sessionExists(sessionName)) {
+      console.log("Session auto-closed (all threads completed).")
+    } else {
+      console.log(`To kill: tmux kill-session -t "${sessionName}"`)
+    }
     process.exit(code ?? 0)
   })
 
