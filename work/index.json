@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-01-22T22:00:34.596Z",
+  "last_updated": "2026-01-22T22:15:53.964Z",
   "current_stream": "006-revision-workflow",
   "streams": [
     {
@@ -338,7 +338,7 @@
         ]
       },
       "created_at": "2026-01-22T21:08:59.022Z",
-      "updated_at": "2026-01-22T22:00:34.596Z",
+      "updated_at": "2026-01-22T22:15:53.964Z",
       "path": "work/006-revision-workflow",
       "generated_by": {
         "workstreams": "0.1.0"
@@ -349,9 +349,9 @@
         "approved_by": "user",
         "plan_hash": "5b9d6f199b68c21246be767fd65a45097cdc667bd6a3df02ab05b7a3155256e6",
         "tasks": {
-          "status": "approved",
-          "approved_at": "2026-01-22T21:44:18.650Z",
-          "task_count": 30
+          "status": "revoked",
+          "revoked_at": "2026-01-22T22:11:59.489Z",
+          "revoked_reason": "revision"
         },
         "stages": {
           "1": {
@@ -368,11 +368,51 @@
             "status": "approved",
             "approved_at": "2026-01-22T22:00:34.596Z",
             "approved_by": "user"
+          },
+          "4": {
+            "status": "approved",
+            "approved_at": "2026-01-22T22:15:53.964Z",
+            "approved_by": "user"
           }
         }
       },
       "github": {
         "branch": "workstream/006-revision-workflow"
+      }
+    },
+    {
+      "id": "007-debug-tasks-md-deletion",
+      "name": "debug-tasks-md-deletion",
+      "order": 7,
+      "size": "medium",
+      "session_estimated": {
+        "length": 4,
+        "unit": "session",
+        "session_minutes": [
+          30,
+          45
+        ],
+        "session_iterations": [
+          4,
+          8
+        ]
+      },
+      "created_at": "2026-01-22T22:13:29.346Z",
+      "updated_at": "2026-01-22T22:13:55.397Z",
+      "path": "work/007-debug-tasks-md-deletion",
+      "generated_by": {
+        "workstreams": "0.1.0"
+      },
+      "approval": {
+        "status": "approved",
+        "approved_at": "2026-01-22T22:13:33.885Z",
+        "approved_by": "user",
+        "plan_hash": "5f26cf25771e29bbc20c4e0dbabb13c60212e9e0a47c43e8e09e76462b2ed501",
+        "tasks": {
+          "status": "approved",
+          "approved_at": "2026-01-22T22:13:55.397Z",
+          "task_count": 1
+        }
       }
     }
   ]

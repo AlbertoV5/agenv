@@ -7,6 +7,7 @@
 import { getRepoRoot } from "../lib/repo.ts"
 import { loadIndex, getResolvedStream } from "../lib/index.ts"
 import { appendRevisionStage } from "../lib/fix.ts"
+import { getTasksApprovalStatus, revokeTasksApproval } from "../lib/approval.ts"
 
 interface RevisionCliArgs {
   repoRoot?: string
@@ -140,7 +141,18 @@ export function main(argv: string[] = process.argv): void {
     })
 
     if (result.success) {
+      // Auto-revoke tasks approval if currently approved
+      const tasksStatus = getTasksApprovalStatus(stream)
+      let revokedTasks = false
+      if (tasksStatus === "approved") {
+        revokeTasksApproval(repoRoot, stream.id, `revision: ${cliArgs.name}`)
+        revokedTasks = true
+      }
+
       console.log(`Added Stage ${result.newStageNumber}: Revision - ${cliArgs.name} to PLAN.md`)
+      if (revokedTasks) {
+        console.log(`  Tasks approval revoked for revision`)
+      }
       console.log(`\nEdit PLAN.md to fill in details, then run 'work approve revision'`)
     } else {
       console.error(`Error: ${result.message}`)

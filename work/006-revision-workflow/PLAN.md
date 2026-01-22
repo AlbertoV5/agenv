@@ -232,6 +232,48 @@ Create tests for revision workflow functions.
   - Full integration: revision → approve revision → approve tasks
 - Use temp directory pattern from existing tests
 
+### Stage 04: Revision - TASKS.md cleanup
+
+#### Stage Definition
+
+Investigate and fix the issue where TASKS.md is not being deleted after `work approve tasks` runs successfully. The deletion code exists in `approve.ts` but TASKS.md persists after task approval.
+
+#### Stage Constitution
+
+**Inputs:**
+- Current `deleteTasksMd()` function in `src/cli/approve.ts`
+- Current `handleTasksApproval()` flow
+
+**Structure:**
+- Investigate why deletion fails silently
+- Fix the deletion logic or error handling
+
+**Outputs:**
+- TASKS.md properly deleted after successful task approval
+
+#### Stage Questions
+
+- [x] Where is deletion called? → Line 792 in `handleTasksApproval()` after `approveTasks()`
+- [x] Does the function exist? → Yes, `deleteTasksMd()` at line 702
+- [x] Why does it fail silently? → Needs investigation (task objective)
+
+#### Stage Batches
+
+##### Batch 01: Investigation and Fix
+
+###### Thread 01: Debug TASKS.md Deletion
+
+**Summary:**
+Investigate why `deleteTasksMd()` fails to remove TASKS.md and fix the issue.
+
+**Details:**
+- Working packages: `./packages/workstreams`
+- The `deleteTasksMd()` function at line 702 catches all errors silently
+- Check if the function is actually being called
+- Check if there's a path mismatch or permission issue
+- Add logging or fix error handling to surface the actual issue
+- Verify fix by running `work approve tasks` and confirming TASKS.md is deleted
+
 ---
 
 *Last updated: 2026-01-22*

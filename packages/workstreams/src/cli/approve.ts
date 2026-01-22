@@ -17,6 +17,7 @@ import {
   revokeStageApproval,
   getStageApprovalStatus,
   approveTasks,
+  revokeTasksApproval,
   getTasksApprovalStatus,
   checkTasksApprovalReady,
   getFullApprovalStatus,
@@ -721,13 +722,42 @@ function handleTasksApproval(
 ): void {
   const currentStatus = getTasksApprovalStatus(stream)
 
-  // Handle revoke (for future use, not commonly needed for tasks)
+  // Handle revoke
   if (cliArgs.revoke) {
-    console.error("Error: Tasks approval revocation is not supported")
-    process.exit(1)
+    if (currentStatus !== "approved") {
+      console.error("Error: Tasks are not approved, nothing to revoke")
+      process.exit(1)
+    }
+
+    try {
+      const updatedStream = revokeTasksApproval(repoRoot, stream.id, cliArgs.reason)
+
+      if (cliArgs.json) {
+        console.log(JSON.stringify({
+          action: "revoked",
+          target: "tasks",
+          streamId: updatedStream.id,
+          streamName: updatedStream.name,
+          reason: cliArgs.reason,
+          approval: updatedStream.approval?.tasks,
+        }, null, 2))
+      } else {
+        console.log(`Revoked tasks approval for workstream "${updatedStream.name}" (${updatedStream.id})`)
+        if (cliArgs.reason) {
+          console.log(`  Reason: ${cliArgs.reason}`)
+        }
+      }
+    } catch (e) {
+      console.error((e as Error).message)
+      process.exit(1)
+    }
+    return
   }
 
   if (currentStatus === "approved") {
+    // Cleanup leftover TASKS.md if it exists
+    const tasksMdDeleted = deleteTasksMd(repoRoot, stream.id)
+
     if (cliArgs.json) {
       console.log(JSON.stringify({
         action: "already_approved",
@@ -735,9 +765,15 @@ function handleTasksApproval(
         streamId: stream.id,
         streamName: stream.name,
         approval: stream.approval?.tasks,
+        artifacts: {
+          tasksMdDeleted,
+        },
       }, null, 2))
     } else {
       console.log(`Tasks for workstream "${stream.name}" are already approved`)
+      if (tasksMdDeleted) {
+        console.log(`  Cleaned up leftover TASKS.md`)
+      }
     }
     return
   }

@@ -19,7 +19,6 @@ Create tests for revision workflow functions.
 - CLI argument parsing for `work revision`
 - Full integration: revision → approve revision → approve tasks
 - Use temp directory pattern from existing tests
-*Last updated: 2026-01-22*
 
 Your tasks are:
 - [ ] 03.01.02.01 Create `tests/revision.test.ts` with test setup using temp directories
