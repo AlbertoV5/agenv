@@ -11,6 +11,10 @@ We use `bun` for package management.
 - Tests are under ./packages/{package}/tests/*
 - Run tests with `bun run test` inside the package.
 
+## Type Checking
+
+- Run `bun run typecheck` from the root or the package.
+
 ## Important Directories
 
 - docs/

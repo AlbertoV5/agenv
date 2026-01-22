@@ -6,12 +6,13 @@
 
 import { getRepoRoot } from "../lib/repo.ts"
 import { loadIndex, resolveStreamId } from "../lib/index.ts"
-import { getStreamProgress, formatProgress, getStreamStatus } from "../lib/status.ts"
+import { getStreamProgress, formatProgress, getStreamStatus, formatSessionHistory } from "../lib/status.ts"
 
 interface StatusCliArgs {
   repoRoot?: string
   streamId?: string
   json: boolean
+  sessions: boolean
 }
 
 function printHelp(): void {
@@ -24,6 +25,7 @@ Usage:
 Options:
   --repo-root, -r  Repository root (auto-detected if omitted)
   --stream, -s     Specific workstream ID or name (shows all if omitted)
+  --sessions       Show detailed session history for each thread
   --json, -j       Output as JSON
   --help, -h       Show this help message
 
@@ -34,6 +36,9 @@ Examples:
   # Show specific workstream
   work status --stream "001-my-stream"
 
+  # Show detailed session history
+  work status --sessions
+
   # Get JSON output
   work status --json
 `)
@@ -41,7 +46,7 @@ Examples:
 
 function parseCliArgs(argv: string[]): StatusCliArgs | null {
   const args = argv.slice(2)
-  const parsed: StatusCliArgs = { json: false }
+  const parsed: StatusCliArgs = { json: false, sessions: false }
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i]
@@ -68,6 +73,10 @@ function parseCliArgs(argv: string[]): StatusCliArgs | null {
         }
         parsed.streamId = next
         i++
+        break
+
+      case "--sessions":
+        parsed.sessions = true
         break
 
       case "--json":
@@ -142,8 +151,14 @@ export function main(argv: string[] = process.argv): void {
     console.log(JSON.stringify(jsonOutput, null, 2))
   } else {
     for (const { stream, progress, status } of progressList) {
-      console.log(formatProgress(progress, status, stream))
-      console.log()
+      console.log(formatProgress(progress, status, stream, repoRoot))
+      
+      // Show detailed session history if --sessions flag is set
+      if (cliArgs.sessions) {
+        console.log(formatSessionHistory(repoRoot, stream.id, progress))
+      } else {
+        console.log()
+      }
     }
   }
 }

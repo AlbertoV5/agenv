@@ -35,13 +35,11 @@ bun add @agenv/workstreams
    
    Syntax: `- [ ] Task description @agent:agent-name`
    
+   work approve tasks  # Auto-generates tasks.json + prompts
    ```bash
    work approve tasks  # Auto-generates tasks.json + prompts
    ```
 
-4. **Verify**
-   ```bash
-   work status
    work tree
    ```
 
@@ -445,6 +443,33 @@ await modifyIndex(repoRoot, (index) => {
 })
 ```
 
+## Session Tracking & Recovery
+
+The library automatically tracks execution sessions for every task. This enables:
+
+1.  **Resuming Interrupted Work**: If a session crashes or is killed, you can resume it using the same session ID.
+2.  **Audit Trail**: Track which agent and model performed each task, along with start/end times.
+3.  **Retry Workflows**: Easily retry failed threads with the same or different agents.
+
+### Session Storage
+Session data is stored in `tasks.json` alongside task definitions.
+
+```json
+"sessions": [
+  {
+    "sessionId": "sess_123...",
+    "agentName": "implementing-workstreams",
+    "model": "anthropic/claude-3-5-sonnet",
+    "startedAt": "2024-01-20T10:00:00Z",
+    "status": "completed"
+  }
+]
+```
+
+### Limitations
+- **Resume Capability**: Resuming a session relies on the underlying agent runner (e.g., `opencode`) retaining the session state. If the runner's temporary state is cleared, resuming may fail.
+- **Concurrent Sessions**: While multiple threads can run in parallel, resuming a specific session is an exclusive operation.
+
 ## CLI
 
 The package includes a CLI for workstream management:
@@ -483,7 +508,6 @@ work context             # Show current workstream context (task, breadcrumbs)
 work continue            # Resume execution (alias for 'work multi --continue')
 
 # Human-In-The-Loop Approvals
-# Three approvals are required before starting the workstream:
 # 1. Plan approval - Validates PLAN.md structure and questions
 work approve plan
 work approve plan --force         # Approve with open questions
@@ -491,8 +515,6 @@ work approve plan --force         # Approve with open questions
 # 2. Tasks approval - Validates tasks.json existence
 work approve tasks
 
-# 3. Prompts approval - Validates agent assignments and prompt files
-work approve prompts
 
 # Check approval status
 work approve

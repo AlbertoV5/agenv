@@ -143,13 +143,11 @@ This command validates and serializes the tasks and assignments.
 
 **Do not proceed without user approval.** Task descriptions and agent assignments drive execution.
 
-## Prompts & Handoff
 
-Prompts are automatically generated when the user runs `work approve tasks`.
+## Best Practices
 
-Once approved, notify the user that prompts are ready and ask them to run `work continue` to start execution. Wait for the user to report completion or issues.
-
-After a stage completes, generate a stage report with `work report --stage N` to review progress before proceeding to the next stage.
+- Don't create threads or batches only for error handling implementation or test running. Include error handling and tests in the tasks for the threads if any.
+- A final review, documentation, integration or refinement stage at the end is fine although not required, depends on the nature of the work.
 ---
 
 ## CLI Reference
@@ -178,12 +176,17 @@ work assign --thread "01.01.01" --agent "backend-expert" # Manual assignment
 work prompt --stage 1 --batch 1  # Manual prompt regeneration (if needed)
 
 # Fix Stages
-work fix                         # Add fix stage
+work add stage                   # Add fix stage
 work approve plan --revoke       # Unlock plan
 work approve tasks --revoke      # Unlock tasks
 # ... edit PLAN.md or TASKS.md ...
-work approve plan
 work approve tasks
+
+# Interactive Fix
+work fix                         # Interactive fix menu
+work fix --thread "01.01.01" --resume  # Resume existing session
+work fix --thread "01.01.01" --retry   # Retry with same agent
+work fix --thread "01.01.01" --agent "name" # Retry with different agent
 
 # Reports
 work report --stage 1

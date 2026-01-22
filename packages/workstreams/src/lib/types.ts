@@ -182,7 +182,6 @@ export type ApprovalStatus = "draft" | "approved" | "revoked"
  * Workstreams require 3 approvals before starting:
  * 1. Plan approval (PLAN.md structure is correct)
  * 2. Tasks approval (tasks.json exists with tasks)
- * 3. Prompts approval (all tasks have agents + prompt files exist)
  */
 export interface ApprovalMetadata {
   status: ApprovalStatus
@@ -207,12 +206,6 @@ export interface ApprovalMetadata {
     status: ApprovalStatus
     approved_at?: string
     task_count?: number // snapshot of task count at approval time
-  }
-  // Prompts approval gate
-  prompts?: {
-    status: ApprovalStatus
-    approved_at?: string
-    prompt_count?: number // snapshot of prompt file count at approval time
   }
 }
 
@@ -375,6 +368,9 @@ export interface Task {
     url: string
     state: "open" | "closed"
   }
+  // Session tracking fields (optional for backwards compatibility)
+  sessions?: SessionRecord[] // Array of session records to track retries
+  currentSessionId?: string // Active session ID for resume functionality
 }
 
 /**
@@ -517,6 +513,29 @@ export interface AgentDefinition {
  */
 export interface AgentsConfig {
   agents: AgentDefinition[]
+}
+
+// ============================================
+// SESSION TRACKING TYPES
+// ============================================
+
+/**
+ * Status of an agent session working on a task
+ */
+export type SessionStatus = "running" | "completed" | "failed" | "interrupted"
+
+/**
+ * Record of a single agent session working on a task
+ * Tracks execution details for debugging, retry logic, and metrics
+ */
+export interface SessionRecord {
+  sessionId: string // Unique identifier for the session
+  agentName: string // Name of the agent that ran this session
+  model: string // Model used (e.g., "anthropic/claude-sonnet-4")
+  startedAt: string // ISO timestamp when session started
+  completedAt?: string // ISO timestamp when session ended (optional for running sessions)
+  status: SessionStatus // Current status of the session
+  exitCode?: number // Exit code if process completed (0 = success)
 }
 
 // ============================================

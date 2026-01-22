@@ -542,191 +542,15 @@ export function approveTasks(
   return stream
 }
 
-// ============================================
-// PROMPTS APPROVAL GATE
-// ============================================
-
-/**
- * Result of checking if prompts can be approved
- */
-export interface PromptsApprovalReadyResult {
-  ready: boolean
-  reason?: string
-  promptCount: number
-  taskCount: number
-  missingAgents: string[] // task IDs without agents
-  missingPrompts: string[] // thread IDs without prompt files
-}
-
-/**
- * Check if prompts can be approved
- * Requirements:
- * 1. All tasks have assigned_agent set
- * 2. Number of prompt files matches number of unique threads
- */
-export function checkPromptsApprovalReady(
-  repoRoot: string,
-  streamId: string
-): PromptsApprovalReadyResult {
-  const { readTasksFile, parseTaskId } = require("./tasks.ts")
-  const { readdirSync, existsSync } = require("fs")
-  const { join } = require("path")
-  const { getWorkDir } = require("./repo.ts")
-
-  const tasksFile = readTasksFile(repoRoot, streamId)
-
-  if (!tasksFile || tasksFile.tasks.length === 0) {
-    return {
-      ready: false,
-      reason: "No tasks found. Run 'work tasks' first.",
-      promptCount: 0,
-      taskCount: 0,
-      missingAgents: [],
-      missingPrompts: [],
-    }
-  }
-
-  // Check for missing agents
-  const missingAgents: string[] = []
-  for (const task of tasksFile.tasks) {
-    if (!task.assigned_agent) {
-      missingAgents.push(task.id)
-    }
-  }
-
-  if (missingAgents.length > 0) {
-    return {
-      ready: false,
-      reason: `${missingAgents.length} task(s) missing agent assignments. Run 'work assign' first.`,
-      promptCount: 0,
-      taskCount: tasksFile.tasks.length,
-      missingAgents,
-      missingPrompts: [],
-    }
-  }
-
-  // Get unique thread IDs from tasks
-  const uniqueThreads = new Set<string>()
-  for (const task of tasksFile.tasks) {
-    const parsed = parseTaskId(task.id)
-    const threadKey = `${parsed.stage.toString().padStart(2, "0")}.${parsed.batch.toString().padStart(2, "0")}.${parsed.thread.toString().padStart(2, "0")}`
-    uniqueThreads.add(threadKey)
-  }
-
-  // Count prompt files recursively
-  const workDir = getWorkDir(repoRoot)
-  const promptsDir = join(workDir, streamId, "prompts")
-
-  let promptCount = 0
-  const foundPrompts = new Set<string>()
-
-  if (existsSync(promptsDir)) {
-    const countMdFiles = (dir: string) => {
-      try {
-        const entries = readdirSync(dir, { withFileTypes: true })
-        for (const entry of entries) {
-          const fullPath = join(dir, entry.name)
-          if (entry.isDirectory()) {
-            countMdFiles(fullPath)
-          } else if (entry.name.endsWith(".md")) {
-            promptCount++
-            // Extract thread ID from path structure
-            // path: prompts/{stage}-{name}/{batch}-{name}/{thread}.md
-            const relativePath = fullPath.replace(promptsDir + "/", "")
-            foundPrompts.add(relativePath)
-          }
-        }
-      } catch (e) {
-        // Ignore errors
-      }
-    }
-    countMdFiles(promptsDir)
-  }
-
-  const threadCount = uniqueThreads.size
-
-  if (promptCount < threadCount) {
-    const missingCount = threadCount - promptCount
-    return {
-      ready: false,
-      reason: `Missing ${missingCount} prompt file(s). Expected ${threadCount}, found ${promptCount}. Run 'work prompt' first.`,
-      promptCount,
-      taskCount: tasksFile.tasks.length,
-      missingAgents: [],
-      missingPrompts: Array.from(uniqueThreads).slice(promptCount),
-    }
-  }
-
-  return {
-    ready: true,
-    promptCount,
-    taskCount: tasksFile.tasks.length,
-    missingAgents: [],
-    missingPrompts: [],
-  }
-}
-
-/**
- * Get prompts approval status
- */
-export function getPromptsApprovalStatus(stream: StreamMetadata): ApprovalStatus {
-  return stream.approval?.prompts?.status ?? "draft"
-}
-
-/**
- * Approve prompts
- */
-export function approvePrompts(
-  repoRoot: string,
-  streamIdOrName: string
-): StreamMetadata {
-  const index = loadIndex(repoRoot)
-  const streamIndex = index.streams.findIndex(
-    (s) => s.id === streamIdOrName || s.name === streamIdOrName
-  )
-
-  if (streamIndex === -1) {
-    throw new Error(`Workstream "${streamIdOrName}" not found`)
-  }
-
-  const stream = index.streams[streamIndex]!
-
-  // Check readiness
-  const readyCheck = checkPromptsApprovalReady(repoRoot, stream.id)
-  if (!readyCheck.ready) {
-    throw new Error(readyCheck.reason!)
-  }
-
-  // Initialize approval if needed
-  if (!stream.approval) {
-    stream.approval = { status: "draft" }
-  }
-
-  // Set prompts approval
-  stream.approval.prompts = {
-    status: "approved",
-    approved_at: new Date().toISOString(),
-    prompt_count: readyCheck.promptCount,
-  }
-
-  stream.updated_at = new Date().toISOString()
-  saveIndex(repoRoot, index)
-
-  return stream
-}
 
 // ============================================
 // FULL APPROVAL CHECK
 // ============================================
 
-/**
- * Check if all 3 approvals are complete (plan, tasks, prompts)
- */
 export function isFullyApproved(stream: StreamMetadata): boolean {
   return (
     getApprovalStatus(stream) === "approved" &&
-    getTasksApprovalStatus(stream) === "approved" &&
-    getPromptsApprovalStatus(stream) === "approved"
+    getTasksApprovalStatus(stream) === "approved"
   )
 }
 
@@ -736,13 +560,11 @@ export function isFullyApproved(stream: StreamMetadata): boolean {
 export function getFullApprovalStatus(stream: StreamMetadata): {
   plan: ApprovalStatus
   tasks: ApprovalStatus
-  prompts: ApprovalStatus
   fullyApproved: boolean
 } {
   return {
     plan: getApprovalStatus(stream),
     tasks: getTasksApprovalStatus(stream),
-    prompts: getPromptsApprovalStatus(stream),
     fullyApproved: isFullyApproved(stream),
   }
 }

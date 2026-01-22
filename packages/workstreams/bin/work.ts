@@ -45,6 +45,7 @@ import { main as approveMain } from "../src/cli/approve.ts"
 import { main as continueMain } from "../src/cli/continue.ts"
 import { main as contextMain } from "../src/cli/context.ts"
 import { main as fixMain } from "../src/cli/fix.ts"
+import { main as addStageMain } from "../src/cli/add-stage.ts"
 import { main as tasksMain } from "../src/cli/tasks.ts"
 import { main as agentsMain } from "../src/cli/agents.ts"
 import { main as assignMain } from "../src/cli/assign.ts"
@@ -60,6 +61,7 @@ import { main as multiGridMain } from "../src/cli/multi-grid.ts"
 import { main as treeMain } from "../src/cli/tree.ts"
 import { main as githubMain } from "../src/cli/github.ts"
 import { main as startMain } from "../src/cli/start.ts"
+import { main as sessionMain } from "../src/cli/session.ts"
 
 // Lazy loader for serve command (has JSX/React dependency)
 const serveMain = async (argv: string[]) => {
@@ -74,6 +76,7 @@ const SUBCOMMANDS = {
   continue: continueMain,
   context: contextMain,
   fix: fixMain,
+  "add-stage": addStageMain,
   approve: approveMain,
   start: startMain,
   status: statusMain,
@@ -108,6 +111,7 @@ const SUBCOMMANDS = {
   serve: serveMain,
   tree: treeMain,
   github: githubMain,
+  session: sessionMain,
 } as const
 
 type Subcommand = keyof typeof SUBCOMMANDS
@@ -125,8 +129,8 @@ Commands:
   current     Get or set the current workstream
   continue    Continue execution (alias for 'work multi --continue')
   context     Show workstream context and resume information
-  fix         Append a fix stage to a workstream
-  fix         Append a fix stage to a workstream
+  add stage   Append a fix stage to a workstream
+  fix         (DEPRECATED) Use 'add stage' instead
   approve     Approve workstream plan/tasks/prompts (subcommands: plan, tasks, prompts)
   start       Start execution (requires all approvals, creates GitHub branch/issues)
   agents      Manage agent definitions (list, add, remove)
@@ -159,6 +163,7 @@ Commands:
   serve       Launch web visualization server
   tree        Show workstream structure tree
   github      Manage GitHub integration (enable, create-branch, etc.)
+  session     Manage agent sessions (complete stale sessions)
 
 Options:
   --help, -h    Show this help message
@@ -214,8 +219,17 @@ export function main(argv?: string[]): void {
     process.exit(0)
   }
 
+  // Handle multi-word command aliases (e.g., "add stage" -> "add-stage")
+  let subcommand: string = firstArg
+  let remainingArgs = args.slice(1)
+  
+  if (firstArg === "add" && args[1] === "stage") {
+    subcommand = "add-stage"
+    remainingArgs = args.slice(2)
+  }
+
   // Check if it's a valid subcommand
-  if (!(firstArg in SUBCOMMANDS)) {
+  if (!(subcommand in SUBCOMMANDS)) {
     console.error(`Error: Unknown command "${firstArg}"`)
     console.error(
       "\nAvailable commands: " + Object.keys(SUBCOMMANDS).join(", "),
@@ -226,10 +240,10 @@ export function main(argv?: string[]): void {
 
   // Call the subcommand with adjusted argv
   // We pass [node, work-subcommand, ...rest] to match expected argv format
-  const subcommand = firstArg as Subcommand
-  const subcommandArgs = ["bun", `work-${subcommand}`, ...args.slice(1)]
+  const subcommandTyped = subcommand as Subcommand
+  const subcommandArgs = ["bun", `work-${subcommand}`, ...remainingArgs]
 
-  SUBCOMMANDS[subcommand](subcommandArgs)
+  SUBCOMMANDS[subcommandTyped](subcommandArgs)
 }
 
 // Run if called directly

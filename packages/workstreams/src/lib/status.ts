@@ -202,12 +202,195 @@ function formatApprovalIcon(status: ApprovalStatus): string {
 }
 
 /**
+ * Format session status as icon
+ */
+function formatSessionStatusIcon(status: string): string {
+  switch (status) {
+    case "completed":
+      return "✓"
+    case "failed":
+      return "✗"
+    case "running":
+      return "▶"
+    case "interrupted":
+      return "⏸"
+    default:
+      return "?"
+  }
+}
+
+/**
+ * Format detailed session history for console output
+ */
+export function formatSessionHistory(
+  repoRoot: string,
+  streamId: string,
+  progress: StreamProgress
+): string {
+  const tasks = getTasks(repoRoot, streamId)
+  const lines: string[] = []
+  const bar = "=".repeat(80)
+  
+  lines.push(`\n${bar}`)
+  lines.push(`SESSION HISTORY: ${streamId}`)
+  lines.push(bar)
+  
+  for (const stage of progress.stages) {
+    const stagePrefix = `${stage.number.toString().padStart(2, "0")}.`
+    const stageTasks = tasks.filter(t => t.id.startsWith(stagePrefix))
+    
+    // Group by thread
+    const threadMap = new Map<string, typeof tasks>()
+    for (const task of stageTasks) {
+      const parts = task.id.split(".")
+      if (parts.length < 3) continue
+      const threadId = parts.slice(0, 3).join(".")
+      
+      if (!threadMap.has(threadId)) {
+        threadMap.set(threadId, [])
+      }
+      threadMap.get(threadId)!.push(task)
+    }
+    
+    // Display each thread's session history
+    for (const [threadId, threadTasks] of threadMap) {
+      const firstTask = threadTasks[0]
+      if (!firstTask) continue
+      
+      // Count total sessions across all tasks in thread
+      const allSessions = threadTasks.flatMap(t => t.sessions || [])
+      if (allSessions.length === 0) continue
+      
+      lines.push(`\n${stage.title} - ${firstTask.thread_name} (${threadId})`)
+      lines.push("-".repeat(80))
+      
+      // Show session details
+      for (let i = 0; i < allSessions.length; i++) {
+        const session = allSessions[i]!
+        const statusIcon = formatSessionStatusIcon(session.status)
+        const duration = session.completedAt 
+          ? `${Math.round((new Date(session.completedAt).getTime() - new Date(session.startedAt).getTime()) / 60000)}m`
+          : "ongoing"
+        
+        const exitInfo = session.exitCode !== undefined ? ` (exit: ${session.exitCode})` : ""
+        
+        lines.push(
+          `  ${i + 1}. ${statusIcon} ${session.status.padEnd(12)} | ${session.agentName.padEnd(20)} | ${session.model.padEnd(30)} | ${duration}${exitInfo}`
+        )
+        lines.push(`     Started: ${new Date(session.startedAt).toLocaleString()}`)
+        if (session.completedAt) {
+          lines.push(`     Ended:   ${new Date(session.completedAt).toLocaleString()}`)
+        }
+      }
+    }
+  }
+  
+  lines.push(`\n${bar}\n`)
+  return lines.join("\n")
+}
+
+/**
+ * Get thread information from tasks including session data
+ */
+export interface ThreadInfo {
+  threadId: string
+  threadName: string
+  sessionCount: number
+  lastSessionStatus?: string
+  hasRunningSession: boolean
+  isResumable: boolean
+}
+
+/**
+ * Extract thread information grouped by thread ID
+ */
+export function getThreadInfo(tasks: ParsedTask[]): Map<string, ThreadInfo> {
+  const threadsMap = new Map<string, ThreadInfo>()
+  
+  // Group tasks by thread (first 3 parts of ID: stage.batch.thread)
+  for (const task of tasks) {
+    const parts = task.id.split(".")
+    if (parts.length < 3) continue
+    
+    const threadId = parts.slice(0, 3).join(".")
+    
+    if (!threadsMap.has(threadId)) {
+      threadsMap.set(threadId, {
+        threadId,
+        threadName: "(unknown)",
+        sessionCount: 0,
+        hasRunningSession: false,
+        isResumable: false
+      })
+    }
+  }
+  
+  return threadsMap
+}
+
+/**
+ * Get thread information with session data from full Task objects
+ */
+export function getThreadInfoWithSessions(repoRoot: string, streamId: string, stageNumber: number): Map<string, ThreadInfo> {
+  const tasks = getTasks(repoRoot, streamId)
+  const stagePrefix = `${stageNumber.toString().padStart(2, "0")}.`
+  const stageTasks = tasks.filter(t => t.id.startsWith(stagePrefix))
+  
+  const threadsMap = new Map<string, ThreadInfo>()
+  
+  for (const task of stageTasks) {
+    const parts = task.id.split(".")
+    if (parts.length < 3) continue
+    
+    const threadId = parts.slice(0, 3).join(".")
+    
+    if (!threadsMap.has(threadId)) {
+      threadsMap.set(threadId, {
+        threadId,
+        threadName: task.thread_name,
+        sessionCount: 0,
+        hasRunningSession: false,
+        isResumable: false
+      })
+    }
+    
+    const threadInfo = threadsMap.get(threadId)!
+    
+    // Count sessions
+    if (task.sessions) {
+      threadInfo.sessionCount += task.sessions.length
+      
+      // Check for running sessions
+      const hasRunning = task.sessions.some(s => s.status === "running")
+      if (hasRunning) {
+        threadInfo.hasRunningSession = true
+      }
+      
+      // Check last session status
+      if (task.sessions.length > 0) {
+        const lastSession = task.sessions[task.sessions.length - 1]
+        threadInfo.lastSessionStatus = lastSession!.status
+        
+        // Thread is resumable if last session was interrupted or failed and not all tasks are complete
+        if ((lastSession!.status === "interrupted" || lastSession!.status === "failed") && 
+            task.status !== "completed") {
+          threadInfo.isResumable = true
+        }
+      }
+    }
+  }
+  
+  return threadsMap
+}
+
+/**
  * Format progress for console output
  */
 export function formatProgress(
   progress: StreamProgress,
   streamStatus?: StreamStatus,
-  stream?: StreamMetadata
+  stream?: StreamMetadata,
+  repoRoot?: string
 ): string {
   const lines: string[] = []
   const bar = "-".repeat(50)
@@ -240,7 +423,7 @@ export function formatProgress(
 
   lines.push(`+${bar}+`)
 
-  // Stage details
+  // Stage details with thread-level session info
   for (const stage of progress.stages) {
     const statusIcon =
       stage.status === "complete"
@@ -266,8 +449,27 @@ export function formatProgress(
       approvalDisplay = ` ${formatApprovalIcon(stageApproval)}`
     }
 
+    // Get thread info with sessions if repoRoot is provided
+    let sessionSummary = ""
+    if (repoRoot && stream) {
+      const threadInfoMap = getThreadInfoWithSessions(repoRoot, stream.id, stage.number)
+      const threadInfoList = Array.from(threadInfoMap.values())
+      
+      const totalSessions = threadInfoList.reduce((sum, t) => sum + t.sessionCount, 0)
+      const runningCount = threadInfoList.filter(t => t.hasRunningSession).length
+      const resumableCount = threadInfoList.filter(t => t.isResumable).length
+      
+      if (totalSessions > 0) {
+        const indicators: string[] = []
+        indicators.push(`${totalSessions}s`)
+        if (runningCount > 0) indicators.push(`${runningCount}▶`)
+        if (resumableCount > 0) indicators.push(`${resumableCount}⟲`)
+        sessionSummary = ` [${indicators.join(" ")}]`
+      }
+    }
+
     lines.push(
-      `| ${statusIcon} Stage ${stageNumPadded}: ${stageTitle} (${completedCount}/${taskCount})${approvalDisplay}`.padEnd(
+      `| ${statusIcon} Stage ${stageNumPadded}: ${stageTitle} (${completedCount}/${taskCount})${sessionSummary}${approvalDisplay}`.padEnd(
         51
       ) + "|"
     )

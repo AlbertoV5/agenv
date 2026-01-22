@@ -7,19 +7,20 @@
  */
 
 import { join } from "path"
-import { existsSync, readFileSync } from "fs"
+import { existsSync } from "fs"
 import { getRepoRoot, getWorkDir } from "../lib/repo.ts"
 import { loadIndex, getResolvedStream } from "../lib/index.ts"
 import { loadAgentsConfig, getAgentModels } from "../lib/agents-yaml.ts"
-import { readTasksFile, parseTaskId } from "../lib/tasks.ts"
-import { parseStreamDocument } from "../lib/stream-parser.ts"
-import type {
-  StreamDocument,
-  BatchDefinition,
-  StageDefinition,
-  ThreadDefinition,
-  NormalizedModelSpec,
-} from "../lib/types.ts"
+import {
+  readTasksFile,
+  parseTaskId,
+  generateSessionId,
+  startMultipleSessionsLocked,
+  completeMultipleSessionsLocked,
+  discoverThreadsInBatch,
+  getBatchMetadata,
+} from "../lib/tasks.ts"
+import type { NormalizedModelSpec } from "../lib/types.ts"
 import { MAX_THREADS_PER_BATCH } from "../lib/types.ts"
 import {
   sessionExists,
@@ -35,7 +36,11 @@ import {
   setGlobalOption,
   createGridLayout,
   listPaneIds,
+  getSessionPaneStatuses,
+  waitForAllPanesExit,
+  setPaneTitle,
   THREAD_START_DELAY_MS,
+  type PaneStatus,
 } from "../lib/tmux.ts"
 import { getStageApprovalStatus } from "../lib/approval.ts"
 import {
@@ -71,6 +76,21 @@ interface ThreadInfo {
     url: string
     state: "open" | "closed"
   }
+  // Session tracking (populated before spawn)
+  sessionId?: string
+  firstTaskId?: string // First task in thread (for session tracking)
+}
+
+/**
+ * Mapping of thread sessions to pane IDs
+ * Used to track which pane is running which thread's session
+ */
+interface ThreadSessionMap {
+  threadId: string
+  sessionId: string
+  taskId: string // First task in thread
+  paneId: string
+  windowIndex: number
 }
 
 function printHelp(): void {
@@ -247,49 +267,36 @@ export function findNextIncompleteBatch(tasks: Task[]): string | null {
   return null
 }
 
-/**
- * Find a batch in the parsed stream document
- */
-function findBatch(
-  doc: StreamDocument,
-  stageNum: number,
-  batchNum: number,
-): { stage: StageDefinition; batch: BatchDefinition } | null {
-  const stage = doc.stages.find((s) => s.id === stageNum)
-  if (!stage) return null
 
-  const batch = stage.batches.find((b) => b.id === batchNum)
-  if (!batch) return null
-
-  return { stage, batch }
-}
 
 /**
- * Build the prompt file path for a thread
+ * Build the prompt file path for a thread using metadata strings
+ * Used when discovering threads from tasks.json instead of PLAN.md
  */
-function getPromptFilePath(
+function getPromptFilePathFromMetadata(
   repoRoot: string,
   streamId: string,
-  stage: StageDefinition,
-  batch: BatchDefinition,
-  thread: ThreadDefinition,
+  stageNum: number,
+  stageName: string,
+  batchNum: number,
+  batchName: string,
+  threadName: string,
 ): string {
   const workDir = getWorkDir(repoRoot)
 
-  const safeStageName = stage.name.replace(/[^a-zA-Z0-9_-]/g, "-").toLowerCase()
-  const safeBatchName = batch.name.replace(/[^a-zA-Z0-9_-]/g, "-").toLowerCase()
-  const safeThreadName = thread.name
-    .replace(/[^a-zA-Z0-9_-]/g, "-")
-    .toLowerCase()
+  const safeStageName = stageName.replace(/[^a-zA-Z0-9_-]/g, "-").toLowerCase()
+  const safeBatchName = batchName.replace(/[^a-zA-Z0-9_-]/g, "-").toLowerCase()
+  const safeThreadName = threadName.replace(/[^a-zA-Z0-9_-]/g, "-").toLowerCase()
 
-  const stagePrefix = stage.id.toString().padStart(2, "0")
+  const stagePrefix = stageNum.toString().padStart(2, "0")
+  const batchPrefix = batchNum.toString().padStart(2, "0")
 
   return join(
     workDir,
     streamId,
     "prompts",
     `${stagePrefix}-${safeStageName}`,
-    `${batch.prefix}-${safeBatchName}`,
+    `${batchPrefix}-${safeBatchName}`,
     `${safeThreadName}.md`,
   )
 }
@@ -305,133 +312,64 @@ function buildPaneTitle(threadInfo: ThreadInfo): string {
 }
 
 /**
- * Get the assigned agent name for a thread from tasks.json
- * Looks at the first task in the thread
+ * Collect thread information from tasks.json (not PLAN.md)
+ * Discovers threads dynamically from tasks, including dynamically added ones
  */
-function getThreadAssignedAgent(
+function collectThreadInfoFromTasks(
   repoRoot: string,
   streamId: string,
   stageNum: number,
   batchNum: number,
-  threadNum: number,
-): string | undefined {
-  const tasksFile = readTasksFile(repoRoot, streamId)
-  if (!tasksFile) return undefined
-
-  // Find first task in this thread that has an assigned agent
-  for (const task of tasksFile.tasks) {
-    try {
-      const parsed = parseTaskId(task.id)
-      if (
-        parsed.stage === stageNum &&
-        parsed.batch === batchNum &&
-        parsed.thread === threadNum
-      ) {
-        if (task.assigned_agent) {
-          return task.assigned_agent
-        }
-      }
-    } catch {
-      // Skip invalid task IDs
-    }
-  }
-
-  return undefined
-}
-
-/**
- * Collect thread information for all threads in a batch
- */
-function collectThreadInfo(
-  repoRoot: string,
-  streamId: string,
-  doc: StreamDocument,
-  stage: StageDefinition,
-  batch: BatchDefinition,
   agentsConfig: ReturnType<typeof loadAgentsConfig>,
 ): ThreadInfo[] {
+  const discoveredThreads = discoverThreadsInBatch(repoRoot, streamId, stageNum, batchNum)
+  if (!discoveredThreads || discoveredThreads.length === 0) {
+    return []
+  }
+
   const threads: ThreadInfo[] = []
 
-  // Load tasks file to get github_issue metadata
-  const tasksFile = readTasksFile(repoRoot, streamId)
-
-  for (const thread of batch.threads) {
-    const stageNum = stage.id
-    const batchNum = batch.id
-    const threadNum = thread.id
-
-    const threadId = [
-      stageNum.toString().padStart(2, "0"),
-      batchNum.toString().padStart(2, "0"),
-      threadNum.toString().padStart(2, "0"),
-    ].join(".")
-
-    // Get prompt path
-    const promptPath = getPromptFilePath(
+  for (const discovered of discoveredThreads) {
+    // Get prompt path from task metadata
+    const promptPath = getPromptFilePathFromMetadata(
       repoRoot,
       streamId,
-      stage,
-      batch,
-      thread,
+      discovered.stageNum,
+      discovered.stageName,
+      discovered.batchNum,
+      discovered.batchName,
+      discovered.threadName,
     )
 
-    // Get agent
-    let agentName = getThreadAssignedAgent(
-      repoRoot,
-      streamId,
-      stageNum,
-      batchNum,
-      threadNum,
-    )
-    if (!agentName) {
-      agentName = "default"
-    }
+    // Get agent (from task or default)
+    const agentName = discovered.assignedAgent || "default"
 
     // Get models from agent (for retry logic)
     const models = getAgentModels(agentsConfig!, agentName)
     if (models.length === 0) {
       console.error(
-        `Error: Agent "${agentName}" not found in agents.yaml (referenced in thread ${threadId})`,
+        `Error: Agent "${agentName}" not found in agents.yaml (referenced in thread ${discovered.threadId})`,
       )
       process.exit(1)
     }
 
-    // Get github_issue from first task in this thread
-    let githubIssue: ThreadInfo["githubIssue"] = undefined
-    if (tasksFile) {
-      for (const task of tasksFile.tasks) {
-        try {
-          const parsed = parseTaskId(task.id)
-          if (
-            parsed.stage === stageNum &&
-            parsed.batch === batchNum &&
-            parsed.thread === threadNum
-          ) {
-            if (task.github_issue) {
-              githubIssue = task.github_issue
-              break
-            }
-          }
-        } catch {
-          // Skip invalid task IDs
-        }
-      }
-    }
-
     threads.push({
-      threadId,
-      threadName: thread.name,
-      stageName: stage.name,
-      batchName: batch.name,
+      threadId: discovered.threadId,
+      threadName: discovered.threadName,
+      stageName: discovered.stageName,
+      batchName: discovered.batchName,
       promptPath,
       models,
       agentName,
-      githubIssue,
+      githubIssue: discovered.githubIssue,
+      firstTaskId: discovered.firstTaskId,
     })
   }
 
   return threads
 }
+
+
 
 export async function main(argv: string[] = process.argv): Promise<void> {
   const cliArgs = parseCliArgs(argv)
@@ -525,62 +463,6 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     }
   }
 
-  // Load and parse PLAN.md
-  const workDir = getWorkDir(repoRoot)
-  const planPath = join(workDir, stream.id, "PLAN.md")
-
-  if (!existsSync(planPath)) {
-    console.error(`Error: PLAN.md not found for stream ${stream.id}`)
-    process.exit(1)
-  }
-
-  const planContent = readFileSync(planPath, "utf-8")
-  const errors: { message: string }[] = []
-  const doc = parseStreamDocument(planContent, errors)
-
-  if (!doc) {
-    console.error("Error: Could not parse PLAN.md")
-    if (errors.length > 0) {
-      for (const err of errors) {
-        console.error(`  - ${err.message}`)
-      }
-    }
-    process.exit(1)
-  }
-
-  // Find the batch
-  const batchResult = findBatch(doc, batchParsed.stage, batchParsed.batch)
-  if (!batchResult) {
-    console.error(
-      `Error: Batch ${cliArgs.batch} not found in stream ${stream.id}`,
-    )
-    console.error("\nAvailable batches:")
-    for (const stage of doc.stages) {
-      for (const batch of stage.batches) {
-        const batchId = `${stage.id.toString().padStart(2, "0")}.${batch.id.toString().padStart(2, "0")}`
-        console.error(`  ${batchId}: ${stage.name} / ${batch.name}`)
-      }
-    }
-    process.exit(1)
-  }
-
-  const { stage, batch } = batchResult
-
-  if (batch.threads.length === 0) {
-    console.error(`Error: Batch ${cliArgs.batch} has no threads`)
-    process.exit(1)
-  }
-
-  if (batch.threads.length > MAX_THREADS_PER_BATCH) {
-    console.error(
-      `Error: Batch has ${batch.threads.length} threads, but max is ${MAX_THREADS_PER_BATCH}`,
-    )
-    console.error(
-      `\\nHint: Split this batch into smaller batches or increase MAX_THREADS_PER_BATCH.`,
-    )
-    process.exit(1)
-  }
-
   // Load agents config
   const agentsConfig = loadAgentsConfig(repoRoot)
   if (!agentsConfig) {
@@ -588,15 +470,36 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     process.exit(1)
   }
 
-  // Collect thread information
-  const threads = collectThreadInfo(
+  // Discover threads from tasks.json (not PLAN.md)
+  // This ensures dynamically added tasks/threads are included
+  const threads = collectThreadInfoFromTasks(
     repoRoot,
     stream.id,
-    doc,
-    stage,
-    batch,
+    batchParsed.stage,
+    batchParsed.batch,
     agentsConfig,
   )
+
+  if (threads.length === 0) {
+    console.error(`Error: No tasks found for batch ${batchId} in stream ${stream.id}`)
+    console.error(`\nHint: Make sure tasks.json has tasks for this batch.`)
+    process.exit(1)
+  }
+
+  if (threads.length > MAX_THREADS_PER_BATCH) {
+    console.error(
+      `Error: Batch has ${threads.length} threads, but max is ${MAX_THREADS_PER_BATCH}`,
+    )
+    console.error(
+      `\nHint: Split this batch into smaller batches or increase MAX_THREADS_PER_BATCH.`,
+    )
+    process.exit(1)
+  }
+
+  // Get batch metadata for display (stage/batch names)
+  const batchMeta = getBatchMetadata(repoRoot, stream.id, batchParsed.stage, batchParsed.batch)
+  const stageName = batchMeta?.stageName || `Stage ${batchParsed.stage}`
+  const batchName = batchMeta?.batchName || `Batch ${batchParsed.batch}`
 
   // Check all prompts exist
   const missingPrompts: string[] = []
@@ -624,7 +527,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
   if (cliArgs.dryRun) {
     console.log("=== DRY RUN ===\n")
     console.log(`Stream: ${stream.id}`)
-    console.log(`Batch: ${batchId} (${stage.name} -> ${batch.name})`)
+    console.log(`Batch: ${batchId} (${stageName} -> ${batchName})`)
     console.log(`Threads: ${threads.length}`)
     console.log(`Session: ${sessionName}`)
     console.log(`Port: ${port}`)
@@ -699,6 +602,30 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     process.exit(1)
   }
 
+  // Generate session IDs for each thread before spawning
+  console.log("Generating session IDs for thread tracking...")
+  for (const thread of threads) {
+    thread.sessionId = generateSessionId()
+  }
+
+  // Start sessions in tasks.json (atomically, with locking)
+  const sessionsToStart = threads
+    .filter((t) => t.firstTaskId && t.sessionId)
+    .map((t) => ({
+      taskId: t.firstTaskId!,
+      agentName: t.agentName,
+      model: t.models[0]?.model || "unknown",
+      sessionId: t.sessionId!,
+    }))
+
+  if (sessionsToStart.length > 0) {
+    console.log(`Starting ${sessionsToStart.length} sessions in tasks.json...`)
+    await startMultipleSessionsLocked(repoRoot, stream.id, sessionsToStart)
+  }
+
+  // Track pane IDs for each thread (populated after spawn)
+  const threadSessionMap: ThreadSessionMap[] = []
+
   // Start opencode serve if needed
   if (!cliArgs.noServer) {
     const serverRunning = await isServerRunning(port)
@@ -764,6 +691,21 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     createGridLayout(`${sessionName}:0`, gridCommands)
   }
 
+  // Capture pane IDs for threads in grid (window 0)
+  const gridPaneIds = listPaneIds(`${sessionName}:0`)
+  for (let i = 0; i < Math.min(4, threads.length); i++) {
+    const thread = threads[i]!
+    if (thread.sessionId && thread.firstTaskId && gridPaneIds[i]) {
+      threadSessionMap.push({
+        threadId: thread.threadId,
+        sessionId: thread.sessionId,
+        taskId: thread.firstTaskId,
+        paneId: gridPaneIds[i]!,
+        windowIndex: 0,
+      })
+    }
+  }
+
   // Create hidden windows for threads 5+ (used by pagination)
   if (threads.length > 4) {
     console.log("  Creating hidden windows for pagination...")
@@ -779,8 +721,22 @@ export async function main(argv: string[] = process.argv): Promise<void> {
       addWindow(sessionName, windowName, cmd)
       console.log(`  Hidden: ${windowName} - ${thread.threadName}`)
       Bun.sleepSync(THREAD_START_DELAY_MS)
+
+      // Capture pane ID for hidden window thread
+      const windowPaneIds = listPaneIds(`${sessionName}:${windowName}`)
+      if (thread.sessionId && thread.firstTaskId && windowPaneIds[0]) {
+        threadSessionMap.push({
+          threadId: thread.threadId,
+          sessionId: thread.sessionId,
+          taskId: thread.firstTaskId,
+          paneId: windowPaneIds[0]!,
+          windowIndex: i - 3, // Hidden windows start at index 1
+        })
+      }
     }
   }
+
+  console.log(`  Tracking ${threadSessionMap.length} thread sessions`)
 
   // Add status bar at bottom for grid controller (if >4 threads for pagination)
   if (threads.length > 4) {
@@ -828,10 +784,53 @@ Layout: ${threads.length <= 4 ? "2x2 Grid (all visible)" : `2x2 Grid with pagina
   // Attach to session (this takes over the terminal)
   const child = attachSession(sessionName)
 
-  child.on("close", (code) => {
+  child.on("close", async (code) => {
     console.log(
-      `\nSession ended. Windows remain in tmux session "${sessionName}".`,
+      `\nSession detached. Checking thread statuses...`,
     )
+
+    // Update session statuses based on pane exit codes
+    if (threadSessionMap.length > 0 && sessionExists(sessionName)) {
+      const paneStatuses = getSessionPaneStatuses(sessionName)
+      const completions: Array<{
+        taskId: string
+        sessionId: string
+        status: "completed" | "failed" | "interrupted"
+        exitCode?: number
+      }> = []
+
+      for (const mapping of threadSessionMap) {
+        const paneStatus = paneStatuses.find((p) => p.paneId === mapping.paneId)
+        if (paneStatus && paneStatus.paneDead) {
+          const exitCode = paneStatus.exitStatus ?? undefined
+          const status = exitCode === 0 ? "completed" : "failed"
+          completions.push({
+            taskId: mapping.taskId,
+            sessionId: mapping.sessionId,
+            status,
+            exitCode,
+          })
+          console.log(`  Thread ${mapping.threadId}: ${status}${exitCode !== undefined ? ` (exit ${exitCode})` : ""}`)
+        } else if (paneStatus && !paneStatus.paneDead) {
+          console.log(`  Thread ${mapping.threadId}: still running`)
+        } else {
+          // Pane not found - mark as interrupted
+          completions.push({
+            taskId: mapping.taskId,
+            sessionId: mapping.sessionId,
+            status: "interrupted",
+          })
+          console.log(`  Thread ${mapping.threadId}: interrupted (pane not found)`)
+        }
+      }
+
+      if (completions.length > 0) {
+        console.log(`\nUpdating ${completions.length} session statuses in tasks.json...`)
+        await completeMultipleSessionsLocked(repoRoot, stream.id, completions)
+      }
+    }
+
+    console.log(`\nWindows remain in tmux session "${sessionName}".`)
     console.log(`To reattach: tmux attach -t "${sessionName}"`)
     console.log(`To kill: tmux kill-session -t "${sessionName}"`)
     process.exit(code ?? 0)
