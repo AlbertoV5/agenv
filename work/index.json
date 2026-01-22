@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-01-22T16:30:47.816Z",
+  "last_updated": "2026-01-22T16:30:54.101Z",
   "current_stream": "003-stage-commit-tracking",
   "streams": [
     {
@@ -150,7 +150,7 @@
         ]
       },
       "created_at": "2026-01-22T14:08:34.163Z",
-      "updated_at": "2026-01-22T16:30:47.816Z",
+      "updated_at": "2026-01-22T16:30:54.101Z",
       "path": "work/003-stage-commit-tracking",
       "generated_by": {
         "workstreams": "0.1.0"
@@ -185,8 +185,10 @@
         }
       },
       "github": {
-        "branch": "workstream/003-stage-commit-tracking"
-      }
+        "branch": "workstream/003-stage-commit-tracking",
+        "completed_at": "2026-01-22T16:30:54.100Z"
+      },
+      "status": "completed"
     }
   ]
 }
