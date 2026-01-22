@@ -6,38 +6,42 @@ import { existsSync, mkdirSync, writeFileSync } from "fs"
 import { join } from "path"
 import { getRepoRoot, getWorkDir, getIndexPath } from "../lib/repo.ts"
 import { getOrCreateIndex, saveIndex } from "../lib/index.ts"
-import { getAgentsMdPath } from "../lib/agents.ts"
+import { getAgentsYamlPath } from "../lib/agents-yaml.ts"
 import { saveGitHubConfig, getGitHubConfigPath } from "../lib/github/config.ts"
 import { DEFAULT_GITHUB_CONFIG } from "../lib/github/types.ts"
 
-const DEFAULT_AGENTS_MD = `# Agents
+const DEFAULT_AGENTS_YAML = `agents:
+  - name: default
+    description: General-purpose implementation agent.
+    best_for: Standard development tasks.
+    models:
+      - anthropic/claude-sonnet-4-5
+      - openrouter/anthropic/claude-sonnet-4.5
 
-## Agent Definitions
+  - name: frontend-speedster
+    description: Very efficient and effective frontend coder.
+    best_for: Straight-forward frontend tasks.
+    models:
+      - openrouter/google/gemini-3-flash-preview
 
-### default
-**Description:** General-purpose implementation agent.
-**Best for:** Standard development tasks.
-**Model:** anthropic/claude-sonnet-4-5
+  - name: systems-engineer
+    description: Good for complex multi-faceted work.
+    best_for: Architecture, complex systems, solving engineering problems.
+    models:
+      - anthropic/claude-opus-4-5
+      - openrouter/anthropic/claude-opus-4.5
 
-### frontend-speedster
-**Description:** Very efficient and effective frontend coder.
-**Best for:** Straight-forward frontend tasks.
-**Model:** openrouter/google/gemini-3-flash-preview
+  - name: code-reviewer
+    description: Specialized on code analysis.
+    best_for: Debugging, testing, code reviews.
+    models:
+      - openrouter/openai/gpt-5.2-codex
 
-### systems-engineer
-**Description:** Good for complex multi-faceted work.
-**Best for:** Architecture, complex systems, solving engineering problems.
-**Model:** anthropic/claude-opus-4-5
-
-### code-reviewer
-**Description:** Specialized on code analysis.
-**Best for:** Debugging, testing, code reviews.
-**Model:** openrouter/openai/gpt-5.2-codex
-
-### documentation-minimalist
-**Description:** Model that creates short and sweet docs.
-**Best for:** Documentation, reviews.
-**Model:** openrouter/google/gemini-3-pro-preview
+  - name: documentation-minimalist
+    description: Model that creates short and sweet docs.
+    best_for: Documentation, reviews.
+    models:
+      - openrouter/google/gemini-3-pro-preview
 `
 
 function printHelp(): void {
@@ -99,15 +103,15 @@ export async function main(argv: string[]): Promise<void> {
       console.log("index.json already exists, skipping.")
     }
 
-    // 3. Initialize AGENTS.md
-    const agentsPath = getAgentsMdPath(repoRoot)
+    // 3. Initialize agents.yaml
+    const agentsPath = getAgentsYamlPath(repoRoot)
     if (!existsSync(agentsPath) || force) {
       console.log(
-        `${force && existsSync(agentsPath) ? "Overwriting" : "Initializing"} AGENTS.md...`,
+        `${force && existsSync(agentsPath) ? "Overwriting" : "Initializing"} agents.yaml...`,
       )
-      writeFileSync(agentsPath, DEFAULT_AGENTS_MD, "utf-8")
+      writeFileSync(agentsPath, DEFAULT_AGENTS_YAML, "utf-8")
     } else {
-      console.log("AGENTS.md already exists, skipping.")
+      console.log("agents.yaml already exists, skipping.")
     }
 
     console.log("\nInitialization complete.")

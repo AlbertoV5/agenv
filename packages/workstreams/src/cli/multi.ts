@@ -10,10 +10,10 @@ import { join } from "path"
 import { existsSync, readFileSync } from "fs"
 import { getRepoRoot, getWorkDir } from "../lib/repo.ts"
 import { loadIndex, getResolvedStream } from "../lib/index.ts"
-import { getAgentsConfig, getAgent } from "../lib/agents.ts"
+import { loadAgentsConfig, getAgentModels } from "../lib/agents-yaml.ts"
 import { readTasksFile, parseTaskId } from "../lib/tasks.ts"
 import { parseStreamDocument } from "../lib/stream-parser.ts"
-import type { StreamDocument, BatchDefinition, StageDefinition, ThreadDefinition } from "../lib/types.ts"
+import type { StreamDocument, BatchDefinition, StageDefinition, ThreadDefinition, NormalizedModelSpec } from "../lib/types.ts"
 import { MAX_THREADS_PER_BATCH } from "../lib/types.ts"
 import {
     sessionExists,
@@ -35,7 +35,7 @@ import {
     isServerRunning,
     startServer,
     waitForServer,
-    buildRunCommand,
+    buildRetryRunCommand,
     buildServeCommand,
 } from "../lib/opencode.ts"
 
@@ -57,7 +57,7 @@ interface ThreadInfo {
     stageName: string
     batchName: string
     promptPath: string
-    model: string
+    models: NormalizedModelSpec[] // List of models to try in order
     agentName: string
     githubIssue?: {
         number: number
@@ -337,10 +337,10 @@ function collectThreadInfo(
     doc: StreamDocument,
     stage: StageDefinition,
     batch: BatchDefinition,
-    agentsConfig: ReturnType<typeof getAgentsConfig>
+    agentsConfig: ReturnType<typeof loadAgentsConfig>
 ): ThreadInfo[] {
     const threads: ThreadInfo[] = []
-    
+
     // Load tasks file to get github_issue metadata
     const tasksFile = readTasksFile(repoRoot, streamId)
 
@@ -364,14 +364,13 @@ function collectThreadInfo(
             agentName = "default"
         }
 
-        // Get model from agent
-        const agent = getAgent(agentsConfig!, agentName)
-        if (!agent) {
-            console.error(`Error: Agent "${agentName}" not found in AGENTS.md (referenced in thread ${threadId})`)
+        // Get models from agent (for retry logic)
+        const models = getAgentModels(agentsConfig!, agentName)
+        if (models.length === 0) {
+            console.error(`Error: Agent "${agentName}" not found in agents.yaml (referenced in thread ${threadId})`)
             process.exit(1)
         }
-        const model = agent.model
-        
+
         // Get github_issue from first task in this thread
         let githubIssue: ThreadInfo["githubIssue"] = undefined
         if (tasksFile) {
@@ -400,7 +399,7 @@ function collectThreadInfo(
             stageName: stage.name,
             batchName: batch.name,
             promptPath,
-            model,
+            models,
             agentName,
             githubIssue,
         })
@@ -544,9 +543,9 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     }
 
     // Load agents config
-    const agentsConfig = getAgentsConfig(repoRoot)
+    const agentsConfig = loadAgentsConfig(repoRoot)
     if (!agentsConfig) {
-        console.error("Error: No AGENTS.md found. Run 'work init' to create one.")
+        console.error("Error: No agents.yaml found. Run 'work init' to create one.")
         process.exit(1)
     }
 
@@ -591,7 +590,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
 
         console.log("# Create tmux session (Window 0: Dashboard)")
         const firstThread = threads[0]!
-        const firstCmd = buildRunCommand(port, firstThread.model, firstThread.promptPath, buildPaneTitle(firstThread))
+        const firstCmd = buildRetryRunCommand(port, firstThread.models, firstThread.promptPath, buildPaneTitle(firstThread))
         console.log(buildCreateSessionCommand(sessionName, "Dashboard", firstCmd))
         console.log("")
 
@@ -599,7 +598,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
         if (threads.length > 1) {
             for (let i = 1; i < threads.length; i++) {
                 const thread = threads[i]!
-                const cmd = buildRunCommand(port, thread.model, thread.promptPath, buildPaneTitle(thread))
+                const cmd = buildRetryRunCommand(port, thread.models, thread.promptPath, buildPaneTitle(thread))
                 // Use thread ID as window name
                 console.log(buildAddWindowCommand(sessionName, thread.threadId, cmd))
             }
@@ -619,7 +618,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
         for (const thread of threads) {
             console.log(`\n${thread.threadId}: ${thread.threadName}`)
             console.log(`  Agent: ${thread.agentName}`)
-            console.log(`  Model: ${thread.model}`)
+            console.log(`  Models: ${thread.models.map(m => m.model).join(" → ")}`)
             console.log(`  Prompt: ${thread.promptPath}`)
             if (thread.githubIssue) {
                 console.log(`  Issue: ${thread.githubIssue.url}`)
@@ -667,7 +666,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     // Windows 1+: Hidden windows for threads 5+ (for pagination)
 
     const firstThread = threads[0]!
-    const firstCmd = buildRunCommand(port, firstThread.model, firstThread.promptPath, buildPaneTitle(firstThread))
+    const firstCmd = buildRetryRunCommand(port, firstThread.models, firstThread.promptPath, buildPaneTitle(firstThread))
 
     // Create session with first thread in Window 0
     createSession(sessionName, "Grid", firstCmd)
@@ -683,7 +682,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     const gridCommands = [firstCmd]
     for (let i = 1; i < Math.min(4, threads.length); i++) {
         const thread = threads[i]!
-        const cmd = buildRunCommand(port, thread.model, thread.promptPath, buildPaneTitle(thread))
+        const cmd = buildRetryRunCommand(port, thread.models, thread.promptPath, buildPaneTitle(thread))
         gridCommands.push(cmd)
         console.log(`  Grid: Thread ${i + 1} - ${thread.threadName}`)
     }
@@ -699,7 +698,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
         console.log("  Creating hidden windows for pagination...")
         for (let i = 4; i < threads.length; i++) {
             const thread = threads[i]!
-            const cmd = buildRunCommand(port, thread.model, thread.promptPath, buildPaneTitle(thread))
+            const cmd = buildRetryRunCommand(port, thread.models, thread.promptPath, buildPaneTitle(thread))
             const windowName = `T${i + 1}`
             addWindow(sessionName, windowName, cmd)
             console.log(`  Hidden: ${windowName} - ${thread.threadName}`)
@@ -715,7 +714,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
 
         // Build thread command environment variables for respawn
         const threadCmdEnv = threads.map((t, i) => {
-            const cmd = buildRunCommand(port, t.model, t.promptPath, buildPaneTitle(t))
+            const cmd = buildRetryRunCommand(port, t.models, t.promptPath, buildPaneTitle(t))
             return `THREAD_CMD_${i + 1}="${cmd}"`
         }).join(" ")
 

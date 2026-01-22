@@ -482,3 +482,43 @@ export interface AgentDefinition {
 export interface AgentsConfig {
   agents: AgentDefinition[]
 }
+
+// ============================================
+// YAML-BASED AGENTS CONFIGURATION (agents.yaml)
+// ============================================
+
+/**
+ * Model specification - can be a simple string or object with variant
+ * 
+ * Examples:
+ *   - "anthropic/claude-sonnet-4-5"
+ *   - { model: "google/antigravity-gemini-3-flash", variant: "low" }
+ */
+export type ModelSpec = string | { model: string; variant?: string }
+
+/**
+ * Normalized model specification (always object form)
+ */
+export interface NormalizedModelSpec {
+  model: string
+  variant?: string
+}
+
+/**
+ * Agent definition in agents.yaml format
+ * Supports multiple models per agent for retry logic
+ */
+export interface AgentDefinitionYaml {
+  name: string
+  description: string
+  best_for: string
+  models: ModelSpec[] // List of models to try in order on failure
+}
+
+/**
+ * Root structure of agents.yaml
+ */
+export interface AgentsConfigYaml {
+  agents: AgentDefinitionYaml[]
+}
+

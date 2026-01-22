@@ -9,7 +9,7 @@ import { existsSync, readFileSync } from "fs"
 import { spawn } from "child_process"
 import { getRepoRoot, getWorkDir } from "../lib/repo.ts"
 import { loadIndex, getResolvedStream } from "../lib/index.ts"
-import { getAgentsConfig, getAgent } from "../lib/agents.ts"
+import { loadAgentsConfig, getAgentModels } from "../lib/agents-yaml.ts"
 import { readTasksFile, parseTaskId } from "../lib/tasks.ts"
 import { parseStreamDocument } from "../lib/stream-parser.ts"
 import type { StreamDocument } from "../lib/types.ts"
@@ -367,33 +367,37 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     }
 
     // Get agent config
-    const agentsConfig = getAgentsConfig(repoRoot)
+    const agentsConfig = loadAgentsConfig(repoRoot)
     if (!agentsConfig) {
-        console.error("Error: No AGENTS.md found. Run 'work init' to create one.")
+        console.error("Error: No agents.yaml found. Run 'work init' to create one.")
         process.exit(1)
     }
 
-    const agent = getAgent(agentsConfig, agentName)
-    if (!agent) {
-        console.error(`Error: Agent "${agentName}" not found in AGENTS.md`)
+    const models = getAgentModels(agentsConfig, agentName)
+    if (models.length === 0) {
+        console.error(`Error: Agent "${agentName}" not found in agents.yaml`)
         console.error(`\nAvailable agents: ${agentsConfig.agents.map((a) => a.name).join(", ")}`)
         process.exit(1)
     }
 
+    // Use first model for single execute (no retry logic in simple execute)
+    const primaryModel = models[0]!
+    const variantFlag = primaryModel.variant ? ` --variant "${primaryModel.variant}"` : ""
+
     // Build and execute command
-    const command = `cat "${promptPath}" | opencode run $1 --model "${agent.model}"`
+    const command = `cat "${promptPath}" | opencode run --model "${primaryModel.model}"${variantFlag}`
 
     if (cliArgs.dryRun) {
         console.log("Would execute:")
         console.log(command)
         console.log(`\nThread: ${threadDisplayName}`)
-        console.log(`Agent: ${agent.name}`)
-        console.log(`Model: ${agent.model}`)
+        console.log(`Agent: ${agentName}`)
+        console.log(`Model: ${primaryModel.model}${primaryModel.variant ? ` (variant: ${primaryModel.variant})` : ""}`)
         console.log(`Prompt: ${promptPath}`)
         return
     }
 
-    console.log(`Executing thread ${threadDisplayName} with agent "${agent.name}" (${agent.model})...`)
+    console.log(`Executing thread ${threadDisplayName} with agent "${agentName}" (${primaryModel.model})...`)
     console.log(`Prompt: ${promptPath}\n`)
 
     // Execute via shell to handle pipe
