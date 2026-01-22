@@ -10,7 +10,7 @@
 ### frontend-speedster
 **Description:** Very efficient and effective frontend coder.
 **Best for:** Straight-forward frontend tasks.
-**Model:** openrouter/google/gemini-3-flash-preview
+**Model:** google/antigravity-gemini-3-flash
 
 ### systems-engineer
 **Description:** Good for complex multi-faceted work.

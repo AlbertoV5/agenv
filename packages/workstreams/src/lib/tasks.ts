@@ -330,6 +330,109 @@ export function formatTaskId(
 }
 
 /**
+ * Parse a thread ID into components
+ * Thread ID format: "stage.batch.thread" (e.g., "01.01.02")
+ */
+export function parseThreadId(threadId: string): {
+  stage: number
+  batch: number
+  thread: number
+} {
+  const parts = threadId.split(".")
+  if (parts.length === 3) {
+    const parsed = parts.map((p) => parseInt(p, 10))
+    if (parsed.every((n) => !isNaN(n))) {
+      return {
+        stage: parsed[0]!,
+        batch: parsed[1]!,
+        thread: parsed[2]!,
+      }
+    }
+  }
+
+  throw new Error(
+    `Invalid thread ID format: ${threadId}. Expected "stage.batch.thread" (e.g., "01.01.02")`,
+  )
+}
+
+/**
+ * Format thread ID from components
+ * All components are zero-padded to 2 digits for consistent sorting
+ */
+export function formatThreadId(
+  stage: number,
+  batch: number,
+  thread: number,
+): string {
+  const stageStr = stage.toString().padStart(2, "0")
+  const batchStr = batch.toString().padStart(2, "0")
+  const threadStr = thread.toString().padStart(2, "0")
+  return `${stageStr}.${batchStr}.${threadStr}`
+}
+
+/**
+ * Get all tasks in a thread
+ */
+export function getTasksByThread(
+  repoRoot: string,
+  streamId: string,
+  stageNumber: number,
+  batchNumber: number,
+  threadNumber: number,
+): Task[] {
+  const tasksFile = readTasksFile(repoRoot, streamId)
+  if (!tasksFile) return []
+
+  const stageStr = stageNumber.toString().padStart(2, "0")
+  const batchStr = batchNumber.toString().padStart(2, "0")
+  const threadStr = threadNumber.toString().padStart(2, "0")
+  const threadPrefix = `${stageStr}.${batchStr}.${threadStr}.`
+
+  return tasksFile.tasks.filter((t) => t.id.startsWith(threadPrefix))
+}
+
+/**
+ * Update all tasks in a thread
+ * Returns the updated tasks
+ */
+export function updateTasksByThread(
+  repoRoot: string,
+  streamId: string,
+  stageNumber: number,
+  batchNumber: number,
+  threadNumber: number,
+  options: TaskUpdateOptions,
+): Task[] {
+  const tasksFile = readTasksFile(repoRoot, streamId)
+  if (!tasksFile) return []
+
+  const stageStr = stageNumber.toString().padStart(2, "0")
+  const batchStr = batchNumber.toString().padStart(2, "0")
+  const threadStr = threadNumber.toString().padStart(2, "0")
+  const threadPrefix = `${stageStr}.${batchStr}.${threadStr}.`
+
+  const updatedTasks: Task[] = []
+  const now = new Date().toISOString()
+
+  for (const task of tasksFile.tasks) {
+    if (task.id.startsWith(threadPrefix)) {
+      if (options.status) task.status = options.status
+      if (options.breadcrumb) task.breadcrumb = options.breadcrumb
+      if (options.report) task.report = options.report
+      if (options.assigned_agent) task.assigned_agent = options.assigned_agent
+      task.updated_at = now
+      updatedTasks.push(task)
+    }
+  }
+
+  if (updatedTasks.length > 0) {
+    writeTasksFile(repoRoot, streamId, tasksFile)
+  }
+
+  return updatedTasks
+}
+
+/**
  * Delete a single task by ID
  * Returns the deleted task, or null if not found
  */

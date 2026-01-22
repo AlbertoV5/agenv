@@ -14,7 +14,7 @@ import type {
   ApprovalStatus,
 } from "./types.ts"
 import { getTasks, getTaskCounts } from "./tasks.ts"
-import { getStageApprovalStatus, getApprovalStatus } from "./approval.ts"
+import { getStageApprovalStatus } from "./approval.ts"
 
 // Re-export ParsedStage for backwards compatibility during migration
 export interface ParsedStage {
@@ -259,13 +259,11 @@ export function formatProgress(
     ).length || 0
 
     // Get stage approval status if stream is available
+    // Stage approval is independent - it's for approving completed work before moving to next stage
     let approvalDisplay = ""
     if (stream) {
-      const approvalStatus = getStageApprovalStatus(stream, stage.number)
-      const planApproval = getApprovalStatus(stream)
-      // Stage approval inherits from plan approval if not explicitly set
-      const effectiveApproval = approvalStatus !== "draft" ? approvalStatus : planApproval
-      approvalDisplay = ` ${formatApprovalIcon(effectiveApproval)}`
+      const stageApproval = getStageApprovalStatus(stream, stage.number)
+      approvalDisplay = ` ${formatApprovalIcon(stageApproval)}`
     }
 
     lines.push(

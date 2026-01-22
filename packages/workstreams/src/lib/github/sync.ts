@@ -183,7 +183,18 @@ export async function createIssuesForWorkstream(
       continue;
     }
 
-    // No existing issue - create a new one
+    // No existing issue found - check if thread is already complete
+    // Don't create issues for work that's already done
+    if (isComplete) {
+      result.skipped.push({
+        threadId: threadKey,
+        threadName: firstTask.thread_name,
+        reason: "Thread already complete, no issue needed",
+      });
+      continue;
+    }
+
+    // No existing issue and thread is not complete - create a new one
     const batchId = `${stageId}.${batchIdFormatted}`;
     const taskList = tasks
       .map((t) => `- [ ] ${t.name}`)

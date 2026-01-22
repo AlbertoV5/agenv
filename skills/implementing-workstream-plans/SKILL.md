@@ -43,6 +43,17 @@ work update --task "01.01.01.01" --status completed \
   --report "Added hono@4.0.0 to package.json. Fixed peer dependency warning by also adding @hono/node-server."
 ```
 
+### Update All Tasks in Thread
+
+When you've completed **all tasks in your thread**, you can update them all at once:
+
+```bash
+work update --thread "01.01.01" --status completed \
+  --report "Implemented full API layer with validation and error handling."
+```
+
+This is useful when wrapping up a thread's work in one step.
+
 ## Work Continuation
 
 In case of finding an in-progress thread, make sure to review all files that were edited, look at the incomplete tasks report and determine best course of action.

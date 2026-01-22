@@ -413,6 +413,9 @@ work read --stream "001-my-feature" --task "01.01.01.01"
 # Update task status
 work update --stream "001-my-feature" --task "01.01.01.01" --status completed
 
+# Update all tasks in a thread at once
+work update --thread "01.01.01" --status completed
+
 # Delete task/thread/batch/stage/workstream
 work delete --stream "001-my-feature" --task "01.01.01.01"
 work delete --stream "001-my-feature" --thread "01.01.02"
