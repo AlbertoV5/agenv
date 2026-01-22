@@ -149,6 +149,19 @@ describe("Approval Flow", () => {
     test("should check prompts approval readiness", () => {
         const { checkPromptsApprovalReady } = require("../src/lib/approval.ts");
 
+        // Create tasks.json (simulating generation + assignment)
+        writeFileSync(join(REPO_ROOT, "work/stream-001/tasks.json"), JSON.stringify({
+            version: "1.0.0",
+            stream_id: "stream-001",
+            last_updated: new Date().toISOString(),
+            tasks: [{
+                id: "01.01.01.01",
+                name: "Task 1",
+                status: "pending",
+                assigned_agent: "coder"
+            }]
+        }));
+
         // Should fail initially (no prompt files)
         const result = checkPromptsApprovalReady(REPO_ROOT, "stream-001");
         expect(result.ready).toBe(false);

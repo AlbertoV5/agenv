@@ -1,6 +1,271 @@
 {
   "version": "1.0.0",
   "stream_id": "003-stage-commit-tracking",
-  "last_updated": "2026-01-22T14:08:34.163Z",
-  "tasks": []
+  "last_updated": "2026-01-22T15:11:45.899Z",
+  "tasks": [
+    {
+      "id": "01.01.01.01",
+      "name": "Create src/lib/github/commits.ts with formatStageCommitMessage function",
+      "stage_name": "Auto-Commit on Stage Approval",
+      "batch_name": "Core Implementation",
+      "thread_name": "Commit Library",
+      "status": "pending",
+      "created_at": "2026-01-22T15:11:36.972Z",
+      "updated_at": "2026-01-22T15:11:45.490Z",
+      "assigned_agent": "systems-engineer"
+    },
+    {
+      "id": "01.01.01.02",
+      "name": "Add createStageApprovalCommit function with git add and commit logic",
+      "stage_name": "Auto-Commit on Stage Approval",
+      "batch_name": "Core Implementation",
+      "thread_name": "Commit Library",
+      "status": "pending",
+      "created_at": "2026-01-22T15:11:36.972Z",
+      "updated_at": "2026-01-22T15:11:45.490Z",
+      "assigned_agent": "systems-engineer"
+    },
+    {
+      "id": "01.01.01.03",
+      "name": "Add hasUncommittedChanges helper function",
+      "stage_name": "Auto-Commit on Stage Approval",
+      "batch_name": "Core Implementation",
+      "thread_name": "Commit Library",
+      "status": "pending",
+      "created_at": "2026-01-22T15:11:36.972Z",
+      "updated_at": "2026-01-22T15:11:45.490Z",
+      "assigned_agent": "systems-engineer"
+    },
+    {
+      "id": "01.01.01.04",
+      "name": "Export functions from src/lib/github/index.ts",
+      "stage_name": "Auto-Commit on Stage Approval",
+      "batch_name": "Core Implementation",
+      "thread_name": "Commit Library",
+      "status": "pending",
+      "created_at": "2026-01-22T15:11:36.973Z",
+      "updated_at": "2026-01-22T15:11:45.490Z",
+      "assigned_agent": "systems-engineer"
+    },
+    {
+      "id": "01.01.02.01",
+      "name": "Add commit_sha field to StageApproval type in src/lib/types.ts",
+      "stage_name": "Auto-Commit on Stage Approval",
+      "batch_name": "Core Implementation",
+      "thread_name": "Approval Integration",
+      "status": "pending",
+      "created_at": "2026-01-22T15:11:36.973Z",
+      "updated_at": "2026-01-22T15:11:45.569Z",
+      "assigned_agent": "systems-engineer"
+    },
+    {
+      "id": "01.01.02.02",
+      "name": "Add auto_commit_on_approval to GitHubConfig type in src/lib/github/types.ts",
+      "stage_name": "Auto-Commit on Stage Approval",
+      "batch_name": "Core Implementation",
+      "thread_name": "Approval Integration",
+      "status": "pending",
+      "created_at": "2026-01-22T15:11:36.973Z",
+      "updated_at": "2026-01-22T15:11:45.569Z",
+      "assigned_agent": "systems-engineer"
+    },
+    {
+      "id": "01.01.02.03",
+      "name": "Update DEFAULT_GITHUB_CONFIG with auto_commit_on_approval default true",
+      "stage_name": "Auto-Commit on Stage Approval",
+      "batch_name": "Core Implementation",
+      "thread_name": "Approval Integration",
+      "status": "pending",
+      "created_at": "2026-01-22T15:11:36.973Z",
+      "updated_at": "2026-01-22T15:11:45.570Z",
+      "assigned_agent": "systems-engineer"
+    },
+    {
+      "id": "01.01.02.04",
+      "name": "Modify approve.ts to call createStageApprovalCommit after stage approval",
+      "stage_name": "Auto-Commit on Stage Approval",
+      "batch_name": "Core Implementation",
+      "thread_name": "Approval Integration",
+      "status": "pending",
+      "created_at": "2026-01-22T15:11:36.973Z",
+      "updated_at": "2026-01-22T15:11:45.570Z",
+      "assigned_agent": "systems-engineer"
+    },
+    {
+      "id": "01.01.02.05",
+      "name": "Store commit SHA in stage approval metadata",
+      "stage_name": "Auto-Commit on Stage Approval",
+      "batch_name": "Core Implementation",
+      "thread_name": "Approval Integration",
+      "status": "pending",
+      "created_at": "2026-01-22T15:11:36.973Z",
+      "updated_at": "2026-01-22T15:11:45.570Z",
+      "assigned_agent": "systems-engineer"
+    },
+    {
+      "id": "02.01.01.01",
+      "name": "Create src/lib/git/log.ts with parseGitLog function",
+      "stage_name": "Review Commits Command",
+      "batch_name": "Command Implementation",
+      "thread_name": "Git Log Parser",
+      "status": "pending",
+      "created_at": "2026-01-22T15:11:36.973Z",
+      "updated_at": "2026-01-22T15:11:45.652Z",
+      "assigned_agent": "systems-engineer"
+    },
+    {
+      "id": "02.01.01.02",
+      "name": "Add extractWorkstreamTrailers function to parse commit trailers",
+      "stage_name": "Review Commits Command",
+      "batch_name": "Command Implementation",
+      "thread_name": "Git Log Parser",
+      "status": "pending",
+      "created_at": "2026-01-22T15:11:36.973Z",
+      "updated_at": "2026-01-22T15:11:45.652Z",
+      "assigned_agent": "systems-engineer"
+    },
+    {
+      "id": "02.01.01.03",
+      "name": "Add groupCommitsByStage function to organize commits",
+      "stage_name": "Review Commits Command",
+      "batch_name": "Command Implementation",
+      "thread_name": "Git Log Parser",
+      "status": "pending",
+      "created_at": "2026-01-22T15:11:36.973Z",
+      "updated_at": "2026-01-22T15:11:45.652Z",
+      "assigned_agent": "systems-engineer"
+    },
+    {
+      "id": "02.01.01.04",
+      "name": "Add identifyHumanCommits function to find non-workstream commits",
+      "stage_name": "Review Commits Command",
+      "batch_name": "Command Implementation",
+      "thread_name": "Git Log Parser",
+      "status": "pending",
+      "created_at": "2026-01-22T15:11:36.973Z",
+      "updated_at": "2026-01-22T15:11:45.653Z",
+      "assigned_agent": "systems-engineer"
+    },
+    {
+      "id": "02.01.01.05",
+      "name": "Export functions from src/lib/git/index.ts",
+      "stage_name": "Review Commits Command",
+      "batch_name": "Command Implementation",
+      "thread_name": "Git Log Parser",
+      "status": "pending",
+      "created_at": "2026-01-22T15:11:36.973Z",
+      "updated_at": "2026-01-22T15:11:45.653Z",
+      "assigned_agent": "systems-engineer"
+    },
+    {
+      "id": "02.01.02.01",
+      "name": "Create src/cli/review-commits.ts with CLI argument parsing",
+      "stage_name": "Review Commits Command",
+      "batch_name": "Command Implementation",
+      "thread_name": "CLI Command",
+      "status": "pending",
+      "created_at": "2026-01-22T15:11:36.973Z",
+      "updated_at": "2026-01-22T15:11:45.734Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "02.01.02.02",
+      "name": "Implement formatCommitOutput for human-readable display",
+      "stage_name": "Review Commits Command",
+      "batch_name": "Command Implementation",
+      "thread_name": "CLI Command",
+      "status": "pending",
+      "created_at": "2026-01-22T15:11:36.973Z",
+      "updated_at": "2026-01-22T15:11:45.735Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "02.01.02.03",
+      "name": "Add JSON output mode for machine parsing",
+      "stage_name": "Review Commits Command",
+      "batch_name": "Command Implementation",
+      "thread_name": "CLI Command",
+      "status": "pending",
+      "created_at": "2026-01-22T15:11:36.973Z",
+      "updated_at": "2026-01-22T15:11:45.735Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "02.01.02.04",
+      "name": "Register review-commits command in bin/work.ts",
+      "stage_name": "Review Commits Command",
+      "batch_name": "Command Implementation",
+      "thread_name": "CLI Command",
+      "status": "pending",
+      "created_at": "2026-01-22T15:11:36.973Z",
+      "updated_at": "2026-01-22T15:11:45.735Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "03.01.01.01",
+      "name": "Add Stage Approval Commits section to README under GitHub Integration",
+      "stage_name": "Documentation and Skill Update",
+      "batch_name": "Documentation",
+      "thread_name": "README Update",
+      "status": "pending",
+      "created_at": "2026-01-22T15:11:36.973Z",
+      "updated_at": "2026-01-22T15:11:45.818Z",
+      "assigned_agent": "documentation-minimalist"
+    },
+    {
+      "id": "03.01.01.02",
+      "name": "Document commit message format with trailers",
+      "stage_name": "Documentation and Skill Update",
+      "batch_name": "Documentation",
+      "thread_name": "README Update",
+      "status": "pending",
+      "created_at": "2026-01-22T15:11:36.973Z",
+      "updated_at": "2026-01-22T15:11:45.818Z",
+      "assigned_agent": "documentation-minimalist"
+    },
+    {
+      "id": "03.01.01.03",
+      "name": "Add work review commits CLI reference section",
+      "stage_name": "Documentation and Skill Update",
+      "batch_name": "Documentation",
+      "thread_name": "README Update",
+      "status": "pending",
+      "created_at": "2026-01-22T15:11:36.973Z",
+      "updated_at": "2026-01-22T15:11:45.818Z",
+      "assigned_agent": "documentation-minimalist"
+    },
+    {
+      "id": "03.01.01.04",
+      "name": "Add configuration documentation for auto_commit_on_approval",
+      "stage_name": "Documentation and Skill Update",
+      "batch_name": "Documentation",
+      "thread_name": "README Update",
+      "status": "pending",
+      "created_at": "2026-01-22T15:11:36.973Z",
+      "updated_at": "2026-01-22T15:11:45.818Z",
+      "assigned_agent": "documentation-minimalist"
+    },
+    {
+      "id": "03.01.02.01",
+      "name": "Add Review Stage Commits section to evaluating-workstreams SKILL.md",
+      "stage_name": "Documentation and Skill Update",
+      "batch_name": "Documentation",
+      "thread_name": "Skill Update",
+      "status": "pending",
+      "created_at": "2026-01-22T15:11:36.973Z",
+      "updated_at": "2026-01-22T15:11:45.898Z",
+      "assigned_agent": "documentation-minimalist"
+    },
+    {
+      "id": "03.01.02.02",
+      "name": "Update evaluation workflow to include commit review steps",
+      "stage_name": "Documentation and Skill Update",
+      "batch_name": "Documentation",
+      "thread_name": "Skill Update",
+      "status": "pending",
+      "created_at": "2026-01-22T15:11:36.973Z",
+      "updated_at": "2026-01-22T15:11:45.899Z",
+      "assigned_agent": "documentation-minimalist"
+    }
+  ]
 }
