@@ -1,0 +1,192 @@
+
+import { describe, test, expect, beforeEach, afterEach, jest, mock } from "bun:test";
+import { join } from "path";
+import { existsSync, writeFileSync, mkdirSync, rmSync } from "fs";
+import { saveIndex, loadIndex } from "../src/lib/index.ts";
+import type { WorkIndex } from "../src/lib/types.ts";
+
+const TEST_DIR = join(import.meta.dir, "temp_stage_validation_test");
+const REPO_ROOT = TEST_DIR;
+
+describe("Stage Approval Validation", () => {
+    beforeEach(() => {
+        if (existsSync(TEST_DIR)) {
+            rmSync(TEST_DIR, { recursive: true });
+        }
+        mkdirSync(join(TEST_DIR, "work", "stream-001"), { recursive: true });
+
+        // Create index.json
+        const index: WorkIndex = {
+            version: "1.0.0",
+            last_updated: new Date().toISOString(),
+            streams: [{
+                id: "stream-001",
+                name: "test-stream",
+                order: 1,
+                size: "short",
+                session_estimated: {
+                    length: 2,
+                    unit: "session",
+                    session_minutes: [30, 45],
+                    session_iterations: [4, 8]
+                },
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                path: "work/stream-001",
+                generated_by: { workstreams: "1.0.0" }
+            }]
+        };
+        saveIndex(REPO_ROOT, index);
+
+        // Create tasks.json
+        const tasksJsonPath = join(REPO_ROOT, "work/stream-001/tasks.json");
+        writeFileSync(tasksJsonPath, JSON.stringify({
+            version: "1.0.0",
+            stream_id: "stream-001",
+            last_updated: new Date().toISOString(),
+            tasks: [
+                {
+                    id: "01.01.01.01",
+                    name: "Task 1",
+                    thread_name: "Thread 1",
+                    batch_name: "Batch 1",
+                    stage_name: "Stage 1",
+                    status: "pending",
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                },
+                {
+                    id: "02.01.01.01",
+                    name: "Task 2 (Stage 2)",
+                    thread_name: "Thread 1",
+                    batch_name: "Batch 1",
+                    stage_name: "Stage 2",
+                    status: "pending",
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                }
+            ]
+        }, null, 2));
+    });
+
+    afterEach(() => {
+        if (existsSync(TEST_DIR)) {
+            rmSync(TEST_DIR, { recursive: true });
+        }
+    });
+
+    test("should block stage approval if tasks are pending", async () => {
+        const { main } = await import("../src/cli/approve.ts");
+
+        // Mock process.exit
+        const originalExit = process.exit;
+        let exitCode: number | undefined;
+        // @ts-ignore
+        process.exit = (code?: number) => {
+            exitCode = code ?? 0;
+            // Throw to stop execution
+            throw new Error(`Process exited with code ${code}`);
+        };
+
+        const logs: string[] = [];
+        const originalError = console.error;
+        const originalLog = console.log;
+        console.error = (...args) => logs.push(args.join(" "));
+        console.log = (...args) => logs.push(args.join(" "));
+
+        try {
+            await main(["node", "approve", "stage", "1", "--stream", "stream-001", "--repo-root", REPO_ROOT]);
+        } catch (e) {
+            // Expected exit
+        } finally {
+            process.exit = originalExit;
+            console.error = originalError;
+            console.log = originalLog;
+        }
+
+        expect(exitCode).toBe(1);
+        const output = logs.join("\n");
+        expect(output).toContain("Cannot approve Stage 1 because 1 thread(s) are not approved");
+        expect(output).toContain("01.01.01 (Thread 1): 1 task(s) remaining");
+    });
+
+    test("should allow stage approval if tasks are completed", async () => {
+        // Update tasks.json to completed
+        const tasksJsonPath = join(REPO_ROOT, "work/stream-001/tasks.json");
+        writeFileSync(tasksJsonPath, JSON.stringify({
+            version: "1.0.0",
+            stream_id: "stream-001",
+            last_updated: new Date().toISOString(),
+            tasks: [
+                {
+                    id: "01.01.01.01",
+                    name: "Task 1",
+                    thread_name: "Thread 1",
+                    batch_name: "Batch 1",
+                    stage_name: "Stage 1",
+                    status: "completed",
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                },
+                {
+                    id: "02.01.01.01",
+                    name: "Task 2 (Stage 2)",
+                    thread_name: "Thread 1",
+                    batch_name: "Batch 1",
+                    stage_name: "Stage 2",
+                    status: "pending", // Stage 2 still pending, shouldn't affect Stage 1
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                }
+            ]
+        }, null, 2));
+
+        const { main } = await import("../src/cli/approve.ts");
+
+        const logs: string[] = [];
+        const originalError = console.error;
+        const originalLog = console.log;
+        console.error = (...args) => logs.push(args.join(" "));
+        console.log = (...args) => logs.push(args.join(" "));
+
+        try {
+            await main(["node", "approve", "stage", "1", "--stream", "stream-001", "--repo-root", REPO_ROOT]);
+        } finally {
+            console.error = originalError;
+            console.log = originalLog;
+        }
+
+        const output = logs.join("\n");
+        expect(output).toContain("Approved Stage 1");
+
+        // Check index state
+        const index = loadIndex(REPO_ROOT);
+        const stream = index.streams[0];
+        expect(stream.approval?.stages?.[1]?.status).toBe("approved");
+    });
+
+    test("should allow stage approval with --force even if tasks pending", async () => {
+        const { main } = await import("../src/cli/approve.ts");
+
+        const logs: string[] = [];
+        const originalError = console.error;
+        const originalLog = console.log;
+        console.error = (...args) => logs.push(args.join(" "));
+        console.log = (...args) => logs.push(args.join(" "));
+
+        try {
+            await main(["node", "approve", "stage", "1", "--force", "--stream", "stream-001", "--repo-root", REPO_ROOT]);
+        } finally {
+            console.error = originalError;
+            console.log = originalLog;
+        }
+
+        const output = logs.join("\n");
+        expect(output).toContain("Approved Stage 1");
+
+        // Check index state
+        const index = loadIndex(REPO_ROOT);
+        const stream = index.streams[0];
+        expect(stream.approval?.stages?.[1]?.status).toBe("approved");
+    });
+});

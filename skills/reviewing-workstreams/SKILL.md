@@ -38,3 +38,10 @@ work approve plan --force
 # Revoke (if plan needs revision during execution)
 work approve plan --revoke --reason "Missing security review"
 ```
+
+## Criteria
+
+- Check that the threads are parallelizable, small overlaps are ok as agents can wait a few seconds for each another
+- Check that we mention files correctly
+- Check that we have documentation stages
+- Check that we are following best practices for this repo

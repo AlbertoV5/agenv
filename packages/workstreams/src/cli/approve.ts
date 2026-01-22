@@ -34,7 +34,7 @@ import { existsSync, readFileSync, unlinkSync } from "fs"
 import { join } from "path"
 import { getWorkDir } from "../lib/repo.ts"
 import { atomicWriteFile } from "../lib/index.ts"
-import { addTasks } from "../lib/tasks.ts"
+import { addTasks, getTasks, parseTaskId } from "../lib/tasks.ts"
 import { generateAllPrompts, type GeneratePromptsResult } from "../lib/prompts.ts"
 
 type ApproveTarget = "plan" | "tasks" | "prompts"
@@ -348,6 +348,76 @@ async function handlePlanApproval(
         console.log(`Stage ${stageNum} of workstream "${stream.name}" is already approved`)
       }
       return
+    }
+
+    // Validate that all tasks in the stage are completed
+    if (!cliArgs.force) {
+      const allTasks = getTasks(repoRoot, stream.id)
+      const stageTasks = allTasks.filter((t) => {
+        try {
+          const parsed = parseTaskId(t.id)
+          return parsed.stage === stageNum
+        } catch {
+          return false
+        }
+      })
+
+      const incompleteTasks = stageTasks.filter((t) => t.status !== "completed")
+
+      // Group incomplete tasks by thread
+      const incompleteThreads = new Map<string, { count: number, name: string }>()
+
+      incompleteTasks.forEach(t => {
+        try {
+          const parsed = parseTaskId(t.id)
+          // Format thread ID: stage.batch.thread
+          const threadId = `${parsed.stage.toString().padStart(2, '0')}.${parsed.batch.toString().padStart(2, '0')}.${parsed.thread.toString().padStart(2, '0')}`
+
+          if (!incompleteThreads.has(threadId)) {
+            incompleteThreads.set(threadId, {
+              count: 0,
+              name: t.thread_name || `Thread ${parsed.thread}`
+            })
+          }
+
+          const threadInfo = incompleteThreads.get(threadId)!
+          threadInfo.count++
+        } catch {
+          // ignore parsing errors
+        }
+      })
+
+      if (incompleteThreads.size > 0) {
+        if (cliArgs.json) {
+          console.log(JSON.stringify({
+            action: "blocked",
+            scope: "stage",
+            stage: stageNum,
+            streamId: stream.id,
+            reason: "incomplete_tasks",
+            incompleteThreadCount: incompleteThreads.size,
+            incompleteTaskCount: incompleteTasks.length,
+            incompleteThreads: Array.from(incompleteThreads.entries()).map(([id, info]) => ({
+              id,
+              name: info.name,
+              incompleteTasks: info.count
+            }))
+          }, null, 2))
+        } else {
+          console.error(`Error: Cannot approve Stage ${stageNum} because ${incompleteThreads.size} thread(s) are not approved.`)
+          console.log("\nIncomplete threads:")
+
+          // Sort threads by ID
+          const sortedThreads = Array.from(incompleteThreads.entries()).sort((a, b) => a[0].localeCompare(b[0]))
+
+          for (const [threadId, info] of sortedThreads) {
+            console.log(`  - ${threadId} (${info.name}): ${info.count} task(s) remaining`)
+          }
+
+          console.log("\nUse --force to approve anyway.")
+        }
+        process.exit(1)
+      }
     }
 
     try {

@@ -397,6 +397,10 @@ work review commits
 # Open PLAN.md in editor
 work edit
 
+# Context & Continuation
+work context             # Show current workstream context (task, breadcrumbs)
+work continue            # Resume execution (alias for 'work multi --continue')
+
 # Human-In-The-Loop Approvals
 # Three approvals are required before starting the workstream:
 # 1. Plan approval - Validates PLAN.md structure and questions
