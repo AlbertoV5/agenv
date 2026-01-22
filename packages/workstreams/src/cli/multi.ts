@@ -11,7 +11,13 @@ import { existsSync, readFileSync } from "fs"
 import { getRepoRoot, getWorkDir } from "../lib/repo.ts"
 import { loadIndex, getResolvedStream } from "../lib/index.ts"
 import { loadAgentsConfig, getAgentModels } from "../lib/agents-yaml.ts"
-import { readTasksFile, parseTaskId } from "../lib/tasks.ts"
+import {
+  readTasksFile,
+  parseTaskId,
+  generateSessionId,
+  startMultipleSessionsLocked,
+  completeMultipleSessionsLocked,
+} from "../lib/tasks.ts"
 import { parseStreamDocument } from "../lib/stream-parser.ts"
 import type {
   StreamDocument,
@@ -35,7 +41,11 @@ import {
   setGlobalOption,
   createGridLayout,
   listPaneIds,
+  getSessionPaneStatuses,
+  waitForAllPanesExit,
+  setPaneTitle,
   THREAD_START_DELAY_MS,
+  type PaneStatus,
 } from "../lib/tmux.ts"
 import { getStageApprovalStatus } from "../lib/approval.ts"
 import {
@@ -71,6 +81,21 @@ interface ThreadInfo {
     url: string
     state: "open" | "closed"
   }
+  // Session tracking (populated before spawn)
+  sessionId?: string
+  firstTaskId?: string // First task in thread (for session tracking)
+}
+
+/**
+ * Mapping of thread sessions to pane IDs
+ * Used to track which pane is running which thread's session
+ */
+interface ThreadSessionMap {
+  threadId: string
+  sessionId: string
+  taskId: string // First task in thread
+  paneId: string
+  windowIndex: number
 }
 
 function printHelp(): void {
@@ -396,8 +421,9 @@ function collectThreadInfo(
       process.exit(1)
     }
 
-    // Get github_issue from first task in this thread
+    // Get github_issue and first task ID from this thread
     let githubIssue: ThreadInfo["githubIssue"] = undefined
+    let firstTaskId: string | undefined = undefined
     if (tasksFile) {
       for (const task of tasksFile.tasks) {
         try {
@@ -407,6 +433,10 @@ function collectThreadInfo(
             parsed.batch === batchNum &&
             parsed.thread === threadNum
           ) {
+            // Capture first task ID for session tracking
+            if (!firstTaskId) {
+              firstTaskId = task.id
+            }
             if (task.github_issue) {
               githubIssue = task.github_issue
               break
@@ -427,6 +457,7 @@ function collectThreadInfo(
       models,
       agentName,
       githubIssue,
+      firstTaskId,
     })
   }
 
@@ -699,6 +730,30 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     process.exit(1)
   }
 
+  // Generate session IDs for each thread before spawning
+  console.log("Generating session IDs for thread tracking...")
+  for (const thread of threads) {
+    thread.sessionId = generateSessionId()
+  }
+
+  // Start sessions in tasks.json (atomically, with locking)
+  const sessionsToStart = threads
+    .filter((t) => t.firstTaskId && t.sessionId)
+    .map((t) => ({
+      taskId: t.firstTaskId!,
+      agentName: t.agentName,
+      model: t.models[0]?.model || "unknown",
+      sessionId: t.sessionId!,
+    }))
+
+  if (sessionsToStart.length > 0) {
+    console.log(`Starting ${sessionsToStart.length} sessions in tasks.json...`)
+    await startMultipleSessionsLocked(repoRoot, stream.id, sessionsToStart)
+  }
+
+  // Track pane IDs for each thread (populated after spawn)
+  const threadSessionMap: ThreadSessionMap[] = []
+
   // Start opencode serve if needed
   if (!cliArgs.noServer) {
     const serverRunning = await isServerRunning(port)
@@ -764,6 +819,21 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     createGridLayout(`${sessionName}:0`, gridCommands)
   }
 
+  // Capture pane IDs for threads in grid (window 0)
+  const gridPaneIds = listPaneIds(`${sessionName}:0`)
+  for (let i = 0; i < Math.min(4, threads.length); i++) {
+    const thread = threads[i]!
+    if (thread.sessionId && thread.firstTaskId && gridPaneIds[i]) {
+      threadSessionMap.push({
+        threadId: thread.threadId,
+        sessionId: thread.sessionId,
+        taskId: thread.firstTaskId,
+        paneId: gridPaneIds[i]!,
+        windowIndex: 0,
+      })
+    }
+  }
+
   // Create hidden windows for threads 5+ (used by pagination)
   if (threads.length > 4) {
     console.log("  Creating hidden windows for pagination...")
@@ -779,8 +849,22 @@ export async function main(argv: string[] = process.argv): Promise<void> {
       addWindow(sessionName, windowName, cmd)
       console.log(`  Hidden: ${windowName} - ${thread.threadName}`)
       Bun.sleepSync(THREAD_START_DELAY_MS)
+
+      // Capture pane ID for hidden window thread
+      const windowPaneIds = listPaneIds(`${sessionName}:${windowName}`)
+      if (thread.sessionId && thread.firstTaskId && windowPaneIds[0]) {
+        threadSessionMap.push({
+          threadId: thread.threadId,
+          sessionId: thread.sessionId,
+          taskId: thread.firstTaskId,
+          paneId: windowPaneIds[0]!,
+          windowIndex: i - 3, // Hidden windows start at index 1
+        })
+      }
     }
   }
+
+  console.log(`  Tracking ${threadSessionMap.length} thread sessions`)
 
   // Add status bar at bottom for grid controller (if >4 threads for pagination)
   if (threads.length > 4) {
@@ -828,10 +912,53 @@ Layout: ${threads.length <= 4 ? "2x2 Grid (all visible)" : `2x2 Grid with pagina
   // Attach to session (this takes over the terminal)
   const child = attachSession(sessionName)
 
-  child.on("close", (code) => {
+  child.on("close", async (code) => {
     console.log(
-      `\nSession ended. Windows remain in tmux session "${sessionName}".`,
+      `\nSession detached. Checking thread statuses...`,
     )
+
+    // Update session statuses based on pane exit codes
+    if (threadSessionMap.length > 0 && sessionExists(sessionName)) {
+      const paneStatuses = getSessionPaneStatuses(sessionName)
+      const completions: Array<{
+        taskId: string
+        sessionId: string
+        status: "completed" | "failed" | "interrupted"
+        exitCode?: number
+      }> = []
+
+      for (const mapping of threadSessionMap) {
+        const paneStatus = paneStatuses.find((p) => p.paneId === mapping.paneId)
+        if (paneStatus && paneStatus.paneDead) {
+          const exitCode = paneStatus.exitStatus ?? undefined
+          const status = exitCode === 0 ? "completed" : "failed"
+          completions.push({
+            taskId: mapping.taskId,
+            sessionId: mapping.sessionId,
+            status,
+            exitCode,
+          })
+          console.log(`  Thread ${mapping.threadId}: ${status}${exitCode !== undefined ? ` (exit ${exitCode})` : ""}`)
+        } else if (paneStatus && !paneStatus.paneDead) {
+          console.log(`  Thread ${mapping.threadId}: still running`)
+        } else {
+          // Pane not found - mark as interrupted
+          completions.push({
+            taskId: mapping.taskId,
+            sessionId: mapping.sessionId,
+            status: "interrupted",
+          })
+          console.log(`  Thread ${mapping.threadId}: interrupted (pane not found)`)
+        }
+      }
+
+      if (completions.length > 0) {
+        console.log(`\nUpdating ${completions.length} session statuses in tasks.json...`)
+        await completeMultipleSessionsLocked(repoRoot, stream.id, completions)
+      }
+    }
+
+    console.log(`\nWindows remain in tmux session "${sessionName}".`)
     console.log(`To reattach: tmux attach -t "${sessionName}"`)
     console.log(`To kill: tmux kill-session -t "${sessionName}"`)
     process.exit(code ?? 0)

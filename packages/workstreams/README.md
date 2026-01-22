@@ -35,13 +35,11 @@ bun add @agenv/workstreams
    
    Syntax: `- [ ] Task description @agent:agent-name`
    
+   work approve tasks  # Auto-generates tasks.json + prompts
    ```bash
    work approve tasks  # Auto-generates tasks.json + prompts
    ```
 
-4. **Verify**
-   ```bash
-   work status
    work tree
    ```
 
@@ -483,7 +481,6 @@ work context             # Show current workstream context (task, breadcrumbs)
 work continue            # Resume execution (alias for 'work multi --continue')
 
 # Human-In-The-Loop Approvals
-# Three approvals are required before starting the workstream:
 # 1. Plan approval - Validates PLAN.md structure and questions
 work approve plan
 work approve plan --force         # Approve with open questions
@@ -491,8 +488,6 @@ work approve plan --force         # Approve with open questions
 # 2. Tasks approval - Validates tasks.json existence
 work approve tasks
 
-# 3. Prompts approval - Validates agent assignments and prompt files
-work approve prompts
 
 # Check approval status
 work approve

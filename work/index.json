@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-01-22T17:52:00.928Z",
-  "current_stream": "004-streamlined-workflow",
+  "last_updated": "2026-01-22T18:30:53.346Z",
+  "current_stream": "005-session-tracking",
   "streams": [
     {
       "id": "000-web-visualization",
@@ -257,6 +257,51 @@
         "completed_at": "2026-01-22T17:52:00.927Z"
       },
       "status": "completed"
+    },
+    {
+      "id": "005-session-tracking",
+      "name": "session-tracking",
+      "order": 5,
+      "size": "medium",
+      "session_estimated": {
+        "length": 4,
+        "unit": "session",
+        "session_minutes": [
+          30,
+          45
+        ],
+        "session_iterations": [
+          4,
+          8
+        ]
+      },
+      "created_at": "2026-01-22T17:55:05.797Z",
+      "updated_at": "2026-01-22T18:30:53.346Z",
+      "path": "work/005-session-tracking",
+      "generated_by": {
+        "workstreams": "0.1.0"
+      },
+      "approval": {
+        "status": "approved",
+        "approved_at": "2026-01-22T17:57:28.082Z",
+        "approved_by": "user",
+        "plan_hash": "46d45f1031646afa3978cfd6f013a7b503a0177548590765bed0538a574da83d",
+        "tasks": {
+          "status": "approved",
+          "approved_at": "2026-01-22T18:03:47.348Z",
+          "task_count": 53
+        },
+        "stages": {
+          "1": {
+            "status": "approved",
+            "approved_at": "2026-01-22T18:30:53.346Z",
+            "approved_by": "user"
+          }
+        }
+      },
+      "github": {
+        "branch": "workstream/005-session-tracking"
+      }
     }
   ]
 }

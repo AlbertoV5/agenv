@@ -423,3 +423,162 @@ export function selectPane(target: string): void {
     Bun.spawnSync(["tmux", "select-pane", "-t", target])
 }
 
+// ============================================
+// PANE STATUS TRACKING (for session monitoring)
+// ============================================
+
+/**
+ * Information about a pane's status
+ */
+export interface PaneStatus {
+    paneId: string
+    windowIndex: number
+    paneIndex: number
+    panePid: number | null    // PID of the process running in the pane
+    paneTitle: string         // Pane title (if set)
+    paneDead: boolean         // true if the pane's command has exited
+    exitStatus: number | null // Exit status if pane is dead
+}
+
+/**
+ * Get detailed status of all panes in a session
+ * Useful for monitoring thread status in multi-window execution
+ */
+export function getSessionPaneStatuses(sessionName: string): PaneStatus[] {
+    try {
+        // Format: window_index, pane_index, pane_id, pane_pid, pane_title, pane_dead, pane_dead_status
+        const output = execSync(
+            `tmux list-panes -s -t "${sessionName}" -F "#{window_index}|#{pane_index}|#{pane_id}|#{pane_pid}|#{pane_title}|#{pane_dead}|#{pane_dead_status}"`,
+            { stdio: "pipe", encoding: "utf-8" }
+        )
+        
+        return output.trim().split("\n").filter(Boolean).map(line => {
+            const [windowIndex, paneIndex, paneId, panePid, paneTitle, paneDead, exitStatus] = line.split("|")
+            return {
+                paneId: paneId || "",
+                windowIndex: parseInt(windowIndex || "0", 10),
+                paneIndex: parseInt(paneIndex || "0", 10),
+                panePid: panePid ? parseInt(panePid, 10) : null,
+                paneTitle: paneTitle || "",
+                paneDead: paneDead === "1",
+                exitStatus: exitStatus ? parseInt(exitStatus, 10) : null,
+            }
+        })
+    } catch {
+        return []
+    }
+}
+
+/**
+ * Get the status of a specific pane
+ * Returns null if the pane doesn't exist
+ */
+export function getPaneStatus(target: string): PaneStatus | null {
+    try {
+        const output = execSync(
+            `tmux display-message -p -t "${target}" "#{window_index}|#{pane_index}|#{pane_id}|#{pane_pid}|#{pane_title}|#{pane_dead}|#{pane_dead_status}"`,
+            { stdio: "pipe", encoding: "utf-8" }
+        )
+        
+        const [windowIndex, paneIndex, paneId, panePid, paneTitle, paneDead, exitStatus] = output.trim().split("|")
+        
+        // If paneId is empty, the pane doesn't exist
+        if (!paneId) {
+            return null
+        }
+        
+        return {
+            paneId: paneId,
+            windowIndex: parseInt(windowIndex || "0", 10),
+            paneIndex: parseInt(paneIndex || "0", 10),
+            panePid: panePid ? parseInt(panePid, 10) : null,
+            paneTitle: paneTitle || "",
+            paneDead: paneDead === "1",
+            exitStatus: exitStatus ? parseInt(exitStatus, 10) : null,
+        }
+    } catch {
+        return null
+    }
+}
+
+/**
+ * Check if a pane is still running (not dead)
+ */
+export function isPaneAlive(target: string): boolean {
+    const status = getPaneStatus(target)
+    return status !== null && !status.paneDead
+}
+
+/**
+ * Get the exit code of a dead pane
+ * Returns null if pane is still alive or doesn't exist
+ */
+export function getPaneExitCode(target: string): number | null {
+    const status = getPaneStatus(target)
+    if (!status || !status.paneDead) return null
+    return status.exitStatus
+}
+
+/**
+ * Poll all panes in a session and return those that have exited
+ * Useful for detecting thread completion in batch execution
+ */
+export function getExitedPanes(sessionName: string): PaneStatus[] {
+    return getSessionPaneStatuses(sessionName).filter(p => p.paneDead)
+}
+
+/**
+ * Poll all panes in a session and return those that are still running
+ */
+export function getAlivePanes(sessionName: string): PaneStatus[] {
+    return getSessionPaneStatuses(sessionName).filter(p => !p.paneDead)
+}
+
+/**
+ * Wait for all panes in a session to exit (with optional timeout)
+ * Returns the final status of all panes
+ * 
+ * @param sessionName - tmux session name
+ * @param pollIntervalMs - How often to check (default: 1000ms)
+ * @param timeoutMs - Max time to wait (default: 0 = infinite)
+ * @returns Array of final pane statuses, or null if timeout
+ */
+export async function waitForAllPanesExit(
+    sessionName: string,
+    pollIntervalMs: number = 1000,
+    timeoutMs: number = 0
+): Promise<PaneStatus[] | null> {
+    const startTime = Date.now()
+    
+    while (true) {
+        const statuses = getSessionPaneStatuses(sessionName)
+        
+        // If session doesn't exist or no panes, we're done
+        if (statuses.length === 0) {
+            return []
+        }
+        
+        // Check if all panes are dead
+        const allDead = statuses.every(s => s.paneDead)
+        if (allDead) {
+            return statuses
+        }
+        
+        // Check timeout
+        if (timeoutMs > 0 && (Date.now() - startTime) >= timeoutMs) {
+            return null // Timeout
+        }
+        
+        // Wait before next poll
+        await Bun.sleep(pollIntervalMs)
+    }
+}
+
+/**
+ * Set a pane's title (visible in tmux status bar)
+ * Useful for tracking which thread is in which pane
+ */
+export function setPaneTitle(target: string, title: string): void {
+    Bun.spawnSync(["tmux", "select-pane", "-t", target, "-T", title])
+}
+

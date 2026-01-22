@@ -182,7 +182,6 @@ work fix                         # Add fix stage
 work approve plan --revoke       # Unlock plan
 work approve tasks --revoke      # Unlock tasks
 # ... edit PLAN.md or TASKS.md ...
-work approve plan
 work approve tasks
 
 # Reports

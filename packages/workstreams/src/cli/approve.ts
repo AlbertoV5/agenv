@@ -17,11 +17,8 @@ import {
   revokeStageApproval,
   getStageApprovalStatus,
   approveTasks,
-  approvePrompts,
   getTasksApprovalStatus,
-  getPromptsApprovalStatus,
   checkTasksApprovalReady,
-  checkPromptsApprovalReady,
   getFullApprovalStatus,
 } from "../lib/approval.ts"
 import {
@@ -37,7 +34,7 @@ import { atomicWriteFile } from "../lib/index.ts"
 import { addTasks, getTasks, parseTaskId } from "../lib/tasks.ts"
 import { generateAllPrompts, type GeneratePromptsResult } from "../lib/prompts.ts"
 
-type ApproveTarget = "plan" | "tasks" | "prompts"
+type ApproveTarget = "plan" | "tasks"
 
 interface ApproveCliArgs {
   repoRoot?: string
@@ -57,7 +54,7 @@ work approve - Human-in-the-loop approval gates for workstreams
 Usage:
   work approve plan [--stream <id>] [--force]
   work approve tasks [--stream <id>]
-  work approve prompts [--stream <id>]
+  work approve tasks [--stream <id>]
   work approve [--stream <id>]  # Show status of all approvals
 
 Targets:
@@ -79,7 +76,6 @@ Description:
   Workstreams require 3 approvals before starting:
   1. Plan approval - validates PLAN.md structure, no open questions
   2. Tasks approval - ensures tasks.json exists with tasks
-  3. Prompts approval - ensures all tasks have agents + prompt files exist
 
   Run 'work start' after all 3 approvals to create the GitHub branch and issues.
 
@@ -93,8 +89,6 @@ Examples:
   # Approve tasks
   work approve tasks
 
-  # Approve prompts  
-  work approve prompts
 
   # Revoke plan approval
   work approve plan --revoke --reason "Need to revise stage 2"
@@ -113,7 +107,7 @@ function parseCliArgs(argv: string[]): ApproveCliArgs | null {
     const next = args[i + 1]
 
     // Check for target subcommand
-    if (arg === "plan" || arg === "tasks" || arg === "prompts") {
+    if (arg === "plan" || arg === "tasks") {
       parsed.target = arg as ApproveTarget
       continue
     }
@@ -265,7 +259,6 @@ export async function main(argv: string[] = process.argv): Promise<void> {
         console.log(`Approval Status for "${stream.name}" (${stream.id})\n`)
         console.log(`  ${formatApprovalIcon(fullStatus.plan)} Plan:    ${fullStatus.plan}`)
         console.log(`  ${formatApprovalIcon(fullStatus.tasks)} Tasks:   ${fullStatus.tasks}`)
-        console.log(`  ${formatApprovalIcon(fullStatus.prompts)} Prompts: ${fullStatus.prompts}`)
         console.log("")
         if (fullStatus.fullyApproved) {
           console.log("All approvals complete. Run 'work start' to begin.")
@@ -284,9 +277,6 @@ export async function main(argv: string[] = process.argv): Promise<void> {
       break
     case "tasks":
       handleTasksApproval(repoRoot, stream, cliArgs)
-      break
-    case "prompts":
-      handlePromptsApproval(repoRoot, stream, cliArgs)
       break
   }
 }
@@ -812,12 +802,6 @@ function handleTasksApproval(
             path: serializeResult.tasksJsonPath,
             taskCount: serializeResult.taskCount,
           },
-          prompts: {
-            generated: promptsResult.success,
-            fileCount: promptsResult.generatedFiles.length,
-            totalThreads: promptsResult.totalThreads,
-            errors: promptsResult.errors.length > 0 ? promptsResult.errors : undefined,
-          },
           tasksMdDeleted,
         },
       }, null, 2))
@@ -845,85 +829,6 @@ function handleTasksApproval(
   }
 }
 
-function handlePromptsApproval(
-  repoRoot: string,
-  stream: ReturnType<typeof getResolvedStream>,
-  cliArgs: ApproveCliArgs
-): void {
-  const currentStatus = getPromptsApprovalStatus(stream)
-
-  // Handle revoke (for future use, not commonly needed for prompts)
-  if (cliArgs.revoke) {
-    console.error("Error: Prompts approval revocation is not supported")
-    process.exit(1)
-  }
-
-  if (currentStatus === "approved") {
-    if (cliArgs.json) {
-      console.log(JSON.stringify({
-        action: "already_approved",
-        target: "prompts",
-        streamId: stream.id,
-        streamName: stream.name,
-        approval: stream.approval?.prompts,
-      }, null, 2))
-    } else {
-      console.log(`Prompts for workstream "${stream.name}" are already approved`)
-    }
-    return
-  }
-
-  // Check readiness
-  const readyCheck = checkPromptsApprovalReady(repoRoot, stream.id)
-  if (!readyCheck.ready) {
-    if (cliArgs.json) {
-      console.log(JSON.stringify({
-        action: "blocked",
-        target: "prompts",
-        reason: readyCheck.reason,
-        streamId: stream.id,
-        streamName: stream.name,
-        missingAgents: readyCheck.missingAgents,
-        missingPrompts: readyCheck.missingPrompts,
-      }, null, 2))
-    } else {
-      console.error(`Error: ${readyCheck.reason}`)
-      if (readyCheck.missingAgents.length > 0) {
-        console.error(`\nMissing agents for tasks:`)
-        for (const taskId of readyCheck.missingAgents.slice(0, 5)) {
-          console.error(`  - ${taskId}`)
-        }
-        if (readyCheck.missingAgents.length > 5) {
-          console.error(`  ... and ${readyCheck.missingAgents.length - 5} more`)
-        }
-      }
-    }
-    process.exit(1)
-  }
-
-  try {
-    const updatedStream = approvePrompts(repoRoot, stream.id)
-
-    if (cliArgs.json) {
-      console.log(JSON.stringify({
-        action: "approved",
-        target: "prompts",
-        streamId: updatedStream.id,
-        streamName: updatedStream.name,
-        promptCount: readyCheck.promptCount,
-        taskCount: readyCheck.taskCount,
-        approval: updatedStream.approval?.prompts,
-      }, null, 2))
-    } else {
-      console.log(`Approved prompts for workstream "${updatedStream.name}"`)
-      console.log(`  Prompt files: ${readyCheck.promptCount}`)
-      console.log(`  Task count: ${readyCheck.taskCount}`)
-    }
-  } catch (e) {
-    console.error((e as Error).message)
-    process.exit(1)
-  }
-}
 
 /**
  * Result of TASKS.md generation attempt

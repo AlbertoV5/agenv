@@ -146,44 +146,7 @@ describe("Approval Flow", () => {
         expect(stream.approval?.tasks?.task_count).toBe(1);
     });
 
-    test("should check prompts approval readiness", () => {
-        const { checkPromptsApprovalReady } = require("../src/lib/approval.ts");
 
-        // Create tasks.json (simulating generation + assignment)
-        writeFileSync(join(REPO_ROOT, "work/stream-001/tasks.json"), JSON.stringify({
-            version: "1.0.0",
-            stream_id: "stream-001",
-            last_updated: new Date().toISOString(),
-            tasks: [{
-                id: "01.01.01.01",
-                name: "Task 1",
-                status: "pending",
-                assigned_agent: "coder"
-            }]
-        }));
-
-        // Should fail initially (no prompt files)
-        const result = checkPromptsApprovalReady(REPO_ROOT, "stream-001");
-        expect(result.ready).toBe(false);
-        expect(result.reason).toContain("Missing 1 prompt file");
-
-        // Create prompt file
-        const promptDir = join(REPO_ROOT, "work/stream-001/prompts/01-stage/01-batch");
-        mkdirSync(promptDir, { recursive: true });
-        writeFileSync(join(promptDir, "thread-01.md"), "# Prompt");
-
-        // Should pass
-        const resultPass = checkPromptsApprovalReady(REPO_ROOT, "stream-001");
-        expect(resultPass.ready).toBe(true);
-    });
-
-    test("should approve prompts", () => {
-        const { approvePrompts, getPromptsApprovalStatus } = require("../src/lib/approval.ts");
-
-        let stream = approvePrompts(REPO_ROOT, "stream-001");
-        expect(getPromptsApprovalStatus(stream)).toBe("approved");
-        expect(stream.approval?.prompts?.prompt_count).toBe(1);
-    });
 
     test("should verify full approval", () => {
         const { isFullyApproved, getFullApprovalStatus } = require("../src/lib/approval.ts");
@@ -196,7 +159,6 @@ describe("Approval Flow", () => {
         const status = getFullApprovalStatus(stream);
         expect(status.plan).toBe("approved");
         expect(status.tasks).toBe("approved");
-        expect(status.prompts).toBe("approved");
         expect(status.fullyApproved).toBe(true);
     });
 });
@@ -309,7 +271,7 @@ Set up the API.
 
         // Run the CLI approve command
         const { main } = await import("../src/cli/approve.ts");
-        
+
         // Capture console output
         const logs: string[] = [];
         const originalLog = console.log;
@@ -400,7 +362,7 @@ Test thread.
 
         // Run the CLI approve command
         const { main } = await import("../src/cli/approve.ts");
-        
+
         // Capture console output
         const logs: string[] = [];
         const originalLog = console.log;
@@ -428,7 +390,7 @@ Test thread.
 
         // Run the CLI approve command
         const { main } = await import("../src/cli/approve.ts");
-        
+
         // Capture console output
         const logs: string[] = [];
         const originalLog = console.log;
@@ -502,7 +464,7 @@ Test thread.
 
         // Run the CLI approve command with JSON output
         const { main } = await import("../src/cli/approve.ts");
-        
+
         // Capture console output
         const logs: string[] = [];
         const originalLog = console.log;
@@ -691,7 +653,7 @@ Implement feature B.
 
         // Run the CLI approve command for tasks
         const { main } = await import("../src/cli/approve.ts");
-        
+
         // Capture console output
         const logs: string[] = [];
         const originalLog = console.log;
@@ -742,7 +704,7 @@ Implement feature B.
 
         // Run the CLI approve command
         const { main } = await import("../src/cli/approve.ts");
-        
+
         const logs: string[] = [];
         const originalLog = console.log;
         console.log = (...args) => logs.push(args.join(" "));
@@ -788,7 +750,7 @@ Implement feature B.
 
         // Run the CLI approve command with JSON output
         const { main } = await import("../src/cli/approve.ts");
-        
+
         const logs: string[] = [];
         const originalLog = console.log;
         console.log = (...args) => logs.push(args.join(" "));
@@ -807,6 +769,5 @@ Implement feature B.
         expect(jsonOutput.artifacts.tasksJson.generated).toBe(true);
         expect(jsonOutput.artifacts.tasksJson.taskCount).toBe(2);
         expect(jsonOutput.artifacts.tasksMdDeleted).toBe(true);
-        expect(jsonOutput.artifacts.prompts).toBeDefined();
     });
 });

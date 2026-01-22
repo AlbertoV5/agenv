@@ -10,9 +10,16 @@ import { spawn } from "child_process"
 import { getRepoRoot, getWorkDir } from "../lib/repo.ts"
 import { loadIndex, getResolvedStream } from "../lib/index.ts"
 import { loadAgentsConfig, getAgentModels } from "../lib/agents-yaml.ts"
-import { readTasksFile, parseTaskId } from "../lib/tasks.ts"
+import {
+  readTasksFile,
+  parseTaskId,
+  parseThreadId,
+  getTasksByThread,
+  startTaskSession,
+  completeTaskSession,
+} from "../lib/tasks.ts"
 import { parseStreamDocument } from "../lib/stream-parser.ts"
-import type { StreamDocument } from "../lib/types.ts"
+import type { StreamDocument, SessionStatus } from "../lib/types.ts"
 
 interface ExecuteCliArgs {
     repoRoot?: string
@@ -397,7 +404,37 @@ export async function main(argv: string[] = process.argv): Promise<void> {
         return
     }
 
+    // Get all tasks in this thread for session tracking
+    const threadParsed = parseThreadId(resolvedThreadId)
+    const threadTasks = getTasksByThread(
+        repoRoot,
+        stream.id,
+        threadParsed.stage,
+        threadParsed.batch,
+        threadParsed.thread
+    )
+
+    // Start sessions for all tasks in the thread
+    const modelString = primaryModel.variant
+        ? `${primaryModel.model}:${primaryModel.variant}`
+        : primaryModel.model
+    
+    const sessionIds: Map<string, string> = new Map()
+    for (const task of threadTasks) {
+        const session = startTaskSession(
+            repoRoot,
+            stream.id,
+            task.id,
+            agentName,
+            modelString
+        )
+        if (session) {
+            sessionIds.set(task.id, session.sessionId)
+        }
+    }
+
     console.log(`Executing thread ${threadDisplayName} with agent "${agentName}" (${primaryModel.model})...`)
+    console.log(`Session tracking: ${sessionIds.size} task(s)`)
     console.log(`Prompt: ${promptPath}\n`)
 
     // Execute via shell to handle pipe
@@ -407,10 +444,36 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     })
 
     child.on("close", (code) => {
+        // Determine session status based on exit code
+        const sessionStatus: SessionStatus = code === 0 ? "completed" : "failed"
+        
+        // Complete all sessions for this thread
+        for (const [taskId, sessionId] of sessionIds) {
+            completeTaskSession(
+                repoRoot,
+                stream.id,
+                taskId,
+                sessionId,
+                sessionStatus,
+                code ?? undefined
+            )
+        }
+        
         process.exit(code ?? 0)
     })
 
     child.on("error", (err) => {
+        // Mark all sessions as failed on error
+        for (const [taskId, sessionId] of sessionIds) {
+            completeTaskSession(
+                repoRoot,
+                stream.id,
+                taskId,
+                sessionId,
+                "failed"
+            )
+        }
+        
         console.error(`Error executing command: ${err.message}`)
         process.exit(1)
     })

@@ -12,7 +12,6 @@ import {
     getFullApprovalStatus,
     getApprovalStatus,
     getTasksApprovalStatus,
-    getPromptsApprovalStatus,
 } from "../lib/approval.ts"
 import { isGitHubEnabled, loadGitHubConfig } from "../lib/github/config.ts"
 import { createWorkstreamBranch } from "../lib/github/branches.ts"
@@ -38,7 +37,7 @@ Options:
   --help, -h       Show this help message
 
 Description:
-  Start a workstream after all 3 approvals (plan, tasks, prompts) are complete.
+  Start a workstream after plan and tasks approvals are complete.
   
   This command:
   1. Creates the workstream branch on GitHub (workstream/{streamId})
@@ -48,7 +47,6 @@ Description:
 Prerequisites:
   - Run 'work approve plan' to approve the PLAN.md
   - Run 'work approve tasks' to approve tasks.json
-  - Run 'work approve prompts' to approve prompt files
   - Run 'work approve' to check approval status
 
 Examples:
@@ -147,7 +145,6 @@ export async function main(argv: string[] = process.argv): Promise<void> {
         const missing: string[] = []
         if (fullStatus.plan !== "approved") missing.push("plan")
         if (fullStatus.tasks !== "approved") missing.push("tasks")
-        if (fullStatus.prompts !== "approved") missing.push("prompts")
 
         if (cliArgs.json) {
             console.log(JSON.stringify({
@@ -163,7 +160,6 @@ export async function main(argv: string[] = process.argv): Promise<void> {
             console.error("")
             console.error(`  Plan:    ${fullStatus.plan}`)
             console.error(`  Tasks:   ${fullStatus.tasks}`)
-            console.error(`  Prompts: ${fullStatus.prompts}`)
             console.error("")
             console.error("Run 'work approve <target>' to approve missing items:")
             for (const item of missing) {
