@@ -5,7 +5,8 @@
 
 
 - [ ] ENHANCE: Improve the tmux to auto kill tmux session when both opencode sessions end.
-- [ ] ENHANCE: Keep track of the opencode sessions per thread so we are able to resume work on incomplete work or small fixes. So when we do `work fix` we have the option to go back to specific threads or create new stages.
+
+- [ ] ENHANCE: Keep track of the opencode sessions per thread so we are able to resume incomplete work or ask for small fixes to the agent responsible for the implementation. So when we do `work fix` we have the option to go back to specific threads or create new stages. I think we may need to rename the current `work fix` to `work add stage` which is a more sensible approach.
 
 - [ ] ENHANCE: Create opencode plugin that will close the session after ~1 min of inactivity so we can auto close batched runs
 
