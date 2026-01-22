@@ -542,6 +542,43 @@ export function approveTasks(
   return stream
 }
 
+/**
+ * Revoke tasks approval
+ */
+export function revokeTasksApproval(
+  repoRoot: string,
+  streamIdOrName: string,
+  reason?: string
+): StreamMetadata {
+  const index = loadIndex(repoRoot)
+  const streamIndex = index.streams.findIndex(
+    (s) => s.id === streamIdOrName || s.name === streamIdOrName
+  )
+
+  if (streamIndex === -1) {
+    throw new Error(`Workstream "${streamIdOrName}" not found`)
+  }
+
+  const stream = index.streams[streamIndex]!
+
+  // Initialize approval if needed
+  if (!stream.approval) {
+    stream.approval = { status: "draft" }
+  }
+
+  // Set tasks approval to revoked
+  stream.approval.tasks = {
+    status: "revoked",
+    revoked_at: new Date().toISOString(),
+    revoked_reason: reason,
+  }
+
+  stream.updated_at = new Date().toISOString()
+  saveIndex(repoRoot, index)
+
+  return stream
+}
+
 
 // ============================================
 // FULL APPROVAL CHECK

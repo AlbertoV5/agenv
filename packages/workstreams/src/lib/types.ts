@@ -206,6 +206,8 @@ export interface ApprovalMetadata {
     status: ApprovalStatus
     approved_at?: string
     task_count?: number // snapshot of task count at approval time
+    revoked_at?: string
+    revoked_reason?: string
   }
 }
 

@@ -13,6 +13,11 @@ export interface FixStageOptions {
   description?: string
 }
 
+export interface RevisionStageOptions {
+  name: string
+  description?: string
+}
+
 export function appendFixBatch(
   repoRoot: string,
   streamId: string,
@@ -160,6 +165,65 @@ Apply fixes.
 - [ ] Analyze root cause
 - [ ] Implement fix
 - [ ] Verify fix
+`
+
+  // Append to end of file, trimming trailing whitespace first
+  const trimmedContent = content.trimEnd()
+  writeFileSync(planPath, trimmedContent + template)
+
+  return {
+    success: true,
+    newStageNumber,
+    message: `Appended Stage ${newStageNumber} to PLAN.md`,
+  }
+}
+
+export function appendRevisionStage(
+  repoRoot: string,
+  streamId: string,
+  options: RevisionStageOptions,
+): { success: boolean; newStageNumber: number; message: string } {
+  const planPath = getStreamPlanMdPath(repoRoot, streamId)
+  const content = readFileSync(planPath, "utf-8")
+  const errors: ConsolidateError[] = []
+
+  const doc = parseStreamDocument(content, errors)
+  if (!doc) {
+    return {
+      success: false,
+      newStageNumber: 0,
+      message: "Failed to parse PLAN.md",
+    }
+  }
+
+  const lastStage = doc.stages[doc.stages.length - 1]
+  const newStageNumber = (lastStage ? lastStage.id : 0) + 1
+  const newStagePadded = newStageNumber.toString().padStart(2, "0")
+
+  const template = `
+
+### Stage ${newStagePadded}: Revision - ${options.name}
+
+#### Definition
+${options.description || "Additional revision stage for further improvements and refinements."}
+
+#### Constitution
+This revision stage adds new functionality or improvements to the workstream.
+
+#### Questions
+- What are the key changes being introduced?
+- How does this revision integrate with existing stages?
+
+#### Batches
+##### Batch 01: ${options.name}
+###### Thread 01: Implementation
+**Summary:**
+Implement ${options.name}.
+
+**Details:**
+- [ ] Analyze requirements
+- [ ] Implement changes
+- [ ] Verify implementation
 `
 
   // Append to end of file, trimming trailing whitespace first
