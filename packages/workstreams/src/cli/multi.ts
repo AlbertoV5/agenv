@@ -29,6 +29,7 @@ import {
     setGlobalOption,
     createGridLayout,
     listPaneIds,
+    THREAD_START_DELAY_MS,
 } from "../lib/tmux.ts"
 import { getStageApprovalStatus } from "../lib/approval.ts"
 import {
@@ -670,6 +671,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
 
     // Create session with first thread in Window 0
     createSession(sessionName, "Grid", firstCmd)
+    Bun.sleepSync(THREAD_START_DELAY_MS)
 
     // Keep windows open after exit for debugging
     setGlobalOption(sessionName, "remain-on-exit", "on")
@@ -702,6 +704,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
             const windowName = `T${i + 1}`
             addWindow(sessionName, windowName, cmd)
             console.log(`  Hidden: ${windowName} - ${thread.threadName}`)
+            Bun.sleepSync(THREAD_START_DELAY_MS)
         }
     }
 

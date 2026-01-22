@@ -7,6 +7,9 @@
 
 import { execSync, spawn, type ChildProcess } from "child_process"
 
+/** Delay between starting threads to avoid bun install race conditions */
+export const THREAD_START_DELAY_MS = 1000
+
 /**
  * Check if a tmux session exists
  */
@@ -330,6 +333,7 @@ export function createGridLayout(
         if (splitResult.exitCode !== 0) {
             throw new Error(`Failed to create 2-pane layout: ${splitResult.stderr.toString()}`)
         }
+        Bun.sleepSync(THREAD_START_DELAY_MS)
         return listPaneIds(sessionWindow)
     }
 
@@ -341,6 +345,7 @@ export function createGridLayout(
         "-h",
         commands[1]!
     ])
+    Bun.sleepSync(THREAD_START_DELAY_MS)
 
     // Step 2: Split left pane vertically (creates bottom-left)
     Bun.spawnSync([
@@ -349,6 +354,7 @@ export function createGridLayout(
         "-v",
         commands[2]!
     ])
+    Bun.sleepSync(THREAD_START_DELAY_MS)
 
     // Step 3: Split right pane vertically (creates bottom-right) if we have 4 commands
     if (commands.length >= 4) {
@@ -358,6 +364,7 @@ export function createGridLayout(
             "-v",
             commands[3]!
         ])
+        Bun.sleepSync(THREAD_START_DELAY_MS)
     }
 
     return listPaneIds(sessionWindow)
