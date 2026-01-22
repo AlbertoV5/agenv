@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "stream_id": "005-session-tracking",
-  "last_updated": "2026-01-22T18:41:48.925Z",
+  "last_updated": "2026-01-22T18:51:32.216Z",
   "tasks": [
     {
       "id": "01.01.01.01",
@@ -479,11 +479,22 @@
       "stage_name": "Integration and Polish",
       "batch_name": "Integration",
       "thread_name": "Continue Command Update",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T18:03:47.255Z",
-      "updated_at": "2026-01-22T18:03:47.255Z",
+      "updated_at": "2026-01-22T18:49:50.523Z",
       "assigned_agent": "default",
-      "sessions": []
+      "sessions": [
+        {
+          "sessionId": "ses_mkpsvib0_vfd1r4",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-22T18:43:30.543Z",
+          "status": "completed",
+          "completedAt": "2026-01-22T18:49:50.523Z",
+          "exitCode": 0
+        }
+      ],
+      "report": "Added check for incomplete/failed threads with session history in next batch using findIncompleteThreadsInBatch function in src/cli/continue.ts"
     },
     {
       "id": "03.01.01.02",
@@ -491,11 +502,12 @@
       "stage_name": "Integration and Polish",
       "batch_name": "Integration",
       "thread_name": "Continue Command Update",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T18:03:47.255Z",
-      "updated_at": "2026-01-22T18:03:47.255Z",
+      "updated_at": "2026-01-22T18:45:06.896Z",
       "assigned_agent": "default",
-      "sessions": []
+      "sessions": [],
+      "report": "Display thread status table with summary before offering options in src/cli/continue.ts using buildThreadStatuses and displayThreadStatusTable"
     },
     {
       "id": "03.01.01.03",
@@ -503,11 +515,12 @@
       "stage_name": "Integration and Polish",
       "batch_name": "Integration",
       "thread_name": "Continue Command Update",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T18:03:47.255Z",
-      "updated_at": "2026-01-22T18:03:47.255Z",
+      "updated_at": "2026-01-22T18:45:08.174Z",
       "assigned_agent": "default",
-      "sessions": []
+      "sessions": [],
+      "report": "Added interactive prompt with 3 options: Continue (skip failed), Fix first, Abort using readline interface in src/cli/continue.ts"
     },
     {
       "id": "03.01.01.04",
@@ -515,11 +528,12 @@
       "stage_name": "Integration and Polish",
       "batch_name": "Integration",
       "thread_name": "Continue Command Update",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T18:03:47.255Z",
-      "updated_at": "2026-01-22T18:03:47.255Z",
+      "updated_at": "2026-01-22T18:45:09.512Z",
       "assigned_agent": "default",
-      "sessions": []
+      "sessions": [],
+      "report": "Delegate to work fix command when user selects option 2 (Fix first) by calling fixMain with original argv in src/cli/continue.ts"
     },
     {
       "id": "03.01.02.01",
@@ -527,11 +541,22 @@
       "stage_name": "Integration and Polish",
       "batch_name": "Integration",
       "thread_name": "Status Command Enhancement",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T18:03:47.255Z",
-      "updated_at": "2026-01-22T18:03:47.255Z",
+      "updated_at": "2026-01-22T18:49:50.523Z",
       "assigned_agent": "default",
-      "sessions": []
+      "sessions": [
+        {
+          "sessionId": "ses_mkpsvib0_qapsl0",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-22T18:43:30.543Z",
+          "status": "completed",
+          "completedAt": "2026-01-22T18:49:50.523Z",
+          "exitCode": 0
+        }
+      ],
+      "report": "Added session count, last session status, running session indicator, and resumable thread indicator to stage display in formatProgress. Session info shows as [Ns N▶ N⟲] where N is count of sessions/running/resumable."
     },
     {
       "id": "03.01.02.02",
@@ -539,11 +564,12 @@
       "stage_name": "Integration and Polish",
       "batch_name": "Integration",
       "thread_name": "Status Command Enhancement",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T18:03:47.255Z",
-      "updated_at": "2026-01-22T18:03:47.255Z",
+      "updated_at": "2026-01-22T18:46:32.034Z",
       "assigned_agent": "default",
-      "sessions": []
+      "sessions": [],
+      "report": "Implemented running session indicator (▶) in stage summary. Running sessions are counted and displayed in the session info bracket."
     },
     {
       "id": "03.01.02.03",
@@ -551,11 +577,12 @@
       "stage_name": "Integration and Polish",
       "batch_name": "Integration",
       "thread_name": "Status Command Enhancement",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T18:03:47.255Z",
-      "updated_at": "2026-01-22T18:03:47.255Z",
+      "updated_at": "2026-01-22T18:46:33.709Z",
       "assigned_agent": "default",
-      "sessions": []
+      "sessions": [],
+      "report": "Implemented resumable thread indicator (⟲). Threads are marked as resumable if their last session was interrupted or failed and tasks are not completed."
     },
     {
       "id": "03.01.02.04",
@@ -563,11 +590,12 @@
       "stage_name": "Integration and Polish",
       "batch_name": "Integration",
       "thread_name": "Status Command Enhancement",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T18:03:47.255Z",
-      "updated_at": "2026-01-22T18:03:47.255Z",
+      "updated_at": "2026-01-22T18:46:35.505Z",
       "assigned_agent": "default",
-      "sessions": []
+      "sessions": [],
+      "report": "Implemented --sessions flag that displays detailed session history per thread including status icons (✓✗▶⏸), agent name, model, duration, exit code, and timestamps. Added formatSessionHistory function to lib/status.ts."
     },
     {
       "id": "03.02.01.01",
@@ -575,11 +603,21 @@
       "stage_name": "Integration and Polish",
       "batch_name": "Documentation and Testing",
       "thread_name": "Documentation Updates",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T18:03:47.255Z",
-      "updated_at": "2026-01-22T18:03:47.255Z",
+      "updated_at": "2026-01-22T18:51:32.216Z",
       "assigned_agent": "documentation-minimalist",
-      "sessions": []
+      "sessions": [
+        {
+          "sessionId": "ses_mkpt472d_79mp11",
+          "agentName": "documentation-minimalist",
+          "model": "openrouter/google/gemini-3-pro-preview",
+          "startedAt": "2026-01-22T18:50:15.880Z",
+          "status": "running"
+        }
+      ],
+      "currentSessionId": "ses_mkpt472d_79mp11",
+      "report": "Updated documentation for session tracking and fix workflows across SKILL.md files and README."
     },
     {
       "id": "03.02.01.02",
@@ -587,11 +625,12 @@
       "stage_name": "Integration and Polish",
       "batch_name": "Documentation and Testing",
       "thread_name": "Documentation Updates",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T18:03:47.255Z",
-      "updated_at": "2026-01-22T18:03:47.255Z",
+      "updated_at": "2026-01-22T18:51:32.216Z",
       "assigned_agent": "documentation-minimalist",
-      "sessions": []
+      "sessions": [],
+      "report": "Updated documentation for session tracking and fix workflows across SKILL.md files and README."
     },
     {
       "id": "03.02.01.03",
@@ -599,11 +638,12 @@
       "stage_name": "Integration and Polish",
       "batch_name": "Documentation and Testing",
       "thread_name": "Documentation Updates",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T18:03:47.255Z",
-      "updated_at": "2026-01-22T18:03:47.255Z",
+      "updated_at": "2026-01-22T18:51:32.216Z",
       "assigned_agent": "documentation-minimalist",
-      "sessions": []
+      "sessions": [],
+      "report": "Updated documentation for session tracking and fix workflows across SKILL.md files and README."
     },
     {
       "id": "03.02.01.04",
@@ -611,95 +651,12 @@
       "stage_name": "Integration and Polish",
       "batch_name": "Documentation and Testing",
       "thread_name": "Documentation Updates",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T18:03:47.255Z",
-      "updated_at": "2026-01-22T18:03:47.255Z",
+      "updated_at": "2026-01-22T18:51:32.216Z",
       "assigned_agent": "documentation-minimalist",
-      "sessions": []
-    },
-    {
-      "id": "03.02.02.01",
-      "name": "Handle missing session ID gracefully with fallback behavior",
-      "stage_name": "Integration and Polish",
-      "batch_name": "Documentation and Testing",
-      "thread_name": "Error Handling",
-      "status": "pending",
-      "created_at": "2026-01-22T18:03:47.255Z",
-      "updated_at": "2026-01-22T18:03:47.255Z",
-      "assigned_agent": "code-reviewer",
-      "sessions": []
-    },
-    {
-      "id": "03.02.02.02",
-      "name": "Handle stale sessions that cannot be resumed",
-      "stage_name": "Integration and Polish",
-      "batch_name": "Documentation and Testing",
-      "thread_name": "Error Handling",
-      "status": "pending",
-      "created_at": "2026-01-22T18:03:47.255Z",
-      "updated_at": "2026-01-22T18:03:47.255Z",
-      "assigned_agent": "code-reviewer",
-      "sessions": []
-    },
-    {
-      "id": "03.02.02.03",
-      "name": "Add file locking or retry logic for concurrent tasks.json writes",
-      "stage_name": "Integration and Polish",
-      "batch_name": "Documentation and Testing",
-      "thread_name": "Error Handling",
-      "status": "pending",
-      "created_at": "2026-01-22T18:03:47.255Z",
-      "updated_at": "2026-01-22T18:03:47.255Z",
-      "assigned_agent": "code-reviewer",
-      "sessions": []
-    },
-    {
-      "id": "03.02.02.04",
-      "name": "Add validation for corrupted or missing session records",
-      "stage_name": "Integration and Polish",
-      "batch_name": "Documentation and Testing",
-      "thread_name": "Error Handling",
-      "status": "pending",
-      "created_at": "2026-01-22T18:03:47.255Z",
-      "updated_at": "2026-01-22T18:03:47.255Z",
-      "assigned_agent": "code-reviewer",
-      "sessions": []
-    },
-    {
-      "id": "03.02.02.05",
-      "name": "Ensure existing workflows work even if session tracking fails",
-      "stage_name": "Integration and Polish",
-      "batch_name": "Documentation and Testing",
-      "thread_name": "Error Handling",
-      "status": "pending",
-      "created_at": "2026-01-22T18:03:47.255Z",
-      "updated_at": "2026-01-22T18:03:47.255Z",
-      "assigned_agent": "code-reviewer",
-      "sessions": []
-    },
-    {
-      "id": "03.02.03.01",
-      "name": "Update or add tests covering session tracking schema/migration",
-      "stage_name": "Integration and Polish",
-      "batch_name": "Documentation and Testing",
-      "thread_name": "Tests and Validation",
-      "status": "pending",
-      "created_at": "2026-01-22T18:03:47.255Z",
-      "updated_at": "2026-01-22T18:03:47.255Z",
-      "assigned_agent": "systems-engineer",
-      "sessions": []
-    },
-    {
-      "id": "03.02.03.02",
-      "name": "Confirm CLI outputs for validate/status reflect session data",
-      "stage_name": "Integration and Polish",
-      "batch_name": "Documentation and Testing",
-      "thread_name": "Tests and Validation",
-      "status": "pending",
-      "created_at": "2026-01-22T18:03:47.255Z",
-      "updated_at": "2026-01-22T18:03:47.255Z",
-      "assigned_agent": "systems-engineer",
-      "sessions": []
+      "sessions": [],
+      "report": "Updated documentation for session tracking and fix workflows across SKILL.md files and README."
     }
   ]
 }

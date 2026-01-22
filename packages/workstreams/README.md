@@ -443,6 +443,33 @@ await modifyIndex(repoRoot, (index) => {
 })
 ```
 
+## Session Tracking & Recovery
+
+The library automatically tracks execution sessions for every task. This enables:
+
+1.  **Resuming Interrupted Work**: If a session crashes or is killed, you can resume it using the same session ID.
+2.  **Audit Trail**: Track which agent and model performed each task, along with start/end times.
+3.  **Retry Workflows**: Easily retry failed threads with the same or different agents.
+
+### Session Storage
+Session data is stored in `tasks.json` alongside task definitions.
+
+```json
+"sessions": [
+  {
+    "sessionId": "sess_123...",
+    "agentName": "implementing-workstreams",
+    "model": "anthropic/claude-3-5-sonnet",
+    "startedAt": "2024-01-20T10:00:00Z",
+    "status": "completed"
+  }
+]
+```
+
+### Limitations
+- **Resume Capability**: Resuming a session relies on the underlying agent runner (e.g., `opencode`) retaining the session state. If the runner's temporary state is cleared, resuming may fail.
+- **Concurrent Sessions**: While multiple threads can run in parallel, resuming a specific session is an exclusive operation.
+
 ## CLI
 
 The package includes a CLI for workstream management:

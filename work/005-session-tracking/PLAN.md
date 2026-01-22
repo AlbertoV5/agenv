@@ -284,9 +284,9 @@ Enhance `work status` to show session information.
 - Add `--sessions` flag for detailed session history view
 - Format output for readability
 
-##### Batch 02: Documentation and Testing
+##### Batch 02: Documentation
 
-Update documentation and ensure reliability.
+Update documentation to reflect new commands and workflows.
 
 ###### Thread 01: Documentation Updates
 
@@ -301,22 +301,66 @@ Update all documentation to reflect new commands and workflows.
 - Add examples for common fix scenarios
 - Document session tracking behavior
 
-###### Thread 02: Error Handling
-
-**Summary:**
-Add comprehensive error handling across session tracking features.
-
-**Details:**
-- Working package: `./packages/workstreams`
-- Handle cases:
-  - Session ID not available (opencode version mismatch)
-  - Stale session (can't resume old sessions)
-  - Concurrent writes to tasks.json
-  - Missing or corrupted session records
-- Add graceful degradation if session tracking fails
-- Log warnings for debugging
-- Ensure existing workflows continue to work even if session tracking fails
-
 ---
 
 *Last updated: 2026-01-22*
+
+### Stage 04: Thread Source and Session Management Fixes
+
+#### Stage Definition
+
+Fix `work multi` to discover threads from `tasks.json` instead of PLAN.md, and add a manual command to mark sessions as completed for recovery from errors or early exits.
+
+#### Stage Constitution
+
+**Inputs:**
+- Current `work multi` implementation reading from PLAN.md
+- Session tracking infrastructure from Stage 1
+- Understanding of tasks.json thread structure
+
+**Structure:**
+- Batch 1: Two parallel threads - one for multi command fix, one for session completion command
+
+**Outputs:**
+- `work multi` discovers threads from tasks.json
+- `work session complete` command for manual session completion
+
+#### Stage Questions
+
+- [x] Should we keep PLAN.md as fallback if tasks.json has no threads? No, tasks.json is authoritative after approval
+
+#### Stage Batches
+
+##### Batch 01: Fixes
+
+###### Thread 01: Multi Command Thread Discovery
+
+**Summary:**
+Update `work multi` to read thread list from `tasks.json` instead of PLAN.md.
+
+**Details:**
+- Working package: `./packages/workstreams`
+- Modify `src/cli/multi.ts`:
+  1. Replace `findBatch()` logic that reads from parsed PLAN.md
+  2. Add function to discover threads from tasks.json by grouping tasks by thread ID
+  3. Extract unique threads from task IDs matching pattern `SS.BB.TT.*`
+  4. Get thread metadata (name, agent) from first task in each thread
+  5. Keep prompt path resolution (still needs stage/batch/thread names for file paths)
+- This ensures dynamically added tasks/threads are included in batch execution
+
+###### Thread 02: Session Completion Command
+
+**Summary:**
+Add `work session complete` command to manually mark sessions as completed.
+
+**Details:**
+- Working package: `./packages/workstreams`
+- Create `src/cli/session.ts` with subcommand structure:
+  ```
+  work session complete --thread "01.01.01"     # Complete specific thread's session
+  work session complete --batch "01.01"         # Complete all sessions in batch
+  work session complete --all                   # Complete all running/interrupted sessions
+  ```
+- Update session status from 'running' or 'interrupted' to 'completed'
+- Set completedAt timestamp
+- Useful for recovery when tmux exits unexpectedly or agent crashes
