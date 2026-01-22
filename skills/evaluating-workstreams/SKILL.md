@@ -23,8 +23,18 @@ work review plan         # Prints the entire PLAN.md to console
 work preview             # Shows structure, progress, and dependencies
 ```
 
+## Review Stage Commits
+
+```bash
+work review commits              # Show all commits by stage
+work review commits --stage 1    # Show commits for specific stage
+work review commits --files      # Include detailed file changes
+work review commits --json       # Machine-readable output
+```
+
 ## Evaluate Workstream
 
+- Review commits per stage (`work review commits`) to identify files modified and verify scope against the plan. Note any human commits for context.
 - Determine the status of the implementation by researching the codebase based on the files mentioned in the plan and additional exploration you may do.
 - Ask the user for feedback on the implementation and for any bugs and issues found.
 - Once the user has given you feedback, create a .md file to document the status, issues, and the evaluation result:

@@ -27,11 +27,14 @@ Plans must be approved before tasks can be started.
 
 ```bash
 # Approve (blocked if open questions in PLAN.md)
-work approve
+work approve plan
+
+# Approve specific stage
+work approve stage 1
 
 # Force approval (ignore open questions)
-work approve --force
+work approve plan --force
 
 # Revoke (if plan needs revision during execution)
-work approve --revoke --reason "Missing security review"
+work approve plan --revoke --reason "Missing security review"
 ```

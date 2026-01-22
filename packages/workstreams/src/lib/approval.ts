@@ -398,6 +398,40 @@ export function revokeStageApproval(
   return stream
 }
 
+/**
+ * Store commit SHA in stage approval metadata
+ * Called after createStageApprovalCommit succeeds
+ */
+export function storeStageCommitSha(
+  repoRoot: string,
+  streamIdOrName: string,
+  stageNumber: number,
+  commitSha: string
+): StreamMetadata {
+  const index = loadIndex(repoRoot)
+  const streamIndex = index.streams.findIndex(
+    (s) => s.id === streamIdOrName || s.name === streamIdOrName
+  )
+
+  if (streamIndex === -1) {
+    throw new Error(`Workstream "${streamIdOrName}" not found`)
+  }
+
+  const stream = index.streams[streamIndex]!
+
+  if (!stream.approval?.stages?.[stageNumber]) {
+    throw new Error(`Stage ${stageNumber} is not approved`)
+  }
+
+  // Store the commit SHA
+  stream.approval.stages[stageNumber].commit_sha = commitSha
+
+  stream.updated_at = new Date().toISOString()
+  saveIndex(repoRoot, index)
+
+  return stream
+}
+
 // ============================================
 // TASKS APPROVAL GATE
 // ============================================

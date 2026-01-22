@@ -6,24 +6,9 @@
   
 - [ ] BUG: Update the Reviewer skill to include to check for if threads are actually parallelizable. Update planner skill doc to reinforce that.
 
-- [ ] ENHANCE: We need to replace the AGENTS.md with agents.yaml so we can add more info, example use "models" instead of "model" so we can run the first choice, and if it fails, run the following ones, and so on.
-  
 - [ ] ENHANCE: Tooling prompt, eg: ```Can you create a test script file in ./scripts so I can run `bun run ./scripts/check-github-*.ts` So I Can test auth, config, label, and issue?``` 
 
 - [ ] ENHANCE: Integrate constant documentation agent that will document tooling and the latest status (apart from the regular docs one).
-
-## Human Workflow notes
-
-- PLAN: Ask for feature and to create plan (iterate).
-- REVIEW: Ask to review and edit PLAN.md and to ask questions if any (iterate).
-
-- PLAN: Ask for TASKS.md generation.
-- REVIEW: Ask to revew and edit TASKS.md if any (iterate).
-
-- PLAN: Ask for TASKS.md serialization and assignements.
-- USER: Review tasks.
-- PLAN: Ask for prompts generation.
-
 
 ## Notes prompts
 

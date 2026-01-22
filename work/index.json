@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-01-22T15:32:03.619Z",
+  "last_updated": "2026-01-22T16:30:56.825Z",
   "current_stream": "003-stage-commit-tracking",
   "streams": [
     {
@@ -150,27 +150,46 @@
         ]
       },
       "created_at": "2026-01-22T14:08:34.163Z",
-      "updated_at": "2026-01-22T15:32:03.619Z",
+      "updated_at": "2026-01-22T16:30:56.825Z",
       "path": "work/003-stage-commit-tracking",
       "generated_by": {
         "workstreams": "0.1.0"
       },
       "approval": {
         "status": "approved",
-        "approved_at": "2026-01-22T14:11:11.217Z",
+        "approved_at": "2026-01-22T16:17:56.072Z",
         "approved_by": "user",
-        "plan_hash": "15da1de57f0adff23dc7f420dd739df4d0085c688ea7584316fb76f2497a1aad",
-        "tasks": {
-          "status": "approved",
-          "approved_at": "2026-01-22T15:11:16.242Z",
-          "task_count": 24
-        },
-        "prompts": {
-          "status": "approved",
-          "approved_at": "2026-01-22T15:32:03.619Z",
-          "prompt_count": 6
+        "plan_hash": "0240a12b9e9366329436ea70acc589b3141681f17e0e6449c52efac2f1dbb8ac",
+        "stages": {
+          "1": {
+            "status": "approved",
+            "approved_at": "2026-01-22T16:30:43.416Z",
+            "approved_by": "user"
+          },
+          "2": {
+            "status": "approved",
+            "approved_at": "2026-01-22T16:30:47.816Z",
+            "approved_by": "user"
+          },
+          "3": {
+            "status": "approved",
+            "approved_at": "2026-01-22T16:22:40.407Z",
+            "approved_by": "user"
+          },
+          "4": {
+            "status": "approved",
+            "approved_at": "2026-01-22T16:27:18.435Z",
+            "approved_by": "user",
+            "commit_sha": "6d37b99d18a3e61e6f343ac5c84dd81e40597af0"
+          }
         }
-      }
+      },
+      "github": {
+        "branch": "workstream/003-stage-commit-tracking",
+        "completed_at": "2026-01-22T16:30:54.100Z",
+        "pr_number": 7
+      },
+      "status": "completed"
     }
   ]
 }

@@ -24,6 +24,10 @@ import {
   checkPromptsApprovalReady,
   getFullApprovalStatus,
 } from "../lib/approval.ts"
+import {
+  loadGitHubConfig,
+  createStageApprovalCommit,
+} from "../lib/github/index.ts"
 
 type ApproveTarget = "plan" | "tasks" | "prompts"
 
@@ -87,8 +91,8 @@ Examples:
   # Revoke plan approval
   work approve plan --revoke --reason "Need to revise stage 2"
 
-  # Approve specific stage (advanced)
-  work approve plan --stage 1
+  # Approve specific stage
+  work approve stage 1
 `)
 }
 
@@ -103,6 +107,21 @@ function parseCliArgs(argv: string[]): ApproveCliArgs | null {
     // Check for target subcommand
     if (arg === "plan" || arg === "tasks" || arg === "prompts") {
       parsed.target = arg as ApproveTarget
+      continue
+    }
+
+    if (arg === "stage") {
+      parsed.target = "plan"
+      if (!next) {
+        console.error("Error: stage requires a stage number")
+        return null
+      }
+      parsed.stage = parseInt(next, 10)
+      if (isNaN(parsed.stage)) {
+        console.error("Error: stage must be a number")
+        return null
+      }
+      i++
       continue
     }
 
@@ -187,7 +206,7 @@ function formatApprovalIcon(status: string): string {
   }
 }
 
-export function main(argv: string[] = process.argv): void {
+export async function main(argv: string[] = process.argv): Promise<void> {
   const cliArgs = parseCliArgs(argv)
   if (!cliArgs) {
     console.error("\nRun with --help for usage information.")
@@ -220,35 +239,40 @@ export function main(argv: string[] = process.argv): void {
     process.exit(1)
   }
 
-  // No target specified = show status
+  // No target specified = show status (unless revoking)
   if (!cliArgs.target) {
-    const fullStatus = getFullApprovalStatus(stream)
-
-    if (cliArgs.json) {
-      console.log(JSON.stringify({
-        streamId: stream.id,
-        streamName: stream.name,
-        ...fullStatus,
-      }, null, 2))
+    if (cliArgs.revoke) {
+      cliArgs.target = "plan"
+      // proceed to switch
     } else {
-      console.log(`Approval Status for "${stream.name}" (${stream.id})\n`)
-      console.log(`  ${formatApprovalIcon(fullStatus.plan)} Plan:    ${fullStatus.plan}`)
-      console.log(`  ${formatApprovalIcon(fullStatus.tasks)} Tasks:   ${fullStatus.tasks}`)
-      console.log(`  ${formatApprovalIcon(fullStatus.prompts)} Prompts: ${fullStatus.prompts}`)
-      console.log("")
-      if (fullStatus.fullyApproved) {
-        console.log("All approvals complete. Run 'work start' to begin.")
+      const fullStatus = getFullApprovalStatus(stream)
+
+      if (cliArgs.json) {
+        console.log(JSON.stringify({
+          streamId: stream.id,
+          streamName: stream.name,
+          ...fullStatus,
+        }, null, 2))
       } else {
-        console.log("Pending approvals. Run 'work approve <target>' to approve.")
+        console.log(`Approval Status for "${stream.name}" (${stream.id})\n`)
+        console.log(`  ${formatApprovalIcon(fullStatus.plan)} Plan:    ${fullStatus.plan}`)
+        console.log(`  ${formatApprovalIcon(fullStatus.tasks)} Tasks:   ${fullStatus.tasks}`)
+        console.log(`  ${formatApprovalIcon(fullStatus.prompts)} Prompts: ${fullStatus.prompts}`)
+        console.log("")
+        if (fullStatus.fullyApproved) {
+          console.log("All approvals complete. Run 'work start' to begin.")
+        } else {
+          console.log("Pending approvals. Run 'work approve <target>' to approve.")
+        }
       }
+      return
     }
-    return
   }
 
   // Handle specific target
   switch (cliArgs.target) {
     case "plan":
-      handlePlanApproval(repoRoot, stream, cliArgs)
+      await handlePlanApproval(repoRoot, stream, cliArgs)
       break
     case "tasks":
       handleTasksApproval(repoRoot, stream, cliArgs)
@@ -259,11 +283,11 @@ export function main(argv: string[] = process.argv): void {
   }
 }
 
-function handlePlanApproval(
+async function handlePlanApproval(
   repoRoot: string,
   stream: ReturnType<typeof getResolvedStream>,
   cliArgs: ApproveCliArgs
-): void {
+): Promise<void> {
   // Handle Stage-level operations
   if (cliArgs.stage !== undefined) {
     const stageNum = cliArgs.stage
@@ -321,6 +345,14 @@ function handlePlanApproval(
     try {
       const updatedStream = approveStage(repoRoot, stream.id, stageNum, "user")
 
+      // Auto-commit on stage approval if enabled
+      let commitResult: { success: boolean; commitSha?: string; skipped?: boolean; error?: string } | undefined
+      const githubConfig = await loadGitHubConfig(repoRoot)
+      if (githubConfig.enabled && githubConfig.auto_commit_on_approval) {
+        const stageName = `Stage ${stageNum}` // Use generic name; could be enhanced to parse from PLAN.md
+        commitResult = createStageApprovalCommit(repoRoot, updatedStream, stageNum, stageName)
+      }
+
       if (cliArgs.json) {
         console.log(JSON.stringify({
           action: "approved",
@@ -328,9 +360,22 @@ function handlePlanApproval(
           stage: stageNum,
           streamId: updatedStream.id,
           approval: updatedStream.approval?.stages?.[stageNum],
+          commit: commitResult ? {
+            created: commitResult.success && !commitResult.skipped,
+            sha: commitResult.commitSha,
+            skipped: commitResult.skipped,
+            error: commitResult.error,
+          } : undefined,
         }, null, 2))
       } else {
         console.log(`Approved Stage ${stageNum} of workstream "${updatedStream.name}"`)
+        if (commitResult?.success && commitResult.commitSha) {
+          console.log(`  Committed: ${commitResult.commitSha.substring(0, 7)}`)
+        } else if (commitResult?.skipped) {
+          console.log(`  No changes to commit`)
+        } else if (commitResult?.error) {
+          console.log(`  Commit skipped: ${commitResult.error}`)
+        }
       }
     } catch (e) {
       console.error((e as Error).message)

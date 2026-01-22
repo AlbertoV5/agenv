@@ -388,6 +388,12 @@ work check plan
 work review plan
 work review tasks
 
+# Review stage approval commits history
+work review commits
+# Output:
+# [2024-01-20] Stage 1 approved by User (commit: abc1234)
+# [2024-01-21] Stage 2 approved by User (commit: def5678)
+
 # Open PLAN.md in editor
 work edit
 
@@ -577,7 +583,7 @@ After running `work approve`, issues are automatically created for all threads i
 ```bash
 work approve  # Creates GitHub issues for all threads
 
-work approve --stage 3  # Creates GitHub issues only for threads in stage 3
+work approve stage 3  # Creates GitHub issues only for threads in stage 3
 ```
 
 This also works when approving individual stages (e.g., fix stages added later).
@@ -614,6 +620,41 @@ work update --task "01.01.01.05" --status in_progress
 
 This ensures GitHub issues accurately reflect the current state of work.
 
+### Stage Approval Commits
+
+When a stage is approved using `work approve stage <N>`, the system can automatically create a commit to mark this milestone. This feature helps track the progress of the workstream in the git history.
+
+#### Auto-Commit on Approval
+
+If enabled, approving a stage will trigger an automatic git commit with the following changes:
+- `work/index.json`: Updates the stage status to approved
+- `work/<stream-id>/PLAN.md`: Updates the stage questions and approval status
+
+#### Commit Message Format
+
+The automatic commits follow a structured format with Git Trailers for machine readability:
+
+```text
+feat: approve stage <N> for <stream-name>
+
+Approved stage <N> of workstream <stream-name>.
+
+Workstream-Id: <stream-id>
+Stage-Id: <stage-number>
+Action: approve-stage
+```
+
+#### Configuration
+
+To enable auto-commit on approval, add `auto_commit_on_approval: true` to your `work/github.json` configuration:
+
+```json
+{
+  "enabled": true,
+  "auto_commit_on_approval": true
+}
+```
+
 ### Label Conventions
 
 GitHub issues are automatically tagged with hierarchical labels:
@@ -641,6 +682,7 @@ The GitHub configuration is stored in `work/github.json`:
   "repo": "myrepo",
   "branch_prefix": "workstream",
   "auto_create_issues": true,
+  "auto_commit_on_approval": true,
   "label_config": {
     "workstream": { "prefix": "workstream", "color": "1d76db" },
     "stage": { "prefix": "stage", "color": "0e8a16" },

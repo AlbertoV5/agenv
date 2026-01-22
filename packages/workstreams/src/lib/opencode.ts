@@ -15,7 +15,7 @@ const DEFAULT_TIMEOUT_MS = 30000
  * Get the server URL for a given port
  */
 export function getServerUrl(port: number = DEFAULT_PORT): string {
-    return `http://localhost:${port}`
+  return `http://localhost:${port}`
 }
 
 /**
@@ -23,18 +23,18 @@ export function getServerUrl(port: number = DEFAULT_PORT): string {
  * Makes a simple HTTP request to verify the server is responsive
  */
 export async function isServerRunning(
-    port: number = DEFAULT_PORT
+  port: number = DEFAULT_PORT,
 ): Promise<boolean> {
-    try {
-        const response = await fetch(`http://localhost:${port}/`, {
-            method: "GET",
-            signal: AbortSignal.timeout(2000),
-        })
-        // Any response means the server is up (even if not 200)
-        return response.ok || response.status < 500
-    } catch {
-        return false
-    }
+  try {
+    const response = await fetch(`http://localhost:${port}/`, {
+      method: "GET",
+      signal: AbortSignal.timeout(2000),
+    })
+    // Any response means the server is up (even if not 200)
+    return response.ok || response.status < 500
+  } catch {
+    return false
+  }
 }
 
 /**
@@ -45,19 +45,19 @@ export async function isServerRunning(
  * after the parent process exits.
  */
 export function startServer(
-    port: number = DEFAULT_PORT,
-    cwd?: string
+  port: number = DEFAULT_PORT,
+  cwd?: string,
 ): ChildProcess {
-    const child = spawn("opencode", ["serve", "--port", String(port)], {
-        cwd,
-        detached: true,
-        stdio: ["ignore", "pipe", "pipe"],
-    })
+  const child = spawn("opencode", ["serve", "--port", String(port)], {
+    cwd,
+    detached: true,
+    stdio: ["ignore", "pipe", "pipe"],
+  })
 
-    // Unref so parent can exit while server continues
-    child.unref()
+  // Unref so parent can exit while server continues
+  child.unref()
 
-    return child
+  return child
 }
 
 /**
@@ -65,36 +65,45 @@ export function startServer(
  * Polls until the server responds or timeout is reached
  */
 export async function waitForServer(
-    port: number = DEFAULT_PORT,
-    timeoutMs: number = DEFAULT_TIMEOUT_MS
+  port: number = DEFAULT_PORT,
+  timeoutMs: number = DEFAULT_TIMEOUT_MS,
 ): Promise<boolean> {
-    const startTime = Date.now()
+  const startTime = Date.now()
 
-    while (Date.now() - startTime < timeoutMs) {
-        const running = await isServerRunning(port)
-        if (running) {
-            return true
-        }
-        // Wait before next check
-        await new Promise((resolve) => setTimeout(resolve, HEALTH_CHECK_INTERVAL_MS))
+  while (Date.now() - startTime < timeoutMs) {
+    const running = await isServerRunning(port)
+    if (running) {
+      return true
     }
+    // Wait before next check
+    await new Promise((resolve) =>
+      setTimeout(resolve, HEALTH_CHECK_INTERVAL_MS),
+    )
+  }
 
-    return false
+  return false
 }
 
 /**
  * Truncate a string to maxLen chars, adding ellipsis if truncated
  */
 function truncateTitle(title: string, maxLen: number = 32): string {
-    if (title.length <= maxLen) return title
-    return title.slice(0, maxLen - 1) + "…"
+  if (title.length <= maxLen) return title
+  return title.slice(0, maxLen - 1) + "…"
 }
 
 /**
- * Escape a string for use in shell double quotes
+ * Escape a string for use in shell commands wrapped in sh -c '...'
+ * Handles both the outer single-quote wrapper and inner double-quoted strings
  */
 function escapeForShell(str: string): string {
-    return str.replace(/"/g, '\\"').replace(/\$/g, '\\$').replace(/`/g, '\\`')
+  // First escape single quotes for the outer sh -c '...' wrapper
+  // Then escape double quotes, $, and backticks for inner double-quoted strings
+  return str
+    .replace(/'/g, "'\\''")
+    .replace(/"/g, '\\"')
+    .replace(/\$/g, "\\$")
+    .replace(/`/g, "\\`")
 }
 
 /**
@@ -108,29 +117,34 @@ function escapeForShell(str: string): string {
  * 4. Resumes the session with opencode TUI if found
  */
 export function buildRunCommand(
-    port: number,
-    model: string,
-    promptPath: string,
-    threadTitle: string,
-    variant?: string
+  port: number,
+  model: string,
+  promptPath: string,
+  threadTitle: string,
+  variant?: string,
 ): string {
-    // Escape single quotes in paths by replacing ' with '\''
-    const escapedPath = promptPath.replace(/'/g, "'\\''")
-    // Truncate and escape the title for shell safety
-    const truncated = truncateTitle(threadTitle, 32)
-    const escapedTitle = escapeForShell(truncated)
+  // Escape single quotes in paths by replacing ' with '\''
+  const escapedPath = promptPath.replace(/'/g, "'\\''")
+  // Truncate and escape the title for shell safety
+  const truncated = truncateTitle(threadTitle, 32)
+  const escapedTitle = escapeForShell(truncated)
 
-    // Build variant flag if specified
-    const variantFlag = variant ? ` --variant "${variant}"` : ""
+  // Build variant flag if specified
+  const variantFlag = variant ? ` --variant "${variant}"` : ""
 
-    // Build a shell script that:
-    // 1. Generates a unique tracking ID (16 chars from nanosecond timestamp)
-    // 2. Runs opencode run with the title containing the tracking ID
-    // 3. After completion, searches for the session by tracking ID using jq
-    // 4. Resumes the session with opencode TUI if found
-    return `sh -c '
+  // Build a shell script that:
+  // 1. Generates a unique tracking ID (16 chars from nanosecond timestamp)
+  // 2. Runs opencode run with the title containing the tracking ID
+  // 3. After completion, searches for the session by tracking ID using jq
+  // 4. Resumes the session with opencode TUI if found
+  return `sh -c '
 TRACK_ID=$(date +%s%N | head -c 16)
 TITLE="${escapedTitle}__id=$TRACK_ID"
+echo "════════════════════════════════════════"
+echo "Thread: ${escapedTitle}"
+echo "Model: ${model}${variant ? ` (${variant})` : ""}"
+echo "════════════════════════════════════════"
+echo ""
 cat "${escapedPath}" | opencode run --port ${port} --model "${model}"${variantFlag} --title "$TITLE"
 echo ""
 echo "Thread finished. Looking for session to resume..."
@@ -158,70 +172,70 @@ const EARLY_FAILURE_THRESHOLD_SECONDS = 10
 
 /**
  * Build the opencode run command with retry logic for multiple models
- * 
+ *
  * Retry logic:
  * - Only retries if opencode exits within EARLY_FAILURE_THRESHOLD_SECONDS (early failure)
  * - Tries each model in order until one succeeds or runs past the threshold
  * - Session resume logic is NOT wrapped in retry (user Ctrl+C exits normally)
  */
 export function buildRetryRunCommand(
-    port: number,
-    models: NormalizedModelSpec[],
-    promptPath: string,
-    threadTitle: string
+  port: number,
+  models: NormalizedModelSpec[],
+  promptPath: string,
+  threadTitle: string,
 ): string {
-    if (models.length === 0) {
-        throw new Error("At least one model must be provided")
-    }
+  if (models.length === 0) {
+    throw new Error("At least one model must be provided")
+  }
 
-    // If only one model, use simple command without retry logic
-    if (models.length === 1) {
-        const m = models[0]!
-        return buildRunCommand(port, m.model, promptPath, threadTitle, m.variant)
-    }
+  // If only one model, use simple command without retry logic
+  if (models.length === 1) {
+    const m = models[0]!
+    return buildRunCommand(port, m.model, promptPath, threadTitle, m.variant)
+  }
 
-    // Escape single quotes in paths by replacing ' with '\''
-    const escapedPath = promptPath.replace(/'/g, "'\\''")
-    // Truncate and escape the title for shell safety
-    const truncated = truncateTitle(threadTitle, 32)
-    const escapedTitle = escapeForShell(truncated)
+  // Escape single quotes in paths by replacing ' with '\''
+  const escapedPath = promptPath.replace(/'/g, "'\\''")
+  // Truncate and escape the title for shell safety
+  const truncated = truncateTitle(threadTitle, 32)
+  const escapedTitle = escapeForShell(truncated)
 
-    // Build model attempt blocks
-    const modelAttempts = models.map((m, i) => {
-        const variantFlag = m.variant ? ` --variant "${m.variant}"` : ""
-        const isLast = i === models.length - 1
+  // Build model attempt blocks
+  const modelAttempts = models
+    .map((m, i) => {
+      const variantFlag = m.variant ? ` --variant "${m.variant}"` : ""
+      const isLast = i === models.length - 1
 
-        if (i === 0) {
-            // First model - always try
-            return `
+      if (i === 0) {
+        // First model - always try
+        return `
   START_TIME=$(date +%s)
-  echo "Trying model ${i + 1}/${models.length}: ${m.model}${m.variant ? ` (variant: ${m.variant})` : ''}"
+  echo "Trying model ${i + 1}/${models.length}: ${m.model}${m.variant ? ` (variant: ${m.variant})` : ""}"
   cat "${escapedPath}" | opencode run --port ${port} --model "${m.model}"${variantFlag} --title "$TITLE"
   EXIT_CODE=$?
   ELAPSED=$(($(date +%s) - START_TIME))
   
   if [ $EXIT_CODE -eq 0 ] || [ $ELAPSED -ge ${EARLY_FAILURE_THRESHOLD_SECONDS} ]; then
-    # Success or ran long enough - don't retry
     FINAL_EXIT=$EXIT_CODE
   else
     echo ""
-    echo "Model failed within ${EARLY_FAILURE_THRESHOLD_SECONDS}s (exit code: $EXIT_CODE, elapsed: ${ELAPSED}s). Trying next model..."
+    echo "Model failed within ${EARLY_FAILURE_THRESHOLD_SECONDS}s (exit code: $EXIT_CODE, elapsed: \${ELAPSED}s). Trying next model..."
   fi`
-        } else if (isLast) {
-            // Last model - no retry after this
-            return `
+      } else if (isLast) {
+        // Last model - no retry after this
+        return `
   if [ -z "$FINAL_EXIT" ]; then
     START_TIME=$(date +%s)
-    echo "Trying model ${i + 1}/${models.length}: ${m.model}${m.variant ? ` (variant: ${m.variant})` : ''}"
+    echo "Trying model ${i + 1}/${models.length}: ${m.model}${m.variant ? ` (variant: ${m.variant})` : ""}"
     cat "${escapedPath}" | opencode run --port ${port} --model "${m.model}"${variantFlag} --title "$TITLE"
     FINAL_EXIT=$?
   fi`
-        } else {
-            // Middle models - check if should retry
-            return `
+      } else {
+        // Middle models - check if should retry
+        return `
   if [ -z "$FINAL_EXIT" ]; then
     START_TIME=$(date +%s)
-    echo "Trying model ${i + 1}/${models.length}: ${m.model}${m.variant ? ` (variant: ${m.variant})` : ''}"
+    echo "Trying model ${i + 1}/${models.length}: ${m.model}${m.variant ? ` (variant: ${m.variant})` : ""}"
     cat "${escapedPath}" | opencode run --port ${port} --model "${m.model}"${variantFlag} --title "$TITLE"
     EXIT_CODE=$?
     ELAPSED=$(($(date +%s) - START_TIME))
@@ -230,16 +244,24 @@ export function buildRetryRunCommand(
       FINAL_EXIT=$EXIT_CODE
     else
       echo ""
-      echo "Model failed within ${EARLY_FAILURE_THRESHOLD_SECONDS}s (exit code: $EXIT_CODE, elapsed: ${ELAPSED}s). Trying next model..."
+      echo "Model failed within ${EARLY_FAILURE_THRESHOLD_SECONDS}s (exit code: $EXIT_CODE, elapsed: \${ELAPSED}s). Trying next model..."
     fi
   fi`
-        }
-    }).join("\n")
+      }
+    })
+    .join("\n")
 
-    return `sh -c '
+  const modelList = models.map(m => m.variant ? `${m.model} (${m.variant})` : m.model).join(" -> ")
+
+  return `sh -c '
 TRACK_ID=$(date +%s%N | head -c 16)
 TITLE="${escapedTitle}__id=$TRACK_ID"
 FINAL_EXIT=""
+echo "════════════════════════════════════════"
+echo "Thread: ${escapedTitle}"
+echo "Models: ${modelList}"
+echo "════════════════════════════════════════"
+echo ""
 ${modelAttempts}
 
 echo ""
@@ -265,6 +287,5 @@ fi
  * Build the opencode serve command for display (dry-run mode)
  */
 export function buildServeCommand(port: number = DEFAULT_PORT): string {
-    return `opencode serve --port ${port}`
+  return `opencode serve --port ${port}`
 }
-

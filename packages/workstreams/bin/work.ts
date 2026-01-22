@@ -145,7 +145,7 @@ Commands:
   delete      Delete workstreams, stages, threads, or tasks
   files       List and index files in files/ directory
   tasks       Manage TASKS.md intermediate file (generate/serialize)
-  review      Review plan or tasks (plan, tasks)
+  review      Review plan, tasks, or commits (plan, tasks, commits)
   validate    Validate plan structure and content
   check       Find unchecked items in plan
   preview     Show PLAN.md structure

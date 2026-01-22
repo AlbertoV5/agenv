@@ -12,7 +12,7 @@ Your scope is **planning only** — you do not implement code. Follow this workf
 1. **Create workstream** — `work create --name "feature" --stages N`
 2. **Fill out PLAN.md** — Define stages, batches, threads, and resolve questions. Include working packages in details.
 3. **Ask user to review PLAN.md** — Present `work preview` output and **wait for confirmation** before proceeding
-4. **User approves plan** — Tell user to run `work approve` (you MUST NOT run this yourself)
+4. **User approves plan** — Tell user to run `work approve plan` (you MUST NOT run this yourself)
 5. **Generate TASKS.md** — Once approved, run `work tasks generate`, then fill in task descriptions
 6. **Ask user to review TASKS.md** — Present the tasks and **wait for confirmation** before serializing
 7. **Serialize tasks** — Run `work tasks serialize` only after user confirms
@@ -104,7 +104,6 @@ work edit       # Open PLAN.md in editor
 work preview      # Shows structure with progress
 work validate plan  # Validates PLAN.md structure (schema only)
 work check plan     # Comprehensive check (schema, open questions, missing inputs)
-work approve      # Approve plan (blocked if open questions)
 ```
 
 ## Review Checkpoint: PLAN.md
@@ -117,9 +116,9 @@ After filling out PLAN.md, you MUST pause and ask for user review:
 4. Ask: "Does this plan structure look correct? Any changes needed before approval?"
 5. **Wait for explicit confirmation** — do not proceed until user confirms
 6. If user requests changes, make edits and repeat from step 1
-7. Once confirmed, tell user: "Please run `work approve` to approve the plan"
+7. Once confirmed, tell user: "Please run `work approve plan` to approve the plan"
 
-**You MUST NOT run `work approve` yourself.** The user must run this command to maintain human-in-the-loop control.
+**You MUST NOT run `work approve *` yourself.** The user must run this command to maintain human-in-the-loop control.
 
 ## Create Tasks (Required Workflow)
 
@@ -208,7 +207,6 @@ work add-thread --stage "setup" --batch "core" --name "thread-name"
 work preview
 work validate plan
 work check plan
-work approve
 
 # Tasks (required workflow after plan approval)
 work tasks generate              # Create TASKS.md from PLAN.md
@@ -222,9 +220,14 @@ work assign --thread "01.01.01" --agent "backend-expert"
 # Agent prompts
 work prompt --stage 1 --batch 1
 
-# Status updates (after user feedback)
+# Workflow for Fix Stages after user feedback
 work fix   # Add fix stage
-work approve --revoke --reason "Fix stage"
+work approve plan --revoke --reason "Fix stage"
+work approve tasks --revoke --reason "Fix stage"
+work generate tasks # re-generate TASKS.md
+work serialize tasks # serialize back to tasks.json once tasks are approved
+work assign --thread ... # re-assign agents
+work prompt --stage ... # generate new prompts
 
 # Reports & completion
 work report --stage 1            # Generate stage report

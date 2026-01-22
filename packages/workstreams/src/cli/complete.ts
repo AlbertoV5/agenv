@@ -449,33 +449,6 @@ function formatPRBody(
 }
 
 /**
- * Store PR number in stream metadata
- */
-function storePRMetadata(
-  repoRoot: string,
-  streamId: string,
-  prNumber: number
-): void {
-  const index = loadIndex(repoRoot)
-  const streamIndex = index.streams.findIndex(
-    (s) => s.id === streamId || s.name === streamId
-  )
-
-  if (streamIndex === -1) {
-    throw new Error(`Workstream "${streamId}" not found`)
-  }
-
-  const stream = index.streams[streamIndex]!
-  stream.github = {
-    ...stream.github,
-    pr_number: prNumber,
-  }
-  stream.updated_at = new Date().toISOString()
-
-  saveIndex(repoRoot, index)
-}
-
-/**
  * Creates a pull request for the completed workstream
  */
 async function createWorkstreamPR(
@@ -514,10 +487,7 @@ async function createWorkstreamPR(
     
     // Create the PR
     const pr = await client.createPullRequest(title, body, branchName, targetBranch, draft)
-    
-    // Store PR number in stream metadata
-    storePRMetadata(repoRoot, streamId, pr.number)
-    
+
     return {
       success: true,
       prNumber: pr.number,

@@ -199,6 +199,7 @@ export interface ApprovalMetadata {
       approved_by?: string
       revoked_at?: string
       revoked_reason?: string
+      commit_sha?: string // SHA of the auto-commit created on stage approval
     }
   >
   // Tasks approval gate
