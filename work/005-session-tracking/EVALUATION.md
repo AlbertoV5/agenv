@@ -50,6 +50,14 @@ Documentation:
    - Impact: Low - `git log` works as workaround
    - Suggested fix: Debug commit parsing in `src/cli/review.ts` or `src/lib/git/log.ts`
 
+2. **`work start` does not create GitHub issues for threads**
+   - Symptom: Running `work start` does not create GitHub issues for each thread
+   - Expected: Should create one issue per thread when GitHub integration is enabled
+   - Impact: Medium - other GitHub features (labels, branches) work correctly
+   - **Root cause found:** `work/github.json` is missing `auto_create_issues` field. The check in `src/lib/github/sync.ts:82` returns early when this is `undefined`.
+   - **Workaround:** Add `"auto_create_issues": true` to `work/github.json`
+   - Suggested fix: Update `loadGitHubConfig()` in `src/lib/github/config.ts` to merge loaded config with `DEFAULT_GITHUB_CONFIG` to handle missing fields
+
 ### Implementation Notes
 
 - Stage 04 was added mid-stream to fix `work multi` thread discovery issue discovered during Stage 03 execution

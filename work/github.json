@@ -3,6 +3,7 @@
   "owner": "AlbertoV5",
   "repo": "agenv",
   "branch_prefix": "workstream/",
+  "auto_create_issues": true,
   "auto_commit_on_approval": true,
   "label_config": {
     "workstream": {
