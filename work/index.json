@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-01-22T17:50:15.624Z",
+  "last_updated": "2026-01-22T17:52:00.928Z",
   "current_stream": "004-streamlined-workflow",
   "streams": [
     {
@@ -209,7 +209,7 @@
         ]
       },
       "created_at": "2026-01-22T16:44:10.635Z",
-      "updated_at": "2026-01-22T17:50:15.624Z",
+      "updated_at": "2026-01-22T17:52:00.928Z",
       "path": "work/004-streamlined-workflow",
       "generated_by": {
         "workstreams": "0.1.0"
@@ -253,8 +253,10 @@
         }
       },
       "github": {
-        "branch": "workstream/004-streamlined-workflow"
-      }
+        "branch": "workstream/004-streamlined-workflow",
+        "completed_at": "2026-01-22T17:52:00.927Z"
+      },
+      "status": "completed"
     }
   ]
 }
