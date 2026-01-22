@@ -28,7 +28,6 @@ import {
   loadGitHubConfig,
   createStageApprovalCommit,
 } from "../lib/github/index.ts"
-import { storeStageCommitSha } from "../lib/approval.ts"
 
 type ApproveTarget = "plan" | "tasks" | "prompts"
 
@@ -352,10 +351,6 @@ async function handlePlanApproval(
       if (githubConfig.enabled && githubConfig.auto_commit_on_approval) {
         const stageName = `Stage ${stageNum}` // Use generic name; could be enhanced to parse from PLAN.md
         commitResult = createStageApprovalCommit(repoRoot, updatedStream, stageNum, stageName)
-
-        if (commitResult.success && commitResult.commitSha) {
-          storeStageCommitSha(repoRoot, updatedStream.id, stageNum, commitResult.commitSha)
-        }
       }
 
       if (cliArgs.json) {

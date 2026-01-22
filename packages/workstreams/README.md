@@ -583,7 +583,7 @@ After running `work approve`, issues are automatically created for all threads i
 ```bash
 work approve  # Creates GitHub issues for all threads
 
-work approve --stage 3  # Creates GitHub issues only for threads in stage 3
+work approve stage 3  # Creates GitHub issues only for threads in stage 3
 ```
 
 This also works when approving individual stages (e.g., fix stages added later).
@@ -622,7 +622,7 @@ This ensures GitHub issues accurately reflect the current state of work.
 
 ### Stage Approval Commits
 
-When a stage is approved using `work approve plan --stage <N>`, the system can automatically create a commit to mark this milestone. This feature helps track the progress of the workstream in the git history.
+When a stage is approved using `work approve stage <N>`, the system can automatically create a commit to mark this milestone. This feature helps track the progress of the workstream in the git history.
 
 #### Auto-Commit on Approval
 
