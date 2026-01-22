@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-01-22T21:46:54.682Z",
+  "last_updated": "2026-01-22T21:52:41.250Z",
   "current_stream": "006-revision-workflow",
   "streams": [
     {
@@ -338,7 +338,7 @@
         ]
       },
       "created_at": "2026-01-22T21:08:59.022Z",
-      "updated_at": "2026-01-22T21:46:54.682Z",
+      "updated_at": "2026-01-22T21:52:41.250Z",
       "path": "work/006-revision-workflow",
       "generated_by": {
         "workstreams": "0.1.0"
@@ -357,6 +357,11 @@
           "1": {
             "status": "approved",
             "approved_at": "2026-01-22T21:46:54.682Z",
+            "approved_by": "user"
+          },
+          "2": {
+            "status": "approved",
+            "approved_at": "2026-01-22T21:52:41.250Z",
             "approved_by": "user"
           }
         }

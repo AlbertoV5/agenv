@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "stream_id": "006-revision-workflow",
-  "last_updated": "2026-01-22T21:46:42.138Z",
+  "last_updated": "2026-01-22T21:52:28.637Z",
   "tasks": [
     {
       "id": "01.01.01.01",
@@ -143,16 +143,27 @@
       "stage_name": "CLI Commands",
       "batch_name": "Revision Command",
       "thread_name": "Work Revision CLI",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T21:44:18.607Z",
-      "updated_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:49:18.535Z",
       "assigned_agent": "default",
-      "sessions": [],
+      "sessions": [
+        {
+          "sessionId": "ses_mkpzfdzm_vvnir3",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-22T21:46:55.764Z",
+          "status": "completed",
+          "completedAt": "2026-01-22T21:49:18.535Z",
+          "exitCode": 0
+        }
+      ],
       "github_issue": {
         "number": 12,
         "url": "https://github.com/AlbertoV5/agenv/issues/12",
-        "state": "open"
-      }
+        "state": "closed"
+      },
+      "report": "Created src/cli/revision.ts with parseCliArgs handling --name and --description flags"
     },
     {
       "id": "02.01.01.02",
@@ -160,11 +171,12 @@
       "stage_name": "CLI Commands",
       "batch_name": "Revision Command",
       "thread_name": "Work Revision CLI",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T21:44:18.607Z",
-      "updated_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:48:03.808Z",
       "assigned_agent": "default",
-      "sessions": []
+      "sessions": [],
+      "report": "Implemented main() in revision.ts with index loading, stream resolution, and appendRevisionStage call"
     },
     {
       "id": "02.01.01.03",
@@ -172,11 +184,12 @@
       "stage_name": "CLI Commands",
       "batch_name": "Revision Command",
       "thread_name": "Work Revision CLI",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T21:44:18.607Z",
-      "updated_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:48:04.960Z",
       "assigned_agent": "default",
-      "sessions": []
+      "sessions": [],
+      "report": "Added success output showing stage number and next steps message about editing PLAN.md and running approve"
     },
     {
       "id": "02.01.01.04",
@@ -184,11 +197,12 @@
       "stage_name": "CLI Commands",
       "batch_name": "Revision Command",
       "thread_name": "Work Revision CLI",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T21:44:18.607Z",
-      "updated_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:48:33.454Z",
       "assigned_agent": "default",
-      "sessions": []
+      "sessions": [],
+      "report": "Registered revision command in bin/work.ts SUBCOMMANDS with import statement"
     },
     {
       "id": "02.01.02.01",
@@ -196,16 +210,27 @@
       "stage_name": "CLI Commands",
       "batch_name": "Revision Command",
       "thread_name": "Append Revision Stage",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T21:44:18.607Z",
-      "updated_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:49:18.535Z",
       "assigned_agent": "default",
-      "sessions": [],
+      "sessions": [
+        {
+          "sessionId": "ses_mkpzfdzm_3gy1vp",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-22T21:46:55.764Z",
+          "status": "completed",
+          "completedAt": "2026-01-22T21:49:18.535Z",
+          "exitCode": 0
+        }
+      ],
       "github_issue": {
         "number": 13,
         "url": "https://github.com/AlbertoV5/agenv/issues/13",
-        "state": "open"
-      }
+        "state": "closed"
+      },
+      "report": "Added appendRevisionStage function and RevisionStageOptions interface to src/lib/fix.ts"
     },
     {
       "id": "02.01.02.02",
@@ -213,11 +238,12 @@
       "stage_name": "CLI Commands",
       "batch_name": "Revision Command",
       "thread_name": "Append Revision Stage",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T21:44:18.607Z",
-      "updated_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:47:38.346Z",
       "assigned_agent": "default",
-      "sessions": []
+      "sessions": [],
+      "report": "Created stage template with 'Revision - {name}' prefix including Definition, Constitution, Questions, and Batches sections"
     },
     {
       "id": "02.01.02.03",
@@ -225,11 +251,12 @@
       "stage_name": "CLI Commands",
       "batch_name": "Revision Command",
       "thread_name": "Append Revision Stage",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T21:44:18.607Z",
-      "updated_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:47:39.449Z",
       "assigned_agent": "default",
-      "sessions": []
+      "sessions": [],
+      "report": "Implemented append to PLAN.md at end without targetStage reference, similar to appendFixStage"
     },
     {
       "id": "02.02.01.01",
@@ -237,16 +264,27 @@
       "stage_name": "CLI Commands",
       "batch_name": "Approve Revision Command",
       "thread_name": "Work Approve Revision CLI",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T21:44:18.607Z",
-      "updated_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:52:28.637Z",
       "assigned_agent": "default",
-      "sessions": [],
+      "sessions": [
+        {
+          "sessionId": "ses_mkpziozg_ehio8a",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-22T21:49:29.983Z",
+          "status": "completed",
+          "completedAt": "2026-01-22T21:52:28.637Z",
+          "exitCode": 0
+        }
+      ],
       "github_issue": {
         "number": 14,
         "url": "https://github.com/AlbertoV5/agenv/issues/14",
-        "state": "open"
-      }
+        "state": "closed"
+      },
+      "report": "Added 'revision' to ApproveTarget type, updated help text, parseCliArgs to handle 'revision' subcommand, and added case in main switch. Added imports for detectNewStages and generateTasksMdForRevision."
     },
     {
       "id": "02.02.01.02",
@@ -254,11 +292,12 @@
       "stage_name": "CLI Commands",
       "batch_name": "Approve Revision Command",
       "thread_name": "Work Approve Revision CLI",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T21:44:18.607Z",
-      "updated_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:51:52.644Z",
       "assigned_agent": "default",
-      "sessions": []
+      "sessions": [],
+      "report": "Implemented handleRevisionApproval function that loads PLAN.md, parses with parseStreamDocument, and loads existing tasks from tasks.json using getTasks."
     },
     {
       "id": "02.02.01.03",
@@ -266,11 +305,12 @@
       "stage_name": "CLI Commands",
       "batch_name": "Approve Revision Command",
       "thread_name": "Work Approve Revision CLI",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T21:44:18.607Z",
-      "updated_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:51:53.898Z",
       "assigned_agent": "default",
-      "sessions": []
+      "sessions": [],
+      "report": "Added call to detectNewStages() and error exit with message 'No new stages to approve' if no new stages found."
     },
     {
       "id": "02.02.01.04",
@@ -278,11 +318,12 @@
       "stage_name": "CLI Commands",
       "batch_name": "Approve Revision Command",
       "thread_name": "Work Approve Revision CLI",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T21:44:18.607Z",
-      "updated_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:51:55.177Z",
       "assigned_agent": "default",
-      "sessions": []
+      "sessions": [],
+      "report": "Added validation to check open questions in new stages using checkOpenQuestions, filtering results to only new stages, with --force option support."
     },
     {
       "id": "02.02.01.05",
@@ -290,11 +331,12 @@
       "stage_name": "CLI Commands",
       "batch_name": "Approve Revision Command",
       "thread_name": "Work Approve Revision CLI",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T21:44:18.607Z",
-      "updated_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:51:56.383Z",
       "assigned_agent": "default",
-      "sessions": []
+      "sessions": [],
+      "report": "Called generateTasksMdForRevision() with stream name, existing tasks, parsed doc, and new stage numbers, then wrote result to TASKS.md using atomicWriteFile."
     },
     {
       "id": "02.02.01.06",
@@ -302,11 +344,12 @@
       "stage_name": "CLI Commands",
       "batch_name": "Approve Revision Command",
       "thread_name": "Work Approve Revision CLI",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T21:44:18.607Z",
-      "updated_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:51:57.986Z",
       "assigned_agent": "default",
-      "sessions": []
+      "sessions": [],
+      "report": "Added output summary showing existing task count, new placeholder count (calculated from new stages), new stage list, and next steps message. Supports both --json and text output formats."
     },
     {
       "id": "03.01.01.01",

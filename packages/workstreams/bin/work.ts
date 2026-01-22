@@ -62,6 +62,7 @@ import { main as treeMain } from "../src/cli/tree.ts"
 import { main as githubMain } from "../src/cli/github.ts"
 import { main as startMain } from "../src/cli/start.ts"
 import { main as sessionMain } from "../src/cli/session.ts"
+import { main as revisionMain } from "../src/cli/revision.ts"
 
 // Lazy loader for serve command (has JSX/React dependency)
 const serveMain = async (argv: string[]) => {
@@ -77,6 +78,7 @@ const SUBCOMMANDS = {
   context: contextMain,
   fix: fixMain,
   "add-stage": addStageMain,
+  revision: revisionMain,
   approve: approveMain,
   start: startMain,
   status: statusMain,
