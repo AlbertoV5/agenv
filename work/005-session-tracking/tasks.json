@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "stream_id": "005-session-tracking",
-  "last_updated": "2026-01-22T18:28:51.091Z",
+  "last_updated": "2026-01-22T18:41:48.925Z",
   "tasks": [
     {
       "id": "01.01.01.01",
@@ -243,11 +243,22 @@
       "stage_name": "Command Refactoring",
       "batch_name": "Rename Fix to Add-Stage",
       "thread_name": "Command Rename",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T18:03:47.255Z",
-      "updated_at": "2026-01-22T18:03:47.255Z",
+      "updated_at": "2026-01-22T18:36:52.470Z",
       "assigned_agent": "default",
-      "sessions": []
+      "sessions": [
+        {
+          "sessionId": "ses_mkpsfc5v_soddph",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-22T18:30:56.086Z",
+          "status": "completed",
+          "completedAt": "2026-01-22T18:36:52.470Z",
+          "exitCode": 0
+        }
+      ],
+      "report": "Renamed fix.ts to add-stage.ts and updated all internal references from FixCliArgs to AddStageCliArgs, and command name from 'work fix' to 'work add-stage' in help text"
     },
     {
       "id": "02.01.01.02",
@@ -255,11 +266,12 @@
       "stage_name": "Command Refactoring",
       "batch_name": "Rename Fix to Add-Stage",
       "thread_name": "Command Rename",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T18:03:47.255Z",
-      "updated_at": "2026-01-22T18:03:47.255Z",
+      "updated_at": "2026-01-22T18:32:21.471Z",
       "assigned_agent": "default",
-      "sessions": []
+      "sessions": [],
+      "report": "Added import for addStageMain and registered 'add-stage' command in SUBCOMMANDS object in bin/work.ts"
     },
     {
       "id": "02.01.01.03",
@@ -267,11 +279,12 @@
       "stage_name": "Command Refactoring",
       "batch_name": "Rename Fix to Add-Stage",
       "thread_name": "Command Rename",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T18:03:47.255Z",
-      "updated_at": "2026-01-22T18:03:47.255Z",
+      "updated_at": "2026-01-22T18:32:49.831Z",
       "assigned_agent": "default",
-      "sessions": []
+      "sessions": [],
+      "report": "Converted fix.ts to a deprecation wrapper that shows a warning and forwards all calls to add-stage command"
     },
     {
       "id": "02.01.01.04",
@@ -279,11 +292,12 @@
       "stage_name": "Command Refactoring",
       "batch_name": "Rename Fix to Add-Stage",
       "thread_name": "Command Rename",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T18:03:47.255Z",
-      "updated_at": "2026-01-22T18:03:47.255Z",
+      "updated_at": "2026-01-22T18:33:05.530Z",
       "assigned_agent": "default",
-      "sessions": []
+      "sessions": [],
+      "report": "Updated help text in bin/work.ts to show 'add-stage' as the primary command and marked 'fix' as deprecated"
     },
     {
       "id": "02.01.01.05",
@@ -291,11 +305,12 @@
       "stage_name": "Command Refactoring",
       "batch_name": "Rename Fix to Add-Stage",
       "thread_name": "Command Rename",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T18:03:47.255Z",
-      "updated_at": "2026-01-22T18:03:47.255Z",
+      "updated_at": "2026-01-22T18:33:17.800Z",
       "assigned_agent": "default",
-      "sessions": []
+      "sessions": [],
+      "report": "Updated CLI reference in skills/planning-workstreams/SKILL.md to use 'add-stage' instead of 'fix'"
     },
     {
       "id": "02.02.01.01",
@@ -303,11 +318,21 @@
       "stage_name": "Command Refactoring",
       "batch_name": "New Fix Command",
       "thread_name": "Fix Command Core",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T18:03:47.255Z",
-      "updated_at": "2026-01-22T18:03:47.255Z",
+      "updated_at": "2026-01-22T18:41:48.925Z",
       "assigned_agent": "systems-engineer",
-      "sessions": []
+      "sessions": [
+        {
+          "sessionId": "ses_mkpsnecv_u07zc3",
+          "agentName": "systems-engineer",
+          "model": "anthropic/claude-opus-4-5",
+          "startedAt": "2026-01-22T18:37:12.178Z",
+          "status": "running"
+        }
+      ],
+      "currentSessionId": "ses_mkpsnecv_u07zc3",
+      "report": "Implemented fix command core logic with: (1) findIncompleteThreads() to list threads with incomplete/failed status, (2) executeResume() to resume sessions using stored session ID via opencode --session, (3) executeRetry() to retry threads with same or different agent, (4) --new-stage flag as alias to add-stage command. All execution functions track sessions via startTaskSession/completeTaskSession APIs."
     },
     {
       "id": "02.02.01.02",
@@ -315,11 +340,12 @@
       "stage_name": "Command Refactoring",
       "batch_name": "New Fix Command",
       "thread_name": "Fix Command Core",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T18:03:47.255Z",
-      "updated_at": "2026-01-22T18:03:47.255Z",
+      "updated_at": "2026-01-22T18:41:48.925Z",
       "assigned_agent": "systems-engineer",
-      "sessions": []
+      "sessions": [],
+      "report": "Implemented fix command core logic with: (1) findIncompleteThreads() to list threads with incomplete/failed status, (2) executeResume() to resume sessions using stored session ID via opencode --session, (3) executeRetry() to retry threads with same or different agent, (4) --new-stage flag as alias to add-stage command. All execution functions track sessions via startTaskSession/completeTaskSession APIs."
     },
     {
       "id": "02.02.01.03",
@@ -327,11 +353,12 @@
       "stage_name": "Command Refactoring",
       "batch_name": "New Fix Command",
       "thread_name": "Fix Command Core",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T18:03:47.255Z",
-      "updated_at": "2026-01-22T18:03:47.255Z",
+      "updated_at": "2026-01-22T18:41:48.925Z",
       "assigned_agent": "systems-engineer",
-      "sessions": []
+      "sessions": [],
+      "report": "Implemented fix command core logic with: (1) findIncompleteThreads() to list threads with incomplete/failed status, (2) executeResume() to resume sessions using stored session ID via opencode --session, (3) executeRetry() to retry threads with same or different agent, (4) --new-stage flag as alias to add-stage command. All execution functions track sessions via startTaskSession/completeTaskSession APIs."
     },
     {
       "id": "02.02.01.04",
@@ -339,11 +366,12 @@
       "stage_name": "Command Refactoring",
       "batch_name": "New Fix Command",
       "thread_name": "Fix Command Core",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T18:03:47.255Z",
-      "updated_at": "2026-01-22T18:03:47.255Z",
+      "updated_at": "2026-01-22T18:41:48.925Z",
       "assigned_agent": "systems-engineer",
-      "sessions": []
+      "sessions": [],
+      "report": "Implemented fix command core logic with: (1) findIncompleteThreads() to list threads with incomplete/failed status, (2) executeResume() to resume sessions using stored session ID via opencode --session, (3) executeRetry() to retry threads with same or different agent, (4) --new-stage flag as alias to add-stage command. All execution functions track sessions via startTaskSession/completeTaskSession APIs."
     },
     {
       "id": "02.02.01.05",
@@ -351,11 +379,12 @@
       "stage_name": "Command Refactoring",
       "batch_name": "New Fix Command",
       "thread_name": "Fix Command Core",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T18:03:47.255Z",
-      "updated_at": "2026-01-22T18:03:47.255Z",
+      "updated_at": "2026-01-22T18:41:48.925Z",
       "assigned_agent": "systems-engineer",
-      "sessions": []
+      "sessions": [],
+      "report": "Implemented fix command core logic with: (1) findIncompleteThreads() to list threads with incomplete/failed status, (2) executeResume() to resume sessions using stored session ID via opencode --session, (3) executeRetry() to retry threads with same or different agent, (4) --new-stage flag as alias to add-stage command. All execution functions track sessions via startTaskSession/completeTaskSession APIs."
     },
     {
       "id": "02.02.01.06",
@@ -363,11 +392,12 @@
       "stage_name": "Command Refactoring",
       "batch_name": "New Fix Command",
       "thread_name": "Fix Command Core",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T18:03:47.255Z",
-      "updated_at": "2026-01-22T18:03:47.255Z",
+      "updated_at": "2026-01-22T18:41:48.925Z",
       "assigned_agent": "systems-engineer",
-      "sessions": []
+      "sessions": [],
+      "report": "Implemented fix command core logic with: (1) findIncompleteThreads() to list threads with incomplete/failed status, (2) executeResume() to resume sessions using stored session ID via opencode --session, (3) executeRetry() to retry threads with same or different agent, (4) --new-stage flag as alias to add-stage command. All execution functions track sessions via startTaskSession/completeTaskSession APIs."
     },
     {
       "id": "02.02.02.01",
@@ -375,11 +405,21 @@
       "stage_name": "Command Refactoring",
       "batch_name": "New Fix Command",
       "thread_name": "Interactive UI",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T18:03:47.255Z",
-      "updated_at": "2026-01-22T18:03:47.255Z",
+      "updated_at": "2026-01-22T18:38:39.328Z",
       "assigned_agent": "default",
-      "sessions": []
+      "sessions": [
+        {
+          "sessionId": "ses_mkpsnecv_8xcpj5",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-22T18:37:12.178Z",
+          "status": "running"
+        }
+      ],
+      "currentSessionId": "ses_mkpsnecv_8xcpj5",
+      "report": "Created interactive UI functions for thread status table display in lib/interactive.ts"
     },
     {
       "id": "02.02.02.02",
@@ -387,11 +427,12 @@
       "stage_name": "Command Refactoring",
       "batch_name": "New Fix Command",
       "thread_name": "Interactive UI",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T18:03:47.255Z",
-      "updated_at": "2026-01-22T18:03:47.255Z",
+      "updated_at": "2026-01-22T18:39:25.282Z",
       "assigned_agent": "default",
-      "sessions": []
+      "sessions": [],
+      "report": "Implemented thread selection prompt in cli/fix.ts using selectThreadFromStatuses function"
     },
     {
       "id": "02.02.02.03",
@@ -399,11 +440,12 @@
       "stage_name": "Command Refactoring",
       "batch_name": "New Fix Command",
       "thread_name": "Interactive UI",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T18:03:47.255Z",
-      "updated_at": "2026-01-22T18:03:47.255Z",
+      "updated_at": "2026-01-22T18:39:26.529Z",
       "assigned_agent": "default",
-      "sessions": []
+      "sessions": [],
+      "report": "Implemented action selection prompt with selectFixAction supporting Resume, Retry, Change Agent, New Stage"
     },
     {
       "id": "02.02.02.04",
@@ -411,11 +453,12 @@
       "stage_name": "Command Refactoring",
       "batch_name": "New Fix Command",
       "thread_name": "Interactive UI",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T18:03:47.255Z",
-      "updated_at": "2026-01-22T18:03:47.255Z",
+      "updated_at": "2026-01-22T18:39:27.712Z",
       "assigned_agent": "default",
-      "sessions": []
+      "sessions": [],
+      "report": "Implemented agent selection prompt using loadAgentsConfig and selectAgent function showing agents from agents.yaml"
     },
     {
       "id": "02.02.02.05",
@@ -423,11 +466,12 @@
       "stage_name": "Command Refactoring",
       "batch_name": "New Fix Command",
       "thread_name": "Interactive UI",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T18:03:47.255Z",
-      "updated_at": "2026-01-22T18:03:47.255Z",
+      "updated_at": "2026-01-22T18:39:28.730Z",
       "assigned_agent": "default",
-      "sessions": []
+      "sessions": [],
+      "report": "Added confirmation prompt using confirmAction function before executing selected action"
     },
     {
       "id": "03.01.01.01",

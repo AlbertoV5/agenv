@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-01-22T18:30:53.346Z",
+  "last_updated": "2026-01-22T18:43:27.489Z",
   "current_stream": "005-session-tracking",
   "streams": [
     {
@@ -276,7 +276,7 @@
         ]
       },
       "created_at": "2026-01-22T17:55:05.797Z",
-      "updated_at": "2026-01-22T18:30:53.346Z",
+      "updated_at": "2026-01-22T18:43:27.489Z",
       "path": "work/005-session-tracking",
       "generated_by": {
         "workstreams": "0.1.0"
@@ -295,6 +295,11 @@
           "1": {
             "status": "approved",
             "approved_at": "2026-01-22T18:30:53.346Z",
+            "approved_by": "user"
+          },
+          "2": {
+            "status": "approved",
+            "approved_at": "2026-01-22T18:43:27.489Z",
             "approved_by": "user"
           }
         }

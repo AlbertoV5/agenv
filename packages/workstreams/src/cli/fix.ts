@@ -1,43 +1,78 @@
 /**
- * CLI: Fix
+ * CLI: Fix Command
  *
- * Append a fix stage to a workstream
+ * Interactive command to resume, retry, or fix incomplete/failed threads
  */
 
-import { getRepoRoot } from "../lib/repo.ts"
+import { spawn } from "child_process"
+import { join } from "path"
+import { existsSync, readFileSync } from "fs"
+import { getRepoRoot, getWorkDir } from "../lib/repo.ts"
 import { loadIndex, getResolvedStream } from "../lib/index.ts"
-import { appendFixStage, appendFixBatch } from "../lib/fix.ts"
+import {
+  getTasks,
+  readTasksFile,
+  parseThreadId,
+  getTasksByThread,
+  startTaskSession,
+  completeTaskSession,
+} from "../lib/tasks.ts"
+import { loadAgentsConfig, getAgentModels } from "../lib/agents-yaml.ts"
+import { parseStreamDocument } from "../lib/stream-parser.ts"
+import type { Task, SessionRecord, SessionStatus, NormalizedModelSpec } from "../lib/types.ts"
+import {
+  createReadlineInterface,
+  buildThreadStatuses,
+  selectThreadFromStatuses,
+  selectFixAction,
+  selectAgent,
+  confirmAction,
+  type ThreadStatus,
+  type AgentOption,
+} from "../lib/interactive.ts"
+import { main as addStageMain } from "./add-stage.ts"
 
 interface FixCliArgs {
   repoRoot?: string
   streamId?: string
-  targetStage: number
-  name: string
-  description?: string
-  isBatch?: boolean
+  threadId?: string
+  resume?: boolean
+  retry?: boolean
+  agent?: string
+  newStage?: boolean
+  dryRun?: boolean
+  json?: boolean
 }
 
 function printHelp(): void {
   console.log(`
-work fix - Append a fix stage or batch to a workstream
+work fix - Resume, retry, or fix incomplete/failed threads
 
 Usage:
-  work fix --stage <n> --name <name> [options]
+  work fix [options]
+  work fix --thread <id> [--resume|--retry|--agent <name>|--new-stage]
 
-Required:
-  --stage          The stage number being fixed (for reference)
-  --name           Name of the fix (e.g., "auth-race-condition")
+Options:
+  --thread <id>        Thread to fix (e.g., "01.01.02"). Interactive if omitted.
+  --resume             Resume the existing session
+  --retry              Retry with the same agent
+  --agent <name>       Retry with a different agent
+  --new-stage          Create a new fix stage (alias to add-stage)
+  --stream, -s         Workstream ID or name (uses current if not specified)
+  --dry-run            Show what would be done without executing
+  --json, -j           Output as JSON
+  --repo-root, -r      Repository root (auto-detected if omitted)
+  --help, -h           Show this help message
 
-Optional:
-  --batch          Create a fix batch within the stage instead of a new stage
-  --stream, -s     Workstream ID or name (uses current if not specified)
-  --description    Description of the fix
-  --repo-root, -r  Repository root (auto-detected if omitted)
-  --help, -h       Show this help message
+Interactive Mode:
+  If --thread is not provided, displays a table of incomplete/failed threads
+  and prompts for thread selection and action.
 
 Examples:
-  work fix --stage 01 --name "api-error-handling"
-  work fix --batch --stage 02 --name "validation-logic"
+  work fix                                    # Interactive mode
+  work fix --thread 01.01.02 --resume         # Resume specific thread
+  work fix --thread 01.01.02 --retry          # Retry with same agent
+  work fix --thread 01.01.02 --agent backend  # Retry with different agent
 `)
 }
 
@@ -72,35 +107,45 @@ function parseCliArgs(argv: string[]): FixCliArgs | null {
         i++
         break
 
-      case "--stage":
+      case "--thread":
+      case "-t":
         if (!next) {
-          console.error("Error: --stage requires a value")
+          console.error("Error: --thread requires a value")
           return null
         }
-        parsed.targetStage = parseInt(next, 10)
+        parsed.threadId = next
         i++
         break
 
-      case "--name":
+      case "--resume":
+        parsed.resume = true
+        break
+
+      case "--retry":
+        parsed.retry = true
+        break
+
+      case "--agent":
+      case "-a":
         if (!next) {
-          console.error("Error: --name requires a value")
+          console.error("Error: --agent requires a value")
           return null
         }
-        parsed.name = next
+        parsed.agent = next
         i++
         break
 
-      case "--description":
-        if (!next) {
-          console.error("Error: --description requires a value")
-          return null
-        }
-        parsed.description = next
-        i++
+      case "--new-stage":
+        parsed.newStage = true
         break
 
-      case "--batch":
-        parsed.isBatch = true
+      case "--dry-run":
+        parsed.dryRun = true
+        break
+
+      case "--json":
+      case "-j":
+        parsed.json = true
         break
 
       case "--help":
@@ -110,23 +155,308 @@ function parseCliArgs(argv: string[]): FixCliArgs | null {
     }
   }
 
-  if (!parsed.targetStage || isNaN(parsed.targetStage)) {
-    console.error("Error: --stage is required and must be a number")
-    return null
-  }
-  if (!parsed.name) {
-    console.error("Error: --name is required")
-    return null
-  }
-
   return parsed as FixCliArgs
 }
 
-export function main(argv: string[] = process.argv): void {
+// ============================================
+// EXECUTION HELPERS
+// ============================================
+
+/**
+ * Get the last session for a thread from tasks
+ */
+function getLastSessionForThread(
+  repoRoot: string,
+  streamId: string,
+  threadId: string
+): SessionRecord | null {
+  const tasksFile = readTasksFile(repoRoot, streamId)
+  if (!tasksFile) return null
+
+  // Get all sessions from tasks in this thread
+  const allSessions: SessionRecord[] = []
+  for (const task of tasksFile.tasks) {
+    if (task.id.startsWith(threadId + ".") && task.sessions) {
+      allSessions.push(...task.sessions)
+    }
+  }
+
+  if (allSessions.length === 0) return null
+
+  // Sort by startedAt descending and return most recent
+  allSessions.sort(
+    (a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime()
+  )
+
+  return allSessions[0] || null
+}
+
+/**
+ * Get the prompt file path for a thread
+ */
+function getPromptFilePath(
+  repoRoot: string,
+  streamId: string,
+  threadId: string
+): string | null {
+  const workDir = getWorkDir(repoRoot)
+  const planPath = join(workDir, streamId, "PLAN.md")
+
+  if (!existsSync(planPath)) {
+    return null
+  }
+
+  const planContent = readFileSync(planPath, "utf-8")
+  const errors: { message: string }[] = []
+  const doc = parseStreamDocument(planContent, errors)
+
+  if (!doc) {
+    return null
+  }
+
+  // Parse thread ID: "01.02.03" -> stage 1, batch 2, thread 3
+  const parts = threadId.split(".").map((p) => parseInt(p, 10))
+  if (parts.length !== 3 || parts.some(isNaN)) {
+    return null
+  }
+  const [stageNum, batchNum, threadNum] = parts
+
+  const stage = doc.stages.find((s) => s.id === stageNum)
+  if (!stage) return null
+
+  const batch = stage.batches.find((b) => b.id === batchNum)
+  if (!batch) return null
+
+  const thread = batch.threads.find((t) => t.id === threadNum)
+  if (!thread) return null
+
+  // Build path matching prompt.ts logic
+  const safeStageName = stage.name.replace(/[^a-zA-Z0-9_-]/g, "-").toLowerCase()
+  const safeBatchName = batch.name.replace(/[^a-zA-Z0-9_-]/g, "-").toLowerCase()
+  const safeThreadName = thread.name.replace(/[^a-zA-Z0-9_-]/g, "-").toLowerCase()
+
+  const stagePrefix = stageNum!.toString().padStart(2, "0")
+
+  return join(
+    workDir,
+    streamId,
+    "prompts",
+    `${stagePrefix}-${safeStageName}`,
+    `${batch.prefix}-${safeBatchName}`,
+    `${safeThreadName}.md`
+  )
+}
+
+/**
+ * Execute resume action - opens opencode TUI with existing session
+ */
+async function executeResume(
+  repoRoot: string,
+  streamId: string,
+  threadStatus: ThreadStatus,
+  dryRun?: boolean
+): Promise<void> {
+  const lastSession = getLastSessionForThread(repoRoot, streamId, threadStatus.threadId)
+
+  if (!lastSession) {
+    console.error(`Error: No session found for thread ${threadStatus.threadId}`)
+    console.error("Use --retry to start a new session instead.")
+    process.exit(1)
+  }
+
+  const command = `opencode --session "${lastSession.sessionId}"`
+
+  if (dryRun) {
+    console.log("\nDry run - would execute:")
+    console.log(`  ${command}`)
+    console.log(`\nThread: ${threadStatus.threadName} (${threadStatus.threadId})`)
+    console.log(`Session ID: ${lastSession.sessionId}`)
+    console.log(`Agent: ${lastSession.agentName}`)
+    console.log(`Model: ${lastSession.model}`)
+    return
+  }
+
+  console.log(`\nResuming session for thread ${threadStatus.threadName} (${threadStatus.threadId})...`)
+  console.log(`Session ID: ${lastSession.sessionId}`)
+  console.log(`Agent: ${lastSession.agentName}`)
+  console.log(`Model: ${lastSession.model}`)
+  console.log("")
+
+  // Execute opencode with the session flag
+  const child = spawn("opencode", ["--session", lastSession.sessionId], {
+    stdio: "inherit",
+    cwd: repoRoot,
+  })
+
+  await new Promise<void>((resolve, reject) => {
+    child.on("close", (code) => {
+      if (code === 0) {
+        resolve()
+      } else {
+        process.exit(code ?? 1)
+      }
+    })
+
+    child.on("error", (err) => {
+      console.error(`Error executing command: ${err.message}`)
+      reject(err)
+    })
+  })
+}
+
+/**
+ * Execute retry action - starts new session with same or different agent
+ */
+async function executeRetry(
+  repoRoot: string,
+  streamId: string,
+  threadStatus: ThreadStatus,
+  agentName: string,
+  models: NormalizedModelSpec[],
+  dryRun?: boolean
+): Promise<void> {
+  const promptPath = getPromptFilePath(repoRoot, streamId, threadStatus.threadId)
+
+  if (!promptPath || !existsSync(promptPath)) {
+    console.error(`Error: Prompt file not found for thread ${threadStatus.threadId}`)
+    console.error(`Expected: ${promptPath}`)
+    console.error(`\nHint: Run 'work prompt --thread "${threadStatus.threadId}"' to generate it first.`)
+    process.exit(1)
+  }
+
+  const primaryModel = models[0]!
+  const variantFlag = primaryModel.variant ? ` --variant "${primaryModel.variant}"` : ""
+  const command = `cat "${promptPath}" | opencode run --model "${primaryModel.model}"${variantFlag}`
+
+  if (dryRun) {
+    console.log("\nDry run - would execute:")
+    console.log(`  ${command}`)
+    console.log(`\nThread: ${threadStatus.threadName} (${threadStatus.threadId})`)
+    console.log(`Agent: ${agentName}`)
+    console.log(`Model: ${primaryModel.model}${primaryModel.variant ? ` (variant: ${primaryModel.variant})` : ""}`)
+    console.log(`Prompt: ${promptPath}`)
+    return
+  }
+
+  // Parse thread ID for task operations
+  const threadParsed = parseThreadId(threadStatus.threadId)
+  const threadTasks = getTasksByThread(
+    repoRoot,
+    streamId,
+    threadParsed.stage,
+    threadParsed.batch,
+    threadParsed.thread
+  )
+
+  // Start sessions for all tasks in the thread
+  const modelString = primaryModel.variant
+    ? `${primaryModel.model}:${primaryModel.variant}`
+    : primaryModel.model
+
+  const sessionIds: Map<string, string> = new Map()
+  for (const task of threadTasks) {
+    const session = startTaskSession(
+      repoRoot,
+      streamId,
+      task.id,
+      agentName,
+      modelString
+    )
+    if (session) {
+      sessionIds.set(task.id, session.sessionId)
+    }
+  }
+
+  console.log(`\nRetrying thread ${threadStatus.threadName} (${threadStatus.threadId}) with agent "${agentName}"...`)
+  console.log(`Model: ${primaryModel.model}${primaryModel.variant ? ` (variant: ${primaryModel.variant})` : ""}`)
+  console.log(`Session tracking: ${sessionIds.size} task(s)`)
+  console.log(`Prompt: ${promptPath}`)
+  console.log("")
+
+  // Execute via shell to handle pipe
+  const child = spawn("sh", ["-c", command], {
+    stdio: "inherit",
+    cwd: repoRoot,
+  })
+
+  await new Promise<void>((resolve, reject) => {
+    child.on("close", (code) => {
+      // Determine session status based on exit code
+      const sessionStatus: SessionStatus = code === 0 ? "completed" : "failed"
+
+      // Complete all sessions for this thread
+      for (const [taskId, sessionId] of sessionIds) {
+        completeTaskSession(repoRoot, streamId, taskId, sessionId, sessionStatus, code ?? undefined)
+      }
+
+      if (code === 0) {
+        resolve()
+      } else {
+        process.exit(code ?? 1)
+      }
+    })
+
+    child.on("error", (err) => {
+      // Mark all sessions as failed on error
+      for (const [taskId, sessionId] of sessionIds) {
+        completeTaskSession(repoRoot, streamId, taskId, sessionId, "failed")
+      }
+
+      console.error(`Error executing command: ${err.message}`)
+      reject(err)
+    })
+  })
+}
+
+/**
+ * Execute new-stage action - forwards to add-stage command
+ */
+function executeNewStage(argv: string[]): void {
+  // Forward all arguments to add-stage
+  addStageMain(argv)
+}
+
+/**
+ * Find incomplete or failed threads from tasks
+ */
+function findIncompleteThreads(tasks: any[]): string[] {
+  const threadMap = new Map<string, any[]>()
+  
+  // Group tasks by thread
+  for (const task of tasks) {
+    const parts = task.id.split(".")
+    if (parts.length >= 3) {
+      const threadId = `${parts[0]}.${parts[1]}.${parts[2]}`
+      if (!threadMap.has(threadId)) {
+        threadMap.set(threadId, [])
+      }
+      threadMap.get(threadId)!.push(task)
+    }
+  }
+  
+  // Filter to incomplete or failed threads
+  const incompleteThreads: string[] = []
+  for (const [threadId, threadTasks] of threadMap.entries()) {
+    const allCompleted = threadTasks.every(t => t.status === "completed")
+    if (!allCompleted) {
+      incompleteThreads.push(threadId)
+    }
+  }
+  
+  return incompleteThreads.sort()
+}
+
+export async function main(argv: string[] = process.argv): Promise<void> {
   const cliArgs = parseCliArgs(argv)
   if (!cliArgs) {
     console.error("\nRun with --help for usage information.")
     process.exit(1)
+  }
+
+  // Handle --new-stage early - it's an alias for add-stage
+  if (cliArgs.newStage && !cliArgs.threadId) {
+    executeNewStage(argv)
+    return
   }
 
   // Auto-detect repo root if not provided
@@ -154,33 +484,242 @@ export function main(argv: string[] = process.argv): void {
     process.exit(1)
   }
 
-  try {
-    let result
+  // Load tasks
+  const tasks = getTasks(repoRoot, stream.id)
+  
+  // Find incomplete threads
+  const incompleteThreads = findIncompleteThreads(tasks)
+  
+  if (incompleteThreads.length === 0 && !cliArgs.threadId) {
+    console.log("No incomplete or failed threads found.")
+    return
+  }
 
-    if (cliArgs.isBatch) {
-      result = appendFixBatch(repoRoot, stream.id, {
-        targetStage: cliArgs.targetStage,
-        name: cliArgs.name,
-        description: cliArgs.description,
-      })
-    } else {
-      result = appendFixStage(repoRoot, stream.id, {
-        targetStage: cliArgs.targetStage,
-        name: cliArgs.name,
-        description: cliArgs.description,
-      })
-    }
-
-    if (result.success) {
-      console.log(result.message)
-      console.log(`\nRun 'work validate plan' to validate the new stage.`)
-    } else {
-      console.error(`Error: ${result.message}`)
+  // If command-line flags specify everything, skip interactive mode
+  if (cliArgs.threadId && (cliArgs.resume || cliArgs.retry || cliArgs.agent)) {
+    const threadStatuses = buildThreadStatuses(tasks, [cliArgs.threadId])
+    if (threadStatuses.length === 0) {
+      console.error(`Error: Thread ${cliArgs.threadId} not found`)
+      
+      // Show available threads
+      const allThreadIds = [...new Set(tasks.map(t => {
+        const parts = t.id.split(".")
+        return parts.length >= 3 ? `${parts[0]}.${parts[1]}.${parts[2]}` : null
+      }).filter(Boolean))]
+      
+      if (allThreadIds.length > 0) {
+        console.error("\nAvailable threads:")
+        for (const id of allThreadIds.slice(0, 10)) {
+          console.error(`  ${id}`)
+        }
+        if (allThreadIds.length > 10) {
+          console.error(`  ... and ${allThreadIds.length - 10} more`)
+        }
+      }
       process.exit(1)
     }
-  } catch (e) {
-    console.error(`Error: ${(e as Error).message}`)
-    process.exit(1)
+    
+    const selectedStatus = threadStatuses[0]!
+    
+    // Execute the specified action directly
+    if (cliArgs.resume) {
+      await executeResume(repoRoot, stream.id, selectedStatus, cliArgs.dryRun)
+      return
+    }
+    
+    if (cliArgs.retry) {
+      // Get agent from last session or default
+      const agentName = selectedStatus.lastAgent || "default"
+      
+      const agentsConfig = loadAgentsConfig(repoRoot)
+      if (!agentsConfig) {
+        console.error("Error: No agents.yaml found. Run 'work init' to create one.")
+        process.exit(1)
+      }
+      
+      const models = getAgentModels(agentsConfig, agentName)
+      if (models.length === 0) {
+        console.error(`Error: Agent "${agentName}" not found in agents.yaml`)
+        console.error(`\nAvailable agents: ${agentsConfig.agents.map((a) => a.name).join(", ")}`)
+        process.exit(1)
+      }
+      
+      await executeRetry(repoRoot, stream.id, selectedStatus, agentName, models, cliArgs.dryRun)
+      return
+    }
+    
+    if (cliArgs.agent) {
+      const agentsConfig = loadAgentsConfig(repoRoot)
+      if (!agentsConfig) {
+        console.error("Error: No agents.yaml found. Run 'work init' to create one.")
+        process.exit(1)
+      }
+      
+      const models = getAgentModels(agentsConfig, cliArgs.agent)
+      if (models.length === 0) {
+        console.error(`Error: Agent "${cliArgs.agent}" not found in agents.yaml`)
+        console.error(`\nAvailable agents: ${agentsConfig.agents.map((a) => a.name).join(", ")}`)
+        process.exit(1)
+      }
+      
+      await executeRetry(repoRoot, stream.id, selectedStatus, cliArgs.agent, models, cliArgs.dryRun)
+      return
+    }
+  }
+
+  // Interactive mode
+  const rl = createReadlineInterface()
+  
+  try {
+    let selectedThreadId: string
+    let selectedStatus: ThreadStatus
+    
+    // Thread selection
+    if (cliArgs.threadId) {
+      // Use provided thread ID
+      selectedThreadId = cliArgs.threadId
+      const threadStatuses = buildThreadStatuses(tasks, [selectedThreadId])
+      if (threadStatuses.length === 0) {
+        console.error(`Error: Thread ${selectedThreadId} not found`)
+        process.exit(1)
+      }
+      selectedStatus = threadStatuses[0]!
+    } else {
+      // Interactive thread selection
+      const threadStatuses = buildThreadStatuses(tasks, incompleteThreads)
+      const selection = await selectThreadFromStatuses(rl, threadStatuses)
+      selectedStatus = selection.value
+      selectedThreadId = selectedStatus.threadId
+    }
+    
+    // Action selection
+    let action: string
+    let selectedAgent: string | undefined
+    
+    if (cliArgs.resume) {
+      action = "resume"
+    } else if (cliArgs.retry) {
+      action = "retry"
+    } else if (cliArgs.agent) {
+      action = "change-agent"
+      selectedAgent = cliArgs.agent
+    } else if (cliArgs.newStage) {
+      action = "new-stage"
+    } else {
+      // Interactive action selection
+      const selectedAction = await selectFixAction(rl, selectedStatus)
+      action = selectedAction
+      
+      // If change-agent, prompt for agent selection
+      if (action === "change-agent") {
+        const agentsConfig = loadAgentsConfig(repoRoot)
+        if (!agentsConfig || agentsConfig.agents.length === 0) {
+          console.error("Error: No agents found in agents.yaml")
+          process.exit(1)
+        }
+        
+        const agentOptions: AgentOption[] = agentsConfig.agents.map(a => ({
+          name: a.name,
+          description: a.description,
+          bestFor: a.best_for
+        }))
+        
+        const agentSelection = await selectAgent(rl, agentOptions)
+        selectedAgent = agentSelection.value.name
+      }
+    }
+    
+    // Confirmation (skip for dry-run)
+    if (!cliArgs.dryRun) {
+      let confirmMessage = ""
+      switch (action) {
+        case "resume":
+          confirmMessage = `Resume thread ${selectedThreadId} (${selectedStatus.threadName})?`
+          break
+        case "retry":
+          confirmMessage = `Retry thread ${selectedThreadId} (${selectedStatus.threadName}) with agent ${selectedStatus.lastAgent || "default"}?`
+          break
+        case "change-agent":
+          confirmMessage = `Retry thread ${selectedThreadId} (${selectedStatus.threadName}) with agent ${selectedAgent}?`
+          break
+        case "new-stage":
+          confirmMessage = `Create a new fix stage for thread ${selectedThreadId}?`
+          break
+      }
+      
+      const confirmed = await confirmAction(rl, confirmMessage)
+      
+      if (!confirmed) {
+        console.log("Action cancelled.")
+        rl.close()
+        return
+      }
+    }
+    
+    // Close readline before executing (exec might need stdin)
+    rl.close()
+    
+    // Execute action
+    switch (action) {
+      case "resume":
+        await executeResume(repoRoot, stream.id, selectedStatus, cliArgs.dryRun)
+        break
+        
+      case "retry": {
+        const agentName = selectedStatus.lastAgent || "default"
+        const agentsConfig = loadAgentsConfig(repoRoot)
+        if (!agentsConfig) {
+          console.error("Error: No agents.yaml found. Run 'work init' to create one.")
+          process.exit(1)
+        }
+        
+        const models = getAgentModels(agentsConfig, agentName)
+        if (models.length === 0) {
+          console.error(`Error: Agent "${agentName}" not found in agents.yaml`)
+          console.error(`\nAvailable agents: ${agentsConfig.agents.map((a) => a.name).join(", ")}`)
+          process.exit(1)
+        }
+        
+        await executeRetry(repoRoot, stream.id, selectedStatus, agentName, models, cliArgs.dryRun)
+        break
+      }
+        
+      case "change-agent": {
+        if (!selectedAgent) {
+          console.error("Error: No agent selected")
+          process.exit(1)
+        }
+        
+        const agentsConfig = loadAgentsConfig(repoRoot)
+        if (!agentsConfig) {
+          console.error("Error: No agents.yaml found. Run 'work init' to create one.")
+          process.exit(1)
+        }
+        
+        const models = getAgentModels(agentsConfig, selectedAgent)
+        if (models.length === 0) {
+          console.error(`Error: Agent "${selectedAgent}" not found in agents.yaml`)
+          console.error(`\nAvailable agents: ${agentsConfig.agents.map((a) => a.name).join(", ")}`)
+          process.exit(1)
+        }
+        
+        await executeRetry(repoRoot, stream.id, selectedStatus, selectedAgent, models, cliArgs.dryRun)
+        break
+      }
+        
+      case "new-stage":
+        // Forward to add-stage with relevant context
+        console.log("\nTo create a fix stage, run:")
+        console.log(`  work add-stage --stage <target-stage> --name "fix-description"`)
+        console.log("\nExample:")
+        const stageNum = selectedThreadId.split(".")[0]
+        console.log(`  work add-stage --stage ${stageNum} --name "thread-${selectedThreadId}-fix"`)
+        break
+    }
+    
+  } catch (err) {
+    rl.close()
+    throw err
   }
 }
 

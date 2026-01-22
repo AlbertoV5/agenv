@@ -178,7 +178,7 @@ work assign --thread "01.01.01" --agent "backend-expert" # Manual assignment
 work prompt --stage 1 --batch 1  # Manual prompt regeneration (if needed)
 
 # Fix Stages
-work fix                         # Add fix stage
+work add stage                   # Add fix stage
 work approve plan --revoke       # Unlock plan
 work approve tasks --revoke      # Unlock tasks
 # ... edit PLAN.md or TASKS.md ...
