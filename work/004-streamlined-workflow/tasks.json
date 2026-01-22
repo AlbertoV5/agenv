@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "stream_id": "004-streamlined-workflow",
-  "last_updated": "2026-01-22T16:52:57.726Z",
+  "last_updated": "2026-01-22T16:57:35.321Z",
   "tasks": [
     {
       "id": "01.01.01.01",
@@ -117,10 +117,11 @@
       "stage_name": "TASKS.md Agent Assignment Support",
       "batch_name": "Agents Command Update",
       "thread_name": "Agents YAML Integration",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T16:48:18.048Z",
-      "updated_at": "2026-01-22T16:48:32.529Z",
-      "assigned_agent": "systems-engineer"
+      "updated_at": "2026-01-22T16:56:41.245Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Updated agents CLI to use loadAgentsConfig() from agents-yaml.ts instead of AGENTS.md functions"
     },
     {
       "id": "01.02.01.02",
@@ -128,10 +129,11 @@
       "stage_name": "TASKS.md Agent Assignment Support",
       "batch_name": "Agents Command Update",
       "thread_name": "Agents YAML Integration",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T16:48:18.048Z",
-      "updated_at": "2026-01-22T16:48:32.529Z",
-      "assigned_agent": "systems-engineer"
+      "updated_at": "2026-01-22T16:56:42.537Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Formatted output with name, description, best_for, and models list (with variant support)"
     },
     {
       "id": "01.02.01.03",
@@ -139,10 +141,11 @@
       "stage_name": "TASKS.md Agent Assignment Support",
       "batch_name": "Agents Command Update",
       "thread_name": "Agents YAML Integration",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T16:48:18.048Z",
-      "updated_at": "2026-01-22T16:48:32.529Z",
-      "assigned_agent": "systems-engineer"
+      "updated_at": "2026-01-22T16:56:43.759Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added --json flag for machine-readable output with normalized model specs"
     },
     {
       "id": "01.02.01.04",
@@ -150,10 +153,11 @@
       "stage_name": "TASKS.md Agent Assignment Support",
       "batch_name": "Agents Command Update",
       "thread_name": "Agents YAML Integration",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T16:48:18.048Z",
-      "updated_at": "2026-01-22T16:48:32.529Z",
-      "assigned_agent": "systems-engineer"
+      "updated_at": "2026-01-22T16:56:44.840Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added helpful error message when agents.yaml is missing, with example config and init suggestion"
     },
     {
       "id": "01.02.01.05",
@@ -161,10 +165,11 @@
       "stage_name": "TASKS.md Agent Assignment Support",
       "batch_name": "Agents Command Update",
       "thread_name": "Agents YAML Integration",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T16:48:18.048Z",
-      "updated_at": "2026-01-22T16:48:32.530Z",
-      "assigned_agent": "systems-engineer"
+      "updated_at": "2026-01-22T16:57:35.321Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added tests/agents-cli.test.ts with 8 tests covering: human-readable output, JSON output, missing file handling, empty agents list, and argument parsing"
     },
     {
       "id": "01.02.02.01",
@@ -172,10 +177,11 @@
       "stage_name": "TASKS.md Agent Assignment Support",
       "batch_name": "Agents Command Update",
       "thread_name": "AGENTS.md Deprecation",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T16:48:18.048Z",
-      "updated_at": "2026-01-22T16:48:32.616Z",
-      "assigned_agent": "systems-engineer"
+      "updated_at": "2026-01-22T16:55:50.916Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Removed --add flag and related options (--name, --description, --best-for, --model) from CLI. Added deprecation errors for these flags."
     },
     {
       "id": "01.02.02.02",
@@ -183,10 +189,11 @@
       "stage_name": "TASKS.md Agent Assignment Support",
       "batch_name": "Agents Command Update",
       "thread_name": "AGENTS.md Deprecation",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T16:48:18.048Z",
-      "updated_at": "2026-01-22T16:48:32.616Z",
-      "assigned_agent": "systems-engineer"
+      "updated_at": "2026-01-22T16:55:51.664Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Removed --remove flag handler from CLI main function. Added deprecation error when flag is used."
     },
     {
       "id": "01.02.02.03",
@@ -194,10 +201,11 @@
       "stage_name": "TASKS.md Agent Assignment Support",
       "batch_name": "Agents Command Update",
       "thread_name": "AGENTS.md Deprecation",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T16:48:18.048Z",
-      "updated_at": "2026-01-22T16:48:32.616Z",
-      "assigned_agent": "systems-engineer"
+      "updated_at": "2026-01-22T16:57:23.067Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Removed AGENTS.md file operations (parseAgentsMd, generateAgentsMd, saveAgentsConfig, addAgent, removeAgent, getAgentsMdPath). Kept isValidModelFormat as it's used by agents-yaml.ts."
     },
     {
       "id": "01.02.02.04",
@@ -205,10 +213,11 @@
       "stage_name": "TASKS.md Agent Assignment Support",
       "batch_name": "Agents Command Update",
       "thread_name": "AGENTS.md Deprecation",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T16:48:18.048Z",
-      "updated_at": "2026-01-22T16:48:32.616Z",
-      "assigned_agent": "systems-engineer"
+      "updated_at": "2026-01-22T16:57:24.373Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Updated multi-navigator.ts and assign.ts to use loadAgentsConfig/getAgentYaml from agents-yaml.ts instead of deprecated functions."
     },
     {
       "id": "01.02.02.05",
@@ -216,10 +225,11 @@
       "stage_name": "TASKS.md Agent Assignment Support",
       "batch_name": "Agents Command Update",
       "thread_name": "AGENTS.md Deprecation",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T16:48:18.048Z",
-      "updated_at": "2026-01-22T16:48:32.617Z",
-      "assigned_agent": "systems-engineer"
+      "updated_at": "2026-01-22T16:57:25.555Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Marked getAgentsConfig, listAgents, getAgent as deprecated with @deprecated JSDoc comments and runtime console.warn messages. Updated tests to verify deprecation warnings."
     },
     {
       "id": "02.01.01.01",
