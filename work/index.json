@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-01-22T22:15:53.964Z",
+  "last_updated": "2026-01-22T22:15:56.888Z",
   "current_stream": "006-revision-workflow",
   "streams": [
     {
@@ -338,7 +338,7 @@
         ]
       },
       "created_at": "2026-01-22T21:08:59.022Z",
-      "updated_at": "2026-01-22T22:15:53.964Z",
+      "updated_at": "2026-01-22T22:15:56.888Z",
       "path": "work/006-revision-workflow",
       "generated_by": {
         "workstreams": "0.1.0"
@@ -377,8 +377,10 @@
         }
       },
       "github": {
-        "branch": "workstream/006-revision-workflow"
-      }
+        "branch": "workstream/006-revision-workflow",
+        "completed_at": "2026-01-22T22:15:56.887Z"
+      },
+      "status": "completed"
     },
     {
       "id": "007-debug-tasks-md-deletion",
