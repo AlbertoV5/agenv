@@ -15,8 +15,12 @@ describe("formatIssueBody", () => {
       details: "These are details",
       streamId: "001-stream",
       streamName: "Stream Name",
+      stageId: "01",
       stageName: "Stage Name",
-      batchName: "Batch Name"
+      batchId: "01",
+      batchName: "Batch Name",
+      threadId: "01",
+      threadName: "Thread Name"
     };
     const body = formatIssueBody(input);
     expect(body).toContain("**Workstream:** Stream Name (`001-stream`)");

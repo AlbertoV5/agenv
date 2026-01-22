@@ -302,7 +302,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
         console.log(`Issues: ${issuesResult.created.length} created, ${issuesResult.skipped.length} skipped`)
         console.log("")
         console.log("Next steps:")
-        console.log("  1. Run 'work multi' to start working on threads")
+        console.log("  1. Run 'work continue' to start working on threads (shortcuts to 'work multi --continue')")
         console.log("  2. Or run 'work execute --thread <id>' for single thread")
         console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
     }

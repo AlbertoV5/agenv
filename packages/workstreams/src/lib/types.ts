@@ -230,6 +230,26 @@ export interface ParsedTask {
   lineNumber: number // for editing
 }
 
+/**
+ * Parsed thread from TASKS.md
+ * Captures thread metadata including optional agent assignment
+ */
+export interface ParsedThread {
+  id: number // Thread number within batch
+  name: string
+  assigned_agent?: string // Agent name extracted from @agent:name syntax
+}
+
+/**
+ * Result of parsing TASKS.md
+ * Includes tasks, thread-level agent assignments, and any parse errors
+ */
+export interface TasksMdParseResult {
+  tasks: Task[]
+  threads: ParsedThread[] // Thread metadata with agent assignments
+  errors: string[]
+}
+
 // Parsed stage from checklist
 export interface ParsedStage {
   number: number

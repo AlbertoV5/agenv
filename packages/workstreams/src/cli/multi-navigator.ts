@@ -10,7 +10,7 @@ import { readFileSync } from "fs"
 import readline from "readline"
 import { getRepoRoot } from "../lib/repo.ts"
 import { readTasksFile, parseTaskId } from "../lib/tasks.ts"
-import { getAgentsConfig, getAgent } from "../lib/agents.ts"
+import { loadAgentsConfig, getAgentYaml } from "../lib/agents-yaml.ts"
 import { parseStreamDocument } from "../lib/stream-parser.ts"
 import type { StreamDocument, BatchDefinition, StageDefinition, Task } from "../lib/types.ts"
 import {

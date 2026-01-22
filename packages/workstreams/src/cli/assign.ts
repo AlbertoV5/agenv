@@ -8,7 +8,7 @@
 import { getRepoRoot } from "../lib/repo.ts"
 import { loadIndex, getResolvedStream } from "../lib/index.ts"
 import { getTasks, updateTaskStatus, getTaskById } from "../lib/tasks.ts"
-import { getAgentsConfig, getAgent } from "../lib/agents.ts"
+import { loadAgentsConfig, getAgentYaml } from "../lib/agents-yaml.ts"
 
 interface AssignCliArgs {
   repoRoot?: string
@@ -43,7 +43,7 @@ Options:
 
 Description:
   Assigns agents to tasks for execution. Agents must be defined first
-  using 'work agents --add'. Assignments are stored in tasks.json.
+  in agents.yaml. Assignments are stored in tasks.json.
 
 Examples:
   # Assign an agent to a thread
@@ -282,12 +282,12 @@ export function main(argv: string[] = process.argv): void {
   }
 
   // Verify agent exists
-  const agentsConfig = getAgentsConfig(repoRoot)
+  const agentsConfig = loadAgentsConfig(repoRoot)
   if (agentsConfig) {
-    const agentDef = getAgent(agentsConfig, cliArgs.agent)
+    const agentDef = getAgentYaml(agentsConfig, cliArgs.agent)
     if (!agentDef) {
       console.error(`Error: Agent "${cliArgs.agent}" is not defined`)
-      console.error("Add it first with: work agents --add")
+      console.error("Define it in agents.yaml first.")
       process.exit(1)
     }
   }

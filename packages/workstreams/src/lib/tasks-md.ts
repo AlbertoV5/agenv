@@ -9,6 +9,14 @@ import type { Task, StreamDocument } from "./types.ts"
 import { formatTaskId, parseTaskId } from "./tasks.ts"
 
 /**
+ * Regex pattern to extract agent assignment from thread headers
+ * Matches: "Thread 01: Router @agent:backend-expert"
+ * Also matches: "Thread 01: Router @agent:" (empty placeholder)
+ * Captures: thread id, thread name, agent name (optional)
+ */
+const THREAD_HEADER_REGEX = /^Thread\s+(\d+):\s*([^@]*?)(?:\s+@agent:([a-zA-Z0-9_-]*))?\s*$/i
+
+/**
  * Generate TASKS.md content from a StreamDocument (PLAN.md structure)
  * Creates empty task checkboxes for each thread.
  */
@@ -32,7 +40,8 @@ export function generateTasksMdFromPlan(
 
       for (const thread of batch.threads) {
         const threadIdPadded = thread.id.toString().padStart(2, "0")
-        lines.push(`#### Thread ${threadIdPadded}: ${thread.name}`)
+        // Include @agent: placeholder for agent assignment
+        lines.push(`#### Thread ${threadIdPadded}: ${thread.name} @agent:`)
         // Add a placeholder task to guide the user
         const taskId = formatTaskId(stage.id, batch.id, thread.id, 1)
         lines.push(`- [ ] Task ${taskId}: `)
@@ -62,6 +71,7 @@ export function generateTasksMdFromTasks(
   const stageNames = new Map<number, string>()
   const batchNames = new Map<string, string>() // Keyed by batch_name for simplicity, or we can store properly
   const threadNames = new Map<string, string>() // Keyed by thread_name? No, thread ID/Name association is loose in tasks.
+  const threadAgents = new Map<string, string | undefined>() // Track agent assignments per thread
 
   // We need to group by ID hierarchy: Stage ID -> Batch ID -> Thread ID
   // But Task objects store names, not IDs directly (except in ID string).
@@ -87,9 +97,11 @@ export function generateTasksMdFromTasks(
 
       const threads = batches.get(batchKey)!
 
+      const threadKey = `${stage}.${batchKey}.${thread}`
       if (!threads.has(thread)) {
         threads.set(thread, [])
-        threadNames.set(`${stage}.${batchKey}.${thread}`, task.thread_name)
+        threadNames.set(threadKey, task.thread_name)
+        threadAgents.set(threadKey, task.assigned_agent)
       }
 
       threads.get(thread)!.push(task)
@@ -126,11 +138,14 @@ export function generateTasksMdFromTasks(
           a.id.localeCompare(b.id, undefined, { numeric: true }),
         )
 
+        const threadKey = `${stageId}.${batchKey}.${threadId}`
         const threadName =
-          threadNames.get(`${stageId}.${batchKey}.${threadId}`) ||
+          threadNames.get(threadKey) ||
           `Thread ${threadId}`
         const threadIdPadded = threadId.toString().padStart(2, "0")
-        lines.push(`#### Thread ${threadIdPadded}: ${threadName}`)
+        const agentAssignment = threadAgents.get(threadKey)
+        const agentSuffix = agentAssignment ? ` @agent:${agentAssignment}` : ""
+        lines.push(`#### Thread ${threadIdPadded}: ${threadName}${agentSuffix}`)
 
         for (const task of threadTasks) {
           const check =
@@ -171,7 +186,7 @@ export function parseTasksMd(
 
   let currentStage: { id: number; name: string } | null = null
   let currentBatch: { id: number; name: string } | null = null
-  let currentThread: { id: number; name: string } | null = null
+  let currentThread: { id: number; name: string; assigned_agent?: string } | null = null
 
   for (const token of tokens) {
     if (token.type === "heading") {
@@ -204,13 +219,14 @@ export function parseTasksMd(
         }
       }
 
-      // H4: Thread N: {name}
+      // H4: Thread N: {name} [@agent:agent-name]
       else if (heading.depth === 4 && currentStage && currentBatch) {
-        const match = heading.text.match(/^Thread\s+(\d+):\s*(.*)$/i)
+        const match = heading.text.match(THREAD_HEADER_REGEX)
         if (match) {
           currentThread = {
             id: parseInt(match[1]!, 10),
             name: match[2]!.trim(),
+            assigned_agent: match[3] || undefined,
           }
         }
       }
@@ -312,6 +328,7 @@ export function parseTasksMd(
                 created_at: now,
                 updated_at: now,
                 report,
+                assigned_agent: currentThread.assigned_agent,
               }
 
               tasks.push(task)
@@ -323,4 +340,82 @@ export function parseTasksMd(
   }
 
   return { tasks, errors }
+}
+
+/**
+ * Serialize TASKS.md content and apply thread agent assignments to provided tasks.
+ * 
+ * This function parses the TASKS.md content to extract thread-level agent assignments,
+ * then applies those assignments to all tasks that belong to each thread.
+ * 
+ * @param content - TASKS.md content with @agent: annotations
+ * @param tasks - Array of tasks to update with agent assignments
+ * @returns Updated tasks with assigned_agent populated from thread headers
+ */
+export function serializeTasksMd(content: string, tasks: Task[]): Task[] {
+  const lexer = new Lexer()
+  const tokens = lexer.lex(content)
+  
+  // Map thread key (stage.batch.thread) to agent name
+  const threadAgents = new Map<string, string>()
+  
+  let currentStage: number | null = null
+  let currentBatch: number | null = null
+  
+  for (const token of tokens) {
+    if (token.type === "heading") {
+      const heading = token as Tokens.Heading
+      
+      // H2: Stage N: {name}
+      if (heading.depth === 2) {
+        const match = heading.text.match(/^Stage\s+(\d+):/i)
+        if (match) {
+          currentStage = parseInt(match[1]!, 10)
+          currentBatch = null
+        }
+      }
+      
+      // H3: Batch NN: {name}
+      else if (heading.depth === 3 && currentStage !== null) {
+        const match = heading.text.match(/^Batch\s+(\d{1,2}):/i)
+        if (match) {
+          currentBatch = parseInt(match[1]!, 10)
+        }
+      }
+      
+      // H4: Thread N: {name} @agent:{agent-name}
+      else if (heading.depth === 4 && currentStage !== null && currentBatch !== null) {
+        const match = heading.text.match(THREAD_HEADER_REGEX)
+        if (match && match[3]) {
+          const threadId = parseInt(match[1]!, 10)
+          const agentName = match[3]
+          const stageKey = currentStage.toString().padStart(2, "0")
+          const batchKey = currentBatch.toString().padStart(2, "0")
+          const threadKey = threadId.toString().padStart(2, "0")
+          const fullKey = `${stageKey}.${batchKey}.${threadKey}`
+          threadAgents.set(fullKey, agentName)
+        }
+      }
+    }
+  }
+  
+  // Apply agent assignments to tasks
+  return tasks.map(task => {
+    try {
+      const { stage, batch, thread } = parseTaskId(task.id)
+      const stageKey = stage.toString().padStart(2, "0")
+      const batchKey = batch.toString().padStart(2, "0")
+      const threadKey = thread.toString().padStart(2, "0")
+      const fullKey = `${stageKey}.${batchKey}.${threadKey}`
+      
+      const agentName = threadAgents.get(fullKey)
+      if (agentName) {
+        return { ...task, assigned_agent: agentName }
+      }
+      return task
+    } catch {
+      // Invalid task ID, return as-is
+      return task
+    }
+  })
 }

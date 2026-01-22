@@ -28,6 +28,14 @@ import {
   loadGitHubConfig,
   createStageApprovalCommit,
 } from "../lib/github/index.ts"
+import { generateTasksMdFromPlan, parseTasksMd } from "../lib/tasks-md.ts"
+import { parseStreamDocument } from "../lib/stream-parser.ts"
+import { existsSync, readFileSync, unlinkSync } from "fs"
+import { join } from "path"
+import { getWorkDir } from "../lib/repo.ts"
+import { atomicWriteFile } from "../lib/index.ts"
+import { addTasks, getTasks, parseTaskId } from "../lib/tasks.ts"
+import { generateAllPrompts, type GeneratePromptsResult } from "../lib/prompts.ts"
 
 type ApproveTarget = "plan" | "tasks" | "prompts"
 
@@ -342,6 +350,76 @@ async function handlePlanApproval(
       return
     }
 
+    // Validate that all tasks in the stage are completed
+    if (!cliArgs.force) {
+      const allTasks = getTasks(repoRoot, stream.id)
+      const stageTasks = allTasks.filter((t) => {
+        try {
+          const parsed = parseTaskId(t.id)
+          return parsed.stage === stageNum
+        } catch {
+          return false
+        }
+      })
+
+      const incompleteTasks = stageTasks.filter((t) => t.status !== "completed")
+
+      // Group incomplete tasks by thread
+      const incompleteThreads = new Map<string, { count: number, name: string }>()
+
+      incompleteTasks.forEach(t => {
+        try {
+          const parsed = parseTaskId(t.id)
+          // Format thread ID: stage.batch.thread
+          const threadId = `${parsed.stage.toString().padStart(2, '0')}.${parsed.batch.toString().padStart(2, '0')}.${parsed.thread.toString().padStart(2, '0')}`
+
+          if (!incompleteThreads.has(threadId)) {
+            incompleteThreads.set(threadId, {
+              count: 0,
+              name: t.thread_name || `Thread ${parsed.thread}`
+            })
+          }
+
+          const threadInfo = incompleteThreads.get(threadId)!
+          threadInfo.count++
+        } catch {
+          // ignore parsing errors
+        }
+      })
+
+      if (incompleteThreads.size > 0) {
+        if (cliArgs.json) {
+          console.log(JSON.stringify({
+            action: "blocked",
+            scope: "stage",
+            stage: stageNum,
+            streamId: stream.id,
+            reason: "incomplete_tasks",
+            incompleteThreadCount: incompleteThreads.size,
+            incompleteTaskCount: incompleteTasks.length,
+            incompleteThreads: Array.from(incompleteThreads.entries()).map(([id, info]) => ({
+              id,
+              name: info.name,
+              incompleteTasks: info.count
+            }))
+          }, null, 2))
+        } else {
+          console.error(`Error: Cannot approve Stage ${stageNum} because ${incompleteThreads.size} thread(s) are not approved.`)
+          console.log("\nIncomplete threads:")
+
+          // Sort threads by ID
+          const sortedThreads = Array.from(incompleteThreads.entries()).sort((a, b) => a[0].localeCompare(b[0]))
+
+          for (const [threadId, info] of sortedThreads) {
+            console.log(`  - ${threadId} (${info.name}): ${info.count} task(s) remaining`)
+          }
+
+          console.log("\nUse --force to approve anyway.")
+        }
+        process.exit(1)
+      }
+    }
+
     try {
       const updatedStream = approveStage(repoRoot, stream.id, stageNum, "user")
 
@@ -495,6 +573,13 @@ async function handlePlanApproval(
   try {
     const updatedStream = approveStream(repoRoot, stream.id, "user")
 
+    // Auto-generate TASKS.md after successful plan approval
+    const tasksMdResult = generateTasksMdAfterApproval(
+      repoRoot,
+      updatedStream.id,
+      updatedStream.name
+    )
+
     if (cliArgs.json) {
       console.log(
         JSON.stringify(
@@ -508,6 +593,12 @@ async function handlePlanApproval(
               ? questionsResult.openCount
               : 0,
             forcedApproval: questionsResult.hasOpenQuestions && cliArgs.force,
+            tasksMd: {
+              generated: tasksMdResult.success,
+              path: tasksMdResult.path,
+              overwritten: tasksMdResult.overwritten,
+              error: tasksMdResult.error,
+            },
           },
           null,
           2,
@@ -518,10 +609,115 @@ async function handlePlanApproval(
         `Approved plan for workstream "${updatedStream.name}" (${updatedStream.id})`,
       )
       console.log(`  Status: ${formatApprovalStatus(updatedStream)}`)
+
+      // Report TASKS.md generation result
+      if (tasksMdResult.success) {
+        if (tasksMdResult.overwritten) {
+          console.log(`  Warning: Overwrote existing TASKS.md`)
+        }
+        console.log(`  TASKS.md generated at ${tasksMdResult.path}`)
+      } else {
+        console.log(`  Warning: Failed to generate TASKS.md: ${tasksMdResult.error}`)
+      }
     }
   } catch (e) {
     console.error((e as Error).message)
     process.exit(1)
+  }
+}
+
+/**
+ * Result of serializing TASKS.md to tasks.json
+ */
+interface SerializeTasksResult {
+  success: boolean
+  taskCount: number
+  tasksJsonPath?: string
+  error?: string
+}
+
+/**
+ * Serialize TASKS.md content to tasks.json
+ * 
+ * Parses TASKS.md, extracts tasks, and writes to tasks.json.
+ * This is the critical artifact that must succeed for approval.
+ * 
+ * @param repoRoot - Repository root path
+ * @param streamId - Workstream ID
+ * @returns Result of the serialization
+ */
+function serializeTasksMdToJson(
+  repoRoot: string,
+  streamId: string
+): SerializeTasksResult {
+  try {
+    const workDir = getWorkDir(repoRoot)
+    const tasksMdPath = join(workDir, streamId, "TASKS.md")
+    const tasksJsonPath = join(workDir, streamId, "tasks.json")
+
+    if (!existsSync(tasksMdPath)) {
+      return {
+        success: false,
+        taskCount: 0,
+        error: `TASKS.md not found at ${tasksMdPath}`,
+      }
+    }
+
+    const content = readFileSync(tasksMdPath, "utf-8")
+    const { tasks, errors } = parseTasksMd(content, streamId)
+
+    if (errors.length > 0) {
+      return {
+        success: false,
+        taskCount: 0,
+        error: `TASKS.md parsing errors: ${errors.join(", ")}`,
+      }
+    }
+
+    if (tasks.length === 0) {
+      return {
+        success: false,
+        taskCount: 0,
+        error: "TASKS.md contains no valid tasks",
+      }
+    }
+
+    // Write tasks to tasks.json
+    addTasks(repoRoot, streamId, tasks)
+
+    return {
+      success: true,
+      taskCount: tasks.length,
+      tasksJsonPath,
+    }
+  } catch (e) {
+    return {
+      success: false,
+      taskCount: 0,
+      error: (e as Error).message,
+    }
+  }
+}
+
+/**
+ * Delete TASKS.md after successful serialization
+ * 
+ * @param repoRoot - Repository root path
+ * @param streamId - Workstream ID
+ * @returns true if deleted, false otherwise
+ */
+function deleteTasksMd(repoRoot: string, streamId: string): boolean {
+  try {
+    const workDir = getWorkDir(repoRoot)
+    const tasksMdPath = join(workDir, streamId, "TASKS.md")
+
+    if (existsSync(tasksMdPath)) {
+      unlinkSync(tasksMdPath)
+      return true
+    }
+    return false
+  } catch {
+    return false
   }
 }
 
@@ -553,7 +749,7 @@ function handleTasksApproval(
     return
   }
 
-  // Check readiness
+  // Check readiness (validates TASKS.md exists and has valid tasks)
   const readyCheck = checkTasksApprovalReady(repoRoot, stream.id)
   if (!readyCheck.ready) {
     if (cliArgs.json) {
@@ -570,8 +766,37 @@ function handleTasksApproval(
     process.exit(1)
   }
 
+  // Step 1: Serialize TASKS.md to tasks.json
+  // This is the critical step - if it fails, we don't approve
+  const serializeResult = serializeTasksMdToJson(repoRoot, stream.id)
+  if (!serializeResult.success) {
+    if (cliArgs.json) {
+      console.log(JSON.stringify({
+        action: "blocked",
+        target: "tasks",
+        reason: "serialization_failed",
+        error: serializeResult.error,
+        streamId: stream.id,
+        streamName: stream.name,
+      }, null, 2))
+    } else {
+      console.error(`Error: Failed to serialize TASKS.md to tasks.json`)
+      console.error(`  ${serializeResult.error}`)
+    }
+    process.exit(1)
+  }
+
+  // Step 2: Generate all prompts
+  // This is non-critical - if it fails, we still approve but warn
+  const promptsResult = generateAllPrompts(repoRoot, stream.id)
+  const promptsWarning = !promptsResult.success
+
   try {
+    // Step 3: Approve tasks (must happen before deleting TASKS.md since approveTasks validates it)
     const updatedStream = approveTasks(repoRoot, stream.id)
+
+    // Step 4: Delete TASKS.md AFTER approval succeeds
+    const tasksMdDeleted = deleteTasksMd(repoRoot, stream.id)
 
     if (cliArgs.json) {
       console.log(JSON.stringify({
@@ -579,12 +804,40 @@ function handleTasksApproval(
         target: "tasks",
         streamId: updatedStream.id,
         streamName: updatedStream.name,
-        taskCount: readyCheck.taskCount,
+        taskCount: serializeResult.taskCount,
         approval: updatedStream.approval?.tasks,
+        artifacts: {
+          tasksJson: {
+            generated: true,
+            path: serializeResult.tasksJsonPath,
+            taskCount: serializeResult.taskCount,
+          },
+          prompts: {
+            generated: promptsResult.success,
+            fileCount: promptsResult.generatedFiles.length,
+            totalThreads: promptsResult.totalThreads,
+            errors: promptsResult.errors.length > 0 ? promptsResult.errors : undefined,
+          },
+          tasksMdDeleted,
+        },
       }, null, 2))
     } else {
-      console.log(`Approved tasks for workstream "${updatedStream.name}"`)
-      console.log(`  Task count: ${readyCheck.taskCount}`)
+      console.log(`Tasks approved. tasks.json and prompts generated.`)
+      console.log(`  Task count: ${serializeResult.taskCount}`)
+      console.log(`  tasks.json: ${serializeResult.tasksJsonPath}`)
+      console.log(`  Prompts: ${promptsResult.generatedFiles.length}/${promptsResult.totalThreads} generated`)
+      if (tasksMdDeleted) {
+        console.log(`  TASKS.md deleted`)
+      }
+      if (promptsWarning) {
+        console.log(`  Warning: Some prompts failed to generate:`)
+        for (const err of promptsResult.errors.slice(0, 3)) {
+          console.log(`    - ${err}`)
+        }
+        if (promptsResult.errors.length > 3) {
+          console.log(`    ... and ${promptsResult.errors.length - 3} more errors`)
+        }
+      }
     }
   } catch (e) {
     console.error((e as Error).message)
@@ -669,6 +922,77 @@ function handlePromptsApproval(
   } catch (e) {
     console.error((e as Error).message)
     process.exit(1)
+  }
+}
+
+/**
+ * Result of TASKS.md generation attempt
+ */
+interface TasksMdGenerationResult {
+  success: boolean
+  path?: string
+  overwritten?: boolean
+  error?: string
+}
+
+/**
+ * Generate TASKS.md file after plan approval
+ * 
+ * @param repoRoot - Repository root path
+ * @param streamId - Workstream ID
+ * @param streamName - Workstream name for the file header
+ * @returns Result of the generation attempt
+ */
+function generateTasksMdAfterApproval(
+  repoRoot: string,
+  streamId: string,
+  streamName: string
+): TasksMdGenerationResult {
+  try {
+    const workDir = getWorkDir(repoRoot)
+    const streamDir = join(workDir, streamId)
+    const tasksMdPath = join(streamDir, "TASKS.md")
+    const planMdPath = join(streamDir, "PLAN.md")
+
+    // Check if PLAN.md exists
+    if (!existsSync(planMdPath)) {
+      return {
+        success: false,
+        error: `PLAN.md not found at ${planMdPath}`,
+      }
+    }
+
+    // Check if TASKS.md already exists
+    const overwritten = existsSync(tasksMdPath)
+
+    // Parse PLAN.md to get the stream document
+    const planContent = readFileSync(planMdPath, "utf-8")
+    const errors: any[] = []
+    const doc = parseStreamDocument(planContent, errors)
+
+    if (!doc) {
+      return {
+        success: false,
+        error: `Failed to parse PLAN.md: ${errors.map(e => e.message).join(", ")}`,
+      }
+    }
+
+    // Generate TASKS.md content from the plan structure
+    const content = generateTasksMdFromPlan(streamName, doc)
+
+    // Write the file
+    atomicWriteFile(tasksMdPath, content)
+
+    return {
+      success: true,
+      path: tasksMdPath,
+      overwritten,
+    }
+  } catch (e) {
+    return {
+      success: false,
+      error: (e as Error).message,
+    }
   }
 }
 

@@ -1,180 +1,66 @@
 /**
- * CLI: Continue
+ * CLI: Continue (Alias)
  *
- * Resumes context for a workstream using breadcrumbs.
+ * This command is now an alias for `work multi --continue`.
+ * The original `work continue` functionality has been moved to `work context`.
  */
 
-import { getRepoRoot } from "../lib/repo.ts"
-import { loadIndex, getResolvedStream } from "../lib/index.ts"
-import { getContinueContext } from "../lib/continue.ts"
-
-interface ContinueCliArgs {
-  repoRoot?: string
-  streamId?: string
-}
+import { main as multiMain } from "./multi.ts"
 
 function printHelp(): void {
   console.log(`
-work continue - Resume work on a workstream
+work continue - Continue execution (Alias for 'work multi --continue')
 
 Usage:
   work continue [options]
 
-Optional:
-  --stream, -s     Workstream ID or name (uses current if not specified)
-  --repo-root, -r  Repository root (auto-detected if omitted)
-  --help, -h       Show this help message
-
 Description:
-  This command helps an agent (or user) orient themselves when resuming work.
-  It displays:
-  1. The current active task (or next pending task)
-  2. The last breadcrumb (if any)
-  3. Context about the workstream status
+  This is a convenience alias that runs:
+    work multi --continue [options]
+
+  It finds the next incomplete batch and executes it in parallel using tmux.
+
+  NOTE: The previous "context/breadcrumbs" functionality of 'work continue'
+  has been moved to 'work context'.
+
+Options:
+  --port, -p       OpenCode server port (default: 4096)
+  --dry-run        Show commands without executing
+  --no-server      Skip starting opencode serve
+  --repo-root, -r  Repository root
+  --help, -h       Show this help message
 
 Examples:
   work continue
-  work continue --stream "001-my-feature"
+  work continue --dry-run
 `)
 }
 
-function parseCliArgs(argv: string[]): ContinueCliArgs | null {
-  const args = argv.slice(2)
-  const parsed: Partial<ContinueCliArgs> = {}
-
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i]
-    const next = args[i + 1]
-
-    switch (arg) {
-      case "--repo-root":
-      case "-r":
-        if (!next) {
-          console.error("Error: --repo-root requires a value")
-          return null
-        }
-        parsed.repoRoot = next
-        i++
-        break
-
-      case "--stream":
-      case "-s":
-      case "--plan":
-      case "-p":
-        if (!next) {
-          console.error("Error: --stream requires a value")
-          return null
-        }
-        parsed.streamId = next
-        i++
-        break
-
-      case "--help":
-      case "-h":
-        printHelp()
-        process.exit(0)
-    }
+export async function main(argv: string[] = process.argv): Promise<void> {
+  // Check for help
+  if (argv.includes("--help") || argv.includes("-h")) {
+    printHelp()
+    process.exit(0)
   }
 
-  return parsed as ContinueCliArgs
-}
+  // Inject --continue if not present (though multiMain handles checking flags,
+  // we want to ensure it acts as continue)
+  // Actually, multiMain looks for --continue or --batch.
+  // We can just construct a new argv that includes --continue.
 
-export function main(argv: string[] = process.argv): void {
-  const cliArgs = parseCliArgs(argv)
-  if (!cliArgs) {
-    console.error("\nRun with --help for usage information.")
-    process.exit(1)
-  }
+  // We need to keep the process structure [node, script, ...args]
+  // The original argv is usually [bun, /path/to/continue.ts, ...args]
 
-  // Auto-detect repo root if not provided
-  let repoRoot: string
-  try {
-    repoRoot = cliArgs.repoRoot ?? getRepoRoot()
-  } catch (e) {
-    console.error((e as Error).message)
-    process.exit(1)
-  }
+  const originalArgs = argv.slice(2)
+  const newArgs = [
+    argv[0]!, // runtime
+    argv[1]!, // script path (doesn't matter much for multiMain internal logic if it parses slices)
+    "--continue",
+    ...originalArgs
+  ]
 
-  let index
-  try {
-    index = loadIndex(repoRoot)
-  } catch (e) {
-    console.error((e as Error).message)
-    process.exit(1)
-  }
-
-  let stream
-  try {
-    stream = getResolvedStream(index, cliArgs.streamId)
-  } catch (e) {
-    console.error((e as Error).message)
-    process.exit(1)
-  }
-
-  const ctx = getContinueContext(repoRoot, stream.id, stream.name)
-
-  console.log(`\n# Resume: ${ctx.streamId} (${ctx.streamName})\n`)
-
-  if (ctx.activeTask) {
-    const t = ctx.activeTask
-    console.log(`## Status: Active Task in Progress`)
-    console.log(`Task ID: ${t.id}`)
-    console.log(`Description: ${t.name}`)
-    console.log(
-      `Location: Stage ${t.stage_name} > Batch ${t.batch_name} > Thread ${t.thread_name}`,
-    )
-
-    if (ctx.assignedAgent) {
-      console.log(`Assigned Agent: ${ctx.assignedAgent}`)
-    }
-
-    if (t.breadcrumb) {
-      console.log(`\n## Last Breadcrumb`)
-      console.log(`> ${t.breadcrumb}`)
-    } else {
-      console.log(`\n## Last Breadcrumb`)
-      console.log(`(No breadcrumb logged)`)
-    }
-
-    console.log(`\n## Action Required`)
-    console.log(
-      `Resume execution of this task. Check the last breadcrumb for context.`,
-    )
-  } else {
-    // No active task, look for next pending
-    if (ctx.lastCompletedTask) {
-      const t = ctx.lastCompletedTask
-      console.log(`## Previous Context`)
-      console.log(`Last Completed Task: ${t.id} - ${t.name}`)
-      if (t.breadcrumb) {
-        console.log(`Last Breadcrumb: ${t.breadcrumb}`)
-      }
-    }
-
-    if (ctx.nextTask) {
-      const t = ctx.nextTask
-      console.log(`\n## Status: Ready to Start New Task`)
-      console.log(`Next Task ID: ${t.id}`)
-      console.log(`Description: ${t.name}`)
-      console.log(
-        `Location: Stage ${t.stage_name} > Batch ${t.batch_name} > Thread ${t.thread_name}`,
-      )
-
-      if (ctx.assignedAgent) {
-        console.log(`Assigned Agent: ${ctx.assignedAgent}`)
-      }
-
-      console.log(`\n## Action Required`)
-      console.log(
-        `Start this task using: work update --task "${t.id}" --status in_progress`,
-      )
-    } else {
-      console.log(`\n## Status: All Tasks Completed`)
-      console.log(
-        `No pending tasks found. The workstream appears to be complete.`,
-      )
-    }
-  }
+  // Call multiMain
+  await multiMain(newArgs)
 }
 
 // Run if called directly

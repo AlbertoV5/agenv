@@ -11,19 +11,14 @@ Your scope is **planning only** — you do not implement code. Follow this workf
 
 1. **Create workstream** — `work create --name "feature" --stages N`
 2. **Fill out PLAN.md** — Define stages, batches, threads, and resolve questions. Include working packages in details.
-3. **Ask user to review PLAN.md** — Present `work preview` output and **wait for confirmation** before proceeding
-4. **User approves plan** — Tell user to run `work approve plan` (you MUST NOT run this yourself)
-5. **Generate TASKS.md** — Once approved, run `work tasks generate`, then fill in task descriptions
-6. **Ask user to review TASKS.md** — Present the tasks and **wait for confirmation** before serializing
-7. **Serialize tasks** — Run `work tasks serialize` only after user confirms
-8. **Assign agents** — Use `work agents` to view available agents and `work assign` to map agents to threads
-9. **Generate prompts** — Use `work prompt` to create execution context for the agents to work
-10. **Ask user to run agents** — Hand off prompts to user for execution
-11. **Wait for instructions** — User may request fixes, additional stages, or adjustments
+3. **Review PLAN.md** — Present `work preview` and ask user to review.
+4. **Approve Plan** — User runs `work approve plan`. This automatically generates `TASKS.md`.
+5. **Fill out TASKS.md** — Define task descriptions and assign agents to threads.
+6. **Review TASKS.md** — Ask user to review the tasks and assignments.
+7. **Approve Tasks** — User runs `work approve tasks`. This serializes tasks and generates prompts automatically.
+8. **Handoff** — Ask user to run agents.
 
-The user manages agent execution. Your job ends when prompts are ready.
-
-**CRITICAL:** Steps 3, 4, and 6 are review checkpoints. You MUST wait for explicit user confirmation before proceeding past each checkpoint. Never assume approval.
+**CRITICAL:** Steps 3, 4, 6, and 7 are review checkpoints. You MUST wait for explicit user confirmation before proceeding past each checkpoint. Never assume approval.
 
 ---
 
@@ -108,34 +103,20 @@ work check plan     # Comprehensive check (schema, open questions, missing input
 
 ## Review Checkpoint: PLAN.md
 
-After filling out PLAN.md, you MUST pause and ask for user review:
+After filling out PLAN.md:
 
-1. Run `work validate plan` to validate structure
-2. Run `work preview` (detailed)
-3. Present the preview output to the user
-4. Ask: "Does this plan structure look correct? Any changes needed before approval?"
-5. **Wait for explicit confirmation** — do not proceed until user confirms
-6. If user requests changes, make edits and repeat from step 1
-7. Once confirmed, tell user: "Please run `work approve plan` to approve the plan"
+1. Run `work check plan` to validate structure and questions.
+2. Run `work preview` and present the output to the user.
+3. **Wait for confirmation.**
+4. Ask the user to run `work approve plan`.
 
 **You MUST NOT run `work approve *` yourself.** The user must run this command to maintain human-in-the-loop control.
 
-## Create Tasks (Required Workflow)
+## Create Tasks & Assign Agents
 
-After approval, tasks **must** be created using the TASKS.md workflow:
-
-```bash
-# Step 1: Generate TASKS.md from approved PLAN.md (or re-generate from tasks.json)
-work tasks generate
-
-# Step 2: Edit TASKS.md to fill in task descriptions for all threads
-# Add specific, actionable task names for each thread
-
-# Step 3: Ask user to review TASKS.md (see checkpoint below)
-
-# Step 4: Convert to tasks.json (deletes TASKS.md)
-work tasks serialize
-```
+After plan approval, `TASKS.md` is automatically created. You must edit this file to:
+1. Add actionable task descriptions
+2. Assign agents to threads using `@agent:name` syntax
 
 **TASKS.md format:**
 ```markdown
@@ -143,51 +124,30 @@ work tasks serialize
 
 ### Batch 01: Core
 
-#### Thread 01: Router
+#### Thread 01: Router @agent:backend-expert
 - [ ] Task 01.01.01.01: Create route definitions
 - [ ] Task 01.01.01.02: Add middleware chain
 ```
 
-Status markers: `[ ]` pending, `[x]` completed, `[~]` in_progress, `[!]` blocked, `[-]` cancelled
+Use `work agents` to see available agents.
 
 ## Review Checkpoint: TASKS.md
 
-After filling in task descriptions, you MUST pause and ask for user review:
-
-1. Present the TASKS.md content or a summary of tasks per thread
-2. Ask: "Do these tasks look correct? Any additions or changes needed?"
-3. **Wait for explicit confirmation** — do not serialize until user confirms
-4. If user requests changes, make edits and repeat from step 1
-5. Once confirmed, run `work tasks serialize`
-6. Run `work tree` to view the current stream structure with task count
-
-**Do not serialize tasks without user review.** Task descriptions drive agent execution.
-
-Use `work add-task` only for tasks discovered during execution:
-```bash
-work add-task --stage 1 --batch 1 --thread 1 --name "Handle edge case"
-```
-
-## Assign Agents to Threads
+After editing `TASKS.md`, ask the user to review. Once confirmed, ask them to run:
 
 ```bash
-work agents                                      # List available agents
-work assign --thread "01.01.01" --agent "backend-expert"
-work assign --thread "01.01.02" --agent "frontend-specialist"
+work approve tasks
 ```
 
-## Generate Agent Prompts
+This command validates and serializes the tasks and assignments.
 
-Create execution prompts for implementation agents:
+**Do not proceed without user approval.** Task descriptions and agent assignments drive execution.
 
-```bash
-work prompt              # Generate ALL prompts for the workstream (Recommended)
-work prompt --stage 1    # Generate all prompts for stage 1
-```
+## Prompts & Handoff
 
-## Handoff to User
+Prompts are automatically generated when the user runs `work approve tasks`.
 
-When prompts are ready notify the user that prompts were generated, ask user to start the agents and wait for user to report completion or issues
+Once approved, notify the user that prompts are ready and ask them to run `work continue` to start execution. Wait for the user to report completion or issues.
 
 After a stage completes, generate a stage report with `work report --stage N` to review progress before proceeding to the next stage.
 ---
@@ -205,31 +165,26 @@ work add-thread --stage "setup" --batch "core" --name "thread-name"
 
 # Validate & approve
 work preview
-work validate plan
 work check plan
+work approve plan                # User only - Generates TASKS.md
+work approve tasks               # User only - Serializes TASKS.md
 
-# Tasks (required workflow after plan approval)
-work tasks generate              # Create TASKS.md from PLAN.md
-work tasks serialize             # Convert TASKS.md to tasks.json
-work add-task --stage 1 --batch 1 --thread 1 --name "..."  # Only for mid-execution additions
+# Tasks
+work add-task --stage 1 --batch 1 --thread 1 --name "..."  # Mid-execution additions
 
-# Agent assignment
+# Agents & Prompts
 work agents                      # List available agents
-work assign --thread "01.01.01" --agent "backend-expert"
+work assign --thread "01.01.01" --agent "backend-expert" # Manual assignment
+work prompt --stage 1 --batch 1  # Manual prompt regeneration (if needed)
 
-# Agent prompts
-work prompt --stage 1 --batch 1
+# Fix Stages
+work fix                         # Add fix stage
+work approve plan --revoke       # Unlock plan
+work approve tasks --revoke      # Unlock tasks
+# ... edit PLAN.md or TASKS.md ...
+work approve plan
+work approve tasks
 
-# Workflow for Fix Stages after user feedback
-work fix   # Add fix stage
-work approve plan --revoke --reason "Fix stage"
-work approve tasks --revoke --reason "Fix stage"
-work generate tasks # re-generate TASKS.md
-work serialize tasks # serialize back to tasks.json once tasks are approved
-work assign --thread ... # re-assign agents
-work prompt --stage ... # generate new prompts
-
-# Reports & completion
-work report --stage 1            # Generate stage report
-work report
+# Reports
+work report --stage 1
 ```

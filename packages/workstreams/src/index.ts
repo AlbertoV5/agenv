@@ -151,3 +151,17 @@ export {
   exportStream,
   generateSummary,
 } from "./lib/document.ts"
+
+// Prompt generation
+export {
+  generateAllPrompts,
+  getPromptContext,
+  generateThreadPrompt,
+  generateThreadPromptJson,
+  parseThreadId,
+  formatThreadId,
+  type GeneratePromptsResult,
+  type PromptContext,
+  type ThreadId,
+  type GeneratePromptOptions,
+} from "./lib/prompts.ts"

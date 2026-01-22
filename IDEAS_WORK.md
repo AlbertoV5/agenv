@@ -1,17 +1,28 @@
 ## Notes
 
-- ENHANCE: Add prompt templates to top-level agent, defined in AGENTS.md, "use x skill, your role is of"
+- [ ] ENHANCE: Add command to summarize plan so the planner can call an "assistant" agent to summarize it and play tts?
+- [ ] NOTE: Tooling prompt, eg: ```Can you create a test script file in ./scripts so I can run `bun run ./scripts/check-github-*.ts` So I Can test auth, config, label, and issue?``` 
 
-- [ ] ENHANCE: After PLAN.md is created, have "assistant" agent read it for you (TTS), include `work preview` command output + reference to plan so assistant synthesizes.
-  
-- [ ] BUG: Update the Reviewer skill to include to check for if threads are actually parallelizable. Update planner skill doc to reinforce that.
+- [ ] ENHANCE: Improve the tmux to auto kill tmux session when both opencode sessions end.
 
-- [ ] ENHANCE: Tooling prompt, eg: ```Can you create a test script file in ./scripts so I can run `bun run ./scripts/check-github-*.ts` So I Can test auth, config, label, and issue?``` 
+- [ ] ENHANCE: Keep track of the opencode sessions per thread so we are able to resume incomplete work or ask for small fixes to the agent responsible for the implementation. So when we do `work fix` we have the option to go back to specific threads or create new stages. I think we may need to rename the current `work fix` to `work add stage` which is a more sensible approach.
 
-- [ ] ENHANCE: Integrate constant documentation agent that will document tooling and the latest status (apart from the regular docs one).
+- [ ] ENHANCE: Create opencode plugin that will close the session after ~1 min of inactivity so we can auto close batched runs
+
 
 ## Notes prompts
 
-- Planner: `your role is of planner agent ... use the create workstream plans skill`
-- Reviewer: `your role is of reviewer agent ... use the revieweing workstream plans skill`
-- Planner `Plan is approved. Please generate the tasks and the prompts.`
+- Planner: `... use the planning workstreams skill`
+- Reviewer: `... use the revieweing workstreams skill`
+
+
+## Flow
+
+- prompt planner
+- approve plan
+- approve tasks
+- start workstream
+- continue work
+- approve stage
+- continue work
+- approve stage

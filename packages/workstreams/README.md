@@ -19,6 +19,39 @@ bun add @agenv/workstreams
 
 ## Quick Start
 
+1. **Create Workstream**
+   ```bash
+   work create --name "my-feature" --stages 1
+   ```
+
+2. **Plan**
+   Edit `work/001-my-feature/PLAN.md` to define the work.
+   ```bash
+   work approve plan  # Auto-generates TASKS.md
+   ```
+
+3. **Define Tasks & Agents**
+   Edit `work/001-my-feature/TASKS.md` to assign tasks.
+   
+   Syntax: `- [ ] Task description @agent:agent-name`
+   
+   ```bash
+   work approve tasks  # Auto-generates tasks.json + prompts
+   ```
+
+4. **Verify**
+   ```bash
+   work status
+   work tree
+   ```
+
+5. **Start**
+   ```bash
+   work start
+   ```
+
+## Library Usage
+
 ```typescript
 import {
   getRepoRoot,
@@ -121,17 +154,60 @@ Batch purpose.
 **Details:** Implementation approach.
 ```
 
+## TASKS.md Structure
+
+`TASKS.md` is an intermediate file generated from `PLAN.md` that allows you to define granular tasks and assign them to specific agents.
+
+```markdown
+# Tasks: {Name}
+
+## Stage 01: {Stage Name}
+
+### Batch 01: {Batch Name}
+
+#### Thread 01: {Thread Name}
+- [ ] Implement feature core logic @agent:implementing-workstreams
+- [ ] Add unit tests @agent:implementing-workstreams
+```
+
+### Agent Assignment
+
+Use the `@agent:name` syntax to assign a task to a specific agent skill.
+
+- **Default:** If no agent is specified, the system default is used.
+- **Syntax:** `@agent:skill-name`
+- **Example:** `... @agent:planning-workstreams`
+
+#### Agents Configuration
+
+Agents are defined in `work/agents.yaml`. You can list available agents using:
+
+```bash
+work agents
+```
+
+Example `agents.yaml`:
+
+```yaml
+agents:
+  - name: planning-workstreams
+    description: Specializes in creating and validating workstream plans
+    best_for: Planning, architecture, requirement analysis
+    models:
+      - anthropic/claude-3-5-sonnet
+```
+
 ## Workstream Lifecycle Stages
 
 Workstreams progress through these stages:
 
 | Stage | Skill | Description |
 |-------|-------|-------------|
-| **Create** | `/planning-workstreams` | Generate workstream structure, define stages/threads/tasks |
-| **Review** | `/reviewing-workstreams` | Read workstreams, add/remove tasks, reorganize structure |
-| **Implement** | `/implementing-workstreams` | Execute tasks, track progress, update statuses |
-| **Evaluate** | `/evaluating-workstream-outputs` | Review completed work, gather metrics |
-| **Document** | `/documenting-workstream-outputs` | Generate reports, changelogs, exports |
+| **Plan** | `/planning-workstreams` | Create stream, fill `PLAN.md` |
+| **Review** | `/reviewing-workstreams` | Validate and approve `PLAN.md` |
+| **Define** | `/planning-workstreams` | Fill `TASKS.md` with assignments, approve tasks |
+| **Implement** | `/implementing-workstreams` | Execute tasks (`work start`), track progress |
+| **Evaluate** | `/evaluating-workstreams` | Review completed work, gather metrics |
 
 ### Task Status
 
@@ -374,6 +450,11 @@ await modifyIndex(repoRoot, (index) => {
 The package includes a CLI for workstream management:
 
 ```bash
+# Initialize workstreams in a repository
+work init
+```
+
+```bash
 # Create a workstream
 work create --name my-feature
 work create --name my-feature --stages 3
@@ -396,6 +477,10 @@ work review commits
 
 # Open PLAN.md in editor
 work edit
+
+# Context & Continuation
+work context             # Show current workstream context (task, breadcrumbs)
+work continue            # Resume execution (alias for 'work multi --continue')
 
 # Human-In-The-Loop Approvals
 # Three approvals are required before starting the workstream:
@@ -430,6 +515,10 @@ work add-task --stage 1 --batch 1 --thread 1 --name "Task description"
 
 # List tasks
 work list --stream "001-my-feature" --tasks
+
+# List available agents
+work agents
+work agents --json
 
 # Read task details
 work read --stream "001-my-feature" --task "01.01.01.01"
@@ -474,6 +563,21 @@ work metrics --stream "001-my-feature"
 work report --stream "001-my-feature"
 work changelog --since-days 7
 work export --format csv
+```
+
+### Manual Commands
+
+These commands are usually handled automatically by the approval workflow but can be run manually:
+
+```bash
+# Generate TASKS.md from PLAN.md
+work tasks generate
+
+# Convert TASKS.md to tasks.json
+work tasks serialize
+
+# Generate agent prompts from tasks.json
+work prompts
 ```
 
 ## GitHub Integration

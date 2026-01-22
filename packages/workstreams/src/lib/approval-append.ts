@@ -1,3 +1,5 @@
+import type { StreamMetadata, ApprovalStatus } from "./types.ts"
+import { loadIndex, saveIndex } from "./index.ts"
 
 /**
  * Get approval status for a specific stage

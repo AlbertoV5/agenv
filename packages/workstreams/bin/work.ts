@@ -43,6 +43,7 @@ import { main as changelogMain } from "../src/cli/changelog.ts"
 import { main as exportMain } from "../src/cli/export.ts"
 import { main as approveMain } from "../src/cli/approve.ts"
 import { main as continueMain } from "../src/cli/continue.ts"
+import { main as contextMain } from "../src/cli/context.ts"
 import { main as fixMain } from "../src/cli/fix.ts"
 import { main as tasksMain } from "../src/cli/tasks.ts"
 import { main as agentsMain } from "../src/cli/agents.ts"
@@ -71,6 +72,7 @@ const SUBCOMMANDS = {
   create: createMain,
   current: currentMain,
   continue: continueMain,
+  context: contextMain,
   fix: fixMain,
   approve: approveMain,
   start: startMain,
@@ -121,7 +123,8 @@ Commands:
   init        Initialize work/ directory with default config files
   create      Create a new workstream
   current     Get or set the current workstream
-  continue    Resume work on a workstream (shows context & breadcrumbs)
+  continue    Continue execution (alias for 'work multi --continue')
+  context     Show workstream context and resume information
   fix         Append a fix stage to a workstream
   fix         Append a fix stage to a workstream
   approve     Approve workstream plan/tasks/prompts (subcommands: plan, tasks, prompts)
