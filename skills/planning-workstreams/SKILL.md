@@ -22,6 +22,55 @@ Your scope is **planning only** — you do not implement code. Follow this workf
 
 ---
 
+## Revision Workflow
+
+Use this workflow when you need to add new stages to a workstream that is already in progress or completed. This allows for iterative development without disrupting existing work.
+
+1. **Start Revision** — `work revision --name "refinement"`
+   - Adds a new stage to `PLAN.md`
+   - Unlocks `PLAN.md` for editing
+2. **Fill out PLAN.md** — Define the new stage's content (batches, threads)
+3. **Review PLAN.md** — Present `work preview` and ask user to review
+4. **Approve Revision** — User runs `work approve revision`
+   - Generates tasks for the *new stage only* in `TASKS.md`
+5. **Fill out TASKS.md** — Define tasks and assign agents for the new stage
+6. **Review TASKS.md** — Ask user to review
+7. **Approve Tasks** — User runs `work approve tasks`
+
+**Note:** This flow mirrors the initial planning flow (Plan → Approve → Tasks → Approve) but is scoped to the new revision stage.
+
+**Recommendation:** Normally, you should use `work fix` for correcting issues in existing threads *before* starting a revision for new work.
+
+### Example: Adding a "Polish" Stage
+
+```bash
+# 1. User realizes more work is needed
+> "Please add a polishing stage to fix UI glitches."
+
+# 2. Agent starts revision
+work revision --name "UI Polish"
+
+# 3. Agent edits PLAN.md to define the new stage structure
+# ... edits PLAN.md ...
+
+# 4. Agent requests review
+> "I've added the UI Polish stage. Please review the plan."
+
+# 5. User approves revision
+work approve revision
+
+# 6. Agent edits TASKS.md to define specific tasks
+# ... edits TASKS.md ...
+
+# 7. Agent requests final review
+> "Tasks are ready. Please approve to start execution."
+
+# 8. User approves tasks
+work approve tasks
+```
+
+---
+
 ## Create a Workstream
 
 ```bash
@@ -175,12 +224,9 @@ work agents                      # List available agents
 work assign --thread "01.01.01" --agent "backend-expert" # Manual assignment
 work prompt --stage 1 --batch 1  # Manual prompt regeneration (if needed)
 
-# Fix Stages
-work add stage                   # Add fix stage
-work approve plan --revoke       # Unlock plan
-work approve tasks --revoke      # Unlock tasks
-# ... edit PLAN.md or TASKS.md ...
-work approve tasks
+# Revision
+work revision --name "stage-name" # Add new stage to active workstream
+work approve revision            # User only - Generates TASKS.md for new stage
 
 # Interactive Fix
 work fix                         # Interactive fix menu

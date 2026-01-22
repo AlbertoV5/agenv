@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "stream_id": "006-revision-workflow",
-  "last_updated": "2026-01-22T21:52:28.637Z",
+  "last_updated": "2026-01-22T22:00:15.607Z",
   "tasks": [
     {
       "id": "01.01.01.01",
@@ -357,16 +357,26 @@
       "stage_name": "Skill Update & Tests",
       "batch_name": "Documentation and Tests",
       "thread_name": "Skill Documentation",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T21:44:18.607Z",
-      "updated_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:53:39.379Z",
       "assigned_agent": "documentation-minimalist",
-      "sessions": [],
+      "sessions": [
+        {
+          "sessionId": "ses_mkpzmv1z_mwmrgi",
+          "agentName": "documentation-minimalist",
+          "model": "openrouter/google/gemini-3-pro-preview",
+          "startedAt": "2026-01-22T21:52:44.474Z",
+          "status": "running"
+        }
+      ],
       "github_issue": {
         "number": 15,
         "url": "https://github.com/AlbertoV5/agenv/issues/15",
-        "state": "open"
-      }
+        "state": "closed"
+      },
+      "currentSessionId": "ses_mkpzmv1z_mwmrgi",
+      "report": "Updated skills/planning-workstreams/SKILL.md with new Revision Workflow section, including 7-step flow, example, and CLI reference updates."
     },
     {
       "id": "03.01.01.02",
@@ -374,11 +384,12 @@
       "stage_name": "Skill Update & Tests",
       "batch_name": "Documentation and Tests",
       "thread_name": "Skill Documentation",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T21:44:18.607Z",
-      "updated_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:53:37.883Z",
       "assigned_agent": "documentation-minimalist",
-      "sessions": []
+      "sessions": [],
+      "report": "Updated skills/planning-workstreams/SKILL.md with new Revision Workflow section, including 7-step flow, example, and CLI reference updates."
     },
     {
       "id": "03.01.01.03",
@@ -386,11 +397,12 @@
       "stage_name": "Skill Update & Tests",
       "batch_name": "Documentation and Tests",
       "thread_name": "Skill Documentation",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T21:44:18.607Z",
-      "updated_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:53:37.883Z",
       "assigned_agent": "documentation-minimalist",
-      "sessions": []
+      "sessions": [],
+      "report": "Updated skills/planning-workstreams/SKILL.md with new Revision Workflow section, including 7-step flow, example, and CLI reference updates."
     },
     {
       "id": "03.01.01.04",
@@ -398,11 +410,12 @@
       "stage_name": "Skill Update & Tests",
       "batch_name": "Documentation and Tests",
       "thread_name": "Skill Documentation",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T21:44:18.607Z",
-      "updated_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:53:37.883Z",
       "assigned_agent": "documentation-minimalist",
-      "sessions": []
+      "sessions": [],
+      "report": "Updated skills/planning-workstreams/SKILL.md with new Revision Workflow section, including 7-step flow, example, and CLI reference updates."
     },
     {
       "id": "03.01.02.01",
@@ -410,15 +423,32 @@
       "stage_name": "Skill Update & Tests",
       "batch_name": "Documentation and Tests",
       "thread_name": "Tests",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T21:44:18.607Z",
-      "updated_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T22:00:15.607Z",
       "assigned_agent": "code-reviewer",
-      "sessions": [],
+      "sessions": [
+        {
+          "sessionId": "ses_mkpzmv1z_04wcqz",
+          "agentName": "code-reviewer",
+          "model": "openrouter/openai/gpt-5.2-codex",
+          "startedAt": "2026-01-22T21:52:44.474Z",
+          "status": "running"
+        },
+        {
+          "sessionId": "ses_mkpzskfk_ex6x1u",
+          "agentName": "documentation-minimalist",
+          "model": "google/antigravity-gemini-3-pro:low",
+          "startedAt": "2026-01-22T21:57:10.640Z",
+          "status": "completed",
+          "completedAt": "2026-01-22T21:58:52.178Z",
+          "exitCode": 0
+        }
+      ],
       "github_issue": {
         "number": 16,
         "url": "https://github.com/AlbertoV5/agenv/issues/16",
-        "state": "open"
+        "state": "closed"
       }
     },
     {
@@ -427,11 +457,21 @@
       "stage_name": "Skill Update & Tests",
       "batch_name": "Documentation and Tests",
       "thread_name": "Tests",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T21:44:18.607Z",
-      "updated_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T22:00:14.040Z",
       "assigned_agent": "code-reviewer",
-      "sessions": []
+      "sessions": [
+        {
+          "sessionId": "ses_mkpzskfk_lzdc96",
+          "agentName": "documentation-minimalist",
+          "model": "google/antigravity-gemini-3-pro:low",
+          "startedAt": "2026-01-22T21:57:10.640Z",
+          "status": "completed",
+          "completedAt": "2026-01-22T21:58:52.179Z",
+          "exitCode": 0
+        }
+      ]
     },
     {
       "id": "03.01.02.03",
@@ -439,11 +479,21 @@
       "stage_name": "Skill Update & Tests",
       "batch_name": "Documentation and Tests",
       "thread_name": "Tests",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T21:44:18.607Z",
-      "updated_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T22:00:14.040Z",
       "assigned_agent": "code-reviewer",
-      "sessions": []
+      "sessions": [
+        {
+          "sessionId": "ses_mkpzskfk_cad1f8",
+          "agentName": "documentation-minimalist",
+          "model": "google/antigravity-gemini-3-pro:low",
+          "startedAt": "2026-01-22T21:57:10.640Z",
+          "status": "completed",
+          "completedAt": "2026-01-22T21:58:52.179Z",
+          "exitCode": 0
+        }
+      ]
     },
     {
       "id": "03.01.02.04",
@@ -451,11 +501,21 @@
       "stage_name": "Skill Update & Tests",
       "batch_name": "Documentation and Tests",
       "thread_name": "Tests",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T21:44:18.607Z",
-      "updated_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T22:00:14.040Z",
       "assigned_agent": "code-reviewer",
-      "sessions": []
+      "sessions": [
+        {
+          "sessionId": "ses_mkpzskfl_4695y7",
+          "agentName": "documentation-minimalist",
+          "model": "google/antigravity-gemini-3-pro:low",
+          "startedAt": "2026-01-22T21:57:10.641Z",
+          "status": "completed",
+          "completedAt": "2026-01-22T21:58:52.179Z",
+          "exitCode": 0
+        }
+      ]
     },
     {
       "id": "03.01.02.05",
@@ -463,11 +523,21 @@
       "stage_name": "Skill Update & Tests",
       "batch_name": "Documentation and Tests",
       "thread_name": "Tests",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-22T21:44:18.607Z",
-      "updated_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T22:00:14.040Z",
       "assigned_agent": "code-reviewer",
-      "sessions": []
+      "sessions": [
+        {
+          "sessionId": "ses_mkpzskfl_hw9uak",
+          "agentName": "documentation-minimalist",
+          "model": "google/antigravity-gemini-3-pro:low",
+          "startedAt": "2026-01-22T21:57:10.641Z",
+          "status": "completed",
+          "completedAt": "2026-01-22T21:58:52.179Z",
+          "exitCode": 0
+        }
+      ]
     }
   ]
 }
