@@ -146,6 +146,49 @@ export class GitHubClient {
     );
   }
 
+  /**
+   * Search for issues matching the given criteria.
+   * Uses GitHub's search API to find issues by labels and state.
+   * 
+   * @param query Search criteria
+   * @returns Array of matching issues
+   */
+  async searchIssues(query: {
+    labels?: string[];
+    state?: "open" | "closed" | "all";
+    title?: string;
+  }): Promise<GitHubIssue[]> {
+    // Build the search query string
+    const queryParts: string[] = [
+      `repo:${this.repository.owner}/${this.repository.repo}`,
+      "is:issue",
+    ];
+
+    if (query.state && query.state !== "all") {
+      queryParts.push(`state:${query.state}`);
+    }
+
+    if (query.labels && query.labels.length > 0) {
+      for (const label of query.labels) {
+        queryParts.push(`label:"${label}"`);
+      }
+    }
+
+    if (query.title) {
+      // Escape quotes in title for search
+      queryParts.push(`"${query.title.replace(/"/g, '\\"')}" in:title`);
+    }
+
+    const searchQuery = queryParts.join(" ");
+    const encodedQuery = encodeURIComponent(searchQuery);
+
+    const response = await this.request<{ items: GitHubIssue[] }>(
+      `/search/issues?q=${encodedQuery}&per_page=100`
+    );
+
+    return response.items || [];
+  }
+
   async createLabel(
     name: string,
     color: string,

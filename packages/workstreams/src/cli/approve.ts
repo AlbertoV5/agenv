@@ -309,43 +309,15 @@ export function main(argv: string[] = process.argv): void {
       const updatedStream = approveStage(repoRoot, stream.id, stageNum, "user")
 
       if (cliArgs.json) {
-        // In JSON mode, wait for GitHub issues to be created and include in output
-        handleGitHubIssueCreation(repoRoot, stream.id, true, stageNum)
-          .then((githubResult) => {
-            console.log(JSON.stringify({
-              action: "approved",
-              scope: "stage",
-              stage: stageNum,
-              streamId: updatedStream.id,
-              approval: updatedStream.approval?.stages?.[stageNum],
-              github: githubResult
-                ? {
-                    issues_created: githubResult.created.length,
-                    issues_skipped: githubResult.skipped.length,
-                    issues_errors: githubResult.errors.length,
-                    created: githubResult.created,
-                  }
-                : null,
-            }, null, 2))
-          })
-          .catch(() => {
-            // GitHub errors should not fail the approval
-            console.log(JSON.stringify({
-              action: "approved",
-              scope: "stage",
-              stage: stageNum,
-              streamId: updatedStream.id,
-              approval: updatedStream.approval?.stages?.[stageNum],
-              github: null,
-            }, null, 2))
-          })
+        console.log(JSON.stringify({
+          action: "approved",
+          scope: "stage",
+          stage: stageNum,
+          streamId: updatedStream.id,
+          approval: updatedStream.approval?.stages?.[stageNum],
+        }, null, 2))
       } else {
         console.log(`Approved Stage ${stageNum} of workstream "${updatedStream.name}"`)
-
-        // Create GitHub issues for threads in this stage (fire and wait)
-        handleGitHubIssueCreation(repoRoot, stream.id, false, stageNum).catch(() => {
-          // Errors are already handled inside the function
-        })
       }
     } catch (e) {
       console.error((e as Error).message)
@@ -480,11 +452,11 @@ export function main(argv: string[] = process.argv): void {
                 forcedApproval: questionsResult.hasOpenQuestions && cliArgs.force,
                 github: githubResult
                   ? {
-                      issues_created: githubResult.created.length,
-                      issues_skipped: githubResult.skipped.length,
-                      issues_errors: githubResult.errors.length,
-                      created: githubResult.created,
-                    }
+                    issues_created: githubResult.created.length,
+                    issues_skipped: githubResult.skipped.length,
+                    issues_errors: githubResult.errors.length,
+                    created: githubResult.created,
+                  }
                   : null,
               },
               null,

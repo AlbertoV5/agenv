@@ -6,7 +6,7 @@
 
 import { loadGitHubConfig, isGitHubEnabled } from "./config";
 import { ensureWorkstreamLabels } from "./labels";
-import { createThreadIssue, storeThreadIssueMeta, closeThreadIssue, reopenThreadIssue, updateThreadIssueBody, type CreateThreadIssueInput } from "./issues";
+import { createThreadIssue, storeThreadIssueMeta, closeThreadIssue, reopenThreadIssue, updateThreadIssueBody, findExistingThreadIssue, type CreateThreadIssueInput } from "./issues";
 import { loadIndex, getStream } from "../index";
 import { readTasksFile, writeTasksFile, parseTaskId } from "../tasks";
 import { getGitHubAuth } from "./auth";
@@ -100,17 +100,6 @@ export async function createIssuesForWorkstream(
 
   // Create issues for each thread
   for (const [threadKey, { firstTask, tasks }] of threads) {
-    // Check if any task in this thread already has an issue
-    const existingIssue = tasks.find((t) => t.github_issue?.number);
-    if (existingIssue) {
-      result.skipped.push({
-        threadId: threadKey,
-        threadName: firstTask.thread_name,
-        reason: `Already has issue #${existingIssue.github_issue!.number}`,
-      });
-      continue;
-    }
-
     // Parse IDs for label generation
     const { stage, batch, thread } = parseTaskId(firstTask.id);
 
@@ -120,24 +109,96 @@ export async function createIssuesForWorkstream(
     }
 
     const stageId = stage.toString().padStart(2, "0");
-    const batchId = `${stageId}.${batch.toString().padStart(2, "0")}`;
-    const threadId = thread.toString().padStart(2, "0");
+    const batchIdFormatted = batch.toString().padStart(2, "0");
+    const threadIdFormatted = thread.toString().padStart(2, "0");
 
-    // Build task list for issue body
+    // Check if thread is complete (all tasks completed or cancelled)
+    const isComplete = tasks.every(
+      (t) => t.status === "completed" || t.status === "cancelled"
+    );
+
+    // Check if any task in this thread already has local issue metadata
+    const existingLocalIssue = tasks.find((t) => t.github_issue?.number);
+    if (existingLocalIssue) {
+      result.skipped.push({
+        threadId: threadKey,
+        threadName: firstTask.thread_name,
+        reason: `Already has issue #${existingLocalIssue.github_issue!.number}`,
+      });
+      continue;
+    }
+
+    // No local metadata - check GitHub for existing issues
+    const existingRemoteIssue = await findExistingThreadIssue(
+      repoRoot,
+      stageId,
+      batchIdFormatted,
+      threadIdFormatted,
+      firstTask.thread_name,
+      stream.name
+    );
+
+    if (existingRemoteIssue) {
+      // Found an existing issue on GitHub - store the metadata locally
+      const meta = {
+        issue_number: existingRemoteIssue.issueNumber,
+        issue_url: existingRemoteIssue.issueUrl,
+      };
+      storeThreadIssueMeta(repoRoot, streamId, firstTask.id, meta);
+
+      if (existingRemoteIssue.state === "closed") {
+        if (isComplete) {
+          // Thread is still complete - keep issue closed
+          result.skipped.push({
+            threadId: threadKey,
+            threadName: firstTask.thread_name,
+            reason: `Existing closed issue #${existingRemoteIssue.issueNumber} (thread complete)`,
+          });
+        } else {
+          // Thread is no longer complete - reopen the issue
+          try {
+            await reopenThreadIssue(repoRoot, streamId, existingRemoteIssue.issueNumber);
+            result.created.push({
+              threadId: threadKey,
+              threadName: firstTask.thread_name,
+              issueNumber: existingRemoteIssue.issueNumber,
+              issueUrl: existingRemoteIssue.issueUrl,
+            });
+          } catch (error) {
+            result.errors.push({
+              threadId: threadKey,
+              threadName: firstTask.thread_name,
+              error: `Failed to reopen issue: ${error instanceof Error ? error.message : String(error)}`,
+            });
+          }
+        }
+      } else {
+        // Issue is already open
+        result.skipped.push({
+          threadId: threadKey,
+          threadName: firstTask.thread_name,
+          reason: `Existing open issue #${existingRemoteIssue.issueNumber}`,
+        });
+      }
+      continue;
+    }
+
+    // No existing issue - create a new one
+    const batchId = `${stageId}.${batchIdFormatted}`;
     const taskList = tasks
       .map((t) => `- [ ] ${t.name}`)
       .join("\n");
 
     const input: CreateThreadIssueInput = {
-      summary: `Thread ${threadId} in batch ${batchId}`,
+      summary: `Thread ${threadIdFormatted} in batch ${batchId}`,
       details: `## Tasks\n\n${taskList}`,
       streamId: stream.id,
       streamName: stream.name,
       stageId,
       stageName: firstTask.stage_name,
-      batchId: batch.toString().padStart(2, "0"),
+      batchId: batchIdFormatted,
       batchName: firstTask.batch_name,
-      threadId,
+      threadId: threadIdFormatted,
       threadName: firstTask.thread_name,
     };
 

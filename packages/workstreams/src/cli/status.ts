@@ -119,8 +119,8 @@ export function main(argv: string[] = process.argv): void {
 
   const streamsToShow = resolvedStreamId
     ? index.streams.filter(
-        (s) => s.id === resolvedStreamId || s.name === resolvedStreamId
-      )
+      (s) => s.id === resolvedStreamId || s.name === resolvedStreamId
+    )
     : index.streams
 
   if (streamsToShow.length === 0) {
@@ -141,8 +141,8 @@ export function main(argv: string[] = process.argv): void {
     }))
     console.log(JSON.stringify(jsonOutput, null, 2))
   } else {
-    for (const { progress, status } of progressList) {
-      console.log(formatProgress(progress, status))
+    for (const { stream, progress, status } of progressList) {
+      console.log(formatProgress(progress, status, stream))
       console.log()
     }
   }

@@ -151,6 +151,83 @@ export function storeThreadIssueMeta(
 }
 
 /**
+ * Result of finding an existing thread issue
+ */
+export interface ExistingIssueInfo {
+  issueNumber: number;
+  issueUrl: string;
+  state: "open" | "closed";
+}
+
+/**
+ * Search for an existing GitHub issue for a thread.
+ * 
+ * This is used to avoid creating duplicate issues when a stage is
+ * revoked and re-approved. It searches by the expected title format
+ * which is unique per thread: [stageId.batchId.threadId] threadName - streamName
+ *
+ * @param repoRoot - Repository root path
+ * @param stageId - Stage ID (e.g., "01")
+ * @param batchId - Batch ID within stage (e.g., "01")
+ * @param threadId - Thread ID within batch (e.g., "01")
+ * @param threadName - Thread name
+ * @param streamName - Workstream name
+ * @returns Issue info if found, null otherwise
+ */
+export async function findExistingThreadIssue(
+  repoRoot: string,
+  stageId: string,
+  batchId: string,
+  threadId: string,
+  threadName: string,
+  streamName: string
+): Promise<ExistingIssueInfo | null> {
+  const enabled = await isGitHubEnabled(repoRoot);
+  if (!enabled) {
+    return null;
+  }
+
+  const config = await loadGitHubConfig(repoRoot);
+  if (!config.owner || !config.repo) {
+    return null;
+  }
+
+  const token = getGitHubAuth();
+  if (!token) {
+    return null;
+  }
+
+  const client = createGitHubClient(token, config.owner, config.repo);
+
+  // Build the expected title for this thread
+  const expectedTitle = formatIssueTitle(stageId, batchId, threadId, threadName, streamName);
+
+  // Search for issues with this title (in any state)
+  try {
+    const issues = await client.searchIssues({
+      title: expectedTitle,
+      state: "all",
+    });
+
+    // Find exact title match (search API does substring matching)
+    const matchingIssue = issues.find((issue) => issue.title === expectedTitle);
+
+    if (matchingIssue) {
+      return {
+        issueNumber: matchingIssue.number,
+        issueUrl: matchingIssue.html_url,
+        state: matchingIssue.state === "closed" ? "closed" : "open",
+      };
+    }
+  } catch (error) {
+    // Log but don't fail - better to create a new issue than crash
+    console.error("Failed to search for existing issues:", error);
+  }
+
+  return null;
+}
+
+/**
  * Format the completed issue body with checked tasks and reports.
  *
  * - All tasks are shown as checked: `- [x] Task name`

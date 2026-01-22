@@ -11,8 +11,10 @@ import type {
   Task,
   StageStatus,
   ParsedTask,
+  ApprovalStatus,
 } from "./types.ts"
 import { getTasks, getTaskCounts } from "./tasks.ts"
+import { getStageApprovalStatus, getApprovalStatus } from "./approval.ts"
 
 // Re-export ParsedStage for backwards compatibility during migration
 export interface ParsedStage {
@@ -185,11 +187,27 @@ export function formatStreamStatusIcon(status: StreamStatus): string {
 }
 
 /**
+ * Format approval status as icon + label
+ */
+function formatApprovalIcon(status: ApprovalStatus): string {
+  switch (status) {
+    case "approved":
+      return "✓"
+    case "revoked":
+      return "⚠"
+    case "draft":
+    default:
+      return "○"
+  }
+}
+
+/**
  * Format progress for console output
  */
 export function formatProgress(
   progress: StreamProgress,
-  streamStatus?: StreamStatus
+  streamStatus?: StreamStatus,
+  stream?: StreamMetadata
 ): string {
   const lines: string[] = []
   const bar = "-".repeat(50)
@@ -210,7 +228,7 @@ export function formatProgress(
   const progressBar = "#".repeat(filled) + ".".repeat(barWidth - filled)
   lines.push(
     `| Progress: [${progressBar}] ${progress.percentComplete}%`.padEnd(51) +
-      "|"
+    "|"
   )
 
   // Task counts
@@ -240,8 +258,18 @@ export function formatProgress(
       (t) => t.status === "completed"
     ).length || 0
 
+    // Get stage approval status if stream is available
+    let approvalDisplay = ""
+    if (stream) {
+      const approvalStatus = getStageApprovalStatus(stream, stage.number)
+      const planApproval = getApprovalStatus(stream)
+      // Stage approval inherits from plan approval if not explicitly set
+      const effectiveApproval = approvalStatus !== "draft" ? approvalStatus : planApproval
+      approvalDisplay = ` ${formatApprovalIcon(effectiveApproval)}`
+    }
+
     lines.push(
-      `| ${statusIcon} Stage ${stageNumPadded}: ${stageTitle} (${completedCount}/${taskCount})`.padEnd(
+      `| ${statusIcon} Stage ${stageNumPadded}: ${stageTitle} (${completedCount}/${taskCount})${approvalDisplay}`.padEnd(
         51
       ) + "|"
     )

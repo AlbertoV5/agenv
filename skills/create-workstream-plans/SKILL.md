@@ -126,7 +126,7 @@ After filling out PLAN.md, you MUST pause and ask for user review:
 After approval, tasks **must** be created using the TASKS.md workflow:
 
 ```bash
-# Step 1: Generate TASKS.md from approved PLAN.md
+# Step 1: Generate TASKS.md from approved PLAN.md (or re-generate from tasks.json)
 work tasks generate
 
 # Step 2: Edit TASKS.md to fill in task descriptions for all threads

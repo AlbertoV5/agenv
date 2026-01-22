@@ -266,7 +266,11 @@ export function main(argv: string[] = process.argv): void {
                 const threadStatus = aggregateStatus(tasks)
                 const threadNum = tasks[0] ? tasks[0].id.split('.')[2] : "?"
 
-                console.log(`${stageChildPrefix}${batchChildPrefix}${threadPrefix}${statusToIcon(threadStatus)} Thread ${threadNum}: ${threadName} (${tasks.length})`)
+                // Get agent assignment (all tasks in a thread should have the same agent)
+                const assignedAgent = tasks.find(t => t.assigned_agent)?.assigned_agent
+                const agentDisplay = assignedAgent ? ` @${assignedAgent}` : ""
+
+                console.log(`${stageChildPrefix}${batchChildPrefix}${threadPrefix}${statusToIcon(threadStatus)} Thread ${threadNum}: ${threadName} (${tasks.length})${agentDisplay}`)
             }
         }
     }
