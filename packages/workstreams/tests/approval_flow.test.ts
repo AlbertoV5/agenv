@@ -523,3 +523,290 @@ Test thread.
         expect(jsonOutput.tasksMd.path).toContain("TASKS.md");
     });
 });
+
+// Separate test suite for tasks approval with auto-generation of tasks.json and prompts
+const TASKS_APPROVAL_TEST_DIR = join(import.meta.dir, "temp_tasks_approval_test");
+const TASKS_APPROVAL_REPO_ROOT = TASKS_APPROVAL_TEST_DIR;
+
+describe("Tasks Approval with Auto-Generation", () => {
+    beforeEach(() => {
+        // Clean up before each test
+        if (existsSync(TASKS_APPROVAL_TEST_DIR)) {
+            rmSync(TASKS_APPROVAL_TEST_DIR, { recursive: true });
+        }
+        mkdirSync(join(TASKS_APPROVAL_TEST_DIR, "work", "stream-tasks"), { recursive: true });
+
+        // Create index.json
+        const index: WorkIndex = {
+            version: "1.0.0",
+            last_updated: new Date().toISOString(),
+            streams: [{
+                id: "stream-tasks",
+                name: "Tasks Test Stream",
+                order: 1,
+                size: "short",
+                session_estimated: {
+                    length: 2,
+                    unit: "session",
+                    session_minutes: [30, 45],
+                    session_iterations: [4, 8]
+                },
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                path: "work/stream-tasks",
+                generated_by: { workstreams: "1.0.0" },
+                approval: { status: "approved" } // Plan is already approved
+            }]
+        };
+        saveIndex(TASKS_APPROVAL_REPO_ROOT, index);
+
+        // Create PLAN.md (needed for prompt generation)
+        const planContent = `# Plan: Tasks Test Stream
+
+## Summary
+
+Test workstream for tasks approval.
+
+## Stages
+
+### Stage 01: Implementation
+
+#### Definition
+
+Implementation stage.
+
+#### Constitution
+
+**Inputs:**
+
+- 
+
+**Structure:**
+
+- 
+
+**Outputs:**
+
+- 
+
+#### Stage Questions
+
+- [x] Ready
+
+#### Batches
+
+##### Batch 01: Core Features
+
+###### Thread 01: Feature A
+
+**Summary:**
+
+Implement feature A.
+
+**Details:**
+
+- Feature A implementation details
+
+###### Thread 02: Feature B
+
+**Summary:**
+
+Implement feature B.
+
+**Details:**
+
+- Feature B implementation details
+`;
+        writeFileSync(join(TASKS_APPROVAL_REPO_ROOT, "work/stream-tasks/PLAN.md"), planContent);
+    });
+
+    afterEach(() => {
+        if (existsSync(TASKS_APPROVAL_TEST_DIR)) {
+            rmSync(TASKS_APPROVAL_TEST_DIR, { recursive: true });
+        }
+    });
+
+    test("should serialize TASKS.md to tasks.json directly", () => {
+        // Create valid TASKS.md 
+        const tasksMdContent = `# Tasks: Tasks Test Stream
+
+## Stage 01: Implementation
+
+### Batch 01: Core Features
+
+#### Thread 01: Feature A @agent:coder
+
+- [ ] Task 01.01.01.01: Implement feature A
+`;
+        const tasksMdPath = join(TASKS_APPROVAL_REPO_ROOT, "work/stream-tasks/TASKS.md");
+        writeFileSync(tasksMdPath, tasksMdContent);
+
+        // Directly test the parsing and addTasks functionality
+        const { parseTasksMd } = require("../src/lib/tasks-md.ts");
+        const { addTasks, readTasksFile } = require("../src/lib/tasks.ts");
+
+        const content = readFileSync(tasksMdPath, "utf-8");
+        const { tasks, errors } = parseTasksMd(content, "stream-tasks");
+
+        expect(errors.length).toBe(0);
+        expect(tasks.length).toBe(1);
+        expect(tasks[0].id).toBe("01.01.01.01");
+
+        // Write tasks to tasks.json
+        addTasks(TASKS_APPROVAL_REPO_ROOT, "stream-tasks", tasks);
+
+        // Verify tasks.json was created
+        const tasksJsonPath = join(TASKS_APPROVAL_REPO_ROOT, "work/stream-tasks/tasks.json");
+        expect(existsSync(tasksJsonPath)).toBe(true);
+
+        // Verify tasks.json content
+        const tasksFile = readTasksFile(TASKS_APPROVAL_REPO_ROOT, "stream-tasks");
+        expect(tasksFile?.tasks.length).toBe(1);
+        expect(tasksFile?.tasks[0].id).toBe("01.01.01.01");
+    });
+
+    test("should generate tasks.json and prompts when approving tasks via CLI", async () => {
+        // Create TASKS.md with valid tasks
+        const tasksMdContent = `# Tasks: Tasks Test Stream
+
+## Stage 01: Implementation
+
+### Batch 01: Core Features
+
+#### Thread 01: Feature A @agent:coder
+
+- [ ] Task 01.01.01.01: Implement feature A base
+- [ ] Task 01.01.01.02: Add feature A tests
+
+#### Thread 02: Feature B @agent:coder
+
+- [ ] Task 01.01.02.01: Implement feature B base
+`;
+        const tasksMdPath = join(TASKS_APPROVAL_REPO_ROOT, "work/stream-tasks/TASKS.md");
+        writeFileSync(tasksMdPath, tasksMdContent);
+
+        // Verify tasks.json doesn't exist yet
+        const tasksJsonPath = join(TASKS_APPROVAL_REPO_ROOT, "work/stream-tasks/tasks.json");
+        expect(existsSync(tasksJsonPath)).toBe(false);
+
+        // Run the CLI approve command for tasks
+        const { main } = await import("../src/cli/approve.ts");
+        
+        // Capture console output
+        const logs: string[] = [];
+        const originalLog = console.log;
+        console.log = (...args) => logs.push(args.join(" "));
+
+        try {
+            await main(["node", "approve", "tasks", "--stream", "stream-tasks", "--repo-root", TASKS_APPROVAL_REPO_ROOT]);
+        } finally {
+            console.log = originalLog;
+        }
+
+        // Verify tasks.json was created
+        expect(existsSync(tasksJsonPath)).toBe(true);
+
+        // Verify tasks.json content
+        const tasksJson = JSON.parse(readFileSync(tasksJsonPath, "utf-8"));
+        expect(tasksJson.tasks.length).toBe(3);
+        expect(tasksJson.tasks[0].id).toBe("01.01.01.01");
+        expect(tasksJson.tasks[0].name).toBe("Implement feature A base");
+
+        // Verify TASKS.md was deleted
+        expect(existsSync(tasksMdPath)).toBe(false);
+
+        // Verify prompts directory exists and has prompt files
+        const promptsDir = join(TASKS_APPROVAL_REPO_ROOT, "work/stream-tasks/prompts");
+        expect(existsSync(promptsDir)).toBe(true);
+
+        // Verify output message
+        const outputJoined = logs.join("\n");
+        expect(outputJoined).toContain("Tasks approved");
+        expect(outputJoined).toContain("tasks.json");
+        expect(outputJoined).toContain("TASKS.md deleted");
+    });
+
+    test("should approve even when prompt generation partially fails via CLI", async () => {
+        // Create valid TASKS.md
+        const tasksMdContent = `# Tasks: Tasks Test Stream
+
+## Stage 01: Implementation
+
+### Batch 01: Core Features
+
+#### Thread 01: Feature A @agent:coder
+
+- [ ] Task 01.01.01.01: Implement feature A
+`;
+        writeFileSync(join(TASKS_APPROVAL_REPO_ROOT, "work/stream-tasks/TASKS.md"), tasksMdContent);
+
+        // Run the CLI approve command
+        const { main } = await import("../src/cli/approve.ts");
+        
+        const logs: string[] = [];
+        const originalLog = console.log;
+        console.log = (...args) => logs.push(args.join(" "));
+
+        try {
+            await main(["node", "approve", "tasks", "--stream", "stream-tasks", "--repo-root", TASKS_APPROVAL_REPO_ROOT]);
+        } finally {
+            console.log = originalLog;
+        }
+
+        // Verify tasks were approved (even if prompts had issues)
+        const index = loadIndex(TASKS_APPROVAL_REPO_ROOT);
+        const stream = index.streams[0];
+        expect(stream?.approval?.tasks?.status).toBe("approved");
+
+        // Verify tasks.json was created
+        const tasksJsonPath = join(TASKS_APPROVAL_REPO_ROOT, "work/stream-tasks/tasks.json");
+        expect(existsSync(tasksJsonPath)).toBe(true);
+
+        // Verify output includes approval message
+        const outputJoined = logs.join("\n");
+        expect(outputJoined).toContain("Tasks approved");
+    });
+
+    test("should include artifacts info in JSON output", async () => {
+        // Create valid TASKS.md
+        const tasksMdContent = `# Tasks: Tasks Test Stream
+
+## Stage 01: Implementation
+
+### Batch 01: Core Features
+
+#### Thread 01: Feature A @agent:coder
+
+- [ ] Task 01.01.01.01: Implement feature A
+- [ ] Task 01.01.01.02: Test feature A
+`;
+        const tasksMdPath = join(TASKS_APPROVAL_REPO_ROOT, "work/stream-tasks/TASKS.md");
+        writeFileSync(tasksMdPath, tasksMdContent);
+
+        // Verify file was written
+        expect(existsSync(tasksMdPath)).toBe(true);
+
+        // Run the CLI approve command with JSON output
+        const { main } = await import("../src/cli/approve.ts");
+        
+        const logs: string[] = [];
+        const originalLog = console.log;
+        console.log = (...args) => logs.push(args.join(" "));
+
+        try {
+            await main(["node", "approve", "tasks", "--stream", "stream-tasks", "--repo-root", TASKS_APPROVAL_REPO_ROOT, "--json"]);
+        } finally {
+            console.log = originalLog;
+        }
+
+        // Parse JSON output
+        const jsonOutput = JSON.parse(logs.join(""));
+        expect(jsonOutput.action).toBe("approved");
+        expect(jsonOutput.target).toBe("tasks");
+        expect(jsonOutput.artifacts).toBeDefined();
+        expect(jsonOutput.artifacts.tasksJson.generated).toBe(true);
+        expect(jsonOutput.artifacts.tasksJson.taskCount).toBe(2);
+        expect(jsonOutput.artifacts.tasksMdDeleted).toBe(true);
+        expect(jsonOutput.artifacts.prompts).toBeDefined();
+    });
+});

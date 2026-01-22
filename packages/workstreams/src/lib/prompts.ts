@@ -5,8 +5,8 @@
  * including tasks, stage definition, parallel threads, and test requirements.
  */
 
-import { existsSync, readFileSync } from "fs"
-import { join } from "path"
+import { existsSync, readFileSync, mkdirSync, writeFileSync } from "fs"
+import { join, dirname } from "path"
 import { getWorkDir } from "./repo.ts"
 import { parseStreamDocument } from "./stream-parser.ts"
 import { getTasks, parseTaskId } from "./tasks.ts"
@@ -54,6 +54,16 @@ export interface PromptContext {
 export interface GeneratePromptOptions {
   includeTests?: boolean
   includeParallel?: boolean
+}
+
+/**
+ * Result of generating all prompts for a workstream
+ */
+export interface GeneratePromptsResult {
+  success: boolean
+  generatedFiles: string[] // Relative paths of generated prompt files
+  errors: string[] // Error messages for failed generations
+  totalThreads: number // Total number of threads found
 }
 
 // ============================================
@@ -319,4 +329,140 @@ export function generateThreadPromptJson(context: PromptContext): object {
       summary: t.summary,
     })),
   }
+}
+
+// ============================================
+// PROMPT FILE OPERATIONS
+// ============================================
+
+/**
+ * Get the relative path for a prompt file
+ * Format: {streamId}/prompts/{stage-prefix}-{stage-name}/{batch-prefix}-{batch-name}/{thread-name}.md
+ */
+function getPromptRelativePath(context: PromptContext): string {
+  const safeStageName = context.stage.name
+    .replace(/[^a-zA-Z0-9_-]/g, "-")
+    .toLowerCase()
+  const safeBatchName = context.batch.name
+    .replace(/[^a-zA-Z0-9_-]/g, "-")
+    .toLowerCase()
+  const safeThreadName = context.thread.name
+    .replace(/[^a-zA-Z0-9_-]/g, "-")
+    .toLowerCase()
+
+  const stagePrefix = context.stage.id.toString().padStart(2, "0")
+
+  return join(
+    context.streamId,
+    "prompts",
+    `${stagePrefix}-${safeStageName}`,
+    `${context.batch.prefix}-${safeBatchName}`,
+    `${safeThreadName}.md`,
+  )
+}
+
+/**
+ * Save a prompt to file and return the relative path
+ * Returns null if saving failed
+ */
+function savePromptToFile(
+  repoRoot: string,
+  context: PromptContext,
+  content: string,
+): string | null {
+  const workDir = getWorkDir(repoRoot)
+  const relPath = getPromptRelativePath(context)
+  const fullPath = join(workDir, relPath)
+
+  try {
+    mkdirSync(dirname(fullPath), { recursive: true })
+    writeFileSync(fullPath, content)
+    return relPath
+  } catch (e) {
+    return null
+  }
+}
+
+// ============================================
+// BATCH PROMPT GENERATION
+// ============================================
+
+/**
+ * Generate prompts for all threads in a workstream
+ *
+ * Iterates through all stages, batches, and threads from PLAN.md,
+ * generates a prompt for each thread, and saves to disk.
+ *
+ * @param repoRoot - Repository root path
+ * @param streamId - Workstream ID
+ * @returns Result with success status, generated files, and any errors
+ */
+export function generateAllPrompts(
+  repoRoot: string,
+  streamId: string,
+): GeneratePromptsResult {
+  const result: GeneratePromptsResult = {
+    success: true,
+    generatedFiles: [],
+    errors: [],
+    totalThreads: 0,
+  }
+
+  // Load and parse PLAN.md
+  const workDir = getWorkDir(repoRoot)
+  const planPath = join(workDir, streamId, "PLAN.md")
+
+  if (!existsSync(planPath)) {
+    result.success = false
+    result.errors.push(`PLAN.md not found at ${planPath}`)
+    return result
+  }
+
+  const planContent = readFileSync(planPath, "utf-8")
+  const parseErrors: ConsolidateError[] = []
+  const doc = parseStreamDocument(planContent, parseErrors)
+
+  if (!doc) {
+    result.success = false
+    result.errors.push(
+      `Failed to parse PLAN.md: ${parseErrors.map((e) => e.message).join(", ")}`,
+    )
+    return result
+  }
+
+  // Iterate all stages, batches, and threads
+  for (const stage of doc.stages) {
+    for (const batch of stage.batches) {
+      for (const thread of batch.threads) {
+        result.totalThreads++
+
+        const threadIdStr = formatThreadId(stage.id, batch.id, thread.id)
+
+        try {
+          const context = getPromptContext(repoRoot, streamId, threadIdStr)
+          const prompt = generateThreadPrompt(context)
+          const savedPath = savePromptToFile(repoRoot, context, prompt)
+
+          if (savedPath) {
+            result.generatedFiles.push(savedPath)
+          } else {
+            result.errors.push(
+              `Failed to save prompt for thread ${threadIdStr}`,
+            )
+          }
+        } catch (e) {
+          result.errors.push(
+            `Error generating prompt for thread ${threadIdStr}: ${(e as Error).message}`,
+          )
+        }
+      }
+    }
+  }
+
+  // Set success to false if any errors occurred
+  if (result.errors.length > 0) {
+    result.success = false
+  }
+
+  return result
 }

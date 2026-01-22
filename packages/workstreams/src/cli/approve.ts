@@ -28,12 +28,14 @@ import {
   loadGitHubConfig,
   createStageApprovalCommit,
 } from "../lib/github/index.ts"
-import { generateTasksMdFromPlan } from "../lib/tasks-md.ts"
+import { generateTasksMdFromPlan, parseTasksMd } from "../lib/tasks-md.ts"
 import { parseStreamDocument } from "../lib/stream-parser.ts"
-import { existsSync, readFileSync } from "fs"
+import { existsSync, readFileSync, unlinkSync } from "fs"
 import { join } from "path"
 import { getWorkDir } from "../lib/repo.ts"
 import { atomicWriteFile } from "../lib/index.ts"
+import { addTasks } from "../lib/tasks.ts"
+import { generateAllPrompts, type GeneratePromptsResult } from "../lib/prompts.ts"
 
 type ApproveTarget = "plan" | "tasks" | "prompts"
 
@@ -554,6 +556,101 @@ async function handlePlanApproval(
   }
 }
 
+/**
+ * Result of serializing TASKS.md to tasks.json
+ */
+interface SerializeTasksResult {
+  success: boolean
+  taskCount: number
+  tasksJsonPath?: string
+  error?: string
+}
+
+/**
+ * Serialize TASKS.md content to tasks.json
+ * 
+ * Parses TASKS.md, extracts tasks, and writes to tasks.json.
+ * This is the critical artifact that must succeed for approval.
+ * 
+ * @param repoRoot - Repository root path
+ * @param streamId - Workstream ID
+ * @returns Result of the serialization
+ */
+function serializeTasksMdToJson(
+  repoRoot: string,
+  streamId: string
+): SerializeTasksResult {
+  try {
+    const workDir = getWorkDir(repoRoot)
+    const tasksMdPath = join(workDir, streamId, "TASKS.md")
+    const tasksJsonPath = join(workDir, streamId, "tasks.json")
+
+    if (!existsSync(tasksMdPath)) {
+      return {
+        success: false,
+        taskCount: 0,
+        error: `TASKS.md not found at ${tasksMdPath}`,
+      }
+    }
+
+    const content = readFileSync(tasksMdPath, "utf-8")
+    const { tasks, errors } = parseTasksMd(content, streamId)
+
+    if (errors.length > 0) {
+      return {
+        success: false,
+        taskCount: 0,
+        error: `TASKS.md parsing errors: ${errors.join(", ")}`,
+      }
+    }
+
+    if (tasks.length === 0) {
+      return {
+        success: false,
+        taskCount: 0,
+        error: "TASKS.md contains no valid tasks",
+      }
+    }
+
+    // Write tasks to tasks.json
+    addTasks(repoRoot, streamId, tasks)
+
+    return {
+      success: true,
+      taskCount: tasks.length,
+      tasksJsonPath,
+    }
+  } catch (e) {
+    return {
+      success: false,
+      taskCount: 0,
+      error: (e as Error).message,
+    }
+  }
+}
+
+/**
+ * Delete TASKS.md after successful serialization
+ * 
+ * @param repoRoot - Repository root path
+ * @param streamId - Workstream ID
+ * @returns true if deleted, false otherwise
+ */
+function deleteTasksMd(repoRoot: string, streamId: string): boolean {
+  try {
+    const workDir = getWorkDir(repoRoot)
+    const tasksMdPath = join(workDir, streamId, "TASKS.md")
+
+    if (existsSync(tasksMdPath)) {
+      unlinkSync(tasksMdPath)
+      return true
+    }
+    return false
+  } catch {
+    return false
+  }
+}
+
 function handleTasksApproval(
   repoRoot: string,
   stream: ReturnType<typeof getResolvedStream>,
@@ -582,7 +679,7 @@ function handleTasksApproval(
     return
   }
 
-  // Check readiness
+  // Check readiness (validates TASKS.md exists and has valid tasks)
   const readyCheck = checkTasksApprovalReady(repoRoot, stream.id)
   if (!readyCheck.ready) {
     if (cliArgs.json) {
@@ -599,8 +696,37 @@ function handleTasksApproval(
     process.exit(1)
   }
 
+  // Step 1: Serialize TASKS.md to tasks.json
+  // This is the critical step - if it fails, we don't approve
+  const serializeResult = serializeTasksMdToJson(repoRoot, stream.id)
+  if (!serializeResult.success) {
+    if (cliArgs.json) {
+      console.log(JSON.stringify({
+        action: "blocked",
+        target: "tasks",
+        reason: "serialization_failed",
+        error: serializeResult.error,
+        streamId: stream.id,
+        streamName: stream.name,
+      }, null, 2))
+    } else {
+      console.error(`Error: Failed to serialize TASKS.md to tasks.json`)
+      console.error(`  ${serializeResult.error}`)
+    }
+    process.exit(1)
+  }
+
+  // Step 2: Generate all prompts
+  // This is non-critical - if it fails, we still approve but warn
+  const promptsResult = generateAllPrompts(repoRoot, stream.id)
+  const promptsWarning = !promptsResult.success
+
   try {
+    // Step 3: Approve tasks (must happen before deleting TASKS.md since approveTasks validates it)
     const updatedStream = approveTasks(repoRoot, stream.id)
+
+    // Step 4: Delete TASKS.md AFTER approval succeeds
+    const tasksMdDeleted = deleteTasksMd(repoRoot, stream.id)
 
     if (cliArgs.json) {
       console.log(JSON.stringify({
@@ -608,12 +734,40 @@ function handleTasksApproval(
         target: "tasks",
         streamId: updatedStream.id,
         streamName: updatedStream.name,
-        taskCount: readyCheck.taskCount,
+        taskCount: serializeResult.taskCount,
         approval: updatedStream.approval?.tasks,
+        artifacts: {
+          tasksJson: {
+            generated: true,
+            path: serializeResult.tasksJsonPath,
+            taskCount: serializeResult.taskCount,
+          },
+          prompts: {
+            generated: promptsResult.success,
+            fileCount: promptsResult.generatedFiles.length,
+            totalThreads: promptsResult.totalThreads,
+            errors: promptsResult.errors.length > 0 ? promptsResult.errors : undefined,
+          },
+          tasksMdDeleted,
+        },
       }, null, 2))
     } else {
-      console.log(`Approved tasks for workstream "${updatedStream.name}"`)
-      console.log(`  Task count: ${readyCheck.taskCount}`)
+      console.log(`Tasks approved. tasks.json and prompts generated.`)
+      console.log(`  Task count: ${serializeResult.taskCount}`)
+      console.log(`  tasks.json: ${serializeResult.tasksJsonPath}`)
+      console.log(`  Prompts: ${promptsResult.generatedFiles.length}/${promptsResult.totalThreads} generated`)
+      if (tasksMdDeleted) {
+        console.log(`  TASKS.md deleted`)
+      }
+      if (promptsWarning) {
+        console.log(`  Warning: Some prompts failed to generate:`)
+        for (const err of promptsResult.errors.slice(0, 3)) {
+          console.log(`    - ${err}`)
+        }
+        if (promptsResult.errors.length > 3) {
+          console.log(`    ... and ${promptsResult.errors.length - 3} more errors`)
+        }
+      }
     }
   } catch (e) {
     console.error((e as Error).message)
