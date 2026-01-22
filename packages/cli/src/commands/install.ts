@@ -3,6 +3,7 @@
  *
  * Subcommands:
  *   skills    - Install skills to agent directories
+ *   hooks     - Install hooks to agent directories
  */
 
 import {
@@ -18,6 +19,7 @@ import { join } from "path"
 
 const AGENV_HOME = process.env.HOME + "/.agenv"
 const AGENV_SKILLS = join(AGENV_HOME, "skills")
+const AGENV_HOOKS = join(AGENV_HOME, "hooks")
 
 // Target directories for different agents
 const TARGETS: Record<string, string> = {
@@ -42,6 +44,7 @@ Usage:
 
 Subcommands:
   skills     Install skills to agent directories
+  hooks      Install hooks to agent settings.json
 
 Run 'ag install <subcommand> --help' for more information.
 `)
@@ -207,6 +210,164 @@ function installSkillsTo(
   }
 }
 
+// ============================================================================
+// Hooks Installation
+// ============================================================================
+
+// Target settings.json files for hooks
+const HOOKS_TARGETS: Record<string, string> = {
+  claude: process.env.HOME + "/.claude/settings.json",
+} as Record<string, string>
+
+function printHooksHelp(): void {
+  console.log(`
+ag install hooks - Install hooks to agent settings
+
+Usage:
+  ag install hooks [options]
+
+Options:
+  --claude       Install to ~/.claude/settings.json (default)
+  --list         List available hooks without installing
+  --dry-run      Show what would be installed without making changes
+  --help, -h     Show this help message
+
+Examples:
+  ag install hooks --claude
+  ag install hooks --list
+  ag install hooks --dry-run
+`)
+}
+
+function listHooks(): void {
+  console.log(`Available hooks in ${AGENV_HOOKS}:`)
+  console.log("")
+
+  const hooksFile = join(AGENV_HOOKS, "hooks.json")
+  if (!existsSync(hooksFile)) {
+    console.log(`${YELLOW}No hooks.json found${NC}`)
+    return
+  }
+
+  try {
+    const content = readFileSync(hooksFile, "utf-8")
+    const data = JSON.parse(content)
+
+    if (data.hooks) {
+      for (const [hookType, hooks] of Object.entries(data.hooks)) {
+        console.log(`  ${hookType}:`)
+        if (Array.isArray(hooks)) {
+          for (const hook of hooks) {
+            const matcher = (hook as { matcher?: string }).matcher || "all"
+            console.log(`    └─ matcher: ${matcher}`)
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.error(`${RED}Error reading hooks.json: ${e}${NC}`)
+  }
+}
+
+function installHooksTo(targetSettingsPath: string, dryRun: boolean): void {
+  const hooksFile = join(AGENV_HOOKS, "hooks.json")
+
+  if (!existsSync(hooksFile)) {
+    console.error(`${RED}Error: hooks.json not found at ${hooksFile}${NC}`)
+    process.exit(1)
+  }
+
+  // Read source hooks
+  let sourceHooks: Record<string, unknown>
+  try {
+    const content = readFileSync(hooksFile, "utf-8")
+    sourceHooks = JSON.parse(content)
+  } catch (e) {
+    console.error(`${RED}Error reading hooks.json: ${e}${NC}`)
+    process.exit(1)
+  }
+
+  // Read existing target settings
+  let targetSettings: Record<string, unknown> = {}
+  if (existsSync(targetSettingsPath)) {
+    try {
+      const content = readFileSync(targetSettingsPath, "utf-8")
+      targetSettings = JSON.parse(content)
+    } catch (e) {
+      console.error(`${RED}Error reading ${targetSettingsPath}: ${e}${NC}`)
+      process.exit(1)
+    }
+  }
+
+  // Merge hooks into settings
+  const mergedSettings = {
+    ...targetSettings,
+    hooks: sourceHooks.hooks || sourceHooks,
+  }
+
+  if (dryRun) {
+    console.log(`${YELLOW}[DRY RUN]${NC} Would update: ${targetSettingsPath}`)
+    console.log("With hooks:")
+    console.log(JSON.stringify(mergedSettings.hooks, null, 2))
+  } else {
+    // Ensure directory exists
+    const targetDir = targetSettingsPath.replace(/\/[^/]+$/, "")
+    mkdirSync(targetDir, { recursive: true })
+
+    // Write merged settings
+    const { writeFileSync } = require("fs")
+    writeFileSync(targetSettingsPath, JSON.stringify(mergedSettings, null, 2) + "\n")
+    console.log(`${GREEN}✓${NC} Installed hooks to ${targetSettingsPath}`)
+  }
+}
+
+function hooksCommand(args: string[]): void {
+  const targets: string[] = []
+  let dryRun = false
+  let listOnly = false
+
+  let i = 0
+  while (i < args.length) {
+    const arg = args[i]
+    switch (arg) {
+      case "--claude":
+        targets.push(HOOKS_TARGETS.claude!)
+        break
+      case "--list":
+        listOnly = true
+        break
+      case "--dry-run":
+        dryRun = true
+        break
+      case "--help":
+      case "-h":
+        printHooksHelp()
+        process.exit(0)
+      default:
+        console.error(`${RED}Error: Unknown option: ${arg}${NC}`)
+        printHooksHelp()
+        process.exit(1)
+    }
+    i++
+  }
+
+  // Handle list mode
+  if (listOnly) {
+    listHooks()
+    return
+  }
+
+  // Default to Claude if no targets specified
+  if (targets.length === 0) {
+    targets.push(HOOKS_TARGETS.claude!)
+  }
+
+  // Install to each target
+  for (const target of targets) {
+    installHooksTo(target, dryRun)
+  }
+}
+
 function skillsCommand(args: string[]): void {
   const targets: (string | undefined)[] = []
   let dryRun = false
@@ -304,9 +465,12 @@ export function main(argv: string[]): void {
     case "skills":
       skillsCommand(args.slice(1))
       break
+    case "hooks":
+      hooksCommand(args.slice(1))
+      break
     default:
       console.error(`Error: Unknown subcommand "${subcommand}"`)
-      console.error("\nAvailable subcommands: skills")
+      console.error("\nAvailable subcommands: skills, hooks")
       console.error("\nRun 'ag install --help' for usage information.")
       process.exit(1)
   }

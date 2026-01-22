@@ -1,0 +1,15 @@
+{
+    "hooks": {
+        "SessionStart": [
+            {
+                "matcher": "startup",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "echo 'export PATH=\"$HOME/.agenv/bin:$PATH\"' >> \"$CLAUDE_ENV_FILE\""
+                    }
+                ]
+            }
+        ]
+    }
+}

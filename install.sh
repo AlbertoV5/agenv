@@ -106,6 +106,32 @@ else
     echo "Added PATH to $SHELL_CONFIG"
 fi
 
+# Setup Claude agent environment (for work command access in Claude Code)
+CLAUDE_ENV_FILE="$AGENV_HOME/env-setup.sh"
+CLAUDE_ENV_EXPORT="export CLAUDE_ENV_FILE=\"$CLAUDE_ENV_FILE\""
+
+# Create env-setup.sh if it doesn't exist
+if [ ! -f "$CLAUDE_ENV_FILE" ]; then
+    echo "Creating Claude agent environment setup..."
+    cat > "$CLAUDE_ENV_FILE" << 'EOF'
+#!/bin/bash
+# Environment setup for Claude agents
+# This file is sourced before each Bash command when CLAUDE_ENV_FILE points to it
+
+# Add agenv bin to PATH for work CLI
+export PATH="$HOME/.agenv/bin:$PATH"
+EOF
+    chmod +x "$CLAUDE_ENV_FILE"
+fi
+
+# Add CLAUDE_ENV_FILE to shell config if not present
+if grep -q 'CLAUDE_ENV_FILE' "$SHELL_CONFIG" 2>/dev/null; then
+    echo "CLAUDE_ENV_FILE already configured in $SHELL_CONFIG"
+else
+    echo "$CLAUDE_ENV_EXPORT" >> "$SHELL_CONFIG"
+    echo "Added CLAUDE_ENV_FILE to $SHELL_CONFIG"
+fi
+
 # Install bun dependencies if needed
 if [ -f "$AGENV_HOME/package.json" ]; then
     echo "Installing dependencies..."
