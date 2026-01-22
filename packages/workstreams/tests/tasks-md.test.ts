@@ -4,6 +4,7 @@ import {
   generateTasksMdFromTasks,
   parseTasksMd,
   serializeTasksMd,
+  detectNewStages,
 } from "../src/lib/tasks-md"
 import type {
   Task,
@@ -409,6 +410,218 @@ describe("tasks-md", () => {
 
       const { tasks } = parseTasksMd(md, "stream-id")
       expect(tasks[0]?.assigned_agent).toBe("test-agent")
+    })
+  })
+
+  describe("detectNewStages", () => {
+    const multiStageDoc: StreamDocument = {
+      streamName: "Multi Stage Stream",
+      summary: "Summary",
+      references: [],
+      stages: [
+        {
+          id: 1,
+          name: "Stage One",
+          definition: "",
+          constitution: "",
+          questions: [],
+          batches: [
+            {
+              id: 1,
+              prefix: "01",
+              name: "Setup",
+              summary: "",
+              threads: [{ id: 1, name: "Thread One", summary: "", details: "" }],
+            },
+          ],
+        },
+        {
+          id: 2,
+          name: "Stage Two",
+          definition: "",
+          constitution: "",
+          questions: [],
+          batches: [
+            {
+              id: 1,
+              prefix: "01",
+              name: "Implementation",
+              summary: "",
+              threads: [{ id: 1, name: "Thread One", summary: "", details: "" }],
+            },
+          ],
+        },
+        {
+          id: 3,
+          name: "Stage Three",
+          definition: "",
+          constitution: "",
+          questions: [],
+          batches: [
+            {
+              id: 1,
+              prefix: "01",
+              name: "Testing",
+              summary: "",
+              threads: [{ id: 1, name: "Thread One", summary: "", details: "" }],
+            },
+          ],
+        },
+      ],
+    }
+
+    test("returns all stages when no tasks exist", () => {
+      const result = detectNewStages(multiStageDoc, [])
+      expect(result).toEqual([1, 2, 3])
+    })
+
+    test("returns empty array when all stages have tasks", () => {
+      const existingTasks: Task[] = [
+        {
+          id: "01.01.01.01",
+          name: "Task 1",
+          status: "pending",
+          stage_name: "Stage One",
+          batch_name: "Setup",
+          thread_name: "Thread One",
+          created_at: "",
+          updated_at: "",
+        },
+        {
+          id: "02.01.01.01",
+          name: "Task 2",
+          status: "pending",
+          stage_name: "Stage Two",
+          batch_name: "Implementation",
+          thread_name: "Thread One",
+          created_at: "",
+          updated_at: "",
+        },
+        {
+          id: "03.01.01.01",
+          name: "Task 3",
+          status: "pending",
+          stage_name: "Stage Three",
+          batch_name: "Testing",
+          thread_name: "Thread One",
+          created_at: "",
+          updated_at: "",
+        },
+      ]
+
+      const result = detectNewStages(multiStageDoc, existingTasks)
+      expect(result).toEqual([])
+    })
+
+    test("returns only stages without tasks", () => {
+      const existingTasks: Task[] = [
+        {
+          id: "01.01.01.01",
+          name: "Task 1",
+          status: "pending",
+          stage_name: "Stage One",
+          batch_name: "Setup",
+          thread_name: "Thread One",
+          created_at: "",
+          updated_at: "",
+        },
+        {
+          id: "03.01.01.01",
+          name: "Task 3",
+          status: "pending",
+          stage_name: "Stage Three",
+          batch_name: "Testing",
+          thread_name: "Thread One",
+          created_at: "",
+          updated_at: "",
+        },
+      ]
+
+      const result = detectNewStages(multiStageDoc, existingTasks)
+      expect(result).toEqual([2])
+    })
+
+    test("handles multiple tasks per stage", () => {
+      const existingTasks: Task[] = [
+        {
+          id: "01.01.01.01",
+          name: "Task 1",
+          status: "pending",
+          stage_name: "Stage One",
+          batch_name: "Setup",
+          thread_name: "Thread One",
+          created_at: "",
+          updated_at: "",
+        },
+        {
+          id: "01.01.01.02",
+          name: "Task 2",
+          status: "pending",
+          stage_name: "Stage One",
+          batch_name: "Setup",
+          thread_name: "Thread One",
+          created_at: "",
+          updated_at: "",
+        },
+        {
+          id: "01.01.02.01",
+          name: "Task 3",
+          status: "pending",
+          stage_name: "Stage One",
+          batch_name: "Setup",
+          thread_name: "Thread Two",
+          created_at: "",
+          updated_at: "",
+        },
+      ]
+
+      const result = detectNewStages(multiStageDoc, existingTasks)
+      expect(result).toEqual([2, 3])
+    })
+
+    test("returns sorted stage numbers", () => {
+      // Create a doc with stages in non-sequential order
+      const unorderedDoc: StreamDocument = {
+        streamName: "Unordered",
+        summary: "",
+        references: [],
+        stages: [
+          { id: 5, name: "Five", definition: "", constitution: "", questions: [], batches: [] },
+          { id: 2, name: "Two", definition: "", constitution: "", questions: [], batches: [] },
+          { id: 8, name: "Eight", definition: "", constitution: "", questions: [], batches: [] },
+        ],
+      }
+
+      const result = detectNewStages(unorderedDoc, [])
+      expect(result).toEqual([2, 5, 8])
+    })
+
+    test("ignores tasks with invalid IDs", () => {
+      const existingTasks: Task[] = [
+        {
+          id: "invalid-id",
+          name: "Invalid task",
+          status: "pending",
+          stage_name: "Stage One",
+          batch_name: "Setup",
+          thread_name: "Thread One",
+          created_at: "",
+          updated_at: "",
+        },
+        {
+          id: "01.01.01.01",
+          name: "Valid task",
+          status: "pending",
+          stage_name: "Stage One",
+          batch_name: "Setup",
+          thread_name: "Thread One",
+          created_at: "",
+          updated_at: "",
+        },
+      ]
+
+      const result = detectNewStages(multiStageDoc, existingTasks)
+      expect(result).toEqual([2, 3])
     })
   })
 })

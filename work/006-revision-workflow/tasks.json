@@ -1,0 +1,430 @@
+{
+  "version": "1.0.0",
+  "stream_id": "006-revision-workflow",
+  "last_updated": "2026-01-22T21:46:42.138Z",
+  "tasks": [
+    {
+      "id": "01.01.01.01",
+      "name": "Add `generateTasksMdForRevision(streamName, existingTasks, doc, newStageNumbers)` function to `src/lib/tasks-md.ts`",
+      "stage_name": "Core Library",
+      "batch_name": "Hybrid Generation",
+      "thread_name": "Revision TASKS.md Generation",
+      "status": "completed",
+      "created_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:46:42.138Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": [
+        {
+          "sessionId": "ses_mkpzclax_l7qmuz",
+          "agentName": "systems-engineer",
+          "model": "anthropic/claude-opus-4-5",
+          "startedAt": "2026-01-22T21:44:45.275Z",
+          "status": "completed",
+          "completedAt": "2026-01-22T21:46:42.138Z",
+          "exitCode": 0
+        }
+      ],
+      "github_issue": {
+        "number": 10,
+        "url": "https://github.com/AlbertoV5/agenv/issues/10",
+        "state": "closed"
+      },
+      "report": "Added generateTasksMdForRevision() to tasks-md.ts. Function preserves existing task statuses ([x], [~], etc.) for stages not in newStageNumbers, generates empty placeholders for new stages, and sorts output by stage/batch/thread."
+    },
+    {
+      "id": "01.01.01.02",
+      "name": "Implement logic to output existing tasks with status markers ([x], [~], etc.) for stages NOT in newStageNumbers",
+      "stage_name": "Core Library",
+      "batch_name": "Hybrid Generation",
+      "thread_name": "Revision TASKS.md Generation",
+      "status": "completed",
+      "created_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:46:12.368Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": [],
+      "report": "Added generateTasksMdForRevision() to tasks-md.ts. Function preserves existing task statuses ([x], [~], etc.) for stages not in newStageNumbers, generates empty placeholders for new stages, and sorts output by stage/batch/thread."
+    },
+    {
+      "id": "01.01.01.03",
+      "name": "Implement logic to output empty placeholders for stages IN newStageNumbers (same format as generateTasksMdFromPlan)",
+      "stage_name": "Core Library",
+      "batch_name": "Hybrid Generation",
+      "thread_name": "Revision TASKS.md Generation",
+      "status": "completed",
+      "created_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:46:12.368Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": [],
+      "report": "Added generateTasksMdForRevision() to tasks-md.ts. Function preserves existing task statuses ([x], [~], etc.) for stages not in newStageNumbers, generates empty placeholders for new stages, and sorts output by stage/batch/thread."
+    },
+    {
+      "id": "01.01.01.04",
+      "name": "Ensure output is sorted by stage/batch/thread and properly formatted",
+      "stage_name": "Core Library",
+      "batch_name": "Hybrid Generation",
+      "thread_name": "Revision TASKS.md Generation",
+      "status": "completed",
+      "created_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:46:12.368Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": [],
+      "report": "Added generateTasksMdForRevision() to tasks-md.ts. Function preserves existing task statuses ([x], [~], etc.) for stages not in newStageNumbers, generates empty placeholders for new stages, and sorts output by stage/batch/thread."
+    },
+    {
+      "id": "01.01.02.01",
+      "name": "Add `detectNewStages(doc, existingTasks)` function to `src/lib/tasks-md.ts`",
+      "stage_name": "Core Library",
+      "batch_name": "Hybrid Generation",
+      "thread_name": "New Stage Detection",
+      "status": "completed",
+      "created_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:46:42.138Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": [
+        {
+          "sessionId": "ses_mkpzclax_36tp69",
+          "agentName": "systems-engineer",
+          "model": "anthropic/claude-opus-4-5",
+          "startedAt": "2026-01-22T21:44:45.275Z",
+          "status": "completed",
+          "completedAt": "2026-01-22T21:46:42.138Z",
+          "exitCode": 0
+        }
+      ],
+      "github_issue": {
+        "number": 11,
+        "url": "https://github.com/AlbertoV5/agenv/issues/11",
+        "state": "closed"
+      },
+      "report": "Added detectNewStages(doc, existingTasks) function to tasks-md.ts. Uses parseTaskId to extract stage IDs from existing tasks, compares against doc.stages, returns sorted array of new stage numbers. Added 6 comprehensive tests."
+    },
+    {
+      "id": "01.01.02.02",
+      "name": "Extract unique stage IDs from existingTasks using parseTaskId",
+      "stage_name": "Core Library",
+      "batch_name": "Hybrid Generation",
+      "thread_name": "New Stage Detection",
+      "status": "completed",
+      "created_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:46:05.153Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": [],
+      "report": "Added detectNewStages(doc, existingTasks) function to tasks-md.ts. Uses parseTaskId to extract stage IDs from existing tasks, compares against doc.stages, returns sorted array of new stage numbers. Added 6 comprehensive tests."
+    },
+    {
+      "id": "01.01.02.03",
+      "name": "Compare against doc.stages to find stages with no tasks",
+      "stage_name": "Core Library",
+      "batch_name": "Hybrid Generation",
+      "thread_name": "New Stage Detection",
+      "status": "completed",
+      "created_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:46:05.153Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": [],
+      "report": "Added detectNewStages(doc, existingTasks) function to tasks-md.ts. Uses parseTaskId to extract stage IDs from existing tasks, compares against doc.stages, returns sorted array of new stage numbers. Added 6 comprehensive tests."
+    },
+    {
+      "id": "01.01.02.04",
+      "name": "Return array of new stage numbers sorted ascending",
+      "stage_name": "Core Library",
+      "batch_name": "Hybrid Generation",
+      "thread_name": "New Stage Detection",
+      "status": "completed",
+      "created_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:46:05.153Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": [],
+      "report": "Added detectNewStages(doc, existingTasks) function to tasks-md.ts. Uses parseTaskId to extract stage IDs from existing tasks, compares against doc.stages, returns sorted array of new stage numbers. Added 6 comprehensive tests."
+    },
+    {
+      "id": "02.01.01.01",
+      "name": "Create `src/cli/revision.ts` with parseCliArgs for `--name` and `--description` flags",
+      "stage_name": "CLI Commands",
+      "batch_name": "Revision Command",
+      "thread_name": "Work Revision CLI",
+      "status": "pending",
+      "created_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:44:18.607Z",
+      "assigned_agent": "default",
+      "sessions": [],
+      "github_issue": {
+        "number": 12,
+        "url": "https://github.com/AlbertoV5/agenv/issues/12",
+        "state": "open"
+      }
+    },
+    {
+      "id": "02.01.01.02",
+      "name": "Implement main() that loads index, resolves stream, calls appendRevisionStage",
+      "stage_name": "CLI Commands",
+      "batch_name": "Revision Command",
+      "thread_name": "Work Revision CLI",
+      "status": "pending",
+      "created_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:44:18.607Z",
+      "assigned_agent": "default",
+      "sessions": []
+    },
+    {
+      "id": "02.01.01.03",
+      "name": "Output success message with stage number and next steps",
+      "stage_name": "CLI Commands",
+      "batch_name": "Revision Command",
+      "thread_name": "Work Revision CLI",
+      "status": "pending",
+      "created_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:44:18.607Z",
+      "assigned_agent": "default",
+      "sessions": []
+    },
+    {
+      "id": "02.01.01.04",
+      "name": "Register \"revision\" in bin/work.ts SUBCOMMANDS",
+      "stage_name": "CLI Commands",
+      "batch_name": "Revision Command",
+      "thread_name": "Work Revision CLI",
+      "status": "pending",
+      "created_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:44:18.607Z",
+      "assigned_agent": "default",
+      "sessions": []
+    },
+    {
+      "id": "02.01.02.01",
+      "name": "Add `appendRevisionStage(repoRoot, streamId, options)` function to `src/lib/fix.ts`",
+      "stage_name": "CLI Commands",
+      "batch_name": "Revision Command",
+      "thread_name": "Append Revision Stage",
+      "status": "pending",
+      "created_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:44:18.607Z",
+      "assigned_agent": "default",
+      "sessions": [],
+      "github_issue": {
+        "number": 13,
+        "url": "https://github.com/AlbertoV5/agenv/issues/13",
+        "state": "open"
+      }
+    },
+    {
+      "id": "02.01.02.02",
+      "name": "Create stage template with \"Revision - {name}\" prefix and clean structure (Definition, Constitution, Questions, Batches)",
+      "stage_name": "CLI Commands",
+      "batch_name": "Revision Command",
+      "thread_name": "Append Revision Stage",
+      "status": "pending",
+      "created_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:44:18.607Z",
+      "assigned_agent": "default",
+      "sessions": []
+    },
+    {
+      "id": "02.01.02.03",
+      "name": "Append to PLAN.md at end (similar to appendFixStage but without targetStage reference)",
+      "stage_name": "CLI Commands",
+      "batch_name": "Revision Command",
+      "thread_name": "Append Revision Stage",
+      "status": "pending",
+      "created_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:44:18.607Z",
+      "assigned_agent": "default",
+      "sessions": []
+    },
+    {
+      "id": "02.02.01.01",
+      "name": "Add \"revision\" case handling in `src/cli/approve.ts` parseCliArgs and main",
+      "stage_name": "CLI Commands",
+      "batch_name": "Approve Revision Command",
+      "thread_name": "Work Approve Revision CLI",
+      "status": "pending",
+      "created_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:44:18.607Z",
+      "assigned_agent": "default",
+      "sessions": [],
+      "github_issue": {
+        "number": 14,
+        "url": "https://github.com/AlbertoV5/agenv/issues/14",
+        "state": "open"
+      }
+    },
+    {
+      "id": "02.02.01.02",
+      "name": "Load PLAN.md, parse with parseStreamDocument, load existing tasks from tasks.json",
+      "stage_name": "CLI Commands",
+      "batch_name": "Approve Revision Command",
+      "thread_name": "Work Approve Revision CLI",
+      "status": "pending",
+      "created_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:44:18.607Z",
+      "assigned_agent": "default",
+      "sessions": []
+    },
+    {
+      "id": "02.02.01.03",
+      "name": "Call detectNewStages() and error if no new stages found",
+      "stage_name": "CLI Commands",
+      "batch_name": "Approve Revision Command",
+      "thread_name": "Work Approve Revision CLI",
+      "status": "pending",
+      "created_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:44:18.607Z",
+      "assigned_agent": "default",
+      "sessions": []
+    },
+    {
+      "id": "02.02.01.04",
+      "name": "Validate new stages have no open questions (reuse checkOpenQuestions logic filtered to new stages)",
+      "stage_name": "CLI Commands",
+      "batch_name": "Approve Revision Command",
+      "thread_name": "Work Approve Revision CLI",
+      "status": "pending",
+      "created_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:44:18.607Z",
+      "assigned_agent": "default",
+      "sessions": []
+    },
+    {
+      "id": "02.02.01.05",
+      "name": "Call generateTasksMdForRevision() and write TASKS.md",
+      "stage_name": "CLI Commands",
+      "batch_name": "Approve Revision Command",
+      "thread_name": "Work Approve Revision CLI",
+      "status": "pending",
+      "created_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:44:18.607Z",
+      "assigned_agent": "default",
+      "sessions": []
+    },
+    {
+      "id": "02.02.01.06",
+      "name": "Output summary with existing task count, new placeholder count, and next steps",
+      "stage_name": "CLI Commands",
+      "batch_name": "Approve Revision Command",
+      "thread_name": "Work Approve Revision CLI",
+      "status": "pending",
+      "created_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:44:18.607Z",
+      "assigned_agent": "default",
+      "sessions": []
+    },
+    {
+      "id": "03.01.01.01",
+      "name": "Add \"Revision Workflow\" section to skills/planning-workstreams/SKILL.md after \"Workflow Overview\"",
+      "stage_name": "Skill Update & Tests",
+      "batch_name": "Documentation and Tests",
+      "thread_name": "Skill Documentation",
+      "status": "pending",
+      "created_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:44:18.607Z",
+      "assigned_agent": "documentation-minimalist",
+      "sessions": [],
+      "github_issue": {
+        "number": 15,
+        "url": "https://github.com/AlbertoV5/agenv/issues/15",
+        "state": "open"
+      }
+    },
+    {
+      "id": "03.01.01.02",
+      "name": "Document the 7-step revision flow with commands",
+      "stage_name": "Skill Update & Tests",
+      "batch_name": "Documentation and Tests",
+      "thread_name": "Skill Documentation",
+      "status": "pending",
+      "created_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:44:18.607Z",
+      "assigned_agent": "documentation-minimalist",
+      "sessions": []
+    },
+    {
+      "id": "03.01.01.03",
+      "name": "Add `work revision` and `work approve revision` to CLI Reference section",
+      "stage_name": "Skill Update & Tests",
+      "batch_name": "Documentation and Tests",
+      "thread_name": "Skill Documentation",
+      "status": "pending",
+      "created_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:44:18.607Z",
+      "assigned_agent": "documentation-minimalist",
+      "sessions": []
+    },
+    {
+      "id": "03.01.01.04",
+      "name": "Add example showing revision flow from user request to work continue",
+      "stage_name": "Skill Update & Tests",
+      "batch_name": "Documentation and Tests",
+      "thread_name": "Skill Documentation",
+      "status": "pending",
+      "created_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:44:18.607Z",
+      "assigned_agent": "documentation-minimalist",
+      "sessions": []
+    },
+    {
+      "id": "03.01.02.01",
+      "name": "Create `tests/revision.test.ts` with test setup using temp directories",
+      "stage_name": "Skill Update & Tests",
+      "batch_name": "Documentation and Tests",
+      "thread_name": "Tests",
+      "status": "pending",
+      "created_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:44:18.607Z",
+      "assigned_agent": "code-reviewer",
+      "sessions": [],
+      "github_issue": {
+        "number": 16,
+        "url": "https://github.com/AlbertoV5/agenv/issues/16",
+        "state": "open"
+      }
+    },
+    {
+      "id": "03.01.02.02",
+      "name": "Test detectNewStages() with various scenarios (no tasks, partial tasks, all tasks)",
+      "stage_name": "Skill Update & Tests",
+      "batch_name": "Documentation and Tests",
+      "thread_name": "Tests",
+      "status": "pending",
+      "created_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:44:18.607Z",
+      "assigned_agent": "code-reviewer",
+      "sessions": []
+    },
+    {
+      "id": "03.01.02.03",
+      "name": "Test generateTasksMdForRevision() produces correct hybrid output",
+      "stage_name": "Skill Update & Tests",
+      "batch_name": "Documentation and Tests",
+      "thread_name": "Tests",
+      "status": "pending",
+      "created_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:44:18.607Z",
+      "assigned_agent": "code-reviewer",
+      "sessions": []
+    },
+    {
+      "id": "03.01.02.04",
+      "name": "Test appendRevisionStage() creates correct PLAN.md structure",
+      "stage_name": "Skill Update & Tests",
+      "batch_name": "Documentation and Tests",
+      "thread_name": "Tests",
+      "status": "pending",
+      "created_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:44:18.607Z",
+      "assigned_agent": "code-reviewer",
+      "sessions": []
+    },
+    {
+      "id": "03.01.02.05",
+      "name": "Test CLI integration: revision command adds stage, approve revision generates TASKS.md",
+      "stage_name": "Skill Update & Tests",
+      "batch_name": "Documentation and Tests",
+      "thread_name": "Tests",
+      "status": "pending",
+      "created_at": "2026-01-22T21:44:18.607Z",
+      "updated_at": "2026-01-22T21:44:18.607Z",
+      "assigned_agent": "code-reviewer",
+      "sessions": []
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-01-22T19:21:59.322Z",
-  "current_stream": "005-session-tracking",
+  "last_updated": "2026-01-22T21:46:54.682Z",
+  "current_stream": "006-revision-workflow",
   "streams": [
     {
       "id": "000-web-visualization",
@@ -319,6 +319,51 @@
         "completed_at": "2026-01-22T19:21:59.322Z"
       },
       "status": "completed"
+    },
+    {
+      "id": "006-revision-workflow",
+      "name": "revision-workflow",
+      "order": 6,
+      "size": "medium",
+      "session_estimated": {
+        "length": 4,
+        "unit": "session",
+        "session_minutes": [
+          30,
+          45
+        ],
+        "session_iterations": [
+          4,
+          8
+        ]
+      },
+      "created_at": "2026-01-22T21:08:59.022Z",
+      "updated_at": "2026-01-22T21:46:54.682Z",
+      "path": "work/006-revision-workflow",
+      "generated_by": {
+        "workstreams": "0.1.0"
+      },
+      "approval": {
+        "status": "approved",
+        "approved_at": "2026-01-22T21:42:49.929Z",
+        "approved_by": "user",
+        "plan_hash": "5b9d6f199b68c21246be767fd65a45097cdc667bd6a3df02ab05b7a3155256e6",
+        "tasks": {
+          "status": "approved",
+          "approved_at": "2026-01-22T21:44:18.650Z",
+          "task_count": 30
+        },
+        "stages": {
+          "1": {
+            "status": "approved",
+            "approved_at": "2026-01-22T21:46:54.682Z",
+            "approved_by": "user"
+          }
+        }
+      },
+      "github": {
+        "branch": "workstream/006-revision-workflow"
+      }
     }
   ]
 }

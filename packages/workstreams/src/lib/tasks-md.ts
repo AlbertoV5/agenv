@@ -9,6 +9,38 @@ import type { Task, StreamDocument } from "./types.ts"
 import { formatTaskId, parseTaskId } from "./tasks.ts"
 
 /**
+ * Detect which stages in a StreamDocument are new (have no tasks yet)
+ *
+ * @param doc - StreamDocument parsed from PLAN.md
+ * @param existingTasks - Array of existing tasks from tasks.json
+ * @returns Array of stage numbers that have no tasks, sorted ascending
+ */
+export function detectNewStages(
+  doc: StreamDocument,
+  existingTasks: Task[],
+): number[] {
+  // Extract unique stage IDs from existing tasks using parseTaskId
+  const stagesWithTasks = new Set<number>()
+  for (const task of existingTasks) {
+    try {
+      const { stage } = parseTaskId(task.id)
+      stagesWithTasks.add(stage)
+    } catch {
+      // Skip invalid task IDs
+    }
+  }
+
+  // Get all stage IDs from PLAN.md
+  const allStageIds = doc.stages.map((stage) => stage.id)
+
+  // Find stages that are in PLAN.md but not in tasks.json
+  const newStages = allStageIds.filter((stageId) => !stagesWithTasks.has(stageId))
+
+  // Return sorted ascending
+  return newStages.sort((a, b) => a - b)
+}
+
+/**
  * Regex pattern to extract agent assignment from thread headers
  * Matches: "Thread 01: Router @agent:backend-expert"
  * Also matches: "Thread 01: Router @agent:" (empty placeholder)
@@ -165,6 +197,150 @@ export function generateTasksMdFromTasks(
           }
         }
         lines.push("")
+      }
+    }
+  }
+
+  return lines.join("\n")
+}
+
+/**
+ * Generate TASKS.md content for a revision workflow.
+ * Combines existing tasks (preserving status) with empty placeholders for new stages.
+ *
+ * @param streamName - Name of the workstream
+ * @param existingTasks - Existing tasks with their current status
+ * @param doc - StreamDocument containing all stages (including new ones)
+ * @param newStageNumbers - Array of stage IDs that are new (have no tasks yet)
+ * @returns TASKS.md content with existing tasks and new stage placeholders
+ */
+export function generateTasksMdForRevision(
+  streamName: string,
+  existingTasks: Task[],
+  doc: StreamDocument,
+  newStageNumbers: number[],
+): string {
+  const lines: string[] = []
+  const newStageSet = new Set(newStageNumbers)
+
+  lines.push(`# Tasks: ${streamName}`)
+  lines.push("")
+
+  // Group existing tasks by stage for efficient lookup
+  const tasksByStage = new Map<number, Task[]>()
+  for (const task of existingTasks) {
+    try {
+      const { stage } = parseTaskId(task.id)
+      if (!tasksByStage.has(stage)) {
+        tasksByStage.set(stage, [])
+      }
+      tasksByStage.get(stage)!.push(task)
+    } catch {
+      // Skip invalid task IDs
+    }
+  }
+
+  // Process all stages from the document in order
+  for (const stage of doc.stages) {
+    const stageIdPadded = stage.id.toString().padStart(2, "0")
+    lines.push(`## Stage ${stageIdPadded}: ${stage.name}`)
+    lines.push("")
+
+    if (newStageSet.has(stage.id)) {
+      // New stage: generate empty placeholders (like generateTasksMdFromPlan)
+      for (const batch of stage.batches) {
+        lines.push(`### Batch ${batch.prefix}: ${batch.name}`)
+        lines.push("")
+
+        for (const thread of batch.threads) {
+          const threadIdPadded = thread.id.toString().padStart(2, "0")
+          // Include @agent: placeholder for agent assignment
+          lines.push(`#### Thread ${threadIdPadded}: ${thread.name} @agent:`)
+          // Add a placeholder task to guide the user
+          const taskId = formatTaskId(stage.id, batch.id, thread.id, 1)
+          lines.push(`- [ ] Task ${taskId}: `)
+          lines.push("")
+        }
+      }
+    } else {
+      // Existing stage: output existing tasks with status markers
+      const stageTasks = tasksByStage.get(stage.id) || []
+
+      // Group tasks by batch and thread
+      const tasksByBatch = new Map<number, Map<number, Task[]>>()
+      const batchNames = new Map<number, string>()
+      const threadNames = new Map<string, string>()
+      const threadAgents = new Map<string, string | undefined>()
+
+      for (const task of stageTasks) {
+        try {
+          const { batch, thread } = parseTaskId(task.id)
+
+          if (!tasksByBatch.has(batch)) {
+            tasksByBatch.set(batch, new Map())
+            batchNames.set(batch, task.batch_name)
+          }
+
+          const threads = tasksByBatch.get(batch)!
+          const threadKey = `${batch}.${thread}`
+
+          if (!threads.has(thread)) {
+            threads.set(thread, [])
+            threadNames.set(threadKey, task.thread_name)
+            threadAgents.set(threadKey, task.assigned_agent)
+          }
+
+          threads.get(thread)!.push(task)
+        } catch {
+          // Skip invalid task IDs
+        }
+      }
+
+      // Sort and output batches
+      const sortedBatches = Array.from(tasksByBatch.keys()).sort((a, b) => a - b)
+
+      for (const batchId of sortedBatches) {
+        const threads = tasksByBatch.get(batchId)!
+        const batchKey = batchId.toString().padStart(2, "0")
+        const batchName = batchNames.get(batchId) || `Batch ${batchKey}`
+        lines.push(`### Batch ${batchKey}: ${batchName}`)
+        lines.push("")
+
+        const sortedThreads = Array.from(threads.keys()).sort((a, b) => a - b)
+
+        for (const threadId of sortedThreads) {
+          const threadTasks = threads.get(threadId)!
+          // Sort tasks by ID
+          threadTasks.sort((a, b) =>
+            a.id.localeCompare(b.id, undefined, { numeric: true }),
+          )
+
+          const threadKey = `${batchId}.${threadId}`
+          const threadName = threadNames.get(threadKey) || `Thread ${threadId}`
+          const threadIdPadded = threadId.toString().padStart(2, "0")
+          const agentAssignment = threadAgents.get(threadKey)
+          const agentSuffix = agentAssignment ? ` @agent:${agentAssignment}` : ""
+          lines.push(`#### Thread ${threadIdPadded}: ${threadName}${agentSuffix}`)
+
+          for (const task of threadTasks) {
+            const check =
+              task.status === "completed"
+                ? "x"
+                : task.status === "in_progress"
+                  ? "~"
+                  : task.status === "blocked"
+                    ? "!"
+                    : task.status === "cancelled"
+                      ? "-"
+                      : " "
+
+            lines.push(`- [${check}] Task ${task.id}: ${task.name}`)
+            if (task.report) {
+              lines.push(`  > Report: ${task.report}`)
+            }
+          }
+          lines.push("")
+        }
       }
     }
   }
