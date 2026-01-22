@@ -1,12 +1,6 @@
 ## Notes
 
-- [x] FEAT: Add review command, `review plan` for printing the current plan's PLAN.md and `review tasks` for printing the current plan's TASKS.md
-
 - ENHANCE: Add prompt templates to top-level agent, defined in AGENTS.md, "use x skill, your role is of"
-
-- [~] FEAT: Add "tree" view command, showing number of batches per stages and number of threads per batch, and number of tasks per thread.
-
-- [~] ENHANCE: Make it so the implementing skills agent only lists tasks for the current stage.
 
 - [ ] ENHANCE: After PLAN.md is created, have "assistant" agent read it for you (TTS), include `work preview` command output + reference to plan so assistant synthesizes.
   

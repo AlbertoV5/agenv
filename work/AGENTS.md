@@ -19,5 +19,10 @@
 
 ### code-reviewer
 **Description:** Specialized on code analysis.
-**Best for:** Debugging, testing, reviews.
+**Best for:** Debugging, testing, code reviews.
 **Model:** openrouter/openai/gpt-5.2-codex
+
+### documentation-minimalist
+**Description:** Model that creates short and sweet docs.
+**Best for:** Documentation, reviews.
+**Model:** openrouter/google/gemini-3-pro-preview
