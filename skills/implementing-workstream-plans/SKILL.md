@@ -61,4 +61,4 @@ In case of requiring a functionality that may currently be worked on in a parall
 
 ## Additional Resources
 
-If you have questions you can check the plan using `work plan review`.
+If you have questions you can check the plan using `work review plan`.
