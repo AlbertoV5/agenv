@@ -220,9 +220,14 @@ work assign --thread "01.01.01" --agent "backend-expert"
 # Agent prompts
 work prompt --stage 1 --batch 1
 
-# Status updates (after user feedback)
+# Workflow for Fix Stages after user feedback
 work fix   # Add fix stage
 work approve plan --revoke --reason "Fix stage"
+work approve tasks --revoke --reason "Fix stage"
+work generate tasks # re-generate TASKS.md
+work serialize tasks # serialize back to tasks.json once tasks are approved
+work assign --thread ... # re-assign agents
+work prompt --stage ... # generate new prompts
 
 # Reports & completion
 work report --stage 1            # Generate stage report

@@ -282,3 +282,49 @@ Update the evaluating-workstreams skill to use commit review.
 ---
 
 *Last updated: 2026-01-22*
+
+### Stage 04: Fix - review-commits-subcommand
+
+#### Stage Definition
+
+Change `work review-commits` to be a subcommand of `work review` as `work review commits` for consistency with documentation and user expectations.
+
+#### Stage Constitution
+
+**Inputs:**
+- Existing `packages/workstreams/src/cli/review.ts` with `plan` and `tasks` subcommands
+- Existing `packages/workstreams/src/cli/review-commits.ts` standalone command
+- Registration in `bin/work.ts`
+
+**Structure:**
+- Move commits logic into review.ts as a third subcommand
+- Remove standalone review-commits.ts file
+- Update bin/work.ts registration
+
+**Outputs:**
+- Modified: `packages/workstreams/src/cli/review.ts` - add `commits` subcommand
+- Deleted: `packages/workstreams/src/cli/review-commits.ts`
+- Modified: `bin/work.ts` - remove review-commits registration
+
+#### Stage Questions
+
+- [x] Keep the git log parsing in a separate lib file? → Yes, keep `src/lib/git/log.ts` for reusability
+
+#### Stage Batches
+
+##### Batch 01: Command Refactor
+
+###### Thread 01: Integrate into Review CLI
+
+**Summary:**
+Move commits functionality into review.ts as a subcommand.
+
+**Details:**
+- Working package: `./packages/workstreams`
+- Modify `packages/workstreams/src/cli/review.ts`:
+  - Add `commits` to subcommand type: `"plan" | "tasks" | "commits"`
+  - Import git log functions from `src/lib/git/log.ts`
+  - Add commits subcommand handling with same options as review-commits.ts
+  - Update help text to include `work review commits` usage
+- Remove `packages/workstreams/src/cli/review-commits.ts`
+- Remove import and registration from `bin/work.ts`
