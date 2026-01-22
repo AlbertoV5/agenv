@@ -28,6 +28,12 @@ import {
   loadGitHubConfig,
   createStageApprovalCommit,
 } from "../lib/github/index.ts"
+import { generateTasksMdFromPlan } from "../lib/tasks-md.ts"
+import { parseStreamDocument } from "../lib/stream-parser.ts"
+import { existsSync, readFileSync } from "fs"
+import { join } from "path"
+import { getWorkDir } from "../lib/repo.ts"
+import { atomicWriteFile } from "../lib/index.ts"
 
 type ApproveTarget = "plan" | "tasks" | "prompts"
 
@@ -495,6 +501,13 @@ async function handlePlanApproval(
   try {
     const updatedStream = approveStream(repoRoot, stream.id, "user")
 
+    // Auto-generate TASKS.md after successful plan approval
+    const tasksMdResult = generateTasksMdAfterApproval(
+      repoRoot,
+      updatedStream.id,
+      updatedStream.name
+    )
+
     if (cliArgs.json) {
       console.log(
         JSON.stringify(
@@ -508,6 +521,12 @@ async function handlePlanApproval(
               ? questionsResult.openCount
               : 0,
             forcedApproval: questionsResult.hasOpenQuestions && cliArgs.force,
+            tasksMd: {
+              generated: tasksMdResult.success,
+              path: tasksMdResult.path,
+              overwritten: tasksMdResult.overwritten,
+              error: tasksMdResult.error,
+            },
           },
           null,
           2,
@@ -518,6 +537,16 @@ async function handlePlanApproval(
         `Approved plan for workstream "${updatedStream.name}" (${updatedStream.id})`,
       )
       console.log(`  Status: ${formatApprovalStatus(updatedStream)}`)
+
+      // Report TASKS.md generation result
+      if (tasksMdResult.success) {
+        if (tasksMdResult.overwritten) {
+          console.log(`  Warning: Overwrote existing TASKS.md`)
+        }
+        console.log(`  TASKS.md generated at ${tasksMdResult.path}`)
+      } else {
+        console.log(`  Warning: Failed to generate TASKS.md: ${tasksMdResult.error}`)
+      }
     }
   } catch (e) {
     console.error((e as Error).message)
@@ -669,6 +698,77 @@ function handlePromptsApproval(
   } catch (e) {
     console.error((e as Error).message)
     process.exit(1)
+  }
+}
+
+/**
+ * Result of TASKS.md generation attempt
+ */
+interface TasksMdGenerationResult {
+  success: boolean
+  path?: string
+  overwritten?: boolean
+  error?: string
+}
+
+/**
+ * Generate TASKS.md file after plan approval
+ * 
+ * @param repoRoot - Repository root path
+ * @param streamId - Workstream ID
+ * @param streamName - Workstream name for the file header
+ * @returns Result of the generation attempt
+ */
+function generateTasksMdAfterApproval(
+  repoRoot: string,
+  streamId: string,
+  streamName: string
+): TasksMdGenerationResult {
+  try {
+    const workDir = getWorkDir(repoRoot)
+    const streamDir = join(workDir, streamId)
+    const tasksMdPath = join(streamDir, "TASKS.md")
+    const planMdPath = join(streamDir, "PLAN.md")
+
+    // Check if PLAN.md exists
+    if (!existsSync(planMdPath)) {
+      return {
+        success: false,
+        error: `PLAN.md not found at ${planMdPath}`,
+      }
+    }
+
+    // Check if TASKS.md already exists
+    const overwritten = existsSync(tasksMdPath)
+
+    // Parse PLAN.md to get the stream document
+    const planContent = readFileSync(planMdPath, "utf-8")
+    const errors: any[] = []
+    const doc = parseStreamDocument(planContent, errors)
+
+    if (!doc) {
+      return {
+        success: false,
+        error: `Failed to parse PLAN.md: ${errors.map(e => e.message).join(", ")}`,
+      }
+    }
+
+    // Generate TASKS.md content from the plan structure
+    const content = generateTasksMdFromPlan(streamName, doc)
+
+    // Write the file
+    atomicWriteFile(tasksMdPath, content)
+
+    return {
+      success: true,
+      path: tasksMdPath,
+      overwritten,
+    }
+  } catch (e) {
+    return {
+      success: false,
+      error: (e as Error).message,
+    }
   }
 }
 
