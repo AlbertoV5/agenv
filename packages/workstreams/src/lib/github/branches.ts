@@ -29,10 +29,58 @@ export function formatBranchName(config: GitHubConfig, streamId: string): string
 }
 
 /**
+ * Checks if a local branch exists.
+ * @param repoRoot The root directory of the repository
+ * @param branchName The branch name to check
+ * @returns True if the branch exists locally, false otherwise
+ */
+function localBranchExists(repoRoot: string, branchName: string): boolean {
+  try {
+    execSync(`git rev-parse --verify ${branchName}`, {
+      cwd: repoRoot,
+      encoding: "utf-8",
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Deletes a local branch if it exists.
+ * Used to clean up branches from previous failed attempts before creating fresh.
+ * @param repoRoot The root directory of the repository
+ * @param branchName The branch name to delete
+ */
+function deleteLocalBranchIfExists(repoRoot: string, branchName: string): void {
+  if (!localBranchExists(repoRoot, branchName)) {
+    return;
+  }
+
+  // Force delete the local branch (-D works even if not fully merged)
+  execSync(`git branch -D ${branchName}`, {
+    cwd: repoRoot,
+    encoding: "utf-8",
+    stdio: ["pipe", "pipe", "pipe"],
+  });
+}
+
+/**
  * Creates a workstream branch on GitHub and checks it out locally.
+ * 
+ * Flow:
+ * 1. Store branch metadata in index.json (while on current branch)
+ * 2. Commit all pending changes (including the workstream files)
+ * 3. Create local branch from current HEAD (preserves workstream files)
+ * 4. Push to origin with tracking (creates branch on GitHub)
+ * 
+ * This ensures workstream files are included in the new branch, unlike
+ * creating from remote main which wouldn't have the workstream.
+ * 
  * @param repoRoot The root directory of the repository
  * @param streamId The workstream ID
- * @param fromRef Optional base ref to create from (default: repository default branch)
+ * @param fromRef Optional base ref to create from (unused, kept for API compatibility)
  * @returns The created branch result
  */
 export async function createWorkstreamBranch(
@@ -50,37 +98,40 @@ export async function createWorkstreamBranch(
     throw new Error("GitHub repository not configured. Run 'work github enable' first.");
   }
 
-  const token = await ensureGitHubAuth();
-  const client = createGitHubClient(token, config.owner, config.repo);
-  
   const branchName = formatBranchName(config, streamId);
 
-  // Determine base branch - use provided ref, current branch, or detect default
-  const baseBranch = fromRef || getCurrentBranch(repoRoot) || await getDefaultBranch(repoRoot);
-
-  // Try to create the branch on GitHub, handle if it already exists
-  let sha: string;
-  try {
-    const ref = await client.createBranch(branchName, baseBranch);
-    sha = ref.object.sha;
-  } catch (error) {
-    // If branch already exists (422), get its current SHA
-    if (error instanceof Error && error.message.includes("422")) {
-      const existingBranch = await client.getBranch(branchName);
-      sha = existingBranch.commit.sha;
-    } else {
-      throw error;
-    }
-  }
-
-  // Store metadata BEFORE checkout - the index.json must be updated while still
-  // on the original branch, so it gets committed and carried to the new branch.
-  // If we checkout first, the new branch has main's index.json which doesn't
-  // have this workstream.
+  // Step 1: Store branch metadata while still on current branch
   await storeWorkstreamBranchMeta(repoRoot, streamId, branchName);
 
-  // Checkout locally (this commits pending changes including the updated index.json)
-  await checkoutBranchLocally(repoRoot, branchName);
+  // Step 2: Commit all pending changes (including workstream files and updated index.json)
+  commitPendingChanges(repoRoot);
+
+  // Step 3: Delete local branch if it exists (from a previous failed attempt)
+  // This ensures we create a fresh branch from current HEAD
+  deleteLocalBranchIfExists(repoRoot, branchName);
+
+  // Step 4: Create local branch from current HEAD
+  // This preserves all workstream files since they're committed
+  execSync(`git checkout -b ${branchName}`, {
+    cwd: repoRoot,
+    encoding: "utf-8",
+    stdio: ["pipe", "pipe", "pipe"],
+  });
+
+  // Step 5: Push to origin with tracking (creates branch on GitHub)
+  // Use --force to overwrite remote if it exists from a previous failed attempt
+  execSync(`git push -u origin ${branchName} --force`, {
+    cwd: repoRoot,
+    encoding: "utf-8",
+    stdio: ["pipe", "pipe", "pipe"],
+  });
+
+  // Get the SHA of the current commit
+  const sha = execSync("git rev-parse HEAD", {
+    cwd: repoRoot,
+    encoding: "utf-8",
+    stdio: ["pipe", "pipe", "pipe"],
+  }).trim();
 
   return {
     branchName,
@@ -186,30 +237,6 @@ function commitPendingChanges(repoRoot: string): boolean {
   });
 
   return true;
-}
-
-/**
- * Fetches from origin and checks out the branch locally.
- * @param repoRoot The root directory of the repository
- * @param branchName The branch name to checkout
- */
-async function checkoutBranchLocally(repoRoot: string, branchName: string): Promise<void> {
-  // Commit any pending changes before switching branches
-  commitPendingChanges(repoRoot);
-
-  // Fetch the new branch from origin
-  execSync("git fetch origin", {
-    cwd: repoRoot,
-    encoding: "utf-8",
-    stdio: ["pipe", "pipe", "pipe"],
-  });
-
-  // Checkout the branch
-  execSync(`git checkout ${branchName}`, {
-    cwd: repoRoot,
-    encoding: "utf-8",
-    stdio: ["pipe", "pipe", "pipe"],
-  });
 }
 
 /**

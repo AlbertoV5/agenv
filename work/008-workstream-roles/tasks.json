@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "stream_id": "008-workstream-roles",
-  "last_updated": "2026-01-23T15:37:12.284Z",
+  "last_updated": "2026-01-23T15:43:39.222Z",
   "tasks": [
     {
       "id": "01.01.01.01",
@@ -13,7 +13,12 @@
       "created_at": "2026-01-23T15:37:12.282Z",
       "updated_at": "2026-01-23T15:37:12.282Z",
       "assigned_agent": "systems-engineer",
-      "sessions": []
+      "sessions": [],
+      "github_issue": {
+        "number": 18,
+        "url": "https://github.com/AlbertoV5/agenv/issues/18",
+        "state": "open"
+      }
     },
     {
       "id": "01.01.01.02",
@@ -109,7 +114,12 @@
       "created_at": "2026-01-23T15:37:12.282Z",
       "updated_at": "2026-01-23T15:37:12.282Z",
       "assigned_agent": "systems-engineer",
-      "sessions": []
+      "sessions": [],
+      "github_issue": {
+        "number": 19,
+        "url": "https://github.com/AlbertoV5/agenv/issues/19",
+        "state": "open"
+      }
     },
     {
       "id": "02.01.01.02",
@@ -181,7 +191,12 @@
       "created_at": "2026-01-23T15:37:12.282Z",
       "updated_at": "2026-01-23T15:37:12.282Z",
       "assigned_agent": "default",
-      "sessions": []
+      "sessions": [],
+      "github_issue": {
+        "number": 20,
+        "url": "https://github.com/AlbertoV5/agenv/issues/20",
+        "state": "open"
+      }
     },
     {
       "id": "02.01.02.02",
@@ -217,7 +232,12 @@
       "created_at": "2026-01-23T15:37:12.282Z",
       "updated_at": "2026-01-23T15:37:12.282Z",
       "assigned_agent": "default",
-      "sessions": []
+      "sessions": [],
+      "github_issue": {
+        "number": 21,
+        "url": "https://github.com/AlbertoV5/agenv/issues/21",
+        "state": "open"
+      }
     },
     {
       "id": "02.01.03.02",
@@ -265,7 +285,12 @@
       "created_at": "2026-01-23T15:37:12.282Z",
       "updated_at": "2026-01-23T15:37:12.282Z",
       "assigned_agent": "code-reviewer",
-      "sessions": []
+      "sessions": [],
+      "github_issue": {
+        "number": 22,
+        "url": "https://github.com/AlbertoV5/agenv/issues/22",
+        "state": "open"
+      }
     },
     {
       "id": "03.01.01.02",
@@ -325,7 +350,12 @@
       "created_at": "2026-01-23T15:37:12.282Z",
       "updated_at": "2026-01-23T15:37:12.282Z",
       "assigned_agent": "documentation-minimalist",
-      "sessions": []
+      "sessions": [],
+      "github_issue": {
+        "number": 23,
+        "url": "https://github.com/AlbertoV5/agenv/issues/23",
+        "state": "open"
+      }
     },
     {
       "id": "03.01.02.02",
