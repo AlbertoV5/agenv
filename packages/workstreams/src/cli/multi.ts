@@ -801,42 +801,60 @@ Press Ctrl+b X to kill the session when done.
   child.on("close", async (code) => {
     console.log(`\nSession detached. Checking thread statuses...`)
 
-    // Update session statuses based on pane exit codes
-    if (threadSessionMap.length > 0 && sessionExists(sessionName)) {
-      const paneStatuses = getSessionPaneStatuses(sessionName)
-      const completions: Array<{
-        taskId: string
-        sessionId: string
-        status: "completed" | "failed" | "interrupted"
-        exitCode?: number
-      }> = []
+    const completions: Array<{
+      taskId: string
+      sessionId: string
+      status: "completed" | "failed" | "interrupted"
+      exitCode?: number
+    }> = []
 
-      for (const mapping of threadSessionMap) {
-        const paneStatus = paneStatuses.find((p) => p.paneId === mapping.paneId)
-        if (paneStatus && paneStatus.paneDead) {
-          const exitCode = paneStatus.exitStatus ?? undefined
-          const status = exitCode === 0 ? "completed" : "failed"
+    // Update session statuses based on pane exit codes
+    if (threadSessionMap.length > 0) {
+      if (sessionExists(sessionName)) {
+        // Session still exists - check individual pane statuses
+        const paneStatuses = getSessionPaneStatuses(sessionName)
+
+        for (const mapping of threadSessionMap) {
+          const paneStatus = paneStatuses.find((p) => p.paneId === mapping.paneId)
+          if (paneStatus && paneStatus.paneDead) {
+            const exitCode = paneStatus.exitStatus ?? undefined
+            const status = exitCode === 0 ? "completed" : "failed"
+            completions.push({
+              taskId: mapping.taskId,
+              sessionId: mapping.sessionId,
+              status,
+              exitCode,
+            })
+            console.log(
+              `  Thread ${mapping.threadId}: ${status}${exitCode !== undefined ? ` (exit ${exitCode})` : ""}`,
+            )
+          } else if (paneStatus && !paneStatus.paneDead) {
+            console.log(`  Thread ${mapping.threadId}: still running`)
+          } else {
+            completions.push({
+              taskId: mapping.taskId,
+              sessionId: mapping.sessionId,
+              status: "interrupted",
+            })
+            console.log(
+              `  Thread ${mapping.threadId}: interrupted (pane not found)`,
+            )
+          }
+        }
+
+        console.log(`\nWindows remain in tmux session "${sessionName}".`)
+        console.log(`To reattach: tmux attach -t "${sessionName}"`)
+        console.log(`To kill: tmux kill-session -t "${sessionName}"`)
+      } else {
+        // Session was killed via Ctrl+b X - user confirmed threads are done
+        console.log("Session closed. Marking all threads as completed...")
+        for (const mapping of threadSessionMap) {
           completions.push({
             taskId: mapping.taskId,
             sessionId: mapping.sessionId,
-            status,
-            exitCode,
+            status: "completed",
           })
-          console.log(
-            `  Thread ${mapping.threadId}: ${status}${exitCode !== undefined ? ` (exit ${exitCode})` : ""}`,
-          )
-        } else if (paneStatus && !paneStatus.paneDead) {
-          console.log(`  Thread ${mapping.threadId}: still running`)
-        } else {
-          // Pane not found - mark as interrupted
-          completions.push({
-            taskId: mapping.taskId,
-            sessionId: mapping.sessionId,
-            status: "interrupted",
-          })
-          console.log(
-            `  Thread ${mapping.threadId}: interrupted (pane not found)`,
-          )
+          console.log(`  Thread ${mapping.threadId}: completed`)
         }
       }
 
@@ -848,15 +866,6 @@ Press Ctrl+b X to kill the session when done.
       }
     }
 
-    console.log(`\nWindows remain in tmux session "${sessionName}".`)
-    console.log(`To reattach: tmux attach -t "${sessionName}"`)
-
-    // Check if session still exists (it might have been auto-killed)
-    if (!sessionExists(sessionName)) {
-      console.log("Session auto-closed (all threads completed).")
-    } else {
-      console.log(`To kill: tmux kill-session -t "${sessionName}"`)
-    }
     process.exit(code ?? 0)
   })
 

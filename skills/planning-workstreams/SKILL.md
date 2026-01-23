@@ -195,6 +195,7 @@ This command validates and serializes the tasks and assignments.
 
 ## Best Practices
 
+- Organize stages and batches for maximum parallelization. The more tasks we can work on at the same time the better, even if they have small overlaps.
 - Don't create threads or batches only for error handling implementation or test running. Include error handling and tests in the tasks for the threads if any.
 - A final review, documentation, integration or refinement stage at the end is fine although not required, depends on the nature of the work.
 ---
