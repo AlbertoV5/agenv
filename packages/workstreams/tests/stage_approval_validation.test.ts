@@ -10,6 +10,9 @@ const REPO_ROOT = TEST_DIR;
 
 describe("Stage Approval Validation", () => {
     beforeEach(() => {
+        // Set USER role for approval tests
+        process.env.WORKSTREAM_ROLE = "USER";
+        
         if (existsSync(TEST_DIR)) {
             rmSync(TEST_DIR, { recursive: true });
         }
@@ -73,6 +76,8 @@ describe("Stage Approval Validation", () => {
         if (existsSync(TEST_DIR)) {
             rmSync(TEST_DIR, { recursive: true });
         }
+        // Clean up role setting
+        delete process.env.WORKSTREAM_ROLE;
     });
 
     test("should block stage approval if tasks are pending", async () => {

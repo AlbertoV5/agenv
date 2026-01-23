@@ -34,6 +34,7 @@ import { getWorkDir } from "../lib/repo.ts"
 import { atomicWriteFile } from "../lib/index.ts"
 import { addTasks, getTasks, parseTaskId } from "../lib/tasks.ts"
 import { generateAllPrompts, type GeneratePromptsResult } from "../lib/prompts.ts"
+import { canExecuteCommand, getRoleDenialMessage } from "../lib/roles.ts"
 
 type ApproveTarget = "plan" | "tasks" | "revision"
 
@@ -51,6 +52,8 @@ interface ApproveCliArgs {
 function printHelp(): void {
   console.log(`
 work approve - Human-in-the-loop approval gates for workstreams
+
+Requires: USER role
 
 Usage:
   work approve plan [--stream <id>] [--force]
@@ -79,6 +82,9 @@ Description:
   2. Tasks approval - ensures tasks.json exists with tasks
 
   Run 'work start' after all 3 approvals to create the GitHub branch and issues.
+
+  Note: This command requires USER role to maintain human-in-the-loop control.
+  Set WORKSTREAM_ROLE=USER environment variable to enable approval commands.
 
 Examples:
   # Show approval status
@@ -213,6 +219,12 @@ export async function main(argv: string[] = process.argv): Promise<void> {
   const cliArgs = parseCliArgs(argv)
   if (!cliArgs) {
     console.error("\nRun with --help for usage information.")
+    process.exit(1)
+  }
+
+  // Role-based access check
+  if (!canExecuteCommand("approve")) {
+    console.error(getRoleDenialMessage("approve"))
     process.exit(1)
   }
 

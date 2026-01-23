@@ -22,6 +22,7 @@ import {
 import { createGitHubClient } from "../lib/github/client.ts"
 import { getGitHubAuth } from "../lib/github/auth.ts"
 import type { StreamMetadata } from "../lib/types.ts"
+import { canExecuteCommand, getRoleDenialMessage } from "../lib/roles.ts"
 
 interface CompleteStreamCliArgs {
   repoRoot?: string
@@ -36,6 +37,8 @@ interface CompleteStreamCliArgs {
 function printHelp(): void {
   console.log(`
 work complete - Mark a workstream as complete
+
+Requires: USER role
 
 Usage:
   work complete [--stream <id>] [--no-commit] [--no-pr] [--target <branch>] [--draft]
@@ -618,6 +621,12 @@ export async function main(argv: string[] = process.argv): Promise<void> {
   const cliArgs = parseCliArgs(argv)
   if (!cliArgs) {
     console.error("\nRun with --help for usage information.")
+    process.exit(1)
+  }
+
+  // Role-based access check
+  if (!canExecuteCommand("complete")) {
+    console.error(getRoleDenialMessage("complete"))
     process.exit(1)
   }
 

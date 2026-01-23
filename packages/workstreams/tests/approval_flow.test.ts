@@ -17,6 +17,9 @@ const REPO_ROOT = TEST_DIR;
 
 describe("Approval Flow", () => {
     beforeAll(() => {
+        // Set USER role for approval tests
+        process.env.WORKSTREAM_ROLE = "USER";
+        
         if (existsSync(TEST_DIR)) {
             rmSync(TEST_DIR, { recursive: true });
         }
@@ -51,6 +54,8 @@ describe("Approval Flow", () => {
 
     afterAll(() => {
         rmSync(TEST_DIR, { recursive: true });
+        // Clean up role setting
+        delete process.env.WORKSTREAM_ROLE;
     });
 
     test("should start with draft status", () => {
@@ -169,6 +174,9 @@ const AUTOGEN_REPO_ROOT = AUTOGEN_TEST_DIR;
 
 describe("Plan Approval with TASKS.md Auto-Generation", () => {
     beforeEach(() => {
+        // Set USER role for approval tests
+        process.env.WORKSTREAM_ROLE = "USER";
+        
         // Clean up before each test
         if (existsSync(AUTOGEN_TEST_DIR)) {
             rmSync(AUTOGEN_TEST_DIR, { recursive: true });
@@ -203,6 +211,8 @@ describe("Plan Approval with TASKS.md Auto-Generation", () => {
         if (existsSync(AUTOGEN_TEST_DIR)) {
             rmSync(AUTOGEN_TEST_DIR, { recursive: true });
         }
+        // Clean up role setting
+        delete process.env.WORKSTREAM_ROLE;
     });
 
     test("should generate TASKS.md when approving plan with valid PLAN.md", async () => {
@@ -492,6 +502,9 @@ const TASKS_APPROVAL_REPO_ROOT = TASKS_APPROVAL_TEST_DIR;
 
 describe("Tasks Approval with Auto-Generation", () => {
     beforeEach(() => {
+        // Set USER role for approval tests
+        process.env.WORKSTREAM_ROLE = "USER";
+        
         // Clean up before each test
         if (existsSync(TASKS_APPROVAL_TEST_DIR)) {
             rmSync(TASKS_APPROVAL_TEST_DIR, { recursive: true });
@@ -586,6 +599,8 @@ Implement feature B.
         if (existsSync(TASKS_APPROVAL_TEST_DIR)) {
             rmSync(TASKS_APPROVAL_TEST_DIR, { recursive: true });
         }
+        // Clean up role setting
+        delete process.env.WORKSTREAM_ROLE;
     });
 
     test("should serialize TASKS.md to tasks.json directly", () => {
