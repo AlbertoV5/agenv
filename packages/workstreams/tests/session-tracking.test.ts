@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach } from "bun:test"
-import { mkdtempSync, writeFileSync, rmSync, mkdirSync, readFileSync } from "fs"
+import { mkdtempSync, writeFileSync, rmSync, mkdirSync, readFileSync, existsSync } from "fs"
 import { tmpdir } from "os"
 import { join } from "path"
 import {
@@ -15,7 +15,8 @@ import {
   startMultipleSessionsLocked,
   completeMultipleSessionsLocked,
 } from "../src/lib/tasks"
-import type { TasksFile, Task } from "../src/lib/types"
+import { loadThreads, getThreadMetadata } from "../src/lib/threads"
+import type { TasksFile, Task, ThreadsJson } from "../src/lib/types"
 
 describe("session-tracking", () => {
   let tempDir: string
@@ -96,7 +97,7 @@ describe("session-tracking", () => {
       expect(session!.completedAt).toBeUndefined()
     })
 
-    test("sets currentSessionId on the task", () => {
+    test("stores session in threads.json (not tasks.json)", () => {
       const session = startTaskSession(
         repoRoot,
         streamId,
@@ -105,12 +106,30 @@ describe("session-tracking", () => {
         "anthropic/claude-sonnet-4"
       )
 
-      const tasksFile = readTasksFile(repoRoot, streamId)
-      const task = tasksFile!.tasks.find((t) => t.id === "01.01.01.01")!
+      // Verify threads.json has the session
+      const threadsFile = loadThreads(repoRoot, streamId)
+      expect(threadsFile).not.toBeNull()
+      
+      const threadId = "01.01.01" // Thread ID derived from task "01.01.01.01"
+      const thread = threadsFile!.threads.find((t) => t.threadId === threadId)
+      expect(thread).toBeDefined()
+      expect(thread!.currentSessionId).toBe(session!.sessionId)
+      expect(thread!.sessions).toHaveLength(1)
+      expect(thread!.sessions[0]!.sessionId).toBe(session!.sessionId)
 
-      expect(task.currentSessionId).toBe(session!.sessionId)
-      expect(task.sessions).toHaveLength(1)
-      expect(task.sessions![0]!.sessionId).toBe(session!.sessionId)
+      // Verify tasks.json does NOT have the new session data added
+      // (Note: tasks.json may still have empty sessions[] from initial setup, 
+      //  but no new session should be written to it)
+      const tasksFilePath = join(repoRoot, "work", streamId, "tasks.json")
+      const tasksContent = readFileSync(tasksFilePath, "utf-8")
+      const tasksFile = JSON.parse(tasksContent) as TasksFile
+      const task = tasksFile.tasks.find((t) => t.id === "01.01.01.01")!
+      // The task should not have the new session added
+      expect(task.currentSessionId).toBeUndefined()
+      // If sessions exist, they should be empty (from setup) or not contain the new session
+      if (task.sessions) {
+        expect(task.sessions.find((s) => s.sessionId === session!.sessionId)).toBeUndefined()
+      }
     })
 
     test("returns null for non-existent task", () => {
@@ -151,7 +170,7 @@ describe("session-tracking", () => {
       expect(completed!.completedAt).toBeDefined()
     })
 
-    test("clears currentSessionId on completion", () => {
+    test("clears currentSessionId in threads.json on completion", () => {
       const session = startTaskSession(
         repoRoot,
         streamId,
@@ -169,10 +188,11 @@ describe("session-tracking", () => {
         0
       )
 
-      const tasksFile = readTasksFile(repoRoot, streamId)
-      const task = tasksFile!.tasks.find((t) => t.id === "01.01.01.01")
-
-      expect(task!.currentSessionId).toBeUndefined()
+      // Verify threads.json has cleared currentSessionId
+      const threadsFile = loadThreads(repoRoot, streamId)
+      const threadId = "01.01.01"
+      const thread = threadsFile!.threads.find((t) => t.threadId === threadId)
+      expect(thread!.currentSessionId).toBeUndefined()
     })
 
     test("handles failed status with non-zero exit code", () => {
@@ -283,7 +303,7 @@ describe("session-tracking", () => {
   })
 
   describe("locked session operations", () => {
-    test("startTaskSessionLocked creates session with provided ID", async () => {
+    test("startTaskSessionLocked creates session with provided ID in threads.json", async () => {
       const sessionId = generateSessionId()
       const session = await startTaskSessionLocked(
         repoRoot,
@@ -297,9 +317,14 @@ describe("session-tracking", () => {
       expect(session).not.toBeNull()
       expect(session!.sessionId).toBe(sessionId)
       expect(session!.status).toBe("running")
+
+      // Verify session is in threads.json
+      const threadsFile = loadThreads(repoRoot, streamId)
+      const thread = threadsFile!.threads.find((t) => t.threadId === "01.01.01")
+      expect(thread!.currentSessionId).toBe(sessionId)
     })
 
-    test("completeTaskSessionLocked updates session", async () => {
+    test("completeTaskSessionLocked updates session in threads.json", async () => {
       const sessionId = generateSessionId()
       await startTaskSessionLocked(
         repoRoot,
@@ -322,9 +347,15 @@ describe("session-tracking", () => {
       expect(completed).not.toBeNull()
       expect(completed!.status).toBe("completed")
       expect(completed!.exitCode).toBe(0)
+
+      // Verify threads.json is updated
+      const threadsFile = loadThreads(repoRoot, streamId)
+      const thread = threadsFile!.threads.find((t) => t.threadId === "01.01.01")
+      expect(thread!.currentSessionId).toBeUndefined()
+      expect(thread!.sessions[0]!.status).toBe("completed")
     })
 
-    test("startMultipleSessionsLocked creates multiple sessions atomically", async () => {
+    test("startMultipleSessionsLocked creates multiple sessions atomically in threads.json", async () => {
       const session1Id = generateSessionId()
       const session2Id = generateSessionId()
 
@@ -347,16 +378,22 @@ describe("session-tracking", () => {
       expect(sessions[0]!.sessionId).toBe(session1Id)
       expect(sessions[1]!.sessionId).toBe(session2Id)
 
-      // Verify both tasks have sessions
+      // Both tasks are in same thread (01.01.01), so only one thread entry
+      const threadsFile = loadThreads(repoRoot, streamId)
+      const thread = threadsFile!.threads.find((t) => t.threadId === "01.01.01")
+      expect(thread).toBeDefined()
+      // Note: Since both tasks are in the same thread, the currentSessionId will be the last one set
+      expect(thread!.sessions).toHaveLength(2)
+
+      // Verify tasks.json does NOT have session data
       const tasksFile = readTasksFile(repoRoot, streamId)
       const task1 = tasksFile!.tasks.find((t) => t.id === "01.01.01.01")
       const task2 = tasksFile!.tasks.find((t) => t.id === "01.01.01.02")
-
-      expect(task1!.currentSessionId).toBe(session1Id)
-      expect(task2!.currentSessionId).toBe(session2Id)
+      expect(task1!.currentSessionId).toBeUndefined()
+      expect(task2!.currentSessionId).toBeUndefined()
     })
 
-    test("completeMultipleSessionsLocked updates multiple sessions atomically", async () => {
+    test("completeMultipleSessionsLocked updates multiple sessions atomically in threads.json", async () => {
       const session1Id = generateSessionId()
       const session2Id = generateSessionId()
 
@@ -398,13 +435,11 @@ describe("session-tracking", () => {
       expect(completed[1]!.status).toBe("failed")
       expect(completed[1]!.exitCode).toBe(1)
 
-      // Verify currentSessionId is cleared
-      const tasksFile = readTasksFile(repoRoot, streamId)
-      const task1 = tasksFile!.tasks.find((t) => t.id === "01.01.01.01")
-      const task2 = tasksFile!.tasks.find((t) => t.id === "01.01.01.02")
-
-      expect(task1!.currentSessionId).toBeUndefined()
-      expect(task2!.currentSessionId).toBeUndefined()
+      // Verify threads.json has the completed sessions
+      const threadsFile = loadThreads(repoRoot, streamId)
+      const thread = threadsFile!.threads.find((t) => t.threadId === "01.01.01")
+      expect(thread!.currentSessionId).toBeUndefined()
+      expect(thread!.sessions).toHaveLength(2)
     })
 
     test("handles non-existent tasks gracefully", async () => {
@@ -418,6 +453,115 @@ describe("session-tracking", () => {
       ])
 
       expect(sessions).toHaveLength(0)
+    })
+  })
+
+  describe("session migration from tasks.json to threads.json", () => {
+    test("migrates existing sessions from tasks.json on read", () => {
+      // Create a tasks.json with legacy session data
+      const workDir = join(repoRoot, "work", streamId)
+      const tasksFilePath = join(workDir, "tasks.json")
+      
+      const legacyTasksFile: TasksFile = {
+        version: "1.0.0",
+        stream_id: streamId,
+        last_updated: new Date().toISOString(),
+        tasks: [
+          {
+            id: "01.01.01.01",
+            name: "Test task 1",
+            thread_name: "Thread One",
+            batch_name: "Setup",
+            stage_name: "Stage One",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            status: "pending",
+            sessions: [
+              {
+                sessionId: "ses_legacy_1",
+                agentName: "legacy-agent",
+                model: "legacy-model",
+                startedAt: new Date().toISOString(),
+                status: "completed",
+                completedAt: new Date().toISOString(),
+                exitCode: 0,
+              },
+            ],
+            currentSessionId: undefined,
+          },
+        ],
+      }
+      
+      // Write legacy format directly (bypassing writeTasksFile to simulate old data)
+      writeFileSync(tasksFilePath, JSON.stringify(legacyTasksFile, null, 2))
+
+      // Read tasks file - this should trigger migration
+      const tasksFile = readTasksFile(repoRoot, streamId)
+
+      // Verify tasks.json no longer has session data
+      const task = tasksFile!.tasks.find((t) => t.id === "01.01.01.01")!
+      expect(task.sessions).toBeUndefined()
+      expect(task.currentSessionId).toBeUndefined()
+
+      // Verify threads.json has the migrated session data
+      const threadsFile = loadThreads(repoRoot, streamId)
+      expect(threadsFile).not.toBeNull()
+      
+      const thread = threadsFile!.threads.find((t) => t.threadId === "01.01.01")
+      expect(thread).toBeDefined()
+      expect(thread!.sessions).toHaveLength(1)
+      expect(thread!.sessions[0]!.sessionId).toBe("ses_legacy_1")
+      expect(thread!.sessions[0]!.agentName).toBe("legacy-agent")
+    })
+
+    test("creates backup before migration", () => {
+      // Create a tasks.json with legacy session data
+      const workDir = join(repoRoot, "work", streamId)
+      const tasksFilePath = join(workDir, "tasks.json")
+      
+      const legacyTasksFile: TasksFile = {
+        version: "1.0.0",
+        stream_id: streamId,
+        last_updated: new Date().toISOString(),
+        tasks: [
+          {
+            id: "01.01.01.01",
+            name: "Test task 1",
+            thread_name: "Thread One",
+            batch_name: "Setup",
+            stage_name: "Stage One",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            status: "pending",
+            sessions: [
+              {
+                sessionId: "ses_backup_test",
+                agentName: "backup-agent",
+                model: "backup-model",
+                startedAt: new Date().toISOString(),
+                status: "running",
+              },
+            ],
+            currentSessionId: "ses_backup_test",
+          },
+        ],
+      }
+      
+      writeFileSync(tasksFilePath, JSON.stringify(legacyTasksFile, null, 2))
+
+      // Read tasks file - this should trigger migration and create backup
+      readTasksFile(repoRoot, streamId)
+
+      // Check that a backup file was created
+      const files = require("fs").readdirSync(workDir)
+      const backupFiles = files.filter((f: string) => f.startsWith("tasks.backup-"))
+      expect(backupFiles.length).toBeGreaterThan(0)
+
+      // Verify backup contains the original session data
+      const backupContent = readFileSync(join(workDir, backupFiles[0]), "utf-8")
+      const backupTasksFile = JSON.parse(backupContent) as TasksFile
+      expect(backupTasksFile.tasks[0]!.sessions).toHaveLength(1)
+      expect(backupTasksFile.tasks[0]!.sessions![0]!.sessionId).toBe("ses_backup_test")
     })
   })
 })

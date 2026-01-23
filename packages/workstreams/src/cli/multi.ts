@@ -49,6 +49,7 @@ import {
   buildRetryRunCommand,
   buildServeCommand,
 } from "../lib/opencode.ts"
+import { playNotification } from "../lib/notifications.ts"
 
 const DEFAULT_PORT = 4096
 
@@ -60,6 +61,7 @@ interface MultiCliArgs {
   dryRun?: boolean
   noServer?: boolean
   continue?: boolean
+  silent?: boolean
 }
 
 interface ThreadInfo {
@@ -110,6 +112,7 @@ Optional:
   --port, -p       OpenCode server port (default: 4096)
   --dry-run        Show commands without executing
   --no-server      Skip starting opencode serve (assume already running)
+  --silent         Disable notification sounds
   --repo-root, -r  Repository root (auto-detected if omitted)
   --help, -h       Show this help message
 
@@ -192,6 +195,10 @@ function parseCliArgs(argv: string[]): MultiCliArgs | null {
 
       case "--no-server":
         parsed.noServer = true
+        break
+
+      case "--silent":
+        parsed.silent = true
         break
 
       case "--help":
@@ -808,6 +815,11 @@ Press Ctrl+b X to kill the session when done.
       exitCode?: number
     }> = []
 
+    // Track completion stats for notifications
+    let completedCount = 0
+    let failedCount = 0
+    let runningCount = 0
+
     // Update session statuses based on pane exit codes
     if (threadSessionMap.length > 0) {
       if (sessionExists(sessionName)) {
@@ -828,8 +840,22 @@ Press Ctrl+b X to kill the session when done.
             console.log(
               `  Thread ${mapping.threadId}: ${status}${exitCode !== undefined ? ` (exit ${exitCode})` : ""}`,
             )
+
+            // Track stats and play notifications
+            if (status === "completed") {
+              completedCount++
+              if (!cliArgs.silent) {
+                playNotification("thread_complete")
+              }
+            } else {
+              failedCount++
+              if (!cliArgs.silent) {
+                playNotification("error")
+              }
+            }
           } else if (paneStatus && !paneStatus.paneDead) {
             console.log(`  Thread ${mapping.threadId}: still running`)
+            runningCount++
           } else {
             completions.push({
               taskId: mapping.taskId,
@@ -855,7 +881,18 @@ Press Ctrl+b X to kill the session when done.
             status: "completed",
           })
           console.log(`  Thread ${mapping.threadId}: completed`)
+          completedCount++
+          if (!cliArgs.silent) {
+            playNotification("thread_complete")
+          }
         }
+      }
+
+      // Play batch_complete if all threads finished (no running threads)
+      if (runningCount === 0 && completions.length > 0 && !cliArgs.silent) {
+        // Small delay so batch sound plays after thread sounds
+        await Bun.sleep(100)
+        playNotification("batch_complete")
       }
 
       if (completions.length > 0) {
@@ -871,6 +908,9 @@ Press Ctrl+b X to kill the session when done.
 
   child.on("error", (err) => {
     console.error(`Error attaching to tmux session: ${err.message}`)
+    if (!cliArgs.silent) {
+      playNotification("error")
+    }
     process.exit(1)
   })
 }

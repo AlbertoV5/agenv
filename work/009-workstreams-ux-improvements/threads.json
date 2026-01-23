@@ -1,0 +1,133 @@
+{
+  "version": "1.0.0",
+  "stream_id": "009-workstreams-ux-improvements",
+  "last_updated": "2026-01-23T21:13:49.913Z",
+  "threads": [
+    {
+      "threadId": "01.01.01",
+      "sessions": [
+        {
+          "sessionId": "ses_mkrdcbqn_7zf4i6",
+          "agentName": "systems-engineer",
+          "model": "anthropic/claude-opus-4-5",
+          "startedAt": "2026-01-23T21:04:13.681Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T21:10:04.873Z"
+        }
+      ],
+      "githubIssue": {
+        "number": 25,
+        "url": "https://github.com/AlbertoV5/agenv/issues/25",
+        "state": "closed"
+      }
+    },
+    {
+      "threadId": "01.01.02",
+      "sessions": [
+        {
+          "sessionId": "ses_mkrdcbqn_iytsbh",
+          "agentName": "systems-engineer",
+          "model": "anthropic/claude-opus-4-5",
+          "startedAt": "2026-01-23T21:04:13.681Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T21:10:04.873Z"
+        }
+      ],
+      "githubIssue": {
+        "number": 26,
+        "url": "https://github.com/AlbertoV5/agenv/issues/26",
+        "state": "closed"
+      }
+    },
+    {
+      "threadId": "02.01.01",
+      "sessions": [
+        {
+          "sessionId": "ses_mkrdk4gp_7r3u7f",
+          "agentName": "systems-engineer",
+          "model": "anthropic/claude-opus-4-5",
+          "startedAt": "2026-01-23T21:10:17.500Z",
+          "status": "running"
+        }
+      ],
+      "currentSessionId": "ses_mkrdk4gp_7r3u7f",
+      "githubIssue": {
+        "number": 27,
+        "url": "https://github.com/AlbertoV5/agenv/issues/27",
+        "state": "open"
+      }
+    },
+    {
+      "threadId": "02.01.02",
+      "sessions": [
+        {
+          "sessionId": "ses_mkrdk4gq_ircq6g",
+          "agentName": "systems-engineer",
+          "model": "anthropic/claude-opus-4-5",
+          "startedAt": "2026-01-23T21:10:17.500Z",
+          "status": "running"
+        }
+      ],
+      "currentSessionId": "ses_mkrdk4gq_ircq6g",
+      "githubIssue": {
+        "number": 28,
+        "url": "https://github.com/AlbertoV5/agenv/issues/28",
+        "state": "closed"
+      }
+    },
+    {
+      "threadId": "03.01.01",
+      "sessions": [],
+      "githubIssue": {
+        "number": 29,
+        "url": "https://github.com/AlbertoV5/agenv/issues/29",
+        "state": "open"
+      }
+    },
+    {
+      "threadId": "03.01.02",
+      "sessions": [],
+      "githubIssue": {
+        "number": 30,
+        "url": "https://github.com/AlbertoV5/agenv/issues/30",
+        "state": "open"
+      }
+    },
+    {
+      "threadId": "03.01.03",
+      "sessions": [],
+      "githubIssue": {
+        "number": 31,
+        "url": "https://github.com/AlbertoV5/agenv/issues/31",
+        "state": "open"
+      }
+    },
+    {
+      "threadId": "03.02.01",
+      "sessions": [],
+      "githubIssue": {
+        "number": 32,
+        "url": "https://github.com/AlbertoV5/agenv/issues/32",
+        "state": "open"
+      }
+    },
+    {
+      "threadId": "04.01.01",
+      "sessions": [],
+      "githubIssue": {
+        "number": 33,
+        "url": "https://github.com/AlbertoV5/agenv/issues/33",
+        "state": "open"
+      }
+    },
+    {
+      "threadId": "04.01.02",
+      "sessions": [],
+      "githubIssue": {
+        "number": 34,
+        "url": "https://github.com/AlbertoV5/agenv/issues/34",
+        "state": "open"
+      }
+    }
+  ]
+}

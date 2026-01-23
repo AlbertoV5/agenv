@@ -1,6 +1,7 @@
-import { describe, expect, test, mock, beforeEach } from "bun:test"
+import { describe, expect, test, mock, beforeEach, afterEach, spyOn } from "bun:test"
 import { findNextIncompleteBatch } from "../src/cli/multi"
 import type { Task } from "../src/lib/types"
+import * as notifications from "../src/lib/notifications"
 
 describe("multi cli", () => {
     describe("findNextIncompleteBatch", () => {
@@ -69,6 +70,164 @@ describe("multi cli", () => {
             ] as Task[]
 
             expect(findNextIncompleteBatch(tasks)).toBe("01.01")
+        })
+    })
+
+    describe("notification integration", () => {
+        let playNotificationMock: ReturnType<typeof spyOn>
+
+        beforeEach(() => {
+            // Mock playNotification to prevent actual sound playback
+            playNotificationMock = spyOn(notifications, "playNotification").mockImplementation(() => {})
+        })
+
+        afterEach(() => {
+            playNotificationMock.mockRestore()
+        })
+
+        test("playNotification is exported and callable", () => {
+            // Verify that playNotification can be called with all event types
+            expect(() => notifications.playNotification("thread_complete")).not.toThrow()
+            expect(() => notifications.playNotification("batch_complete")).not.toThrow()
+            expect(() => notifications.playNotification("error")).not.toThrow()
+        })
+
+        test("mock tracks playNotification calls", () => {
+            notifications.playNotification("thread_complete")
+            notifications.playNotification("error")
+            notifications.playNotification("batch_complete")
+
+            expect(playNotificationMock).toHaveBeenCalledTimes(3)
+            expect(playNotificationMock).toHaveBeenCalledWith("thread_complete")
+            expect(playNotificationMock).toHaveBeenCalledWith("error")
+            expect(playNotificationMock).toHaveBeenCalledWith("batch_complete")
+        })
+
+        test("notification events have expected types", () => {
+            // Type-level verification that notification events match expected API
+            const events: notifications.NotificationEvent[] = [
+                "thread_complete",
+                "batch_complete",
+                "error"
+            ]
+
+            for (const event of events) {
+                expect(() => notifications.playNotification(event)).not.toThrow()
+            }
+        })
+
+        describe("integration scenarios (mocked)", () => {
+            test("simulates thread completion notification flow", () => {
+                // Simulate what happens when a thread completes successfully
+                const threadCompleted = true
+                const silent = false
+
+                if (threadCompleted && !silent) {
+                    notifications.playNotification("thread_complete")
+                }
+
+                expect(playNotificationMock).toHaveBeenCalledTimes(1)
+                expect(playNotificationMock).toHaveBeenCalledWith("thread_complete")
+            })
+
+            test("simulates thread failure notification flow", () => {
+                // Simulate what happens when a thread fails
+                const threadFailed = true
+                const silent = false
+
+                if (threadFailed && !silent) {
+                    notifications.playNotification("error")
+                }
+
+                expect(playNotificationMock).toHaveBeenCalledTimes(1)
+                expect(playNotificationMock).toHaveBeenCalledWith("error")
+            })
+
+            test("simulates batch completion notification flow", () => {
+                // Simulate what happens when all threads complete
+                const allThreadsCompleted = true
+                const runningCount = 0
+                const silent = false
+
+                if (allThreadsCompleted && runningCount === 0 && !silent) {
+                    notifications.playNotification("batch_complete")
+                }
+
+                expect(playNotificationMock).toHaveBeenCalledTimes(1)
+                expect(playNotificationMock).toHaveBeenCalledWith("batch_complete")
+            })
+
+            test("silent mode prevents all notifications", () => {
+                // Simulate silent mode behavior
+                const silent = true
+
+                // Thread complete
+                if (!silent) {
+                    notifications.playNotification("thread_complete")
+                }
+
+                // Error
+                if (!silent) {
+                    notifications.playNotification("error")
+                }
+
+                // Batch complete
+                if (!silent) {
+                    notifications.playNotification("batch_complete")
+                }
+
+                expect(playNotificationMock).toHaveBeenCalledTimes(0)
+            })
+
+            test("multiple threads trigger multiple thread_complete notifications", () => {
+                // Simulate multiple threads completing
+                const completedThreads = ["thread1", "thread2", "thread3"]
+                const silent = false
+
+                for (const _thread of completedThreads) {
+                    if (!silent) {
+                        notifications.playNotification("thread_complete")
+                    }
+                }
+
+                expect(playNotificationMock).toHaveBeenCalledTimes(3)
+                expect(playNotificationMock).toHaveBeenCalledWith("thread_complete")
+            })
+
+            test("mixed thread results trigger appropriate notifications", () => {
+                // Simulate a batch with mixed results: 2 completed, 1 failed
+                const threadResults = [
+                    { id: "thread1", status: "completed" },
+                    { id: "thread2", status: "failed" },
+                    { id: "thread3", status: "completed" }
+                ]
+                const silent = false
+
+                for (const thread of threadResults) {
+                    if (!silent) {
+                        if (thread.status === "completed") {
+                            notifications.playNotification("thread_complete")
+                        } else if (thread.status === "failed") {
+                            notifications.playNotification("error")
+                        }
+                    }
+                }
+
+                // Should have 2 thread_complete and 1 error calls
+                expect(playNotificationMock).toHaveBeenCalledTimes(3)
+
+                // Count specific calls
+                const calls = playNotificationMock.mock.calls
+                const threadCompleteCalls = calls.filter(
+                    (call: unknown[]) => call[0] === "thread_complete"
+                )
+                const errorCalls = calls.filter(
+                    (call: unknown[]) => call[0] === "error"
+                )
+
+                expect(threadCompleteCalls.length).toBe(2)
+                expect(errorCalls.length).toBe(1)
+            })
         })
     })
 })

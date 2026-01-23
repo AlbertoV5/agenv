@@ -5,12 +5,22 @@
  * task tracking information in JSON format.
  */
 
-import { existsSync, readFileSync } from "fs"
+import { existsSync, readFileSync, copyFileSync } from "fs"
 import { join } from "path"
-import * as lockfile from "proper-lockfile"
 import type { Task, TasksFile, TaskStatus, SessionRecord, SessionStatus } from "./types.ts"
 import { atomicWriteFile } from "./index.ts"
 import { getWorkDir } from "./repo.ts"
+import {
+  startThreadSession,
+  completeThreadSession,
+  startThreadSessionLocked,
+  completeThreadSessionLocked,
+  startMultipleThreadSessionsLocked,
+  completeMultipleThreadSessionsLocked,
+  getThreadMetadata,
+  loadThreads,
+  migrateFromTasksJson,
+} from "./threads.ts"
 
 const TASKS_FILE_VERSION = "1.0.0"
 
@@ -223,36 +233,124 @@ export function validateTasksFileSessions(tasksFile: TasksFile): SessionValidati
 
 /**
  * Migrate a single task to include session fields
- * Adds empty sessions array if not present (for backwards compatibility)
- * Returns the migrated task (does not mutate original)
+ * @deprecated Session data is now stored in threads.json.
+ * This function is kept for backwards compatibility but no longer adds session fields.
+ * Returns the task unchanged (does not mutate original)
  */
 export function migrateTaskSessions(task: Task): Task {
-  // If sessions already exists (even if empty), no migration needed
-  if (task.sessions !== undefined) {
-    return task
-  }
-
-  // Add empty sessions array for new schema compliance
-  return {
-    ...task,
-    sessions: [],
-  }
+  // Session data is now stored in threads.json, not in tasks.json
+  // Just return the task as-is (no migration needed for deprecated fields)
+  return task
 }
 
 /**
  * Migrate all tasks in a TasksFile to include session fields
- * Returns a new TasksFile with migrated tasks (does not mutate original)
+ * @deprecated Session data is now stored in threads.json.
+ * Returns the TasksFile unchanged (does not mutate original)
  */
 export function migrateTasksFileSessions(tasksFile: TasksFile): TasksFile {
+  return tasksFile
+}
+
+// ============================================
+// SESSION DATA MIGRATION TO THREADS.JSON
+// ============================================
+
+/**
+ * Check if any task in tasks.json has session data that needs migration
+ * Returns true if sessions exist in tasks.json
+ */
+export function hasSessionsInTasksJson(tasksFile: TasksFile): boolean {
+  return tasksFile.tasks.some((task) => 
+    (task.sessions && task.sessions.length > 0) || task.currentSessionId
+  )
+}
+
+/**
+ * Create a backup of tasks.json before migration
+ * Returns the backup file path
+ */
+export function createTasksJsonBackup(repoRoot: string, streamId: string): string {
+  const filePath = getTasksFilePath(repoRoot, streamId)
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-")
+  const backupPath = filePath.replace(".json", `.backup-${timestamp}.json`)
+  copyFileSync(filePath, backupPath)
+  return backupPath
+}
+
+/**
+ * Clear session data from tasks after migration to threads.json
+ * Returns the updated TasksFile
+ */
+export function clearSessionsFromTasks(tasksFile: TasksFile): TasksFile {
   return {
     ...tasksFile,
-    tasks: tasksFile.tasks.map(migrateTaskSessions),
+    tasks: tasksFile.tasks.map((task) => ({
+      ...task,
+      sessions: undefined,
+      currentSessionId: undefined,
+    })),
+  }
+}
+
+/**
+ * Migrate session data from tasks.json to threads.json
+ * Creates a backup of tasks.json before migration
+ * Returns the migration result
+ */
+export function migrateSessionsToThreads(
+  repoRoot: string,
+  streamId: string,
+  tasksFile: TasksFile,
+): { migrated: boolean; backupPath?: string; error?: string } {
+  try {
+    // Check if migration is needed
+    if (!hasSessionsInTasksJson(tasksFile)) {
+      return { migrated: false }
+    }
+
+    // Create backup before migration
+    const backupPath = createTasksJsonBackup(repoRoot, streamId)
+
+    // Migrate sessions to threads.json using the migration utility
+    const result = migrateFromTasksJson(repoRoot, streamId, tasksFile)
+
+    if (result.errors.length > 0) {
+      return { 
+        migrated: false, 
+        backupPath, 
+        error: `Migration errors: ${result.errors.join(", ")}` 
+      }
+    }
+
+    // Clear session data from tasks.json
+    const cleanedTasksFile = clearSessionsFromTasks(tasksFile)
+    writeTasksFile(repoRoot, streamId, cleanedTasksFile)
+
+    return { migrated: true, backupPath }
+  } catch (err) {
+    return { 
+      migrated: false, 
+      error: err instanceof Error ? err.message : String(err) 
+    }
   }
 }
 
 // ============================================
 // SESSION MANAGEMENT FUNCTIONS
 // ============================================
+
+/**
+ * Extract thread ID from task ID
+ * Task ID format: "SS.BB.TT.NN" -> Thread ID: "SS.BB.TT"
+ */
+function extractThreadIdFromTaskId(taskId: string): string {
+  const parts = taskId.split(".")
+  if (parts.length !== 4) {
+    throw new Error(`Invalid task ID format: ${taskId}. Expected "SS.BB.TT.NN"`)
+  }
+  return `${parts[0]}.${parts[1]}.${parts[2]}`
+}
 
 /**
  * Generate a unique session ID
@@ -268,6 +366,9 @@ export function generateSessionId(): string {
  * Start a new session for a task
  * Creates a SessionRecord with 'running' status and sets it as currentSessionId
  * Returns the created session record, or null if task not found
+ * 
+ * NOTE: Session data is stored in threads.json, not tasks.json.
+ * The task must exist in tasks.json for validation.
  */
 export function startTaskSession(
   repoRoot: string,
@@ -282,35 +383,19 @@ export function startTaskSession(
   const taskIndex = tasksFile.tasks.findIndex((t) => t.id === taskId)
   if (taskIndex === -1) return null
 
-  const task = tasksFile.tasks[taskIndex]!
-
-  // Create new session record
-  const sessionRecord: SessionRecord = {
-    sessionId: generateSessionId(),
-    agentName,
-    model,
-    startedAt: new Date().toISOString(),
-    status: "running",
-  }
-
-  // Initialize sessions array if needed
-  if (!task.sessions) {
-    task.sessions = []
-  }
-
-  // Add session to array and set as current
-  task.sessions.push(sessionRecord)
-  task.currentSessionId = sessionRecord.sessionId
-  task.updated_at = new Date().toISOString()
-
-  writeTasksFile(repoRoot, streamId, tasksFile)
-  return sessionRecord
+  // Extract thread ID from task ID and delegate to threads.ts
+  const threadId = extractThreadIdFromTaskId(taskId)
+  const sessionId = generateSessionId()
+  
+  return startThreadSession(repoRoot, streamId, threadId, agentName, model, sessionId)
 }
 
 /**
  * Complete a session for a task
  * Updates the session status and exit code, clears currentSessionId
  * Returns the updated session record, or null if not found
+ * 
+ * NOTE: Session data is stored in threads.json, not tasks.json.
  */
 export function completeTaskSession(
   repoRoot: string,
@@ -320,63 +405,45 @@ export function completeTaskSession(
   status: SessionStatus,
   exitCode?: number,
 ): SessionRecord | null {
-  const tasksFile = readTasksFile(repoRoot, streamId)
-  if (!tasksFile) return null
-
-  const taskIndex = tasksFile.tasks.findIndex((t) => t.id === taskId)
-  if (taskIndex === -1) return null
-
-  const task = tasksFile.tasks[taskIndex]!
-
-  if (!task.sessions) return null
-
-  const sessionIndex = task.sessions.findIndex((s) => s.sessionId === sessionId)
-  if (sessionIndex === -1) return null
-
-  const session = task.sessions[sessionIndex]!
-
-  // Update session with completion info
-  session.status = status
-  session.completedAt = new Date().toISOString()
-  if (exitCode !== undefined) {
-    session.exitCode = exitCode
-  }
-
-  // Clear currentSessionId since session is complete
-  task.currentSessionId = undefined
-  task.updated_at = new Date().toISOString()
-
-  writeTasksFile(repoRoot, streamId, tasksFile)
-  return session
+  // Extract thread ID from task ID and delegate to threads.ts
+  const threadId = extractThreadIdFromTaskId(taskId)
+  
+  return completeThreadSession(repoRoot, streamId, threadId, sessionId, status, exitCode)
 }
 
 /**
  * Get the current session for a task
  * Returns the session record if there's an active session, null otherwise
+ * 
+ * NOTE: Session data is stored in threads.json, not tasks.json.
  */
 export function getCurrentTaskSession(
   repoRoot: string,
   streamId: string,
   taskId: string,
 ): SessionRecord | null {
-  const task = getTaskById(repoRoot, streamId, taskId)
-  if (!task || !task.currentSessionId || !task.sessions) return null
+  const threadId = extractThreadIdFromTaskId(taskId)
+  const thread = getThreadMetadata(repoRoot, streamId, threadId)
+  if (!thread || !thread.currentSessionId) return null
 
-  return task.sessions.find((s) => s.sessionId === task.currentSessionId) || null
+  return thread.sessions.find((s) => s.sessionId === thread.currentSessionId) || null
 }
 
 /**
  * Get all sessions for a task
  * Returns empty array if task not found or has no sessions
+ * 
+ * NOTE: Session data is stored in threads.json, not tasks.json.
  */
 export function getTaskSessions(
   repoRoot: string,
   streamId: string,
   taskId: string,
 ): SessionRecord[] {
-  const task = getTaskById(repoRoot, streamId, taskId)
-  if (!task || !task.sessions) return []
-  return task.sessions
+  const threadId = extractThreadIdFromTaskId(taskId)
+  const thread = getThreadMetadata(repoRoot, streamId, threadId)
+  if (!thread) return []
+  return thread.sessions
 }
 
 // ============================================
@@ -384,26 +451,11 @@ export function getTaskSessions(
 // ============================================
 
 /**
- * Execute a function with file lock on tasks.json
- * Used for safe concurrent writes from multiple parallel threads
- */
-async function withTasksLock<T>(
-  tasksPath: string,
-  fn: () => T
-): Promise<T> {
-  const release = await lockfile.lock(tasksPath, {
-    retries: { retries: 10, minTimeout: 50, maxTimeout: 500 }
-  })
-  try {
-    return fn()
-  } finally {
-    await release()
-  }
-}
-
-/**
  * Start a session for a task with file locking (safe for concurrent access)
- * Use this when multiple threads may write to tasks.json simultaneously
+ * Use this when multiple threads may write to threads.json simultaneously
+ * 
+ * NOTE: Session data is stored in threads.json, not tasks.json.
+ * The task must exist in tasks.json for validation.
  * 
  * @param repoRoot - Repository root path
  * @param streamId - Workstream ID
@@ -425,42 +477,24 @@ export async function startTaskSessionLocked(
   
   if (!existsSync(filePath)) return null
 
-  return withTasksLock(filePath, () => {
-    const tasksFile = readTasksFile(repoRoot, streamId)
-    if (!tasksFile) return null
+  // Verify task exists
+  const tasksFile = readTasksFile(repoRoot, streamId)
+  if (!tasksFile) return null
 
-    const taskIndex = tasksFile.tasks.findIndex((t) => t.id === taskId)
-    if (taskIndex === -1) return null
+  const taskIndex = tasksFile.tasks.findIndex((t) => t.id === taskId)
+  if (taskIndex === -1) return null
 
-    const task = tasksFile.tasks[taskIndex]!
-
-    // Create new session record with provided session ID
-    const sessionRecord: SessionRecord = {
-      sessionId,
-      agentName,
-      model,
-      startedAt: new Date().toISOString(),
-      status: "running",
-    }
-
-    // Initialize sessions array if needed
-    if (!task.sessions) {
-      task.sessions = []
-    }
-
-    // Add session to array and set as current
-    task.sessions.push(sessionRecord)
-    task.currentSessionId = sessionRecord.sessionId
-    task.updated_at = new Date().toISOString()
-
-    writeTasksFile(repoRoot, streamId, tasksFile)
-    return sessionRecord
-  })
+  // Extract thread ID from task ID and delegate to threads.ts
+  const threadId = extractThreadIdFromTaskId(taskId)
+  
+  return startThreadSessionLocked(repoRoot, streamId, threadId, agentName, model, sessionId)
 }
 
 /**
  * Complete a session for a task with file locking (safe for concurrent access)
- * Use this when multiple threads may write to tasks.json simultaneously
+ * Use this when multiple threads may write to threads.json simultaneously
+ * 
+ * NOTE: Session data is stored in threads.json, not tasks.json.
  * 
  * @param repoRoot - Repository root path
  * @param streamId - Workstream ID
@@ -478,45 +512,18 @@ export async function completeTaskSessionLocked(
   status: SessionStatus,
   exitCode?: number,
 ): Promise<SessionRecord | null> {
-  const filePath = getTasksFilePath(repoRoot, streamId)
+  // Extract thread ID from task ID and delegate to threads.ts
+  const threadId = extractThreadIdFromTaskId(taskId)
   
-  if (!existsSync(filePath)) return null
-
-  return withTasksLock(filePath, () => {
-    const tasksFile = readTasksFile(repoRoot, streamId)
-    if (!tasksFile) return null
-
-    const taskIndex = tasksFile.tasks.findIndex((t) => t.id === taskId)
-    if (taskIndex === -1) return null
-
-    const task = tasksFile.tasks[taskIndex]!
-
-    if (!task.sessions) return null
-
-    const sessionIndex = task.sessions.findIndex((s) => s.sessionId === sessionId)
-    if (sessionIndex === -1) return null
-
-    const session = task.sessions[sessionIndex]!
-
-    // Update session with completion info
-    session.status = status
-    session.completedAt = new Date().toISOString()
-    if (exitCode !== undefined) {
-      session.exitCode = exitCode
-    }
-
-    // Clear currentSessionId since session is complete
-    task.currentSessionId = undefined
-    task.updated_at = new Date().toISOString()
-
-    writeTasksFile(repoRoot, streamId, tasksFile)
-    return session
-  })
+  return completeThreadSessionLocked(repoRoot, streamId, threadId, sessionId, status, exitCode)
 }
 
 /**
  * Start sessions for multiple tasks atomically with file locking
  * Use this when spawning parallel threads to record all sessions in one write
+ * 
+ * NOTE: Session data is stored in threads.json, not tasks.json.
+ * Tasks must exist in tasks.json for validation.
  * 
  * @param repoRoot - Repository root path
  * @param streamId - Workstream ID
@@ -537,52 +544,41 @@ export async function startMultipleSessionsLocked(
   
   if (!existsSync(filePath)) return []
 
-  return withTasksLock(filePath, () => {
-    const tasksFile = readTasksFile(repoRoot, streamId)
-    if (!tasksFile) return []
+  // Verify tasks exist and convert to thread sessions
+  const tasksFile = readTasksFile(repoRoot, streamId)
+  if (!tasksFile) return []
 
-    const createdSessions: SessionRecord[] = []
-    const now = new Date().toISOString()
+  const threadSessions: Array<{
+    threadId: string
+    agentName: string
+    model: string
+    sessionId: string
+  }> = []
 
-    for (const sessionInfo of sessions) {
-      const taskIndex = tasksFile.tasks.findIndex((t) => t.id === sessionInfo.taskId)
-      if (taskIndex === -1) continue
+  for (const sessionInfo of sessions) {
+    const taskIndex = tasksFile.tasks.findIndex((t) => t.id === sessionInfo.taskId)
+    if (taskIndex === -1) continue
 
-      const task = tasksFile.tasks[taskIndex]!
+    const threadId = extractThreadIdFromTaskId(sessionInfo.taskId)
+    threadSessions.push({
+      threadId,
+      agentName: sessionInfo.agentName,
+      model: sessionInfo.model,
+      sessionId: sessionInfo.sessionId,
+    })
+  }
 
-      // Create new session record
-      const sessionRecord: SessionRecord = {
-        sessionId: sessionInfo.sessionId,
-        agentName: sessionInfo.agentName,
-        model: sessionInfo.model,
-        startedAt: now,
-        status: "running",
-      }
+  if (threadSessions.length === 0) return []
 
-      // Initialize sessions array if needed
-      if (!task.sessions) {
-        task.sessions = []
-      }
-
-      // Add session to array and set as current
-      task.sessions.push(sessionRecord)
-      task.currentSessionId = sessionRecord.sessionId
-      task.updated_at = now
-
-      createdSessions.push(sessionRecord)
-    }
-
-    if (createdSessions.length > 0) {
-      writeTasksFile(repoRoot, streamId, tasksFile)
-    }
-
-    return createdSessions
-  })
+  // Delegate to threads.ts
+  return startMultipleThreadSessionsLocked(repoRoot, streamId, threadSessions)
 }
 
 /**
  * Complete sessions for multiple tasks atomically with file locking
  * Use this on batch completion to update all session statuses in one write
+ * 
+ * NOTE: Session data is stored in threads.json, not tasks.json.
  * 
  * @param repoRoot - Repository root path
  * @param streamId - Workstream ID
@@ -599,55 +595,23 @@ export async function completeMultipleSessionsLocked(
     exitCode?: number
   }>,
 ): Promise<SessionRecord[]> {
-  const filePath = getTasksFilePath(repoRoot, streamId)
-  
-  if (!existsSync(filePath)) return []
+  if (completions.length === 0) return []
 
-  return withTasksLock(filePath, () => {
-    const tasksFile = readTasksFile(repoRoot, streamId)
-    if (!tasksFile) return []
+  // Convert to thread completions
+  const threadCompletions = completions.map((completion) => ({
+    threadId: extractThreadIdFromTaskId(completion.taskId),
+    sessionId: completion.sessionId,
+    status: completion.status,
+    exitCode: completion.exitCode,
+  }))
 
-    const updatedSessions: SessionRecord[] = []
-    const now = new Date().toISOString()
-
-    for (const completion of completions) {
-      const taskIndex = tasksFile.tasks.findIndex((t) => t.id === completion.taskId)
-      if (taskIndex === -1) continue
-
-      const task = tasksFile.tasks[taskIndex]!
-
-      if (!task.sessions) continue
-
-      const sessionIndex = task.sessions.findIndex((s) => s.sessionId === completion.sessionId)
-      if (sessionIndex === -1) continue
-
-      const session = task.sessions[sessionIndex]!
-
-      // Update session with completion info
-      session.status = completion.status
-      session.completedAt = now
-      if (completion.exitCode !== undefined) {
-        session.exitCode = completion.exitCode
-      }
-
-      // Clear currentSessionId since session is complete
-      task.currentSessionId = undefined
-      task.updated_at = now
-
-      updatedSessions.push(session)
-    }
-
-    if (updatedSessions.length > 0) {
-      writeTasksFile(repoRoot, streamId, tasksFile)
-    }
-
-    return updatedSessions
-  })
+  // Delegate to threads.ts
+  return completeMultipleThreadSessionsLocked(repoRoot, streamId, threadCompletions)
 }
 
 /**
  * Read tasks.json from a workstream directory
- * Automatically migrates older tasks to include session fields
+ * Automatically migrates session data to threads.json if sessions exist in tasks.json
  * Returns null if file doesn't exist
  */
 export function readTasksFile(
@@ -661,9 +625,20 @@ export function readTasksFile(
   }
 
   const content = readFileSync(filePath, "utf-8")
-  const tasksFile = JSON.parse(content) as TasksFile
+  let tasksFile = JSON.parse(content) as TasksFile
 
-  // Migrate tasks to include session fields if missing
+  // Check for sessions in tasks.json and migrate to threads.json
+  if (hasSessionsInTasksJson(tasksFile)) {
+    const migrationResult = migrateSessionsToThreads(repoRoot, streamId, tasksFile)
+    if (migrationResult.migrated) {
+      // Re-read the cleaned tasks file
+      const cleanedContent = readFileSync(filePath, "utf-8")
+      tasksFile = JSON.parse(cleanedContent) as TasksFile
+    }
+    // If migration failed, continue with the original data (sessions will still work via threads.ts fallback)
+  }
+
+  // Migrate tasks to include session fields if missing (legacy compatibility)
   return migrateTasksFileSessions(tasksFile)
 }
 

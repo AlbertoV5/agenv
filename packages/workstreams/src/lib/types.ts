@@ -370,9 +370,18 @@ export interface Task {
     url: string
     state: "open" | "closed"
   }
-  // Session tracking fields (optional for backwards compatibility)
-  sessions?: SessionRecord[] // Array of session records to track retries
-  currentSessionId?: string // Active session ID for resume functionality
+  /**
+   * @deprecated Session data is now stored in threads.json.
+   * Use ThreadsStore functions (getThreadMetadata, etc.) to access session data.
+   * This field will be automatically migrated and cleared on first read.
+   */
+  sessions?: SessionRecord[]
+  /**
+   * @deprecated Session data is now stored in threads.json.
+   * Use ThreadsStore functions (getThreadMetadata, etc.) to access session data.
+   * This field will be automatically migrated and cleared on first read.
+   */
+  currentSessionId?: string
 }
 
 /**
