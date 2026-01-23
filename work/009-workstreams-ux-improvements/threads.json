@@ -1,0 +1,465 @@
+{
+  "version": "1.0.0",
+  "stream_id": "009-workstreams-ux-improvements",
+  "last_updated": "2026-01-23T22:24:32.128Z",
+  "threads": [
+    {
+      "threadId": "01.01.01",
+      "sessions": [
+        {
+          "sessionId": "ses_mkrdcbqn_7zf4i6",
+          "agentName": "systems-engineer",
+          "model": "anthropic/claude-opus-4-5",
+          "startedAt": "2026-01-23T21:04:13.681Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T21:10:04.873Z"
+        }
+      ],
+      "githubIssue": {
+        "number": 25,
+        "url": "https://github.com/AlbertoV5/agenv/issues/25",
+        "state": "closed"
+      }
+    },
+    {
+      "threadId": "01.01.02",
+      "sessions": [
+        {
+          "sessionId": "ses_mkrdcbqn_iytsbh",
+          "agentName": "systems-engineer",
+          "model": "anthropic/claude-opus-4-5",
+          "startedAt": "2026-01-23T21:04:13.681Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T21:10:04.873Z"
+        }
+      ],
+      "githubIssue": {
+        "number": 26,
+        "url": "https://github.com/AlbertoV5/agenv/issues/26",
+        "state": "closed"
+      }
+    },
+    {
+      "threadId": "02.01.01",
+      "sessions": [
+        {
+          "sessionId": "ses_mkrdk4gp_7r3u7f",
+          "agentName": "systems-engineer",
+          "model": "anthropic/claude-opus-4-5",
+          "startedAt": "2026-01-23T21:10:17.500Z",
+          "status": "running"
+        }
+      ],
+      "currentSessionId": "ses_mkrdk4gp_7r3u7f",
+      "githubIssue": {
+        "number": 27,
+        "url": "https://github.com/AlbertoV5/agenv/issues/27",
+        "state": "open"
+      }
+    },
+    {
+      "threadId": "02.01.02",
+      "sessions": [
+        {
+          "sessionId": "ses_mkrdk4gq_ircq6g",
+          "agentName": "systems-engineer",
+          "model": "anthropic/claude-opus-4-5",
+          "startedAt": "2026-01-23T21:10:17.500Z",
+          "status": "running"
+        }
+      ],
+      "currentSessionId": "ses_mkrdk4gq_ircq6g",
+      "githubIssue": {
+        "number": 28,
+        "url": "https://github.com/AlbertoV5/agenv/issues/28",
+        "state": "closed"
+      }
+    },
+    {
+      "threadId": "03.01.01",
+      "sessions": [
+        {
+          "sessionId": "ses_mkrdtpmi_1l8i18",
+          "agentName": "systems-engineer",
+          "model": "anthropic/claude-opus-4-5",
+          "startedAt": "2026-01-23T21:17:44.829Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T21:25:40.460Z"
+        }
+      ],
+      "githubIssue": {
+        "number": 29,
+        "url": "https://github.com/AlbertoV5/agenv/issues/29",
+        "state": "open"
+      }
+    },
+    {
+      "threadId": "03.01.02",
+      "sessions": [
+        {
+          "sessionId": "ses_mkrdtpmi_eidc5z",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-23T21:17:44.829Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T21:25:40.460Z"
+        }
+      ],
+      "githubIssue": {
+        "number": 30,
+        "url": "https://github.com/AlbertoV5/agenv/issues/30",
+        "state": "open"
+      }
+    },
+    {
+      "threadId": "03.01.03",
+      "sessions": [
+        {
+          "sessionId": "ses_mkrdtpmi_gcd83w",
+          "agentName": "code-reviewer",
+          "model": "google/antigravity-gemini-3-pro",
+          "startedAt": "2026-01-23T21:17:44.829Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T21:25:40.460Z"
+        }
+      ],
+      "githubIssue": {
+        "number": 31,
+        "url": "https://github.com/AlbertoV5/agenv/issues/31",
+        "state": "open"
+      }
+    },
+    {
+      "threadId": "03.02.01",
+      "sessions": [
+        {
+          "sessionId": "ses_mkre46g8_25a38d",
+          "agentName": "systems-engineer",
+          "model": "anthropic/claude-opus-4-5",
+          "startedAt": "2026-01-23T21:25:53.195Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T21:31:56.646Z"
+        }
+      ],
+      "githubIssue": {
+        "number": 32,
+        "url": "https://github.com/AlbertoV5/agenv/issues/32",
+        "state": "open"
+      }
+    },
+    {
+      "threadId": "04.01.01",
+      "sessions": [
+        {
+          "sessionId": "ses_mkrec779_6kpdqv",
+          "agentName": "documentation-minimalist",
+          "model": "google/antigravity-gemini-3-pro",
+          "startedAt": "2026-01-23T21:32:07.416Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T21:34:33.773Z"
+        }
+      ],
+      "githubIssue": {
+        "number": 33,
+        "url": "https://github.com/AlbertoV5/agenv/issues/33",
+        "state": "open"
+      }
+    },
+    {
+      "threadId": "04.01.02",
+      "sessions": [
+        {
+          "sessionId": "ses_mkrec779_d103vx",
+          "agentName": "code-reviewer",
+          "model": "google/antigravity-gemini-3-pro",
+          "startedAt": "2026-01-23T21:32:07.416Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T21:34:33.773Z"
+        }
+      ],
+      "githubIssue": {
+        "number": 34,
+        "url": "https://github.com/AlbertoV5/agenv/issues/34",
+        "state": "open"
+      }
+    },
+    {
+      "threadId": "05.01.01",
+      "sessions": [
+        {
+          "sessionId": "ses_mkrekn7h_t5wr1o",
+          "agentName": "systems-engineer",
+          "model": "anthropic/claude-opus-4-5",
+          "startedAt": "2026-01-23T21:38:41.409Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T21:47:28.750Z"
+        }
+      ]
+    },
+    {
+      "threadId": "05.01.02",
+      "sessions": [
+        {
+          "sessionId": "ses_mkrekn7h_303ktw",
+          "agentName": "systems-engineer",
+          "model": "anthropic/claude-opus-4-5",
+          "startedAt": "2026-01-23T21:38:41.409Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T21:47:28.750Z"
+        }
+      ]
+    },
+    {
+      "threadId": "05.01.03",
+      "sessions": [
+        {
+          "sessionId": "ses_mkrekn7h_z1imii",
+          "agentName": "systems-engineer",
+          "model": "anthropic/claude-opus-4-5",
+          "startedAt": "2026-01-23T21:38:41.409Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T21:47:28.750Z"
+        }
+      ]
+    },
+    {
+      "threadId": "06.01.01",
+      "sessions": [
+        {
+          "sessionId": "ses_mkrf72eg_gdxiaq",
+          "agentName": "systems-engineer",
+          "model": "anthropic/claude-opus-4-5",
+          "startedAt": "2026-01-23T21:56:07.531Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T22:03:49.839Z"
+        }
+      ],
+      "opencodeSessionId": "ses_413247667ffe2YnaJTd7VspwDh"
+    },
+    {
+      "threadId": "06.01.02",
+      "sessions": [
+        {
+          "sessionId": "ses_mkrf72eg_vbup01",
+          "agentName": "systems-engineer",
+          "model": "anthropic/claude-opus-4-5",
+          "startedAt": "2026-01-23T21:56:07.531Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T22:03:49.839Z"
+        }
+      ],
+      "opencodeSessionId": "ses_413247196ffeCblOmCEU7oZgUv"
+    },
+    {
+      "threadId": "06.01.03",
+      "sessions": [
+        {
+          "sessionId": "ses_mkrf72eg_rii8hs",
+          "agentName": "systems-engineer",
+          "model": "anthropic/claude-opus-4-5",
+          "startedAt": "2026-01-23T21:56:07.531Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T22:03:49.839Z"
+        }
+      ],
+      "opencodeSessionId": "ses_413246c94ffeLa67ljPGl1DdxI"
+    },
+    {
+      "threadId": "06.01.04",
+      "sessions": [
+        {
+          "sessionId": "ses_mkrf72eg_fyzq52",
+          "agentName": "systems-engineer",
+          "model": "anthropic/claude-opus-4-5",
+          "startedAt": "2026-01-23T21:56:07.531Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T22:03:49.839Z"
+        }
+      ],
+      "opencodeSessionId": "ses_41324675affehtuzAiWQO6dRMQ"
+    },
+    {
+      "threadId": "06.02.01",
+      "sessions": [
+        {
+          "sessionId": "ses_mkrfh4ae_j7v0w2",
+          "agentName": "code-reviewer",
+          "model": "google/antigravity-gemini-3-pro",
+          "startedAt": "2026-01-23T22:03:56.537Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T22:15:04.088Z"
+        },
+        {
+          "sessionId": "ses_mkrfw0pz_yjga99",
+          "agentName": "code-reviewer",
+          "model": "google/antigravity-gemini-3-pro",
+          "startedAt": "2026-01-23T22:15:31.753Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T22:15:43.850Z"
+        }
+      ],
+      "opencodeSessionId": "ses_4131d4cdeffez4y6P2iRnIRGof"
+    },
+    {
+      "threadId": "06.02.02",
+      "sessions": [
+        {
+          "sessionId": "ses_mkrfh4ae_if1pz2",
+          "agentName": "code-reviewer",
+          "model": "google/antigravity-gemini-3-pro",
+          "startedAt": "2026-01-23T22:03:56.537Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T22:15:04.088Z"
+        },
+        {
+          "sessionId": "ses_mkrfw0pz_d6ma85",
+          "agentName": "code-reviewer",
+          "model": "google/antigravity-gemini-3-pro",
+          "startedAt": "2026-01-23T22:15:31.753Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T22:15:43.850Z"
+        }
+      ],
+      "opencodeSessionId": "ses_4131d4880ffeAOrsCZbmBeJz40"
+    },
+    {
+      "threadId": "06.02.03",
+      "sessions": [
+        {
+          "sessionId": "ses_mkrfh4ae_v93qxf",
+          "agentName": "code-reviewer",
+          "model": "google/antigravity-gemini-3-pro",
+          "startedAt": "2026-01-23T22:03:56.537Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T22:15:04.088Z"
+        },
+        {
+          "sessionId": "ses_mkrfw0pz_bwo7ql",
+          "agentName": "code-reviewer",
+          "model": "google/antigravity-gemini-3-pro",
+          "startedAt": "2026-01-23T22:15:31.753Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T22:15:43.850Z"
+        },
+        {
+          "sessionId": "ses_mkrfxxlh_wdhgfs",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4.5",
+          "startedAt": "2026-01-23T22:17:01.013Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T22:17:19.318Z"
+        },
+        {
+          "sessionId": "ses_mkrfxxlh_zqlqk1",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4.5",
+          "startedAt": "2026-01-23T22:17:01.013Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T22:17:19.319Z"
+        },
+        {
+          "sessionId": "ses_mkrfxxli_0f6hm9",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4.5",
+          "startedAt": "2026-01-23T22:17:01.014Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T22:17:19.319Z"
+        },
+        {
+          "sessionId": "ses_mkrfxxli_j89ash",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4.5",
+          "startedAt": "2026-01-23T22:17:01.014Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T22:17:19.320Z"
+        },
+        {
+          "sessionId": "ses_mkrfxxli_owscw4",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4.5",
+          "startedAt": "2026-01-23T22:17:01.014Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T22:17:19.320Z"
+        },
+        {
+          "sessionId": "ses_mkrfxxli_o03bi4",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4.5",
+          "startedAt": "2026-01-23T22:17:01.014Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T22:17:19.320Z"
+        },
+        {
+          "sessionId": "ses_mkrfz1gi_qjr9g8",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-23T22:17:52.674Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T22:24:32.126Z"
+        },
+        {
+          "sessionId": "ses_mkrfz1gi_y5i003",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-23T22:17:52.674Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T22:24:32.127Z"
+        },
+        {
+          "sessionId": "ses_mkrfz1gj_aqwghr",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-23T22:17:52.675Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T22:24:32.127Z"
+        },
+        {
+          "sessionId": "ses_mkrfz1gj_axh2ls",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-23T22:17:52.675Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T22:24:32.128Z"
+        },
+        {
+          "sessionId": "ses_mkrfz1gj_wl82s7",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-23T22:17:52.675Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T22:24:32.128Z"
+        },
+        {
+          "sessionId": "ses_mkrfz1gj_u1cy5b",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-23T22:17:52.675Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T22:24:32.128Z"
+        }
+      ]
+    },
+    {
+      "threadId": "06.02.04",
+      "sessions": [
+        {
+          "sessionId": "ses_mkrfh4ae_6lfeyt",
+          "agentName": "code-reviewer",
+          "model": "google/antigravity-gemini-3-pro",
+          "startedAt": "2026-01-23T22:03:56.537Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T22:15:04.088Z"
+        },
+        {
+          "sessionId": "ses_mkrfw0pz_0f88gk",
+          "agentName": "code-reviewer",
+          "model": "google/antigravity-gemini-3-pro",
+          "startedAt": "2026-01-23T22:15:31.753Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T22:15:43.850Z"
+        }
+      ],
+      "opencodeSessionId": "ses_4131d3e1fffeVybU7Dlh0Wlmtt"
+    }
+  ]
+}

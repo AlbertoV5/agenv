@@ -153,7 +153,7 @@ export type FixAction = "resume" | "retry" | "change-agent" | "new-stage"
 export function calculateThreadStatus(tasks: Task[]): "completed" | "failed" | "incomplete" {
   if (tasks.length === 0) return "incomplete"
   
-  const allCompleted = tasks.every(t => t.status === "completed")
+  const allCompleted = tasks.every(t => t.status === "completed" || t.status === "cancelled")
   if (allCompleted) return "completed"
   
   const hasFailed = tasks.some(t => 

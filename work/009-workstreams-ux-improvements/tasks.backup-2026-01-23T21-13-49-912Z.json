@@ -1,0 +1,687 @@
+{
+  "version": "1.0.0",
+  "stream_id": "009-workstreams-ux-improvements",
+  "last_updated": "2026-01-23T21:12:55.575Z",
+  "tasks": [
+    {
+      "id": "01.01.01.01",
+      "name": "Create NotificationProvider interface with event types (thread_complete, batch_complete, error) and playNotification method",
+      "stage_name": "Core Infrastructure",
+      "batch_name": "Foundation",
+      "thread_name": "Notification System",
+      "status": "completed",
+      "created_at": "2026-01-23T21:00:01.346Z",
+      "updated_at": "2026-01-23T21:10:04.873Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": [
+        {
+          "sessionId": "ses_mkrdcbqn_7zf4i6",
+          "agentName": "systems-engineer",
+          "model": "anthropic/claude-opus-4-5",
+          "startedAt": "2026-01-23T21:04:13.681Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T21:10:04.873Z"
+        }
+      ],
+      "github_issue": {
+        "number": 25,
+        "url": "https://github.com/AlbertoV5/agenv/issues/25",
+        "state": "closed"
+      },
+      "report": "Created NotificationProvider interface with NotificationEvent type and playNotification method in src/lib/notifications.ts"
+    },
+    {
+      "id": "01.01.01.02",
+      "name": "Implement MacOSSoundProvider using afplay with default system sounds from /System/Library/Sounds/",
+      "stage_name": "Core Infrastructure",
+      "batch_name": "Foundation",
+      "thread_name": "Notification System",
+      "status": "completed",
+      "created_at": "2026-01-23T21:00:01.346Z",
+      "updated_at": "2026-01-23T21:05:51.088Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": [],
+      "report": "Implemented MacOSSoundProvider class using afplay with default system sounds from /System/Library/Sounds/ (Glass.aiff, Hero.aiff, Basso.aiff)"
+    },
+    {
+      "id": "01.01.01.03",
+      "name": "Add configuration loading from ~/.config/agenv/notifications.json for custom sound mappings",
+      "stage_name": "Core Infrastructure",
+      "batch_name": "Foundation",
+      "thread_name": "Notification System",
+      "status": "completed",
+      "created_at": "2026-01-23T21:00:01.346Z",
+      "updated_at": "2026-01-23T21:05:53.876Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": [],
+      "report": "Added loadConfig function that reads from ~/.config/agenv/notifications.json with SoundMappings and NotificationConfig interfaces"
+    },
+    {
+      "id": "01.01.01.04",
+      "name": "Create ExternalApiProvider stub interface for future webhook/API integrations",
+      "stage_name": "Core Infrastructure",
+      "batch_name": "Foundation",
+      "thread_name": "Notification System",
+      "status": "completed",
+      "created_at": "2026-01-23T21:00:01.346Z",
+      "updated_at": "2026-01-23T21:05:56.561Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": [],
+      "report": "Created ExternalApiProvider stub class with WebhookPayload interface and buildPayload method for future webhook integrations"
+    },
+    {
+      "id": "01.01.01.05",
+      "name": "Write unit tests for notifications.ts with mocked audio playback",
+      "stage_name": "Core Infrastructure",
+      "batch_name": "Foundation",
+      "thread_name": "Notification System",
+      "status": "completed",
+      "created_at": "2026-01-23T21:00:01.346Z",
+      "updated_at": "2026-01-23T21:07:04.307Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": [],
+      "report": "Created tests/notifications.test.ts with 30 tests covering loadConfig, MacOSSoundProvider, ExternalApiProvider, NotificationManager, and convenience functions. All tests pass with mocked audio playback."
+    },
+    {
+      "id": "01.01.02.01",
+      "name": "Define ThreadMetadata interface and ThreadsJson schema in types.ts",
+      "stage_name": "Core Infrastructure",
+      "batch_name": "Foundation",
+      "thread_name": "Thread Metadata Store",
+      "status": "completed",
+      "created_at": "2026-01-23T21:00:01.346Z",
+      "updated_at": "2026-01-23T21:10:04.873Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": [
+        {
+          "sessionId": "ses_mkrdcbqn_iytsbh",
+          "agentName": "systems-engineer",
+          "model": "anthropic/claude-opus-4-5",
+          "startedAt": "2026-01-23T21:04:13.681Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T21:10:04.873Z"
+        }
+      ],
+      "github_issue": {
+        "number": 26,
+        "url": "https://github.com/AlbertoV5/agenv/issues/26",
+        "state": "closed"
+      },
+      "report": "Added ThreadMetadata interface and ThreadsJson schema to types.ts"
+    },
+    {
+      "id": "01.01.02.02",
+      "name": "Create ThreadsStore class with CRUD operations (loadThreads, saveThreads, getThreadMetadata, updateThreadMetadata)",
+      "stage_name": "Core Infrastructure",
+      "batch_name": "Foundation",
+      "thread_name": "Thread Metadata Store",
+      "status": "completed",
+      "created_at": "2026-01-23T21:00:01.346Z",
+      "updated_at": "2026-01-23T21:06:18.736Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": [],
+      "report": "Created ThreadsStore with loadThreads, saveThreads, getThreadMetadata, updateThreadMetadata and CRUD operations"
+    },
+    {
+      "id": "01.01.02.03",
+      "name": "Implement file locking using proper-lockfile for concurrent access safety",
+      "stage_name": "Core Infrastructure",
+      "batch_name": "Foundation",
+      "thread_name": "Thread Metadata Store",
+      "status": "completed",
+      "created_at": "2026-01-23T21:00:01.346Z",
+      "updated_at": "2026-01-23T21:06:20.204Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": [],
+      "report": "Implemented file locking with withThreadsLock, updateThreadMetadataLocked, modifyThreads, and session locking functions"
+    },
+    {
+      "id": "01.01.02.04",
+      "name": "Create migrateFromTasksJson utility to move sessions and github issues from tasks.json to threads.json",
+      "stage_name": "Core Infrastructure",
+      "batch_name": "Foundation",
+      "thread_name": "Thread Metadata Store",
+      "status": "completed",
+      "created_at": "2026-01-23T21:00:01.346Z",
+      "updated_at": "2026-01-23T21:06:21.581Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": [],
+      "report": "Created migrateFromTasksJson utility to migrate sessions and github issues, plus validateMigration for verification"
+    },
+    {
+      "id": "01.01.02.05",
+      "name": "Write unit tests for threads.ts including CRUD, migration, and concurrent access tests",
+      "stage_name": "Core Infrastructure",
+      "batch_name": "Foundation",
+      "thread_name": "Thread Metadata Store",
+      "status": "completed",
+      "created_at": "2026-01-23T21:00:01.346Z",
+      "updated_at": "2026-01-23T21:08:11.002Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": [],
+      "report": "Created comprehensive tests for CRUD, sessions, locking, GitHub issues, migration, and concurrent access - all 35 tests pass"
+    },
+    {
+      "id": "02.01.01.01",
+      "name": "Update startTaskSession and startTaskSessionLocked to write to threads.json via ThreadsStore",
+      "stage_name": "Integration",
+      "batch_name": "System Integration",
+      "thread_name": "Tasks.ts Refactor",
+      "status": "completed",
+      "created_at": "2026-01-23T21:00:01.346Z",
+      "updated_at": "2026-01-23T21:11:45.080Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": [
+        {
+          "sessionId": "ses_mkrdk4gp_7r3u7f",
+          "agentName": "systems-engineer",
+          "model": "anthropic/claude-opus-4-5",
+          "startedAt": "2026-01-23T21:10:17.500Z",
+          "status": "running"
+        }
+      ],
+      "github_issue": {
+        "number": 27,
+        "url": "https://github.com/AlbertoV5/agenv/issues/27",
+        "state": "open"
+      },
+      "currentSessionId": "ses_mkrdk4gp_7r3u7f",
+      "report": "Updated startTaskSession, startTaskSessionLocked, and startMultipleSessionsLocked to delegate to threads.ts"
+    },
+    {
+      "id": "02.01.01.02",
+      "name": "Update completeTaskSession and completeTaskSessionLocked to write to threads.json",
+      "stage_name": "Integration",
+      "batch_name": "System Integration",
+      "thread_name": "Tasks.ts Refactor",
+      "status": "completed",
+      "created_at": "2026-01-23T21:00:01.346Z",
+      "updated_at": "2026-01-23T21:12:19.135Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": [],
+      "report": "Updated completeTaskSession, completeTaskSessionLocked, and completeMultipleSessionsLocked to delegate to threads.ts"
+    },
+    {
+      "id": "02.01.01.03",
+      "name": "Update getCurrentTaskSession and getTaskSessions to read from threads.json",
+      "stage_name": "Integration",
+      "batch_name": "System Integration",
+      "thread_name": "Tasks.ts Refactor",
+      "status": "completed",
+      "created_at": "2026-01-23T21:00:01.346Z",
+      "updated_at": "2026-01-23T21:12:52.135Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": [],
+      "report": "Updated getCurrentTaskSession and getTaskSessions to read from threads.json via getThreadMetadata. Removed unused withTasksLock function and lockfile import."
+    },
+    {
+      "id": "02.01.01.04",
+      "name": "Add auto-migration check on load: if sessions exist in tasks.json, migrate them with backup",
+      "stage_name": "Integration",
+      "batch_name": "System Integration",
+      "thread_name": "Tasks.ts Refactor",
+      "status": "in_progress",
+      "created_at": "2026-01-23T21:00:01.346Z",
+      "updated_at": "2026-01-23T21:12:52.666Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": []
+    },
+    {
+      "id": "02.01.01.05",
+      "name": "Mark session fields in Task interface as deprecated, update session-tracking.test.ts",
+      "stage_name": "Integration",
+      "batch_name": "System Integration",
+      "thread_name": "Tasks.ts Refactor",
+      "status": "pending",
+      "created_at": "2026-01-23T21:00:01.346Z",
+      "updated_at": "2026-01-23T21:00:01.346Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": []
+    },
+    {
+      "id": "02.01.02.01",
+      "name": "Import notification service in multi.ts and add --silent flag to disable sounds",
+      "stage_name": "Integration",
+      "batch_name": "System Integration",
+      "thread_name": "Notification Integration",
+      "status": "completed",
+      "created_at": "2026-01-23T21:00:01.346Z",
+      "updated_at": "2026-01-23T21:12:55.575Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": [
+        {
+          "sessionId": "ses_mkrdk4gq_ircq6g",
+          "agentName": "systems-engineer",
+          "model": "anthropic/claude-opus-4-5",
+          "startedAt": "2026-01-23T21:10:17.500Z",
+          "status": "running"
+        }
+      ],
+      "github_issue": {
+        "number": 28,
+        "url": "https://github.com/AlbertoV5/agenv/issues/28",
+        "state": "closed"
+      },
+      "currentSessionId": "ses_mkrdk4gq_ircq6g",
+      "report": "Added import for playNotification from notifications.ts. Added --silent flag to MultiCliArgs interface, help text, and argument parsing."
+    },
+    {
+      "id": "02.01.02.02",
+      "name": "Detect thread completion in status polling loop and call playNotification('thread_complete')",
+      "stage_name": "Integration",
+      "batch_name": "System Integration",
+      "thread_name": "Notification Integration",
+      "status": "completed",
+      "created_at": "2026-01-23T21:00:01.346Z",
+      "updated_at": "2026-01-23T21:12:00.087Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": [],
+      "report": "Added thread_complete notification call when thread pane exits with code 0. Plays for each completed thread in the child.on(close) callback."
+    },
+    {
+      "id": "02.01.02.03",
+      "name": "Call playNotification('batch_complete') when all threads in batch complete",
+      "stage_name": "Integration",
+      "batch_name": "System Integration",
+      "thread_name": "Notification Integration",
+      "status": "completed",
+      "created_at": "2026-01-23T21:00:01.346Z",
+      "updated_at": "2026-01-23T21:12:01.379Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": [],
+      "report": "Added batch_complete notification after all threads in batch have exited (no running threads). Added 100ms delay to avoid sound overlap with thread sounds."
+    },
+    {
+      "id": "02.01.02.04",
+      "name": "Call playNotification('error') on thread failure detection",
+      "stage_name": "Integration",
+      "batch_name": "System Integration",
+      "thread_name": "Notification Integration",
+      "status": "completed",
+      "created_at": "2026-01-23T21:00:01.346Z",
+      "updated_at": "2026-01-23T21:12:02.689Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": [],
+      "report": "Added error notification when thread fails (non-zero exit code) and in child.on(error) handler for tmux attachment failures."
+    },
+    {
+      "id": "02.01.02.05",
+      "name": "Add notification integration tests to multi.test.ts with mocked playback",
+      "stage_name": "Integration",
+      "batch_name": "System Integration",
+      "thread_name": "Notification Integration",
+      "status": "completed",
+      "created_at": "2026-01-23T21:00:01.346Z",
+      "updated_at": "2026-01-23T21:12:54.352Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": [],
+      "report": "Added comprehensive notification integration tests to multi.test.ts with mocked playNotification. Tests cover: thread completion, thread failure, batch completion, silent mode, and mixed results scenarios. All 15 tests pass."
+    },
+    {
+      "id": "03.01.01.01",
+      "name": "Debug createGridLayout in tmux.ts - trace split sequence and identify why layout is 1+3 instead of 2x2",
+      "stage_name": "Tmux & Fix Command",
+      "batch_name": "Tmux Improvements",
+      "thread_name": "Grid Layout Fix",
+      "status": "pending",
+      "created_at": "2026-01-23T21:00:01.346Z",
+      "updated_at": "2026-01-23T21:00:01.346Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": [],
+      "github_issue": {
+        "number": 29,
+        "url": "https://github.com/AlbertoV5/agenv/issues/29",
+        "state": "open"
+      }
+    },
+    {
+      "id": "03.01.01.02",
+      "name": "Fix split percentages and target pane selection to produce correct 2x2 grid",
+      "stage_name": "Tmux & Fix Command",
+      "batch_name": "Tmux Improvements",
+      "thread_name": "Grid Layout Fix",
+      "status": "pending",
+      "created_at": "2026-01-23T21:00:01.346Z",
+      "updated_at": "2026-01-23T21:00:01.346Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": []
+    },
+    {
+      "id": "03.01.01.03",
+      "name": "Test grid with 1, 2, 3, 4 pane configurations to ensure all work correctly",
+      "stage_name": "Tmux & Fix Command",
+      "batch_name": "Tmux Improvements",
+      "thread_name": "Grid Layout Fix",
+      "status": "pending",
+      "created_at": "2026-01-23T21:00:01.346Z",
+      "updated_at": "2026-01-23T21:00:01.346Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": []
+    },
+    {
+      "id": "03.01.01.04",
+      "name": "Add tmux-grid.test.ts with layout verification tests",
+      "stage_name": "Tmux & Fix Command",
+      "batch_name": "Tmux Improvements",
+      "thread_name": "Grid Layout Fix",
+      "status": "pending",
+      "created_at": "2026-01-23T21:00:01.346Z",
+      "updated_at": "2026-01-23T21:00:01.346Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": []
+    },
+    {
+      "id": "03.01.02.01",
+      "name": "Create scripts/preview-multi.ts that runs mock prompts with claude-3-5-haiku-latest and configurable thread count",
+      "stage_name": "Tmux & Fix Command",
+      "batch_name": "Tmux Improvements",
+      "thread_name": "Tmux Test Scripts",
+      "status": "pending",
+      "created_at": "2026-01-23T21:00:01.347Z",
+      "updated_at": "2026-01-23T21:00:01.347Z",
+      "assigned_agent": "default",
+      "sessions": [],
+      "github_issue": {
+        "number": 30,
+        "url": "https://github.com/AlbertoV5/agenv/issues/30",
+        "state": "open"
+      }
+    },
+    {
+      "id": "03.01.02.02",
+      "name": "Create scripts/preview-grid.ts as standalone 2x2 grid tester with simple commands",
+      "stage_name": "Tmux & Fix Command",
+      "batch_name": "Tmux Improvements",
+      "thread_name": "Tmux Test Scripts",
+      "status": "pending",
+      "created_at": "2026-01-23T21:00:01.347Z",
+      "updated_at": "2026-01-23T21:00:01.347Z",
+      "assigned_agent": "default",
+      "sessions": []
+    },
+    {
+      "id": "03.01.02.03",
+      "name": "Create scripts/preview-fix.ts to test fix command retry flow with mock failed thread",
+      "stage_name": "Tmux & Fix Command",
+      "batch_name": "Tmux Improvements",
+      "thread_name": "Tmux Test Scripts",
+      "status": "pending",
+      "created_at": "2026-01-23T21:00:01.347Z",
+      "updated_at": "2026-01-23T21:00:01.347Z",
+      "assigned_agent": "default",
+      "sessions": []
+    },
+    {
+      "id": "03.01.02.04",
+      "name": "Add scripts/README.md with instructions for running preview scripts",
+      "stage_name": "Tmux & Fix Command",
+      "batch_name": "Tmux Improvements",
+      "thread_name": "Tmux Test Scripts",
+      "status": "pending",
+      "created_at": "2026-01-23T21:00:01.347Z",
+      "updated_at": "2026-01-23T21:00:01.347Z",
+      "assigned_agent": "default",
+      "sessions": []
+    },
+    {
+      "id": "03.01.03.01",
+      "name": "Add tests for createSession and addWindow in tmux.test.ts",
+      "stage_name": "Tmux & Fix Command",
+      "batch_name": "Tmux Improvements",
+      "thread_name": "Tmux Unit Tests",
+      "status": "pending",
+      "created_at": "2026-01-23T21:00:01.347Z",
+      "updated_at": "2026-01-23T21:00:01.347Z",
+      "assigned_agent": "code-reviewer",
+      "sessions": [],
+      "github_issue": {
+        "number": 31,
+        "url": "https://github.com/AlbertoV5/agenv/issues/31",
+        "state": "open"
+      }
+    },
+    {
+      "id": "03.01.03.02",
+      "name": "Add tests for splitWindow and createGridLayout operations",
+      "stage_name": "Tmux & Fix Command",
+      "batch_name": "Tmux Improvements",
+      "thread_name": "Tmux Unit Tests",
+      "status": "pending",
+      "created_at": "2026-01-23T21:00:01.347Z",
+      "updated_at": "2026-01-23T21:00:01.347Z",
+      "assigned_agent": "code-reviewer",
+      "sessions": []
+    },
+    {
+      "id": "03.01.03.03",
+      "name": "Add tests for getSessionPaneStatuses and waitForAllPanesExit",
+      "stage_name": "Tmux & Fix Command",
+      "batch_name": "Tmux Improvements",
+      "thread_name": "Tmux Unit Tests",
+      "status": "pending",
+      "created_at": "2026-01-23T21:00:01.347Z",
+      "updated_at": "2026-01-23T21:00:01.347Z",
+      "assigned_agent": "code-reviewer",
+      "sessions": []
+    },
+    {
+      "id": "03.01.03.04",
+      "name": "Add tests for respawnPane and ensure cleanup in test teardown",
+      "stage_name": "Tmux & Fix Command",
+      "batch_name": "Tmux Improvements",
+      "thread_name": "Tmux Unit Tests",
+      "status": "pending",
+      "created_at": "2026-01-23T21:00:01.347Z",
+      "updated_at": "2026-01-23T21:00:01.347Z",
+      "assigned_agent": "code-reviewer",
+      "sessions": []
+    },
+    {
+      "id": "03.01.03.05",
+      "name": "Verify 80%+ coverage of tmux.ts functions",
+      "stage_name": "Tmux & Fix Command",
+      "batch_name": "Tmux Improvements",
+      "thread_name": "Tmux Unit Tests",
+      "status": "pending",
+      "created_at": "2026-01-23T21:00:01.347Z",
+      "updated_at": "2026-01-23T21:00:01.347Z",
+      "assigned_agent": "code-reviewer",
+      "sessions": []
+    },
+    {
+      "id": "03.02.01.01",
+      "name": "Refactor fix --retry to create a new tmux session (work-fix-{threadId}) instead of running opencode directly",
+      "stage_name": "Tmux & Fix Command",
+      "batch_name": "Fix Command Enhancement",
+      "thread_name": "Fix Command Tmux Integration",
+      "status": "pending",
+      "created_at": "2026-01-23T21:00:01.347Z",
+      "updated_at": "2026-01-23T21:00:01.347Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": [],
+      "github_issue": {
+        "number": 32,
+        "url": "https://github.com/AlbertoV5/agenv/issues/32",
+        "state": "open"
+      }
+    },
+    {
+      "id": "03.02.01.02",
+      "name": "Run opencode command within the tmux session and attach user to it",
+      "stage_name": "Tmux & Fix Command",
+      "batch_name": "Fix Command Enhancement",
+      "thread_name": "Fix Command Tmux Integration",
+      "status": "pending",
+      "created_at": "2026-01-23T21:00:01.347Z",
+      "updated_at": "2026-01-23T21:00:01.347Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": []
+    },
+    {
+      "id": "03.02.01.03",
+      "name": "Handle detach (Ctrl-B D) to let process continue in background with reattach instructions",
+      "stage_name": "Tmux & Fix Command",
+      "batch_name": "Fix Command Enhancement",
+      "thread_name": "Fix Command Tmux Integration",
+      "status": "pending",
+      "created_at": "2026-01-23T21:00:01.347Z",
+      "updated_at": "2026-01-23T21:00:01.347Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": []
+    },
+    {
+      "id": "03.02.01.04",
+      "name": "Update --resume to work within tmux if a fix session exists",
+      "stage_name": "Tmux & Fix Command",
+      "batch_name": "Fix Command Enhancement",
+      "thread_name": "Fix Command Tmux Integration",
+      "status": "pending",
+      "created_at": "2026-01-23T21:00:01.347Z",
+      "updated_at": "2026-01-23T21:00:01.347Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": []
+    },
+    {
+      "id": "03.02.01.05",
+      "name": "Add --no-tmux flag to preserve old foreground behavior",
+      "stage_name": "Tmux & Fix Command",
+      "batch_name": "Fix Command Enhancement",
+      "thread_name": "Fix Command Tmux Integration",
+      "status": "pending",
+      "created_at": "2026-01-23T21:00:01.347Z",
+      "updated_at": "2026-01-23T21:00:01.347Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": []
+    },
+    {
+      "id": "03.02.01.06",
+      "name": "Add fix command tmux integration tests to fix.test.ts",
+      "stage_name": "Tmux & Fix Command",
+      "batch_name": "Fix Command Enhancement",
+      "thread_name": "Fix Command Tmux Integration",
+      "status": "pending",
+      "created_at": "2026-01-23T21:00:01.347Z",
+      "updated_at": "2026-01-23T21:00:01.347Z",
+      "assigned_agent": "systems-engineer",
+      "sessions": []
+    },
+    {
+      "id": "04.01.01.01",
+      "name": "Create notification system configuration guide in docs/",
+      "stage_name": "Documentation & Polish",
+      "batch_name": "Finalization",
+      "thread_name": "Documentation",
+      "status": "pending",
+      "created_at": "2026-01-23T21:00:01.347Z",
+      "updated_at": "2026-01-23T21:00:01.347Z",
+      "assigned_agent": "documentation-minimalist",
+      "sessions": [],
+      "github_issue": {
+        "number": 33,
+        "url": "https://github.com/AlbertoV5/agenv/issues/33",
+        "state": "open"
+      }
+    },
+    {
+      "id": "04.01.01.02",
+      "name": "Document threads.json schema and migration guide",
+      "stage_name": "Documentation & Polish",
+      "batch_name": "Finalization",
+      "thread_name": "Documentation",
+      "status": "pending",
+      "created_at": "2026-01-23T21:00:01.347Z",
+      "updated_at": "2026-01-23T21:00:01.347Z",
+      "assigned_agent": "documentation-minimalist",
+      "sessions": []
+    },
+    {
+      "id": "04.01.01.03",
+      "name": "Document fix command tmux integration and new flags",
+      "stage_name": "Documentation & Polish",
+      "batch_name": "Finalization",
+      "thread_name": "Documentation",
+      "status": "pending",
+      "created_at": "2026-01-23T21:00:01.347Z",
+      "updated_at": "2026-01-23T21:00:01.347Z",
+      "assigned_agent": "documentation-minimalist",
+      "sessions": []
+    },
+    {
+      "id": "04.01.01.04",
+      "name": "Create ~/.config/agenv/notifications.json.example with custom sounds and webhook examples",
+      "stage_name": "Documentation & Polish",
+      "batch_name": "Finalization",
+      "thread_name": "Documentation",
+      "status": "pending",
+      "created_at": "2026-01-23T21:00:01.347Z",
+      "updated_at": "2026-01-23T21:00:01.347Z",
+      "assigned_agent": "documentation-minimalist",
+      "sessions": []
+    },
+    {
+      "id": "04.01.01.05",
+      "name": "Update CLI help text for --silent and --no-tmux flags",
+      "stage_name": "Documentation & Polish",
+      "batch_name": "Finalization",
+      "thread_name": "Documentation",
+      "status": "pending",
+      "created_at": "2026-01-23T21:00:01.347Z",
+      "updated_at": "2026-01-23T21:00:01.347Z",
+      "assigned_agent": "documentation-minimalist",
+      "sessions": []
+    },
+    {
+      "id": "04.01.02.01",
+      "name": "Add console warning when reading sessions from deprecated tasks.json location",
+      "stage_name": "Documentation & Polish",
+      "batch_name": "Finalization",
+      "thread_name": "Cleanup & Deprecation",
+      "status": "pending",
+      "created_at": "2026-01-23T21:00:01.347Z",
+      "updated_at": "2026-01-23T21:00:01.347Z",
+      "assigned_agent": "code-reviewer",
+      "sessions": [],
+      "github_issue": {
+        "number": 34,
+        "url": "https://github.com/AlbertoV5/agenv/issues/34",
+        "state": "open"
+      }
+    },
+    {
+      "id": "04.01.02.02",
+      "name": "Add @deprecated JSDoc annotations to old session fields in Task interface",
+      "stage_name": "Documentation & Polish",
+      "batch_name": "Finalization",
+      "thread_name": "Cleanup & Deprecation",
+      "status": "pending",
+      "created_at": "2026-01-23T21:00:01.347Z",
+      "updated_at": "2026-01-23T21:00:01.347Z",
+      "assigned_agent": "code-reviewer",
+      "sessions": []
+    },
+    {
+      "id": "04.01.02.03",
+      "name": "Clean up any temporary migration code paths",
+      "stage_name": "Documentation & Polish",
+      "batch_name": "Finalization",
+      "thread_name": "Cleanup & Deprecation",
+      "status": "pending",
+      "created_at": "2026-01-23T21:00:01.347Z",
+      "updated_at": "2026-01-23T21:00:01.347Z",
+      "assigned_agent": "code-reviewer",
+      "sessions": []
+    },
+    {
+      "id": "04.01.02.04",
+      "name": "Run full test suite (bun run test) and typecheck (bun run typecheck) to verify no regressions",
+      "stage_name": "Documentation & Polish",
+      "batch_name": "Finalization",
+      "thread_name": "Cleanup & Deprecation",
+      "status": "pending",
+      "created_at": "2026-01-23T21:00:01.347Z",
+      "updated_at": "2026-01-23T21:00:01.347Z",
+      "assigned_agent": "code-reviewer",
+      "sessions": []
+    }
+  ]
+}

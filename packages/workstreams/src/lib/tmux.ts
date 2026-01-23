@@ -347,7 +347,13 @@ export function createGridLayout(
     ])
     Bun.sleepSync(THREAD_START_DELAY_MS)
 
+    // Capture the right pane ID before it shifts
+    // After horizontal split: pane 0 = left, pane 1 = right
+    const panesAfterHSplit = listPaneIds(sessionWindow)
+    const rightPaneId = panesAfterHSplit[1] // This is the right pane
+
     // Step 2: Split left pane vertically (creates bottom-left)
+    // This will shift pane indices, but we have the right pane ID saved
     Bun.spawnSync([
         "tmux", "split-window",
         "-t", `${sessionWindow}.0`,
@@ -357,10 +363,11 @@ export function createGridLayout(
     Bun.sleepSync(THREAD_START_DELAY_MS)
 
     // Step 3: Split right pane vertically (creates bottom-right) if we have 4 commands
-    if (commands.length >= 4) {
+    // Use the saved pane ID to target the correct pane (not index-based)
+    if (commands.length >= 4 && rightPaneId) {
         Bun.spawnSync([
             "tmux", "split-window",
-            "-t", `${sessionWindow}.1`,
+            "-t", rightPaneId,
             "-v",
             commands[3]!
         ])

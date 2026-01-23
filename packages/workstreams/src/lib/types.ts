@@ -370,9 +370,18 @@ export interface Task {
     url: string
     state: "open" | "closed"
   }
-  // Session tracking fields (optional for backwards compatibility)
-  sessions?: SessionRecord[] // Array of session records to track retries
-  currentSessionId?: string // Active session ID for resume functionality
+  /**
+   * @deprecated Session data is now stored in threads.json.
+   * Use ThreadsStore functions (getThreadMetadata, etc.) to access session data.
+   * This field will be automatically migrated and cleared on first read.
+   */
+  sessions?: SessionRecord[]
+  /**
+   * @deprecated Session data is now stored in threads.json.
+   * Use ThreadsStore functions (getThreadMetadata, etc.) to access session data.
+   * This field will be automatically migrated and cleared on first read.
+   */
+  currentSessionId?: string
 }
 
 /**
@@ -518,6 +527,37 @@ export interface AgentsConfig {
 }
 
 // ============================================
+// THREAD METADATA STORE TYPES (threads.json)
+// ============================================
+
+/**
+ * Thread metadata stored in threads.json
+ * Contains session history and github issue links, migrated from tasks.json
+ */
+export interface ThreadMetadata {
+  threadId: string // Format: "SS.BB.TT" (e.g., "01.01.02")
+  sessions: SessionRecord[] // Session history for this thread
+  githubIssue?: {
+    number: number
+    url: string
+    state: "open" | "closed"
+  }
+  currentSessionId?: string // Active session ID for resume functionality
+  opencodeSessionId?: string // Actual opencode session ID (e.g., "ses_413402385ffe4rhZzbpafvjAUc") - separate from internal sessionId
+}
+
+/**
+ * threads.json file structure
+ * Stores thread-level metadata separate from task definitions
+ */
+export interface ThreadsJson {
+  version: string // Schema version, e.g., "1.0.0"
+  stream_id: string // Reference to the workstream ID
+  last_updated: string // ISO date
+  threads: ThreadMetadata[]
+}
+
+// ============================================
 // SESSION TRACKING TYPES
 // ============================================
 
@@ -577,5 +617,43 @@ export interface AgentDefinitionYaml {
  */
 export interface AgentsConfigYaml {
   agents: AgentDefinitionYaml[]
+}
+
+// ============================================
+// MULTI COMMAND TYPES (Parallel Execution)
+// ============================================
+
+/**
+ * Thread information for parallel execution
+ * Contains all metadata needed to spawn and track a thread
+ */
+export interface ThreadInfo {
+  threadId: string // "01.01.01"
+  threadName: string
+  stageName: string
+  batchName: string
+  promptPath: string
+  models: NormalizedModelSpec[] // List of models to try in order
+  agentName: string
+  githubIssue?: {
+    number: number
+    url: string
+    state: "open" | "closed"
+  }
+  // Session tracking (populated before spawn)
+  sessionId?: string
+  firstTaskId?: string // First task in thread (for session tracking)
+}
+
+/**
+ * Mapping of thread sessions to pane IDs
+ * Used to track which pane is running which thread's session
+ */
+export interface ThreadSessionMap {
+  threadId: string
+  sessionId: string
+  taskId: string // First task in thread
+  paneId: string
+  windowIndex: number
 }
 

@@ -71,7 +71,7 @@ function findIncompleteThreadsInBatch(tasks: any[], batchId: string): string[] {
   // Filter to incomplete or failed threads with session history
   const incompleteThreads: string[] = []
   for (const [threadId, threadTasks] of threadMap.entries()) {
-    const allCompleted = threadTasks.every(t => t.status === "completed")
+    const allCompleted = threadTasks.every(t => t.status === "completed" || t.status === "cancelled")
     const hasSessionHistory = threadTasks.some(t => t.sessions && t.sessions.length > 0)
     
     if (!allCompleted && hasSessionHistory) {

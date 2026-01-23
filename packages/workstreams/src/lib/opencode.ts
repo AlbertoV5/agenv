@@ -93,6 +93,28 @@ function truncateTitle(title: string, maxLen: number = 32): string {
 }
 
 /**
+ * Get the marker file path for a thread's first command completion
+ * Used to signal when opencode run finishes (before session resume)
+ * 
+ * @param threadId - Thread ID (e.g., "01.01.02")
+ * @returns Path to the completion marker file
+ */
+export function getCompletionMarkerPath(threadId: string): string {
+  return `/tmp/workstream-${threadId}-complete.txt`
+}
+
+/**
+ * Get the session file path for storing the opencode session ID
+ * Used to capture the actual opencode session ID for workstream tracking
+ * 
+ * @param threadId - Thread ID (e.g., "01.01.02")
+ * @returns Path to the session ID file
+ */
+export function getSessionFilePath(threadId: string): string {
+  return `/tmp/workstream-${threadId}-session.txt`
+}
+
+/**
  * Escape a string for use in shell commands wrapped in sh -c '...'
  * Handles both the outer single-quote wrapper and inner double-quoted strings
  */
@@ -113,8 +135,12 @@ function escapeForShell(str: string): string {
  * The command:
  * 1. Generates a unique tracking ID
  * 2. Runs opencode with a title containing the tracking ID
- * 3. After completion, searches for the session by tracking ID
- * 4. Resumes the session with opencode TUI if found
+ * 3. Writes a completion marker file to signal first command done (for notification timing)
+ * 4. After completion, searches for the session by tracking ID
+ * 5. Writes the session ID to a temp file for workstream tracking (if threadId provided)
+ * 6. Resumes the session with opencode TUI if found
+ * 
+ * @param threadId - Optional thread ID for completion marker (e.g., "01.01.02")
  */
 export function buildRunCommand(
   port: number,
@@ -122,6 +148,7 @@ export function buildRunCommand(
   promptPath: string,
   threadTitle: string,
   variant?: string,
+  threadId?: string,
 ): string {
   // Escape single quotes in paths by replacing ' with '\''
   const escapedPath = promptPath.replace(/'/g, "'\\''")
@@ -132,11 +159,24 @@ export function buildRunCommand(
   // Build variant flag if specified
   const variantFlag = variant ? ` --variant "${variant}"` : ""
 
+  // Build completion marker path if threadId provided
+  const completionMarkerCmd = threadId
+    ? `\necho "done" > "${getCompletionMarkerPath(threadId)}"`
+    : ""
+
+  // Build session file write command if threadId provided
+  const sessionFilePath = threadId ? getSessionFilePath(threadId) : ""
+  const writeSessionCmd = threadId
+    ? `\n    echo "$SESSION_ID" > "${sessionFilePath}"`
+    : ""
+
   // Build a shell script that:
   // 1. Generates a unique tracking ID (16 chars from nanosecond timestamp)
   // 2. Runs opencode run with the title containing the tracking ID
-  // 3. After completion, searches for the session by tracking ID using jq
-  // 4. Resumes the session with opencode TUI if found
+  // 3. Writes completion marker file (if threadId provided)
+  // 4. After completion, searches for the session by tracking ID using jq
+  // 5. Writes the session ID to a temp file for workstream tracking (if threadId provided)
+  // 6. Resumes the session with opencode TUI if found
   return `sh -c '
 TRACK_ID=$(date +%s%N | head -c 16)
 TITLE="${escapedTitle}__id=$TRACK_ID"
@@ -145,12 +185,12 @@ echo "Thread: ${escapedTitle}"
 echo "Model: ${model}${variant ? ` (${variant})` : ""}"
 echo "════════════════════════════════════════"
 echo ""
-cat "${escapedPath}" | opencode run --port ${port} --model "${model}"${variantFlag} --title "$TITLE"
+cat "${escapedPath}" | opencode run --port ${port} --model "${model}"${variantFlag} --title "$TITLE"${completionMarkerCmd}
 echo ""
 echo "Thread finished. Looking for session to resume..."
 if command -v jq >/dev/null 2>&1; then
   SESSION_ID=$(opencode session list --max-count 10 --format json 2>/dev/null | jq -r ".[] | select(.title | contains(\\"__id=$TRACK_ID\\")) | .id" | head -1)
-  if [ -n "$SESSION_ID" ]; then
+  if [ -n "$SESSION_ID" ]; then${writeSessionCmd}
     echo "Resuming session $SESSION_ID..."
     opencode --session "$SESSION_ID"
   else
@@ -177,12 +217,16 @@ const EARLY_FAILURE_THRESHOLD_SECONDS = 10
  * - Only retries if opencode exits within EARLY_FAILURE_THRESHOLD_SECONDS (early failure)
  * - Tries each model in order until one succeeds or runs past the threshold
  * - Session resume logic is NOT wrapped in retry (user Ctrl+C exits normally)
+ * - Writes completion marker file after first command finishes (if threadId provided)
+ *
+ * @param threadId - Optional thread ID for completion marker (e.g., "01.01.02")
  */
 export function buildRetryRunCommand(
   port: number,
   models: NormalizedModelSpec[],
   promptPath: string,
   threadTitle: string,
+  threadId?: string,
 ): string {
   if (models.length === 0) {
     throw new Error("At least one model must be provided")
@@ -191,7 +235,7 @@ export function buildRetryRunCommand(
   // If only one model, use simple command without retry logic
   if (models.length === 1) {
     const m = models[0]!
-    return buildRunCommand(port, m.model, promptPath, threadTitle, m.variant)
+    return buildRunCommand(port, m.model, promptPath, threadTitle, m.variant, threadId)
   }
 
   // Escape single quotes in paths by replacing ' with '\''
@@ -253,6 +297,17 @@ export function buildRetryRunCommand(
 
   const modelList = models.map(m => m.variant ? `${m.model} (${m.variant})` : m.model).join(" -> ")
 
+  // Build completion marker command if threadId provided
+  const completionMarkerCmd = threadId
+    ? `echo "done" > "${getCompletionMarkerPath(threadId)}"`
+    : ""
+
+  // Build session file write command if threadId provided
+  const sessionFilePath = threadId ? getSessionFilePath(threadId) : ""
+  const writeSessionCmd = threadId
+    ? `\n    echo "$SESSION_ID" > "${sessionFilePath}"`
+    : ""
+
   return `sh -c '
 TRACK_ID=$(date +%s%N | head -c 16)
 TITLE="${escapedTitle}__id=$TRACK_ID"
@@ -263,12 +318,12 @@ echo "Models: ${modelList}"
 echo "════════════════════════════════════════"
 echo ""
 ${modelAttempts}
-
+${completionMarkerCmd}
 echo ""
 echo "Thread finished. Looking for session to resume..."
 if command -v jq >/dev/null 2>&1; then
   SESSION_ID=$(opencode session list --max-count 10 --format json 2>/dev/null | jq -r ".[] | select(.title | contains(\\"__id=$TRACK_ID\\")) | .id" | head -1)
-  if [ -n "$SESSION_ID" ]; then
+  if [ -n "$SESSION_ID" ]; then${writeSessionCmd}
     echo "Resuming session $SESSION_ID..."
     opencode --session "$SESSION_ID"
   else

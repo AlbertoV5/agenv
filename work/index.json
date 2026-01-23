@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-01-23T16:02:56.984Z",
-  "current_stream": "008-workstream-roles",
+  "last_updated": "2026-01-23T22:28:36.576Z",
+  "current_stream": "009-workstreams-ux-improvements",
   "streams": [
     {
       "id": "000-web-visualization",
@@ -476,6 +476,78 @@
       "github": {
         "branch": "workstream/008-workstream-roles",
         "completed_at": "2026-01-23T16:02:56.983Z"
+      },
+      "status": "completed"
+    },
+    {
+      "id": "009-workstreams-ux-improvements",
+      "name": "workstreams-ux-improvements",
+      "order": 9,
+      "size": "medium",
+      "session_estimated": {
+        "length": 4,
+        "unit": "session",
+        "session_minutes": [
+          30,
+          45
+        ],
+        "session_iterations": [
+          4,
+          8
+        ]
+      },
+      "created_at": "2026-01-23T20:48:49.660Z",
+      "updated_at": "2026-01-23T22:28:36.576Z",
+      "path": "work/009-workstreams-ux-improvements",
+      "generated_by": {
+        "workstreams": "0.1.0"
+      },
+      "approval": {
+        "status": "approved",
+        "approved_at": "2026-01-23T20:54:49.492Z",
+        "approved_by": "user",
+        "plan_hash": "3da654c035eaa3f7fe4cebdc9294d1e8059ccfbbffa154d5907de4d7a4c8d4ac",
+        "tasks": {
+          "status": "approved",
+          "approved_at": "2026-01-23T21:56:03.256Z",
+          "task_count": 123
+        },
+        "stages": {
+          "1": {
+            "status": "approved",
+            "approved_at": "2026-01-23T21:10:14.736Z",
+            "approved_by": "user"
+          },
+          "2": {
+            "status": "approved",
+            "approved_at": "2026-01-23T21:17:36.474Z",
+            "approved_by": "user"
+          },
+          "3": {
+            "status": "approved",
+            "approved_at": "2026-01-23T21:32:03.778Z",
+            "approved_by": "user"
+          },
+          "4": {
+            "status": "approved",
+            "approved_at": "2026-01-23T21:34:39.085Z",
+            "approved_by": "user"
+          },
+          "5": {
+            "status": "approved",
+            "approved_at": "2026-01-23T21:47:37.205Z",
+            "approved_by": "user"
+          },
+          "6": {
+            "status": "approved",
+            "approved_at": "2026-01-23T22:28:03.358Z",
+            "approved_by": "user"
+          }
+        }
+      },
+      "github": {
+        "branch": "workstream/009-workstreams-ux-improvements",
+        "completed_at": "2026-01-23T22:28:36.576Z"
       },
       "status": "completed"
     }

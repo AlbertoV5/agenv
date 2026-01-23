@@ -16,7 +16,7 @@ import { getRepoRoot } from "../lib/repo.ts"
 import {
   getTasks as getTasksLib,
   getTaskCounts,
-  groupTasksByStageAndBatchAndThread,
+  groupTasks,
 } from "../lib/tasks.ts"
 import { getStreamProgress, getStreamStatus } from "../lib/status.ts"
 import { parseStreamDocument } from "../lib/stream-parser.ts"
@@ -328,7 +328,7 @@ export class DataService {
       }
 
       // Group tasks by stage/batch/thread
-      const groupedMap = groupTasksByStageAndBatchAndThread(tasks)
+      const groupedMap = groupTasks(tasks, { byBatch: true })
 
       // Convert Map to plain object for JSON serialization
       const grouped: GroupedTasks["grouped"] = {}

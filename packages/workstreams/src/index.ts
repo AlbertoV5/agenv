@@ -107,11 +107,15 @@ export {
   updateTaskStatus,
   addTasks,
   getTaskCounts,
-  groupTasksByStageAndThread,
+  groupTasks,
+  groupTasksByStageAndThread, // deprecated - use groupTasks({ byBatch: false })
   formatTaskId,
   deleteTask,
   deleteTasksByStage,
   deleteTasksByThread,
+  type GroupTasksOptions,
+  type GroupedByStageThread,
+  type GroupedByStageBatchThread,
 } from "./lib/tasks.ts"
 
 // PLAN.md parsing

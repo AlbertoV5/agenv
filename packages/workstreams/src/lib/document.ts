@@ -13,7 +13,7 @@ import type {
   ChangelogEntry,
   ExportFormat,
 } from "./types.ts"
-import { getTasks, groupTasksByStageAndThread, parseTaskId } from "./tasks.ts"
+import { getTasks, groupTasks, parseTaskId } from "./tasks.ts"
 import { loadIndex, findStream } from "./index.ts"
 import { getStreamStatus } from "./status.ts"
 import { evaluateStream } from "./metrics.ts"
@@ -278,7 +278,7 @@ export function exportStreamAsJSON(repoRoot: string, streamId: string): string {
 export function exportStreamAsMarkdown(repoRoot: string, streamId: string): string {
   const report = generateReport(repoRoot, streamId)
   const tasks = getTasks(repoRoot, streamId)
-  const grouped = groupTasksByStageAndThread(tasks)
+  const grouped = groupTasks(tasks, { byBatch: false })
 
   const lines: string[] = []
 
