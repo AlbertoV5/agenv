@@ -67,6 +67,24 @@ function deleteLocalBranchIfExists(repoRoot: string, branchName: string): void {
 }
 
 /**
+ * Deletes a remote branch if it exists.
+ * Used to clean up branches from previous failed attempts before creating fresh.
+ * @param repoRoot The root directory of the repository
+ * @param branchName The branch name to delete
+ */
+function deleteRemoteBranchIfExists(repoRoot: string, branchName: string): void {
+  try {
+    execSync(`git push origin --delete ${branchName}`, {
+      cwd: repoRoot,
+      encoding: "utf-8",
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+  } catch {
+    // Ignore errors - branch might not exist on remote
+  }
+}
+
+/**
  * Creates a workstream branch on GitHub and checks it out locally.
  * 
  * Flow:
@@ -106,9 +124,10 @@ export async function createWorkstreamBranch(
   // Step 2: Commit all pending changes (including workstream files and updated index.json)
   commitPendingChanges(repoRoot);
 
-  // Step 3: Delete local branch if it exists (from a previous failed attempt)
+  // Step 3: Delete local and remote branches if they exist (from previous failed attempts)
   // This ensures we create a fresh branch from current HEAD
   deleteLocalBranchIfExists(repoRoot, branchName);
+  deleteRemoteBranchIfExists(repoRoot, branchName);
 
   // Step 4: Create local branch from current HEAD
   // This preserves all workstream files since they're committed
@@ -119,8 +138,7 @@ export async function createWorkstreamBranch(
   });
 
   // Step 5: Push to origin with tracking (creates branch on GitHub)
-  // Use --force to overwrite remote if it exists from a previous failed attempt
-  execSync(`git push -u origin ${branchName} --force`, {
+  execSync(`git push -u origin ${branchName}`, {
     cwd: repoRoot,
     encoding: "utf-8",
     stdio: ["pipe", "pipe", "pipe"],

@@ -212,41 +212,30 @@ export async function main(argv: string[] = process.argv): Promise<void> {
         console.log("")
     }
 
-    // Step 1: Create branch
+    // Step 1: Create branch (always create fresh, cleaning up any previous failed attempts)
     let branchResult: { branchName: string; sha: string; url: string } | null = null
 
-    if (stream.github?.branch) {
+    try {
         if (!cliArgs.json) {
-            console.log(`Branch already exists: ${stream.github.branch}`)
+            console.log("Creating branch...")
         }
-        branchResult = {
-            branchName: stream.github.branch,
-            sha: "",
-            url: "",
+        branchResult = await createWorkstreamBranch(repoRoot, stream.id)
+        if (!cliArgs.json) {
+            console.log(`  ✅ Branch: ${branchResult.branchName}`)
+            console.log(`  SHA: ${branchResult.sha.substring(0, 7)}`)
         }
-    } else {
-        try {
-            if (!cliArgs.json) {
-                console.log("Creating branch...")
-            }
-            branchResult = await createWorkstreamBranch(repoRoot, stream.id)
-            if (!cliArgs.json) {
-                console.log(`  ✅ Branch: ${branchResult.branchName}`)
-                console.log(`  SHA: ${branchResult.sha.substring(0, 7)}`)
-            }
-        } catch (e) {
-            if (cliArgs.json) {
-                console.log(JSON.stringify({
-                    action: "error",
-                    step: "create_branch",
-                    error: (e as Error).message,
-                    streamId: stream.id,
-                }, null, 2))
-            } else {
-                console.error(`Error creating branch: ${(e as Error).message}`)
-            }
-            process.exit(1)
+    } catch (e) {
+        if (cliArgs.json) {
+            console.log(JSON.stringify({
+                action: "error",
+                step: "create_branch",
+                error: (e as Error).message,
+                streamId: stream.id,
+            }, null, 2))
+        } else {
+            console.error(`Error creating branch: ${(e as Error).message}`)
         }
+        process.exit(1)
     }
 
     // Step 2: Create issues for all threads
