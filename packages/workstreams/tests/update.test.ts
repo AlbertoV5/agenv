@@ -70,7 +70,7 @@ describe("updateTask", () => {
         JSON.stringify(tasksFile, null, 2),
       )
 
-      const result = updateTask({
+      const result = await updateTask({
         repoRoot: tempDir,
         stream: baseStream,
         taskId: "01.01.01.01",
@@ -111,7 +111,7 @@ describe("updateTask", () => {
         JSON.stringify(tasksFile, null, 2),
       )
 
-      const result = updateTask({
+      const result = await updateTask({
         repoRoot: tempDir,
         stream: baseStream,
         taskId: "01.01.01.01",
@@ -220,7 +220,7 @@ describe("updateTask", () => {
       )
 
       const reportText = "Completed the task successfully"
-      const result = updateTask({
+      const result = await updateTask({
         repoRoot: tempDir,
         stream: baseStream,
         taskId: "01.01.01.01",
@@ -524,7 +524,7 @@ describe("updateTask", () => {
         JSON.stringify(tasksFile, null, 2),
       )
 
-      const result = updateTask({
+      const result = await updateTask({
         repoRoot: tempDir,
         stream: baseStream,
         taskId: "01.01.01.01",

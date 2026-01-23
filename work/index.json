@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-01-22T22:15:56.888Z",
-  "current_stream": "006-revision-workflow",
+  "last_updated": "2026-01-23T15:37:12.319Z",
+  "current_stream": "008-workstream-roles",
   "streams": [
     {
       "id": "000-web-visualization",
@@ -414,6 +414,41 @@
           "status": "approved",
           "approved_at": "2026-01-22T22:13:55.397Z",
           "task_count": 1
+        }
+      }
+    },
+    {
+      "id": "008-workstream-roles",
+      "name": "workstream-roles",
+      "order": 8,
+      "size": "medium",
+      "session_estimated": {
+        "length": 4,
+        "unit": "session",
+        "session_minutes": [
+          30,
+          45
+        ],
+        "session_iterations": [
+          4,
+          8
+        ]
+      },
+      "created_at": "2026-01-23T15:22:55.348Z",
+      "updated_at": "2026-01-23T15:37:12.319Z",
+      "path": "work/008-workstream-roles",
+      "generated_by": {
+        "workstreams": "0.1.0"
+      },
+      "approval": {
+        "status": "approved",
+        "approved_at": "2026-01-23T15:35:57.534Z",
+        "approved_by": "user",
+        "plan_hash": "2f746ad901bd636218993ae19194c53b0618484cd308bcbf3e4ece2b9f5ae8e8",
+        "tasks": {
+          "status": "approved",
+          "approved_at": "2026-01-23T15:37:12.319Z",
+          "task_count": 29
         }
       }
     }

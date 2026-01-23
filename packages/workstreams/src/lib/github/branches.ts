@@ -54,24 +54,55 @@ export async function createWorkstreamBranch(
   const client = createGitHubClient(token, config.owner, config.repo);
   
   const branchName = formatBranchName(config, streamId);
-  
-  // Determine base branch - use provided ref or detect default
-  const baseBranch = fromRef || await getDefaultBranch(repoRoot);
-  
-  // Create the branch on GitHub
-  const ref = await client.createBranch(branchName, baseBranch);
-  
+
+  // Determine base branch - use provided ref, current branch, or detect default
+  const baseBranch = fromRef || getCurrentBranch(repoRoot) || await getDefaultBranch(repoRoot);
+
+  // Try to create the branch on GitHub, handle if it already exists
+  let sha: string;
+  try {
+    const ref = await client.createBranch(branchName, baseBranch);
+    sha = ref.object.sha;
+  } catch (error) {
+    // If branch already exists (422), get its current SHA
+    if (error instanceof Error && error.message.includes("422")) {
+      const existingBranch = await client.getBranch(branchName);
+      sha = existingBranch.commit.sha;
+    } else {
+      throw error;
+    }
+  }
+
   // Checkout locally
   await checkoutBranchLocally(repoRoot, branchName);
-  
+
   // Store metadata
   await storeWorkstreamBranchMeta(repoRoot, streamId, branchName);
-  
+
   return {
     branchName,
-    sha: ref.object.sha,
+    sha,
     url: `https://github.com/${config.owner}/${config.repo}/tree/${branchName}`,
   };
+}
+
+/**
+ * Gets the current branch name.
+ * @param repoRoot The root directory of the repository
+ * @returns The current branch name or undefined if not on a branch
+ */
+function getCurrentBranch(repoRoot: string): string | undefined {
+  try {
+    const branch = execSync("git rev-parse --abbrev-ref HEAD", {
+      cwd: repoRoot,
+      encoding: "utf-8",
+      stdio: ["pipe", "pipe", "pipe"],
+    }).trim();
+    // HEAD means detached state
+    return branch === "HEAD" ? undefined : branch;
+  } catch {
+    return undefined;
+  }
 }
 
 /**
@@ -126,23 +157,23 @@ async function getDefaultBranch(repoRoot: string): Promise<string> {
  * @returns True if changes were committed, false if working tree was clean
  */
 function commitPendingChanges(repoRoot: string): boolean {
-  // Check if there are any changes (staged or unstaged)
-  const status = execSync("git status --porcelain", {
-    cwd: repoRoot,
-    encoding: "utf-8",
-    stdio: ["pipe", "pipe", "pipe"],
-  }).trim();
-
-  if (!status) {
-    return false; // Working tree is clean
-  }
-
-  // Stage all changes
+  // Stage all changes first
   execSync("git add -A", {
     cwd: repoRoot,
     encoding: "utf-8",
     stdio: ["pipe", "pipe", "pipe"],
   });
+
+  // Check if there are any staged changes to commit
+  const stagedFiles = execSync("git diff --cached --name-only", {
+    cwd: repoRoot,
+    encoding: "utf-8",
+    stdio: ["pipe", "pipe", "pipe"],
+  }).trim();
+
+  if (!stagedFiles) {
+    return false; // Nothing staged to commit
+  }
 
   // Commit with workstream start message
   execSync('git commit -m "workstream start"', {

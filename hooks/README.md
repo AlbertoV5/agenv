@@ -1,27 +1,28 @@
 # AgEnv Hooks
 
-Hooks for Claude Code that trigger on specific events.
+Hooks for Claude Code that add `~/.agenv/bin` to PATH.
 
-## Structure
+## Claude Code
 
-Each hook is defined as a JSON file in this directory. The `hooks.json` file merges all hooks together for installation.
+Uses `hooks.json` with a SessionStart hook that runs `setup-env.sh`.
 
-## Installation
+### Installation
 
 ```bash
 ag install hooks --claude
 ```
 
-## Available Hooks
+## Files
 
-### SessionStart Hooks
-- Triggered when a Claude Code session starts
+- `hooks.json` - Claude Code hooks configuration
+- `setup-env.sh` - Script that outputs PATH export
 
-### PreToolUse / PostToolUse Hooks  
-- Triggered before/after tool execution (coming soon)
+## OpenCode Environment Setup
 
-## Creating New Hooks
+For OpenCode agent runs that need GitHub tokens, use the plugin:
 
-1. Create a new JSON file in this directory
-2. Follow the Claude Code hooks schema
-3. Run `ag install hooks` to deploy
+```bash
+ag install plugins --opencode
+```
+
+The plugin sources `bin/source_env.sh` from the project directory and falls back to `gh auth token`.

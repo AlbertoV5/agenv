@@ -200,7 +200,7 @@ function parseCliArgs(argv: string[]): UpdateTaskCliArgs | null {
   return parsed as UpdateTaskCliArgs
 }
 
-export function main(argv: string[] = process.argv): void {
+export async function main(argv: string[] = process.argv): Promise<void> {
   const cliArgs = parseCliArgs(argv)
   if (!cliArgs) {
     console.error("\nRun with --help for usage information.")
@@ -235,7 +235,7 @@ export function main(argv: string[] = process.argv): void {
   try {
     if (cliArgs.threadId) {
       // Update all tasks in thread
-      const result = updateThreadTasks({
+      const result = await updateThreadTasks({
         repoRoot,
         stream,
         threadId: cliArgs.threadId,
@@ -248,7 +248,7 @@ export function main(argv: string[] = process.argv): void {
       console.log(`Updated ${result.count} task(s) in thread ${result.threadId} to ${result.status}`)
     } else {
       // Update single task
-      const result = updateTask({
+      const result = await updateTask({
         repoRoot,
         stream,
         taskId: cliArgs.taskId!,
@@ -268,5 +268,5 @@ export function main(argv: string[] = process.argv): void {
 
 // Run if called directly
 if (import.meta.main) {
-  main()
+  await main()
 }

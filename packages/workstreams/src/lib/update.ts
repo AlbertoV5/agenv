@@ -37,7 +37,7 @@ export interface UpdateTaskResult {
 /**
  * Update a task's status in a workstream
  */
-export function updateTask(args: UpdateTaskArgs): UpdateTaskResult {
+export async function updateTask(args: UpdateTaskArgs): Promise<UpdateTaskResult> {
   // Validate task ID format
   try {
     parseTaskId(args.taskId)
@@ -76,30 +76,28 @@ export function updateTask(args: UpdateTaskArgs): UpdateTaskResult {
 
   // Check if thread is complete and close GitHub issue if needed
   if (args.status === "completed") {
-    checkAndCloseThreadIssue(args.repoRoot, args.stream.id, args.taskId)
-      .then((result) => {
-        if (result.closed && result.issueNumber) {
-          console.log(`Closed GitHub issue #${result.issueNumber} (thread complete)`)
-        }
-      })
-      .catch((error) => {
-        // Don't fail the task update if GitHub fails
-        console.error("Failed to check/close GitHub issue:", error)
-      })
+    try {
+      const result = await checkAndCloseThreadIssue(args.repoRoot, args.stream.id, args.taskId)
+      if (result.closed && result.issueNumber) {
+        console.log(`Closed GitHub issue #${result.issueNumber} (thread complete)`)
+      }
+    } catch (error) {
+      // Don't fail the task update if GitHub fails
+      console.error("Failed to check/close GitHub issue:", error)
+    }
   }
 
   // Check if task changed from completed to in_progress/blocked and reopen issue if needed
   if (previousStatus === "completed" && (args.status === "in_progress" || args.status === "blocked")) {
-    checkAndReopenThreadIssue(args.repoRoot, args.stream.id, args.taskId)
-      .then((result) => {
-        if (result.reopened && result.issueNumber) {
-          console.log(`Reopened GitHub issue #${result.issueNumber} (task no longer completed)`)
-        }
-      })
-      .catch((error) => {
-        // Don't fail the task update if GitHub fails
-        console.error("Failed to check/reopen GitHub issue:", error)
-      })
+    try {
+      const result = await checkAndReopenThreadIssue(args.repoRoot, args.stream.id, args.taskId)
+      if (result.reopened && result.issueNumber) {
+        console.log(`Reopened GitHub issue #${result.issueNumber} (task no longer completed)`)
+      }
+    } catch (error) {
+      // Don't fail the task update if GitHub fails
+      console.error("Failed to check/reopen GitHub issue:", error)
+    }
   }
 
   return {
@@ -134,7 +132,7 @@ export interface UpdateThreadTasksResult {
 /**
  * Update all tasks in a thread
  */
-export function updateThreadTasks(args: UpdateThreadTasksArgs): UpdateThreadTasksResult {
+export async function updateThreadTasks(args: UpdateThreadTasksArgs): Promise<UpdateThreadTasksResult> {
   // Parse the thread ID
 
   let parsed: { stage: number; batch: number; thread: number }
@@ -171,29 +169,27 @@ export function updateThreadTasks(args: UpdateThreadTasksArgs): UpdateThreadTask
   if (args.status === "completed") {
     // Use the first task ID to trigger thread issue close check
     const firstTaskId = updatedTasks[0]!.id
-    checkAndCloseThreadIssue(args.repoRoot, args.stream.id, firstTaskId)
-      .then((result) => {
-        if (result.closed && result.issueNumber) {
-          console.log(`Closed GitHub issue #${result.issueNumber} (thread complete)`)
-        }
-      })
-      .catch((error) => {
-        console.error("Failed to check/close GitHub issue:", error)
-      })
+    try {
+      const result = await checkAndCloseThreadIssue(args.repoRoot, args.stream.id, firstTaskId)
+      if (result.closed && result.issueNumber) {
+        console.log(`Closed GitHub issue #${result.issueNumber} (thread complete)`)
+      }
+    } catch (error) {
+      console.error("Failed to check/close GitHub issue:", error)
+    }
   }
 
   // Handle GitHub issue sync for status change from completed
   if (args.status === "in_progress" || args.status === "blocked") {
     const firstTaskId = updatedTasks[0]!.id
-    checkAndReopenThreadIssue(args.repoRoot, args.stream.id, firstTaskId)
-      .then((result) => {
-        if (result.reopened && result.issueNumber) {
-          console.log(`Reopened GitHub issue #${result.issueNumber} (thread no longer completed)`)
-        }
-      })
-      .catch((error) => {
-        console.error("Failed to check/reopen GitHub issue:", error)
-      })
+    try {
+      const result = await checkAndReopenThreadIssue(args.repoRoot, args.stream.id, firstTaskId)
+      if (result.reopened && result.issueNumber) {
+        console.log(`Reopened GitHub issue #${result.issueNumber} (thread no longer completed)`)
+      }
+    } catch (error) {
+      console.error("Failed to check/reopen GitHub issue:", error)
+    }
   }
 
   return {

@@ -4,6 +4,7 @@
  * Subcommands:
  *   skills    - Install skills to agent directories
  *   hooks     - Install hooks to agent directories
+ *   plugins   - Install plugins to agent directories
  */
 
 import {
@@ -20,6 +21,7 @@ import { join } from "path"
 const AGENV_HOME = process.env.HOME + "/.agenv"
 const AGENV_SKILLS = join(AGENV_HOME, "skills")
 const AGENV_HOOKS = join(AGENV_HOME, "hooks")
+const AGENV_PLUGINS = join(AGENV_HOME, "plugins")
 
 // Target directories for different agents
 const TARGETS: Record<string, string> = {
@@ -45,6 +47,7 @@ Usage:
 Subcommands:
   skills     Install skills to agent directories
   hooks      Install hooks to agent settings.json
+  plugins    Install plugins to agent directories
 
 Run 'ag install <subcommand> --help' for more information.
 `)
@@ -368,6 +371,224 @@ function hooksCommand(args: string[]): void {
   }
 }
 
+// ============================================================================
+// Plugins Installation
+// ============================================================================
+
+// Target directories for plugins
+const PLUGINS_TARGETS: Record<string, string> = {
+  opencode: process.env.HOME + "/.config/opencode/plugins",
+} as Record<string, string>
+
+function printPluginsHelp(): void {
+  console.log(`
+ag install plugins - Install plugins to agent directories
+
+Usage:
+  ag install plugins [options]
+
+Options:
+  --opencode     Install to ~/.config/opencode/plugins (default)
+  --target PATH  Install to a custom directory
+  --clean        Remove ALL existing plugins in target before installing
+  --list         List available plugins without installing
+  --dry-run      Show what would be installed without making changes
+  --help, -h     Show this help message
+
+Examples:
+  ag install plugins --opencode
+  ag install plugins --clean --opencode
+  ag install plugins --target ~/my-project/.opencode/plugins
+  ag install plugins --list
+`)
+}
+
+function listPlugins(): void {
+  console.log(`Available plugins in ${AGENV_PLUGINS}:`)
+  console.log("")
+
+  if (!existsSync(AGENV_PLUGINS)) {
+    console.log(`${YELLOW}No plugins directory found${NC}`)
+    return
+  }
+
+  const entries = readdirSync(AGENV_PLUGINS)
+  for (const entry of entries) {
+    const pluginPath = join(AGENV_PLUGINS, entry)
+    const isDir = statSync(pluginPath).isDirectory()
+    const ext = entry.split(".").pop()
+
+    if (isDir || ext === "ts" || ext === "js") {
+      console.log(`  ${entry}`)
+    }
+  }
+}
+
+function cleanPluginsTarget(targetDir: string, dryRun: boolean): number {
+  if (!existsSync(targetDir)) return 0
+
+  let removedCount = 0
+  const entries = readdirSync(targetDir)
+
+  for (const entry of entries) {
+    const pluginPath = join(targetDir, entry)
+    const isDir = statSync(pluginPath).isDirectory()
+    const ext = entry.split(".").pop()
+
+    if (isDir || ext === "ts" || ext === "js") {
+      if (dryRun) {
+        console.log(`  [REMOVE] ${entry}`)
+      } else {
+        rmSync(pluginPath, { recursive: true, force: true })
+        console.log(`  ${RED}✗${NC} ${entry} (removed)`)
+      }
+      removedCount++
+    }
+  }
+
+  if (removedCount > 0 && !dryRun) {
+    console.log(`${YELLOW}Removed ${removedCount} existing plugins${NC}`)
+  }
+
+  return removedCount
+}
+
+function installPluginsTo(
+  targetDir: string,
+  dryRun: boolean,
+  clean: boolean,
+): void {
+  if (!existsSync(AGENV_PLUGINS)) {
+    console.error(
+      `${RED}Error: Source plugins directory not found: ${AGENV_PLUGINS}${NC}`,
+    )
+    process.exit(1)
+  }
+
+  const entries = readdirSync(AGENV_PLUGINS).filter((e) => {
+    const pluginPath = join(AGENV_PLUGINS, e)
+    const isDir = statSync(pluginPath).isDirectory()
+    const ext = e.split(".").pop()
+    return isDir || ext === "ts" || ext === "js"
+  })
+
+  if (entries.length === 0) {
+    console.log(`${YELLOW}No plugins found in ${AGENV_PLUGINS}${NC}`)
+    return
+  }
+
+  if (dryRun) {
+    console.log(`${YELLOW}[DRY RUN]${NC} Would install to: ${targetDir}`)
+  } else {
+    console.log(`Installing plugins to: ${targetDir}`)
+    mkdirSync(targetDir, { recursive: true })
+  }
+
+  // Clean existing plugins if requested
+  if (clean) {
+    if (dryRun) {
+      console.log(`${YELLOW}[DRY RUN]${NC} Would remove existing plugins:`)
+    } else {
+      console.log("Removing existing plugins...")
+    }
+    cleanPluginsTarget(targetDir, dryRun)
+    console.log("")
+  }
+
+  if (dryRun) {
+    console.log("Would install:")
+  } else {
+    console.log("Installing:")
+  }
+
+  for (const entry of entries) {
+    const pluginPath = join(AGENV_PLUGINS, entry)
+    const targetPlugin = join(targetDir, entry)
+
+    if (dryRun) {
+      if (existsSync(targetPlugin) && !clean) {
+        console.log(`  [UPDATE] ${entry}`)
+      } else {
+        console.log(`  [NEW]    ${entry}`)
+      }
+    } else {
+      // Remove existing and copy fresh
+      if (existsSync(targetPlugin)) {
+        rmSync(targetPlugin, { recursive: true, force: true })
+      }
+      cpSync(pluginPath, targetPlugin, { recursive: true })
+      console.log(`  ${GREEN}✓${NC} ${entry}`)
+    }
+  }
+
+  if (!dryRun) {
+    console.log(
+      `${GREEN}Done!${NC} Installed ${entries.length} plugins to ${targetDir}`,
+    )
+  }
+}
+
+function pluginsCommand(args: string[]): void {
+  const targets: (string | undefined)[] = []
+  let dryRun = false
+  let listOnly = false
+  let clean = false
+
+  let i = 0
+  while (i < args.length) {
+    const arg = args[i]
+    switch (arg) {
+      case "--opencode":
+        targets.push(PLUGINS_TARGETS.opencode!)
+        break
+      case "--target":
+        i++
+        if (!args[i]) {
+          console.error(`${RED}Error: --target requires a path${NC}`)
+          process.exit(1)
+        }
+        targets.push(args[i])
+        break
+      case "--clean":
+        clean = true
+        break
+      case "--list":
+        listOnly = true
+        break
+      case "--dry-run":
+        dryRun = true
+        break
+      case "--help":
+      case "-h":
+        printPluginsHelp()
+        process.exit(0)
+      default:
+        console.error(`${RED}Error: Unknown option: ${arg}${NC}`)
+        printPluginsHelp()
+        process.exit(1)
+    }
+    i++
+  }
+
+  // Handle list mode
+  if (listOnly) {
+    listPlugins()
+    return
+  }
+
+  // Default to OpenCode if no targets specified
+  if (targets.length === 0) {
+    targets.push(PLUGINS_TARGETS.opencode!)
+  }
+
+  // Install to each target
+  for (const target of targets) {
+    if (!target) continue
+    installPluginsTo(target, dryRun, clean)
+    console.log("")
+  }
+}
+
 function skillsCommand(args: string[]): void {
   const targets: (string | undefined)[] = []
   let dryRun = false
@@ -468,9 +689,12 @@ export function main(argv: string[]): void {
     case "hooks":
       hooksCommand(args.slice(1))
       break
+    case "plugins":
+      pluginsCommand(args.slice(1))
+      break
     default:
       console.error(`Error: Unknown subcommand "${subcommand}"`)
-      console.error("\nAvailable subcommands: skills, hooks")
+      console.error("\nAvailable subcommands: skills, hooks, plugins")
       console.error("\nRun 'ag install --help' for usage information.")
       process.exit(1)
   }

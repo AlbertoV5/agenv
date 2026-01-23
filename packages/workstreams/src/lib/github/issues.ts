@@ -291,13 +291,19 @@ export async function updateThreadIssueBody(
   tasks: Task[]
 ): Promise<void> {
   const enabled = await isGitHubEnabled(repoRoot);
-  if (!enabled) return;
+  if (!enabled) {
+    throw new Error("GitHub integration is not enabled");
+  }
 
   const config = await loadGitHubConfig(repoRoot);
-  if (!config.owner || !config.repo) return;
+  if (!config.owner || !config.repo) {
+    throw new Error("GitHub repository not configured");
+  }
 
   const token = getGitHubAuth();
-  if (!token) return;
+  if (!token) {
+    throw new Error("GitHub authentication not available. Ensure GITHUB_TOKEN or GH_TOKEN is set, or run 'gh auth login'");
+  }
 
   const client = createGitHubClient(token, config.owner, config.repo);
   const body = formatCompletedIssueBody(input, tasks);

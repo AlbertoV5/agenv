@@ -376,7 +376,8 @@ export async function checkAndCloseThreadIssue(
     await updateThreadIssueBody(repoRoot, streamId, issueNumber, input, threadTasks);
   } catch (error) {
     // Don't fail the close operation if body update fails
-    console.error(`Failed to update GitHub issue #${issueNumber} body:`, error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(`Failed to update GitHub issue #${issueNumber} body: ${errorMessage}`);
   }
 
   // Close the issue on GitHub
@@ -639,7 +640,8 @@ export async function syncIssueStates(
           await updateThreadIssueBody(repoRoot, streamId, info.issueNumber, input, info.tasks);
         } catch (updateError) {
           // Don't fail the close operation if body update fails
-          console.error(`Failed to update GitHub issue #${info.issueNumber} body:`, updateError);
+          const errorMessage = updateError instanceof Error ? updateError.message : String(updateError);
+          console.error(`Failed to update GitHub issue #${info.issueNumber} body: ${errorMessage}`);
         }
 
         // Close the issue

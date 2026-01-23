@@ -16,6 +16,7 @@ import {
 import { isGitHubEnabled, loadGitHubConfig } from "../lib/github/config.ts"
 import { createWorkstreamBranch } from "../lib/github/branches.ts"
 import { createIssuesForWorkstream } from "../lib/github/sync.ts"
+import { ensureGitHubAuth } from "../lib/github/auth.ts"
 
 interface StartCliArgs {
     repoRoot?: string
@@ -182,6 +183,26 @@ export async function main(argv: string[] = process.argv): Promise<void> {
         } else {
             console.error("Error: GitHub integration is not enabled")
             console.error("Run 'work github enable' to enable it")
+        }
+        process.exit(1)
+    }
+
+    // Validate GitHub authentication upfront using the configured repo
+    const githubConfig = await loadGitHubConfig(repoRoot)
+    try {
+        await ensureGitHubAuth(githubConfig.owner, githubConfig.repo)
+    } catch (error) {
+        if (cliArgs.json) {
+            console.log(JSON.stringify({
+                action: "blocked",
+                reason: "github_auth_failed",
+                streamId: stream.id,
+                streamName: stream.name,
+                error: (error as Error).message,
+            }, null, 2))
+        } else {
+            console.error(`Error: ${(error as Error).message}`)
+            console.error("Set GITHUB_TOKEN, GH_TOKEN, or run 'gh auth login'")
         }
         process.exit(1)
     }

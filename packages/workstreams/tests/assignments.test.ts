@@ -58,7 +58,7 @@ describe("assignments", () => {
       JSON.stringify(tasksFile, null, 2),
     )
 
-    updateTask({
+    await updateTask({
       repoRoot: tempDir,
       stream: baseStream,
       taskId: "01.01.01.01",

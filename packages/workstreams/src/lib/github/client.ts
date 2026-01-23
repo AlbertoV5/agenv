@@ -86,7 +86,12 @@ export class GitHubClient {
     });
 
     if (!response.ok) {
-      const errorBody = await response.text();
+      let errorBody = "";
+      try {
+        errorBody = await response.text();
+      } catch {
+        errorBody = "(unable to read error body)";
+      }
       throw new Error(
         `GitHub API error: ${response.status} ${response.statusText} - ${errorBody}`
       );
