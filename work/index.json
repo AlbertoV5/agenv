@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-01-23T22:28:03.358Z",
+  "last_updated": "2026-01-23T22:28:36.576Z",
   "current_stream": "009-workstreams-ux-improvements",
   "streams": [
     {
@@ -497,7 +497,7 @@
         ]
       },
       "created_at": "2026-01-23T20:48:49.660Z",
-      "updated_at": "2026-01-23T22:28:03.358Z",
+      "updated_at": "2026-01-23T22:28:36.576Z",
       "path": "work/009-workstreams-ux-improvements",
       "generated_by": {
         "workstreams": "0.1.0"
@@ -546,8 +546,10 @@
         }
       },
       "github": {
-        "branch": "workstream/009-workstreams-ux-improvements"
-      }
+        "branch": "workstream/009-workstreams-ux-improvements",
+        "completed_at": "2026-01-23T22:28:36.576Z"
+      },
+      "status": "completed"
     }
   ]
 }
