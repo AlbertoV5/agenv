@@ -791,44 +791,144 @@ export function getTaskCounts(
   }
 }
 
+// ============================================
+// TASK GROUPING UTILITIES
+// ============================================
+
 /**
- * Group tasks by stage and thread
+ * Sort tasks by their numeric ID parts (e.g., "01.02.03.04")
+ * Used internally by grouping functions
+ */
+function sortTasksById(tasks: Task[]): void {
+  tasks.sort((a, b) => {
+    const aParts = a.id.split(".").map(Number)
+    const bParts = b.id.split(".").map(Number)
+    for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+      const aVal = aParts[i] ?? 0
+      const bVal = bParts[i] ?? 0
+      if (aVal !== bVal) return aVal - bVal
+    }
+    return 0
+  })
+}
+
+/**
+ * Options for groupTasks function
+ */
+export interface GroupTasksOptions {
+  /** Include batch level in grouping (default: true) */
+  byBatch?: boolean
+}
+
+/**
+ * Result types for groupTasks - depends on options
+ */
+export type GroupedByStageThread = Map<string, Map<string, Task[]>>
+export type GroupedByStageBatchThread = Map<string, Map<string, Map<string, Task[]>>>
+
+/**
+ * Group tasks by stage, optionally batch, and thread
+ * 
+ * @param tasks - Array of tasks to group
+ * @param options - Grouping options
+ * @returns Nested Map structure grouped by stage -> (batch ->) thread -> tasks
+ * 
+ * When byBatch is false (or omitted as false):
+ *   Returns Map<stageName, Map<threadName, Task[]>>
+ * 
+ * When byBatch is true (default):
+ *   Returns Map<stageName, Map<batchName, Map<threadName, Task[]>>>
+ */
+export function groupTasks(
+  tasks: Task[],
+  options?: { byBatch: false }
+): GroupedByStageThread
+export function groupTasks(
+  tasks: Task[],
+  options: { byBatch: true }
+): GroupedByStageBatchThread
+export function groupTasks(
+  tasks: Task[],
+  options?: GroupTasksOptions
+): GroupedByStageThread | GroupedByStageBatchThread
+export function groupTasks(
+  tasks: Task[],
+  options: GroupTasksOptions = {}
+): GroupedByStageThread | GroupedByStageBatchThread {
+  const { byBatch = true } = options
+
+  if (byBatch) {
+    // 3-level grouping: stage -> batch -> thread
+    const grouped = new Map<string, Map<string, Map<string, Task[]>>>()
+
+    for (const task of tasks) {
+      // Stage level
+      if (!grouped.has(task.stage_name)) {
+        grouped.set(task.stage_name, new Map())
+      }
+      const stageMap = grouped.get(task.stage_name)!
+
+      // Batch level
+      const batchName = task.batch_name || "Batch 01"
+      if (!stageMap.has(batchName)) {
+        stageMap.set(batchName, new Map())
+      }
+      const batchMap = stageMap.get(batchName)!
+
+      // Thread level
+      if (!batchMap.has(task.thread_name)) {
+        batchMap.set(task.thread_name, [])
+      }
+      batchMap.get(task.thread_name)!.push(task)
+    }
+
+    // Sort tasks within each thread by ID
+    for (const stageMap of grouped.values()) {
+      for (const batchMap of stageMap.values()) {
+        for (const threadTasks of batchMap.values()) {
+          sortTasksById(threadTasks)
+        }
+      }
+    }
+
+    return grouped
+  } else {
+    // 2-level grouping: stage -> thread
+    const grouped = new Map<string, Map<string, Task[]>>()
+
+    for (const task of tasks) {
+      if (!grouped.has(task.stage_name)) {
+        grouped.set(task.stage_name, new Map())
+      }
+      const stageMap = grouped.get(task.stage_name)!
+
+      if (!stageMap.has(task.thread_name)) {
+        stageMap.set(task.thread_name, [])
+      }
+      stageMap.get(task.thread_name)!.push(task)
+    }
+
+    // Sort tasks within each thread by ID
+    for (const stageMap of grouped.values()) {
+      for (const threadTasks of stageMap.values()) {
+        sortTasksById(threadTasks)
+      }
+    }
+
+    return grouped
+  }
+}
+
+/**
+ * Group tasks by stage and thread (convenience wrapper)
  * Returns a nested structure: { stageName: { threadName: Task[] } }
+ * 
+ * @deprecated Use groupTasks(tasks, { byBatch: false }) instead
  */
 export function groupTasksByStageAndThread(
   tasks: Task[],
 ): Map<string, Map<string, Task[]>> {
-  const grouped = new Map<string, Map<string, Task[]>>()
-
-  for (const task of tasks) {
-    if (!grouped.has(task.stage_name)) {
-      grouped.set(task.stage_name, new Map())
-    }
-    const stageMap = grouped.get(task.stage_name)!
-
-    if (!stageMap.has(task.thread_name)) {
-      stageMap.set(task.thread_name, [])
-    }
-    stageMap.get(task.thread_name)!.push(task)
-  }
-
-  // Sort tasks within each thread by ID
-  for (const stageMap of grouped.values()) {
-    for (const tasks of stageMap.values()) {
-      tasks.sort((a, b) => {
-        const aParts = a.id.split(".").map(Number)
-        const bParts = b.id.split(".").map(Number)
-        for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
-          const aVal = aParts[i] ?? 0
-          const bVal = bParts[i] ?? 0
-          if (aVal !== bVal) return aVal - bVal
-        }
-        return 0
-      })
-    }
-  }
-
-  return grouped
+  return groupTasks(tasks, { byBatch: false })
 }
 
 // ============================================
@@ -1249,52 +1349,13 @@ export function deleteTasksByBatch(
 }
 
 /**
- * Group tasks by stage, batch, and thread
+ * Group tasks by stage, batch, and thread (convenience wrapper)
  * Returns a nested structure: { stageName: { batchName: { threadName: Task[] } } }
+ * 
+ * @deprecated Use groupTasks(tasks, { byBatch: true }) or groupTasks(tasks) instead
  */
 export function groupTasksByStageAndBatchAndThread(
   tasks: Task[],
 ): Map<string, Map<string, Map<string, Task[]>>> {
-  const grouped = new Map<string, Map<string, Map<string, Task[]>>>()
-
-  for (const task of tasks) {
-    // Stage level
-    if (!grouped.has(task.stage_name)) {
-      grouped.set(task.stage_name, new Map())
-    }
-    const stageMap = grouped.get(task.stage_name)!
-
-    // Batch level
-    const batchName = task.batch_name || "Batch 01"
-    if (!stageMap.has(batchName)) {
-      stageMap.set(batchName, new Map())
-    }
-    const batchMap = stageMap.get(batchName)!
-
-    // Thread level
-    if (!batchMap.has(task.thread_name)) {
-      batchMap.set(task.thread_name, [])
-    }
-    batchMap.get(task.thread_name)!.push(task)
-  }
-
-  // Sort tasks within each thread by ID
-  for (const stageMap of grouped.values()) {
-    for (const batchMap of stageMap.values()) {
-      for (const threadTasks of batchMap.values()) {
-        threadTasks.sort((a, b) => {
-          const aParts = a.id.split(".").map(Number)
-          const bParts = b.id.split(".").map(Number)
-          for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
-            const aVal = aParts[i] ?? 0
-            const bVal = bParts[i] ?? 0
-            if (aVal !== bVal) return aVal - bVal
-          }
-          return 0
-        })
-      }
-    }
-  }
-
-  return grouped
+  return groupTasks(tasks, { byBatch: true })
 }

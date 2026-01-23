@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "stream_id": "009-workstreams-ux-improvements",
-  "last_updated": "2026-01-23T21:46:30.150Z",
+  "last_updated": "2026-01-23T22:24:08.487Z",
   "tasks": [
     {
       "id": "01.01.01.01",
@@ -636,8 +636,8 @@
       "status": "completed",
       "created_at": "2026-01-23T21:38:31.803Z",
       "updated_at": "2026-01-23T21:40:54.049Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Added getSessionFilePath() helper and modified buildRunCommand to write opencode session ID to /tmp/workstream-{threadId}-session.txt after lookup"
+      "report": "Added getSessionFilePath() helper and modified buildRunCommand to write opencode session ID to /tmp/workstream-{threadId}-session.txt after lookup",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.01.01.02",
@@ -648,8 +648,8 @@
       "status": "completed",
       "created_at": "2026-01-23T21:38:31.803Z",
       "updated_at": "2026-01-23T21:41:44.407Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Updated buildRetryRunCommand to write opencode session ID to temp file for multi-model case (single-model case already handled via buildRunCommand)"
+      "report": "Updated buildRetryRunCommand to write opencode session ID to temp file for multi-model case (single-model case already handled via buildRunCommand)",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.01.01.03",
@@ -660,8 +660,8 @@
       "status": "completed",
       "created_at": "2026-01-23T21:38:31.803Z",
       "updated_at": "2026-01-23T21:42:10.846Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Added opcodeSessionId field to ThreadMetadata interface in types.ts - stores the actual opencode session ID from the temp file"
+      "report": "Added opcodeSessionId field to ThreadMetadata interface in types.ts - stores the actual opencode session ID from the temp file",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.01.01.04",
@@ -672,8 +672,8 @@
       "status": "completed",
       "created_at": "2026-01-23T21:38:31.803Z",
       "updated_at": "2026-01-23T21:44:30.104Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Updated multi.ts to read session file after thread completion and store opencodeSessionId in threads.json via updateThreadMetadataLocked"
+      "report": "Updated multi.ts to read session file after thread completion and store opencodeSessionId in threads.json via updateThreadMetadataLocked",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.01.01.05",
@@ -684,8 +684,8 @@
       "status": "completed",
       "created_at": "2026-01-23T21:38:31.803Z",
       "updated_at": "2026-01-23T21:44:44.940Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Added cleanupSessionFiles function in multi.ts and call it after batch completes to remove /tmp/workstream-*-session.txt files"
+      "report": "Added cleanupSessionFiles function in multi.ts and call it after batch completes to remove /tmp/workstream-*-session.txt files",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.01.01.06",
@@ -696,8 +696,8 @@
       "status": "completed",
       "created_at": "2026-01-23T21:38:31.803Z",
       "updated_at": "2026-01-23T21:46:30.150Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Added tests for getSessionFilePath, session file writing in buildRunCommand/buildRetryRunCommand, and opcodeSessionId storage in ThreadMetadata. Updated updateThreadMetadata to handle opcodeSessionId field."
+      "report": "Added tests for getSessionFilePath, session file writing in buildRunCommand/buildRetryRunCommand, and opcodeSessionId storage in ThreadMetadata. Updated updateThreadMetadata to handle opcodeSessionId field.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.01.02.01",
@@ -708,8 +708,8 @@
       "status": "completed",
       "created_at": "2026-01-23T21:38:31.803Z",
       "updated_at": "2026-01-23T21:40:28.171Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Added getCompletionMarkerPath() helper function and modified buildRunCommand to write marker file after opencode run exits when threadId is provided"
+      "report": "Added getCompletionMarkerPath() helper function and modified buildRunCommand to write marker file after opencode run exits when threadId is provided",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.01.02.02",
@@ -720,8 +720,8 @@
       "status": "completed",
       "created_at": "2026-01-23T21:38:31.803Z",
       "updated_at": "2026-01-23T21:41:26.182Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Modified buildRetryRunCommand to accept threadId parameter and write completion marker after model attempts, passes threadId to buildRunCommand for single-model case"
+      "report": "Modified buildRetryRunCommand to accept threadId parameter and write completion marker after model attempts, passes threadId to buildRunCommand for single-model case",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.01.02.03",
@@ -732,8 +732,8 @@
       "status": "completed",
       "created_at": "2026-01-23T21:38:31.803Z",
       "updated_at": "2026-01-23T21:43:53.375Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Added marker file polling in multi.ts that runs concurrently with tmux session, detects /tmp/workstream-{threadId}-complete.txt files, and passes threadId to all buildRetryRunCommand calls"
+      "report": "Added marker file polling in multi.ts that runs concurrently with tmux session, detects /tmp/workstream-{threadId}-complete.txt files, and passes threadId to all buildRetryRunCommand calls",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.01.02.04",
@@ -744,8 +744,8 @@
       "status": "completed",
       "created_at": "2026-01-23T21:38:31.803Z",
       "updated_at": "2026-01-23T21:43:56.560Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Marker polling triggers playNotification('thread_complete') when marker file is detected, not when pane exits"
+      "report": "Marker polling triggers playNotification('thread_complete') when marker file is detected, not when pane exits",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.01.02.05",
@@ -756,8 +756,8 @@
       "status": "completed",
       "created_at": "2026-01-23T21:38:31.803Z",
       "updated_at": "2026-01-23T21:44:01.276Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Marker polling triggers playNotification('batch_complete') only when ALL threads have marker files (completedThreadIds.size === threadIds.length)"
+      "report": "Marker polling triggers playNotification('batch_complete') only when ALL threads have marker files (completedThreadIds.size === threadIds.length)",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.01.02.06",
@@ -768,8 +768,8 @@
       "status": "completed",
       "created_at": "2026-01-23T21:38:31.803Z",
       "updated_at": "2026-01-23T21:44:05.242Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Removed per-thread notification triggers from child.on('close') handler - notifications now come from marker detection. Error notifications still fire from close handler for failures not captured by markers."
+      "report": "Removed per-thread notification triggers from child.on('close') handler - notifications now come from marker detection. Error notifications still fire from close handler for failures not captured by markers.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.01.02.07",
@@ -780,8 +780,8 @@
       "status": "completed",
       "created_at": "2026-01-23T21:38:31.803Z",
       "updated_at": "2026-01-23T21:44:08.627Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Added cleanupCompletionMarkers() function that removes /tmp/workstream-{threadId}-complete.txt files when batch completes"
+      "report": "Added cleanupCompletionMarkers() function that removes /tmp/workstream-{threadId}-complete.txt files when batch completes",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.01.02.08",
@@ -792,8 +792,8 @@
       "status": "completed",
       "created_at": "2026-01-23T21:38:31.803Z",
       "updated_at": "2026-01-23T21:45:32.181Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Added tests for getCompletionMarkerPath, buildRunCommand/buildRetryRunCommand with threadId parameter, and marker-based notification timing simulation"
+      "report": "Added tests for getCompletionMarkerPath, buildRunCommand/buildRetryRunCommand with threadId parameter, and marker-based notification timing simulation",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.01.03.01",
@@ -804,8 +804,8 @@
       "status": "completed",
       "created_at": "2026-01-23T21:38:31.803Z",
       "updated_at": "2026-01-23T21:39:31.861Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Created NotificationTracker class in notifications.ts with Set<string> for notified threadIds, error tracking, and batchCompleteNotified flag. Includes helper methods playThreadComplete(), playError(), playBatchComplete() that check tracker before playing."
+      "report": "Created NotificationTracker class in notifications.ts with Set<string> for notified threadIds, error tracking, and batchCompleteNotified flag. Includes helper methods playThreadComplete(), playError(), playBatchComplete() that check tracker before playing.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.01.03.02",
@@ -816,8 +816,8 @@
       "status": "completed",
       "created_at": "2026-01-23T21:38:31.803Z",
       "updated_at": "2026-01-23T21:40:20.768Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Updated multi.ts to import NotificationTracker. All playNotification calls now use tracker methods (playThreadComplete, playError, playBatchComplete) which handle deduplication internally."
+      "report": "Updated multi.ts to import NotificationTracker. All playNotification calls now use tracker methods (playThreadComplete, playError, playBatchComplete) which handle deduplication internally.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.01.03.03",
@@ -828,8 +828,8 @@
       "status": "completed",
       "created_at": "2026-01-23T21:38:31.803Z",
       "updated_at": "2026-01-23T21:40:26.960Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Removed the loop in Ctrl-b X handler (lines 875-889) that played thread_complete for each thread. Now plays only batch_complete once for the entire session closure."
+      "report": "Removed the loop in Ctrl-b X handler (lines 875-889) that played thread_complete for each thread. Now plays only batch_complete once for the entire session closure.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.01.03.04",
@@ -840,8 +840,8 @@
       "status": "completed",
       "created_at": "2026-01-23T21:38:31.803Z",
       "updated_at": "2026-01-23T21:40:33.512Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Edge cases handled: (1) Normal completion - tracker.playThreadComplete per thread, then batch_complete once; (2) Early tmux close via Ctrl-b X - only batch_complete, no per-thread sounds; (3) Thread failure - tracker.playError with deduplication. All paths use tracker to prevent duplicates."
+      "report": "Edge cases handled: (1) Normal completion - tracker.playThreadComplete per thread, then batch_complete once; (2) Early tmux close via Ctrl-b X - only batch_complete, no per-thread sounds; (3) Thread failure - tracker.playError with deduplication. All paths use tracker to prevent duplicates.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.01.03.05",
@@ -852,8 +852,680 @@
       "status": "completed",
       "created_at": "2026-01-23T21:38:31.803Z",
       "updated_at": "2026-01-23T21:41:41.498Z",
+      "report": "Added comprehensive unit tests for NotificationTracker in notifications.test.ts. Tests cover: thread completion deduplication, error tracking, batch completion, helper methods (playThreadComplete, playError, playBatchComplete), reset functionality, and edge cases simulating multi.ts usage patterns. All 52 tests pass.",
+      "assigned_agent": "systems-engineer"
+    },
+    {
+      "id": "06.01.01.01",
+      "name": "Run tests first - execute `bun run test` in packages/workstreams to establish baseline",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Source File Refactoring",
+      "thread_name": "Multi.ts Decomposition",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:03:25.583Z",
       "assigned_agent": "systems-engineer",
-      "report": "Added comprehensive unit tests for NotificationTracker in notifications.test.ts. Tests cover: thread completion deduplication, error tracking, batch completion, helper methods (playThreadComplete, playError, playBatchComplete), reset functionality, and edge cases simulating multi.ts usage patterns. All 52 tests pass."
+      "report": "Refactored multi.ts from 1028 to 709 lines (31% reduction). Created 4 new modules: cli-utils.ts (ID parsing, help formatting), multi-orchestrator.ts (tmux session setup), marker-polling.ts (completion polling/cleanup), multi-types.ts (CLI args type). Added ThreadInfo/ThreadSessionMap to types.ts. All 543 tests pass."
+    },
+    {
+      "id": "06.01.01.02",
+      "name": "Create src/lib/cli-utils.ts with reusable parseCliArgs pattern and help text formatting helpers",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Source File Refactoring",
+      "thread_name": "Multi.ts Decomposition",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:03:25.583Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Refactored multi.ts from 1028 to 709 lines (31% reduction). Created 4 new modules: cli-utils.ts (ID parsing, help formatting), multi-orchestrator.ts (tmux session setup), marker-polling.ts (completion polling/cleanup), multi-types.ts (CLI args type). Added ThreadInfo/ThreadSessionMap to types.ts. All 543 tests pass."
+    },
+    {
+      "id": "06.01.01.03",
+      "name": "Create src/lib/multi-orchestrator.ts - extract collectThreadInfoFromTasks(), tmux session setup, pane spawning logic",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Source File Refactoring",
+      "thread_name": "Multi.ts Decomposition",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:03:25.583Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Refactored multi.ts from 1028 to 709 lines (31% reduction). Created 4 new modules: cli-utils.ts (ID parsing, help formatting), multi-orchestrator.ts (tmux session setup), marker-polling.ts (completion polling/cleanup), multi-types.ts (CLI args type). Added ThreadInfo/ThreadSessionMap to types.ts. All 543 tests pass."
+    },
+    {
+      "id": "06.01.01.04",
+      "name": "Create src/lib/marker-polling.ts - extract pollMarkerFiles(), cleanupCompletionMarkers(), cleanupSessionFiles()",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Source File Refactoring",
+      "thread_name": "Multi.ts Decomposition",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:03:25.583Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Refactored multi.ts from 1028 to 709 lines (31% reduction). Created 4 new modules: cli-utils.ts (ID parsing, help formatting), multi-orchestrator.ts (tmux session setup), marker-polling.ts (completion polling/cleanup), multi-types.ts (CLI args type). Added ThreadInfo/ThreadSessionMap to types.ts. All 543 tests pass."
+    },
+    {
+      "id": "06.01.01.05",
+      "name": "Move ThreadInfo type to src/lib/types.ts",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Source File Refactoring",
+      "thread_name": "Multi.ts Decomposition",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:03:25.583Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Refactored multi.ts from 1028 to 709 lines (31% reduction). Created 4 new modules: cli-utils.ts (ID parsing, help formatting), multi-orchestrator.ts (tmux session setup), marker-polling.ts (completion polling/cleanup), multi-types.ts (CLI args type). Added ThreadInfo/ThreadSessionMap to types.ts. All 543 tests pass."
+    },
+    {
+      "id": "06.01.01.06",
+      "name": "Update multi.ts to import and use extracted modules, target ~400 lines from 1028",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Source File Refactoring",
+      "thread_name": "Multi.ts Decomposition",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:03:25.583Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Refactored multi.ts from 1028 to 709 lines (31% reduction). Created 4 new modules: cli-utils.ts (ID parsing, help formatting), multi-orchestrator.ts (tmux session setup), marker-polling.ts (completion polling/cleanup), multi-types.ts (CLI args type). Added ThreadInfo/ThreadSessionMap to types.ts. All 543 tests pass."
+    },
+    {
+      "id": "06.01.01.07",
+      "name": "Run tests last - execute `bun run test` to verify no regressions",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Source File Refactoring",
+      "thread_name": "Multi.ts Decomposition",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:03:25.583Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Refactored multi.ts from 1028 to 709 lines (31% reduction). Created 4 new modules: cli-utils.ts (ID parsing, help formatting), multi-orchestrator.ts (tmux session setup), marker-polling.ts (completion polling/cleanup), multi-types.ts (CLI args type). Added ThreadInfo/ThreadSessionMap to types.ts. All 543 tests pass."
+    },
+    {
+      "id": "06.01.02.01",
+      "name": "Run tests first - execute `bun run test` in packages/workstreams to establish baseline",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Source File Refactoring",
+      "thread_name": "Approve.ts Modularization",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T21:56:55.766Z",
+      "assigned_agent": "systems-engineer",
+      "report": "All 543 tests pass. Baseline established."
+    },
+    {
+      "id": "06.01.02.02",
+      "name": "Create src/cli/approve/ directory structure with index.ts as main entry point",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Source File Refactoring",
+      "thread_name": "Approve.ts Modularization",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T21:59:55.546Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Created src/cli/approve/ directory structure with index.ts containing main entry point, CLI arg parsing, and router to handlers"
+    },
+    {
+      "id": "06.01.02.03",
+      "name": "Create src/cli/approve/plan.ts - extract handlePlanApproval() (~200 lines)",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Source File Refactoring",
+      "thread_name": "Approve.ts Modularization",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T21:59:56.629Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Created plan.ts with handlePlanApproval() and generateTasksMdAfterApproval() (~320 lines)"
+    },
+    {
+      "id": "06.01.02.04",
+      "name": "Create src/cli/approve/tasks.ts - extract handleTasksApproval() and serializeTasksMdToJson() (~250 lines)",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Source File Refactoring",
+      "thread_name": "Approve.ts Modularization",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T21:59:57.492Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Created tasks.ts with handleTasksApproval(), serializeTasksMdToJson(), and deleteTasksMd() (~240 lines)"
+    },
+    {
+      "id": "06.01.02.05",
+      "name": "Create src/cli/approve/revision.ts - extract handleRevisionApproval() (~200 lines)",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Source File Refactoring",
+      "thread_name": "Approve.ts Modularization",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T21:59:58.185Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Created revision.ts with handleRevisionApproval() (~160 lines)"
+    },
+    {
+      "id": "06.01.02.06",
+      "name": "Create src/cli/approve/utils.ts - shared formatting, stage validation, JSON output helpers",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Source File Refactoring",
+      "thread_name": "Approve.ts Modularization",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T21:59:59.096Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Created utils.ts with ApproveTarget, ApproveCliArgs types and formatApprovalIcon() helper"
+    },
+    {
+      "id": "06.01.02.07",
+      "name": "Extract checkStageCompletion() to src/lib/approval.ts for reuse by other commands",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Source File Refactoring",
+      "thread_name": "Approve.ts Modularization",
+      "status": "cancelled",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:00:00.110Z",
+      "assigned_agent": "systems-engineer",
+      "report": "No checkStageCompletion() function exists - stage completion logic is inline in handlePlanApproval()"
+    },
+    {
+      "id": "06.01.02.08",
+      "name": "Update any imports referencing old approve.ts path",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Source File Refactoring",
+      "thread_name": "Approve.ts Modularization",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:02:07.969Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Updated 4 files: bin/work.ts, tests/approve_role_enforcement.test.ts, tests/stage_approval_validation.test.ts, tests/approval_flow.test.ts to use new approve/index.ts path"
+    },
+    {
+      "id": "06.01.02.09",
+      "name": "Run tests last - execute `bun run test` to verify no regressions",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Source File Refactoring",
+      "thread_name": "Approve.ts Modularization",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:02:26.092Z",
+      "assigned_agent": "systems-engineer",
+      "report": "All 543 tests pass. Refactoring complete: 1089-line approve.ts split into 5 modules (1309 total lines with imports/exports)."
+    },
+    {
+      "id": "06.01.03.01",
+      "name": "Run tests first - execute `bun run test` in packages/workstreams to establish baseline",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Source File Refactoring",
+      "thread_name": "Fix.ts & Shared Utilities",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T21:57:00.412Z",
+      "assigned_agent": "systems-engineer",
+      "report": "All 543 tests pass. Baseline established."
+    },
+    {
+      "id": "06.01.03.02",
+      "name": "Create src/lib/prompt-paths.ts - consolidate getPromptFilePath() from fix.ts and getPromptFilePathFromMetadata() from multi.ts",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Source File Refactoring",
+      "thread_name": "Fix.ts & Shared Utilities",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T21:57:49.266Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Created src/lib/prompt-paths.ts with resolvePromptPath() and resolvePromptPathFromMetadata() functions."
+    },
+    {
+      "id": "06.01.03.03",
+      "name": "Add getLastSessionForThread(threadId) helper to src/lib/threads.ts",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Source File Refactoring",
+      "thread_name": "Fix.ts & Shared Utilities",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T21:58:14.167Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added getLastSessionForThread() helper to threads.ts"
+    },
+    {
+      "id": "06.01.03.04",
+      "name": "Add getOpencodeSessionId(threadId) helper to src/lib/threads.ts",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Source File Refactoring",
+      "thread_name": "Fix.ts & Shared Utilities",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T21:58:14.215Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added getOpencodeSessionId() helper to threads.ts"
+    },
+    {
+      "id": "06.01.03.05",
+      "name": "Update fix.ts to use shared resolvePromptPath() and threads.ts helpers",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Source File Refactoring",
+      "thread_name": "Fix.ts & Shared Utilities",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T21:59:02.430Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Updated fix.ts to use shared resolvePromptPath() and getLastSessionForThread() from new modules."
+    },
+    {
+      "id": "06.01.03.06",
+      "name": "Update multi.ts to use shared resolvePromptPath() instead of inline logic",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Source File Refactoring",
+      "thread_name": "Fix.ts & Shared Utilities",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T21:59:37.585Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Updated multi.ts to use shared resolvePromptPathFromMetadata() from prompt-paths.ts."
+    },
+    {
+      "id": "06.01.03.07",
+      "name": "Run tests last - execute `bun run test` to verify no regressions",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Source File Refactoring",
+      "thread_name": "Fix.ts & Shared Utilities",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:00:13.236Z",
+      "assigned_agent": "systems-engineer",
+      "report": "All 543 tests pass with no regressions."
+    },
+    {
+      "id": "06.01.04.01",
+      "name": "Run tests first - execute `bun run test` in packages/workstreams to establish baseline",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Source File Refactoring",
+      "thread_name": "Tasks.ts Simplification",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T21:56:55.099Z",
+      "assigned_agent": "systems-engineer",
+      "report": "All 543 tests pass (2 skipped). Baseline established."
+    },
+    {
+      "id": "06.01.04.02",
+      "name": "Evaluate thin session delegation functions - identify which wrappers can be removed if CLI calls threads.ts directly",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Source File Refactoring",
+      "thread_name": "Tasks.ts Simplification",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T21:57:37.521Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Analyzed session wrappers: startTaskSession/completeTaskSession used by fix.ts and execute.ts - provide taskId->threadId conversion. Locked variants and getCurrentTaskSession/getTaskSessions only used in tests. CLI code loops over tasks but sessions are per-thread. Wrappers add value for task validation and ID conversion but callers create redundant sessions."
+    },
+    {
+      "id": "06.01.04.03",
+      "name": "Remove unnecessary session wrapper functions, update callers to use threads.ts directly",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Source File Refactoring",
+      "thread_name": "Tasks.ts Simplification",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T21:58:08.797Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Evaluated session wrappers - decided to KEEP them. They provide valuable taskId->threadId conversion abstraction. CLI works with taskIds (user-friendly), storage uses threadIds. Removing would push complexity to CLI. The 'thin delegation' is proper separation of concerns."
+    },
+    {
+      "id": "06.01.04.04",
+      "name": "Consolidate groupTasksByStageAndThread() and groupTasksByStageAndBatchAndThread() into single groupTasks() with options",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Source File Refactoring",
+      "thread_name": "Tasks.ts Simplification",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T21:59:49.801Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Created unified groupTasks(tasks, { byBatch }) function with TypeScript overloads for proper typing. Kept old functions as deprecated wrappers for backward compatibility. Extracted sortTasksById() helper. All 543 tests pass."
+    },
+    {
+      "id": "06.01.04.05",
+      "name": "Consider extracting discoverThreadsInBatch() to src/lib/task-discovery.ts if it improves clarity",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Source File Refactoring",
+      "thread_name": "Tasks.ts Simplification",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:00:21.883Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Evaluated discoverThreadsInBatch() extraction - decided to KEEP in tasks.ts. Only 1 caller (multi.ts), depends on tasks.ts functions, extraction would add complexity with little benefit. File is organized into clear sections."
+    },
+    {
+      "id": "06.01.04.06",
+      "name": "Update all callers of removed/changed functions throughout codebase",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Source File Refactoring",
+      "thread_name": "Tasks.ts Simplification",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:02:08.674Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Updated 4 callers to use new groupTasks() API: tree.ts, list.ts, data-service.ts, document.ts. Changed imports and call sites. Updated comments referencing old function name. All relevant tests pass."
+    },
+    {
+      "id": "06.01.04.07",
+      "name": "Run tests last - execute `bun run test` to verify no regressions",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Source File Refactoring",
+      "thread_name": "Tasks.ts Simplification",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:02:45.028Z",
+      "assigned_agent": "systems-engineer",
+      "report": "All 543 tests pass (2 skipped). No regressions introduced by tasks.ts simplification."
+    },
+    {
+      "id": "06.02.01.01",
+      "name": "Run tests first - execute `bun run test` in packages/workstreams to establish baseline",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Test Refactoring",
+      "thread_name": "Test Helpers Infrastructure",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:13:47.012Z",
+      "assigned_agent": "code-reviewer",
+      "report": "Implemented test helpers: test-workspace, cli-runner, mocks. Fixed failing tests in multi.test.ts."
+    },
+    {
+      "id": "06.02.01.02",
+      "name": "Create tests/helpers/test-workspace.ts with createTestWorkstream(), cleanupTestWorkstream(), withTestWorkstream()",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Test Refactoring",
+      "thread_name": "Test Helpers Infrastructure",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:13:47.012Z",
+      "assigned_agent": "code-reviewer",
+      "report": "Implemented test helpers: test-workspace, cli-runner, mocks. Fixed failing tests in multi.test.ts."
+    },
+    {
+      "id": "06.02.01.03",
+      "name": "Create tests/helpers/cli-runner.ts with captureCliOutput(fn) and runCliCommand(command, args)",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Test Refactoring",
+      "thread_name": "Test Helpers Infrastructure",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:13:47.012Z",
+      "assigned_agent": "code-reviewer",
+      "report": "Implemented test helpers: test-workspace, cli-runner, mocks. Fixed failing tests in multi.test.ts."
+    },
+    {
+      "id": "06.02.01.04",
+      "name": "Create tests/helpers/mocks.ts with createSpawnMock(), createChildProcessMock(), mockPlayNotification()",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Test Refactoring",
+      "thread_name": "Test Helpers Infrastructure",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:13:47.012Z",
+      "assigned_agent": "code-reviewer",
+      "report": "Implemented test helpers: test-workspace, cli-runner, mocks. Fixed failing tests in multi.test.ts."
+    },
+    {
+      "id": "06.02.01.05",
+      "name": "Add index.ts to tests/helpers/ that exports all utilities",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Test Refactoring",
+      "thread_name": "Test Helpers Infrastructure",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:13:47.012Z",
+      "assigned_agent": "code-reviewer",
+      "report": "Implemented test helpers: test-workspace, cli-runner, mocks. Fixed failing tests in multi.test.ts."
+    },
+    {
+      "id": "06.02.01.06",
+      "name": "Run tests last - execute `bun run test` to verify helpers work correctly",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Test Refactoring",
+      "thread_name": "Test Helpers Infrastructure",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:13:47.012Z",
+      "assigned_agent": "code-reviewer",
+      "report": "Implemented test helpers: test-workspace, cli-runner, mocks. Fixed failing tests in multi.test.ts."
+    },
+    {
+      "id": "06.02.02.01",
+      "name": "Run tests first - execute `bun run test` in packages/workstreams to establish baseline",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Test Refactoring",
+      "thread_name": "Approval Flow Test Refactoring",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:14:04.990Z",
+      "assigned_agent": "code-reviewer",
+      "report": "Refactored approval_flow.test.ts to use helpers and fixtures. Implemented missing helpers in tests/helpers/. Reduced file size from 789 to 535 lines. All tests passed."
+    },
+    {
+      "id": "06.02.02.02",
+      "name": "Create tests/fixtures/plans/ directory with basic-plan.md, multi-batch-plan.md, revision-plan.md",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Test Refactoring",
+      "thread_name": "Approval Flow Test Refactoring",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:14:04.990Z",
+      "assigned_agent": "code-reviewer",
+      "report": "Refactored approval_flow.test.ts to use helpers and fixtures. Implemented missing helpers in tests/helpers/. Reduced file size from 789 to 535 lines. All tests passed."
+    },
+    {
+      "id": "06.02.02.03",
+      "name": "Refactor approval_flow.test.ts to import PLAN.md fixtures instead of inline strings",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Test Refactoring",
+      "thread_name": "Approval Flow Test Refactoring",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:14:04.990Z",
+      "assigned_agent": "code-reviewer",
+      "report": "Refactored approval_flow.test.ts to use helpers and fixtures. Implemented missing helpers in tests/helpers/. Reduced file size from 789 to 535 lines. All tests passed."
+    },
+    {
+      "id": "06.02.02.04",
+      "name": "Refactor approval_flow.test.ts to use createTestWorkstream() from helpers",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Test Refactoring",
+      "thread_name": "Approval Flow Test Refactoring",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:14:04.990Z",
+      "assigned_agent": "code-reviewer",
+      "report": "Refactored approval_flow.test.ts to use helpers and fixtures. Implemented missing helpers in tests/helpers/. Reduced file size from 789 to 535 lines. All tests passed."
+    },
+    {
+      "id": "06.02.02.05",
+      "name": "Refactor approval_flow.test.ts to use captureCliOutput() for console capture",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Test Refactoring",
+      "thread_name": "Approval Flow Test Refactoring",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:14:04.990Z",
+      "assigned_agent": "code-reviewer",
+      "report": "Refactored approval_flow.test.ts to use helpers and fixtures. Implemented missing helpers in tests/helpers/. Reduced file size from 789 to 535 lines. All tests passed."
+    },
+    {
+      "id": "06.02.02.06",
+      "name": "Consolidate three separate beforeEach blocks into shared setup, target 788→500 lines",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Test Refactoring",
+      "thread_name": "Approval Flow Test Refactoring",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:14:04.990Z",
+      "assigned_agent": "code-reviewer",
+      "report": "Refactored approval_flow.test.ts to use helpers and fixtures. Implemented missing helpers in tests/helpers/. Reduced file size from 789 to 535 lines. All tests passed."
+    },
+    {
+      "id": "06.02.02.07",
+      "name": "Run tests last - execute `bun run test` to verify no regressions",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Test Refactoring",
+      "thread_name": "Approval Flow Test Refactoring",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:14:04.990Z",
+      "assigned_agent": "code-reviewer",
+      "report": "Refactored approval_flow.test.ts to use helpers and fixtures. Implemented missing helpers in tests/helpers/. Reduced file size from 789 to 535 lines. All tests passed."
+    },
+    {
+      "id": "06.02.03.01",
+      "name": "Run tests first - execute `bun run test` in packages/workstreams to establish baseline",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Test Refactoring",
+      "thread_name": "Notification Test Refactoring",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:24:08.487Z",
+      "assigned_agent": "code-reviewer",
+      "report": "Refactored notifications.test.ts from 767 to 515 lines (33% reduction). Replaced inline mocks with createSpawnMock/createChildProcessMock helpers, consolidated repeated beforeEach blocks, and merged similar test cases. All tests passing."
+    },
+    {
+      "id": "06.02.03.02",
+      "name": "Refactor notifications.test.ts to use createSpawnMock() from helpers instead of inline mocks",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Test Refactoring",
+      "thread_name": "Notification Test Refactoring",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:24:08.487Z",
+      "assigned_agent": "code-reviewer",
+      "report": "Refactored notifications.test.ts from 767 to 515 lines (33% reduction). Replaced inline mocks with createSpawnMock/createChildProcessMock helpers, consolidated repeated beforeEach blocks, and merged similar test cases. All tests passing."
+    },
+    {
+      "id": "06.02.03.03",
+      "name": "Refactor notifications.test.ts to use createChildProcessMock() for ChildProcess mocks",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Test Refactoring",
+      "thread_name": "Notification Test Refactoring",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:24:08.487Z",
+      "assigned_agent": "code-reviewer",
+      "report": "Refactored notifications.test.ts from 767 to 515 lines (33% reduction). Replaced inline mocks with createSpawnMock/createChildProcessMock helpers, consolidated repeated beforeEach blocks, and merged similar test cases. All tests passing."
+    },
+    {
+      "id": "06.02.03.04",
+      "name": "Extract repeated mock setup to beforeEach blocks where appropriate",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Test Refactoring",
+      "thread_name": "Notification Test Refactoring",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:24:08.487Z",
+      "assigned_agent": "code-reviewer",
+      "report": "Refactored notifications.test.ts from 767 to 515 lines (33% reduction). Replaced inline mocks with createSpawnMock/createChildProcessMock helpers, consolidated repeated beforeEach blocks, and merged similar test cases. All tests passing."
+    },
+    {
+      "id": "06.02.03.05",
+      "name": "Consolidate similar test cases, target 766→500 lines",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Test Refactoring",
+      "thread_name": "Notification Test Refactoring",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:24:08.487Z",
+      "assigned_agent": "code-reviewer",
+      "report": "Refactored notifications.test.ts from 767 to 515 lines (33% reduction). Replaced inline mocks with createSpawnMock/createChildProcessMock helpers, consolidated repeated beforeEach blocks, and merged similar test cases. All tests passing."
+    },
+    {
+      "id": "06.02.03.06",
+      "name": "Run tests last - execute `bun run test` to verify no regressions",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Test Refactoring",
+      "thread_name": "Notification Test Refactoring",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:24:08.487Z",
+      "assigned_agent": "code-reviewer",
+      "report": "Refactored notifications.test.ts from 767 to 515 lines (33% reduction). Replaced inline mocks with createSpawnMock/createChildProcessMock helpers, consolidated repeated beforeEach blocks, and merged similar test cases. All tests passing."
+    },
+    {
+      "id": "06.02.04.01",
+      "name": "Run tests first - execute `bun run test` in packages/workstreams to establish baseline",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Test Refactoring",
+      "thread_name": "Multi & Session Test Cleanup",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:13:51.321Z",
+      "assigned_agent": "code-reviewer",
+      "report": "Refactored multi.test.ts and session-tracking.test.ts to use shared helpers and remove redundancy. Implemented missing helpers in packages/workstreams/tests/helpers/."
+    },
+    {
+      "id": "06.02.04.02",
+      "name": "Refactor multi.test.ts to use shared mock factories from helpers",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Test Refactoring",
+      "thread_name": "Multi & Session Test Cleanup",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:13:51.321Z",
+      "assigned_agent": "code-reviewer",
+      "report": "Refactored multi.test.ts and session-tracking.test.ts to use shared helpers and remove redundancy. Implemented missing helpers in packages/workstreams/tests/helpers/."
+    },
+    {
+      "id": "06.02.04.03",
+      "name": "Review simulation tests in multi.test.ts - convert valuable ones to integration tests, remove redundant ones",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Test Refactoring",
+      "thread_name": "Multi & Session Test Cleanup",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:13:51.321Z",
+      "assigned_agent": "code-reviewer",
+      "report": "Refactored multi.test.ts and session-tracking.test.ts to use shared helpers and remove redundancy. Implemented missing helpers in packages/workstreams/tests/helpers/."
+    },
+    {
+      "id": "06.02.04.04",
+      "name": "Refactor session-tracking.test.ts to use createTestWorkstream() from helpers",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Test Refactoring",
+      "thread_name": "Multi & Session Test Cleanup",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:13:51.321Z",
+      "assigned_agent": "code-reviewer",
+      "report": "Refactored multi.test.ts and session-tracking.test.ts to use shared helpers and remove redundancy. Implemented missing helpers in packages/workstreams/tests/helpers/."
+    },
+    {
+      "id": "06.02.04.05",
+      "name": "Mark legacy migration tests in session-tracking.test.ts with describe.skip or // LEGACY: comments",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Test Refactoring",
+      "thread_name": "Multi & Session Test Cleanup",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:13:51.321Z",
+      "assigned_agent": "code-reviewer",
+      "report": "Refactored multi.test.ts and session-tracking.test.ts to use shared helpers and remove redundancy. Implemented missing helpers in packages/workstreams/tests/helpers/."
+    },
+    {
+      "id": "06.02.04.06",
+      "name": "Share setup between session-tracking.test.ts and threads.test.ts where possible",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Test Refactoring",
+      "thread_name": "Multi & Session Test Cleanup",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:13:51.321Z",
+      "assigned_agent": "code-reviewer",
+      "report": "Refactored multi.test.ts and session-tracking.test.ts to use shared helpers and remove redundancy. Implemented missing helpers in packages/workstreams/tests/helpers/."
+    },
+    {
+      "id": "06.02.04.07",
+      "name": "Run tests last - execute `bun run test` to verify no regressions",
+      "stage_name": "Revision - Code Refactoring",
+      "batch_name": "Test Refactoring",
+      "thread_name": "Multi & Session Test Cleanup",
+      "status": "completed",
+      "created_at": "2026-01-23T21:56:02.526Z",
+      "updated_at": "2026-01-23T22:13:51.321Z",
+      "assigned_agent": "code-reviewer",
+      "report": "Refactored multi.test.ts and session-tracking.test.ts to use shared helpers and remove redundancy. Implemented missing helpers in packages/workstreams/tests/helpers/."
     }
   ]
 }

@@ -2,7 +2,7 @@
  * Test role enforcement for approve command
  */
 import { describe, it, expect, beforeEach, afterEach } from "bun:test"
-import { main as approveMain } from "../src/cli/approve.ts"
+import { main as approveMain } from "../src/cli/approve/index.ts"
 
 describe("approve command role enforcement", () => {
   const originalRole = process.env.WORKSTREAM_ROLE

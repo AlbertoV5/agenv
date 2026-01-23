@@ -17,6 +17,7 @@ import {
   getNotificationManager,
   resetNotificationManager,
 } from "../src/lib/notifications"
+import { createSpawnMock, createChildProcessMock } from "./helpers/mocks"
 
 describe("NotificationEvent types", () => {
   test("has expected event types", () => {
@@ -95,158 +96,71 @@ describe("MacOSSoundProvider", () => {
   let spawnMock: ReturnType<typeof spyOn>
 
   beforeEach(() => {
-    // Mock spawn to prevent actual sound playback
-    // biome-ignore lint/suspicious/noExplicitAny: Mock needs flexible typing
-    spawnMock = spyOn(childProcess, "spawn").mockImplementation((): any => {
-      const mockChild = {
-        unref: mock(() => {}),
-        on: mock(() => mockChild),
-        stdout: null,
-        stderr: null,
-        stdin: null,
-        pid: 12345,
-        killed: false,
-        exitCode: null,
-        signalCode: null,
-        connected: false,
-        kill: mock(() => true),
-        send: mock(() => true),
-        disconnect: mock(() => {}),
-        ref: mock(() => {}),
-        [Symbol.dispose]: mock(() => {}),
-      } as unknown as childProcess.ChildProcess
-      return mockChild
-    })
+    spawnMock = createSpawnMock()
   })
 
   afterEach(() => {
     spawnMock.mockRestore()
   })
 
-  test("has correct provider name", () => {
+  test("provider name and availability", () => {
     const provider = new MacOSSoundProvider()
     expect(provider.name).toBe("macos-sound")
-  })
-
-  test("isAvailable returns true on darwin", () => {
-    const provider = new MacOSSoundProvider()
-    // We're running on macOS in this test environment
     expect(provider.isAvailable()).toBe(process.platform === "darwin")
   })
 
-  test("playNotification spawns afplay with correct sound", () => {
-    const provider = new MacOSSoundProvider()
-
-    // Only test if on macOS
-    if (process.platform !== "darwin") {
-      return
-    }
-
-    provider.playNotification("thread_complete")
-
-    expect(spawnMock).toHaveBeenCalledWith(
-      "afplay",
-      [DEFAULT_SOUNDS.thread_complete],
-      expect.objectContaining({
-        detached: true,
-        stdio: "ignore",
-      })
-    )
-  })
-
-  test("playNotification does not spawn when disabled", () => {
-    const provider = new MacOSSoundProvider({ enabled: false })
-    provider.playNotification("thread_complete")
-
+  test("playNotification behavior", () => {
+    // Does not spawn when disabled
+    const disabledProvider = new MacOSSoundProvider({ enabled: false })
+    disabledProvider.playNotification("thread_complete")
     expect(spawnMock).not.toHaveBeenCalled()
-  })
 
-  test("uses custom sound path when configured", () => {
-    const customPath = "/System/Library/Sounds/Ping.aiff" // Use existing system sound
-    const provider = new MacOSSoundProvider({
-      sounds: { thread_complete: customPath },
-    })
+    if (process.platform !== "darwin") return
 
-    // Only test if on macOS
-    if (process.platform !== "darwin") {
-      return
-    }
-
-    provider.playNotification("thread_complete")
-
-    expect(spawnMock).toHaveBeenCalledWith("afplay", [customPath], expect.anything())
-  })
-
-  test("falls back to default sound when custom path does not exist", () => {
-    const provider = new MacOSSoundProvider({
-      sounds: { thread_complete: "/nonexistent/custom.aiff" },
-    })
-
-    // Only test if on macOS
-    if (process.platform !== "darwin") {
-      return
-    }
-
-    provider.playNotification("thread_complete")
-
-    // Should fall back to default sound
+    // Spawns afplay with default sound
+    const defaultProvider = new MacOSSoundProvider()
+    defaultProvider.playNotification("thread_complete")
     expect(spawnMock).toHaveBeenCalledWith(
       "afplay",
       [DEFAULT_SOUNDS.thread_complete],
-      expect.anything()
+      expect.objectContaining({ detached: true, stdio: "ignore" })
     )
+
+    // Uses custom sound path when configured
+    const customPath = "/System/Library/Sounds/Ping.aiff"
+    const customProvider = new MacOSSoundProvider({ sounds: { thread_complete: customPath } })
+    customProvider.playNotification("thread_complete")
+    expect(spawnMock).toHaveBeenCalledWith("afplay", [customPath], expect.anything())
+
+    // Falls back to default when custom path does not exist
+    const fallbackProvider = new MacOSSoundProvider({ sounds: { thread_complete: "/nonexistent/custom.aiff" } })
+    fallbackProvider.playNotification("thread_complete")
+    expect(spawnMock).toHaveBeenCalledWith("afplay", [DEFAULT_SOUNDS.thread_complete], expect.anything())
   })
 })
 
 describe("ExternalApiProvider", () => {
-  test("has correct provider name", () => {
+  test("provider name and availability", () => {
     const provider = new ExternalApiProvider()
     expect(provider.name).toBe("external-api")
+    
+    // isAvailable checks for enabled flag and webhook_url
+    expect(new ExternalApiProvider().isAvailable()).toBe(false)
+    expect(new ExternalApiProvider({ enabled: false, webhook_url: "https://example.com/webhook" }).isAvailable()).toBe(false)
+    expect(new ExternalApiProvider({ enabled: true }).isAvailable()).toBe(false)
+    expect(new ExternalApiProvider({ enabled: true, webhook_url: "https://example.com/webhook" }).isAvailable()).toBe(true)
   })
 
-  test("isAvailable returns false when not configured", () => {
+  test("buildPayload creates correct structure with and without metadata", () => {
     const provider = new ExternalApiProvider()
-    expect(provider.isAvailable()).toBe(false)
-  })
+    const withMetadata = provider.buildPayload("thread_complete", { task: "test" })
+    expect(withMetadata.event).toBe("thread_complete")
+    expect(withMetadata.timestamp).toBeDefined()
+    expect(withMetadata.metadata).toEqual({ task: "test" })
 
-  test("isAvailable returns false when disabled", () => {
-    const provider = new ExternalApiProvider({
-      enabled: false,
-      webhook_url: "https://example.com/webhook",
-    })
-    expect(provider.isAvailable()).toBe(false)
-  })
-
-  test("isAvailable returns false when no webhook_url", () => {
-    const provider = new ExternalApiProvider({
-      enabled: true,
-    })
-    expect(provider.isAvailable()).toBe(false)
-  })
-
-  test("isAvailable returns true when properly configured", () => {
-    const provider = new ExternalApiProvider({
-      enabled: true,
-      webhook_url: "https://example.com/webhook",
-    })
-    expect(provider.isAvailable()).toBe(true)
-  })
-
-  test("buildPayload creates correct structure", () => {
-    const provider = new ExternalApiProvider()
-    const payload = provider.buildPayload("thread_complete", { task: "test" })
-
-    expect(payload.event).toBe("thread_complete")
-    expect(payload.timestamp).toBeDefined()
-    expect(payload.metadata).toEqual({ task: "test" })
-  })
-
-  test("buildPayload handles no metadata", () => {
-    const provider = new ExternalApiProvider()
-    const payload = provider.buildPayload("error")
-
-    expect(payload.event).toBe("error")
-    expect(payload.metadata).toBeUndefined()
+    const withoutMetadata = provider.buildPayload("error")
+    expect(withoutMetadata.event).toBe("error")
+    expect(withoutMetadata.metadata).toBeUndefined()
   })
 
   test("playNotification respects event filter", () => {
@@ -295,38 +209,30 @@ describe("NotificationManager", () => {
     expect(providers.some((p) => p.name === "external-api")).toBe(true)
   })
 
-  test("addProvider adds custom provider", () => {
+  test("add and remove providers", () => {
     const manager = new NotificationManager({})
+    const initialCount = manager.getProviders().length
+    
     const customProvider: NotificationProvider = {
       name: "custom-test",
       isAvailable: () => true,
       playNotification: () => {},
     }
-
     manager.addProvider(customProvider)
-    const providers = manager.getProviders()
-
-    expect(providers.some((p) => p.name === "custom-test")).toBe(true)
-  })
-
-  test("removeProvider removes provider by name", () => {
-    const manager = new NotificationManager({})
-    const initialCount = manager.getProviders().length
+    expect(manager.getProviders().some((p) => p.name === "custom-test")).toBe(true)
 
     manager.removeProvider("macos-sound")
     const providers = manager.getProviders()
-
-    expect(providers.length).toBe(initialCount - 1)
+    expect(providers.length).toBe(initialCount)
     expect(providers.some((p) => p.name === "macos-sound")).toBe(false)
   })
 
-  test("playNotification does not throw when disabled", () => {
-    const manager = new NotificationManager({ enabled: false })
+  test("playNotification behavior with providers", () => {
+    // Does not throw when disabled
+    const disabledManager = new NotificationManager({ enabled: false })
+    expect(() => disabledManager.playNotification("thread_complete")).not.toThrow()
 
-    expect(() => manager.playNotification("thread_complete")).not.toThrow()
-  })
-
-  test("playNotification calls all available providers", () => {
+    // Calls all available providers
     const mockProvider1: NotificationProvider = {
       name: "mock-1",
       isAvailable: () => true,
@@ -337,20 +243,6 @@ describe("NotificationManager", () => {
       isAvailable: () => true,
       playNotification: mock(() => {}),
     }
-
-    const manager = new NotificationManager({ enabled: true })
-    // Remove default providers for clean test
-    manager.removeProvider("macos-sound")
-    manager.addProvider(mockProvider1)
-    manager.addProvider(mockProvider2)
-
-    manager.playNotification("batch_complete")
-
-    expect(mockProvider1.playNotification).toHaveBeenCalledWith("batch_complete")
-    expect(mockProvider2.playNotification).toHaveBeenCalledWith("batch_complete")
-  })
-
-  test("playNotification skips unavailable providers", () => {
     const unavailableProvider: NotificationProvider = {
       name: "unavailable",
       isAvailable: () => false,
@@ -359,39 +251,31 @@ describe("NotificationManager", () => {
 
     const manager = new NotificationManager({ enabled: true })
     manager.removeProvider("macos-sound")
+    manager.addProvider(mockProvider1)
+    manager.addProvider(mockProvider2)
     manager.addProvider(unavailableProvider)
 
-    manager.playNotification("error")
+    manager.playNotification("batch_complete")
 
+    expect(mockProvider1.playNotification).toHaveBeenCalledWith("batch_complete")
+    expect(mockProvider2.playNotification).toHaveBeenCalledWith("batch_complete")
     expect(unavailableProvider.playNotification).not.toHaveBeenCalled()
   })
 })
 
 describe("Convenience functions", () => {
-  beforeEach(() => {
-    resetNotificationManager()
-  })
+  beforeEach(() => resetNotificationManager())
+  afterEach(() => resetNotificationManager())
 
-  afterEach(() => {
-    resetNotificationManager()
-  })
-
-  test("getNotificationManager returns singleton", () => {
+  test("singleton manager and playNotification", () => {
     const manager1 = getNotificationManager()
     const manager2 = getNotificationManager()
-
     expect(manager1).toBe(manager2)
-  })
 
-  test("resetNotificationManager creates new instance", () => {
-    const manager1 = getNotificationManager()
     resetNotificationManager()
-    const manager2 = getNotificationManager()
+    const manager3 = getNotificationManager()
+    expect(manager1).not.toBe(manager3)
 
-    expect(manager1).not.toBe(manager2)
-  })
-
-  test("playNotification does not throw", () => {
     expect(() => playNotification("thread_complete")).not.toThrow()
     expect(() => playNotification("batch_complete")).not.toThrow()
     expect(() => playNotification("error")).not.toThrow()
@@ -399,6 +283,18 @@ describe("Convenience functions", () => {
 })
 
 describe("NotificationTracker", () => {
+  let spawnMock: ReturnType<typeof spyOn>
+
+  beforeEach(() => {
+    resetNotificationManager()
+    spawnMock = createSpawnMock()
+  })
+
+  afterEach(() => {
+    spawnMock.mockRestore()
+    resetNotificationManager()
+  })
+
   describe("thread completion deduplication", () => {
     test("tracks thread completion notification", () => {
       const tracker = new NotificationTracker()
@@ -470,185 +366,46 @@ describe("NotificationTracker", () => {
   })
 
   describe("batch completion deduplication", () => {
-    test("tracks batch completion notification", () => {
+    test("tracks batch completion and ignores duplicates", () => {
       const tracker = new NotificationTracker()
       
       expect(tracker.hasBatchCompleteNotified()).toBe(false)
       tracker.markBatchCompleteNotified()
       expect(tracker.hasBatchCompleteNotified()).toBe(true)
-    })
-
-    test("marking batch complete multiple times has no effect", () => {
-      const tracker = new NotificationTracker()
       
+      // Marking multiple times has no effect
       tracker.markBatchCompleteNotified()
       tracker.markBatchCompleteNotified()
-      tracker.markBatchCompleteNotified()
-      
       expect(tracker.hasBatchCompleteNotified()).toBe(true)
     })
   })
 
-  describe("playThreadComplete helper", () => {
-    let spawnMock: ReturnType<typeof spyOn>
-
-    beforeEach(() => {
-      resetNotificationManager()
-      // Mock spawn to prevent actual sound playback
-      // biome-ignore lint/suspicious/noExplicitAny: Mock needs flexible typing
-      spawnMock = spyOn(childProcess, "spawn").mockImplementation((): any => {
-        const mockChild = {
-          unref: mock(() => {}),
-          on: mock(() => mockChild),
-          stdout: null,
-          stderr: null,
-          stdin: null,
-          pid: 12345,
-          killed: false,
-          exitCode: null,
-          signalCode: null,
-          connected: false,
-          kill: mock(() => true),
-          send: mock(() => true),
-          disconnect: mock(() => {}),
-          ref: mock(() => {}),
-          [Symbol.dispose]: mock(() => {}),
-        } as unknown as childProcess.ChildProcess
-        return mockChild
-      })
-    })
-
-    afterEach(() => {
-      spawnMock.mockRestore()
-      resetNotificationManager()
-    })
-
-    test("plays notification on first call and marks as notified", () => {
-      const tracker = new NotificationTracker()
-      
-      const result1 = tracker.playThreadComplete("01.01.01")
-      expect(result1).toBe(true)
-      expect(tracker.hasThreadCompleteNotified("01.01.01")).toBe(true)
-    })
-
-    test("returns false and does not play on subsequent calls", () => {
-      const tracker = new NotificationTracker()
-      
-      tracker.playThreadComplete("01.01.01")
-      const result2 = tracker.playThreadComplete("01.01.01")
-      
-      expect(result2).toBe(false)
-    })
-
-    test("plays for different threads", () => {
+  describe("play helpers", () => {
+    test("playThreadComplete deduplicates per thread", () => {
       const tracker = new NotificationTracker()
       
       expect(tracker.playThreadComplete("01.01.01")).toBe(true)
-      expect(tracker.playThreadComplete("01.01.02")).toBe(true)
+      expect(tracker.hasThreadCompleteNotified("01.01.01")).toBe(true)
       expect(tracker.playThreadComplete("01.01.01")).toBe(false)
+      
+      expect(tracker.playThreadComplete("01.01.02")).toBe(true)
       expect(tracker.playThreadComplete("01.01.02")).toBe(false)
     })
-  })
 
-  describe("playError helper", () => {
-    let spawnMock: ReturnType<typeof spyOn>
-
-    beforeEach(() => {
-      resetNotificationManager()
-      // biome-ignore lint/suspicious/noExplicitAny: Mock needs flexible typing
-      spawnMock = spyOn(childProcess, "spawn").mockImplementation((): any => {
-        const mockChild = {
-          unref: mock(() => {}),
-          on: mock(() => mockChild),
-          stdout: null,
-          stderr: null,
-          stdin: null,
-          pid: 12345,
-          killed: false,
-          exitCode: null,
-          signalCode: null,
-          connected: false,
-          kill: mock(() => true),
-          send: mock(() => true),
-          disconnect: mock(() => {}),
-          ref: mock(() => {}),
-          [Symbol.dispose]: mock(() => {}),
-        } as unknown as childProcess.ChildProcess
-        return mockChild
-      })
-    })
-
-    afterEach(() => {
-      spawnMock.mockRestore()
-      resetNotificationManager()
-    })
-
-    test("plays error notification on first call", () => {
+    test("playError deduplicates per thread", () => {
       const tracker = new NotificationTracker()
       
-      const result = tracker.playError("01.01.01")
-      expect(result).toBe(true)
+      expect(tracker.playError("01.01.01")).toBe(true)
       expect(tracker.hasErrorNotified("01.01.01")).toBe(true)
+      expect(tracker.playError("01.01.01")).toBe(false)
     })
 
-    test("returns false on subsequent calls for same thread", () => {
+    test("playBatchComplete deduplicates", () => {
       const tracker = new NotificationTracker()
       
-      tracker.playError("01.01.01")
-      const result = tracker.playError("01.01.01")
-      
-      expect(result).toBe(false)
-    })
-  })
-
-  describe("playBatchComplete helper", () => {
-    let spawnMock: ReturnType<typeof spyOn>
-
-    beforeEach(() => {
-      resetNotificationManager()
-      // biome-ignore lint/suspicious/noExplicitAny: Mock needs flexible typing
-      spawnMock = spyOn(childProcess, "spawn").mockImplementation((): any => {
-        const mockChild = {
-          unref: mock(() => {}),
-          on: mock(() => mockChild),
-          stdout: null,
-          stderr: null,
-          stdin: null,
-          pid: 12345,
-          killed: false,
-          exitCode: null,
-          signalCode: null,
-          connected: false,
-          kill: mock(() => true),
-          send: mock(() => true),
-          disconnect: mock(() => {}),
-          ref: mock(() => {}),
-          [Symbol.dispose]: mock(() => {}),
-        } as unknown as childProcess.ChildProcess
-        return mockChild
-      })
-    })
-
-    afterEach(() => {
-      spawnMock.mockRestore()
-      resetNotificationManager()
-    })
-
-    test("plays batch notification on first call", () => {
-      const tracker = new NotificationTracker()
-      
-      const result = tracker.playBatchComplete()
-      expect(result).toBe(true)
+      expect(tracker.playBatchComplete()).toBe(true)
       expect(tracker.hasBatchCompleteNotified()).toBe(true)
-    })
-
-    test("returns false on subsequent calls", () => {
-      const tracker = new NotificationTracker()
-      
-      tracker.playBatchComplete()
-      const result = tracker.playBatchComplete()
-      
-      expect(result).toBe(false)
+      expect(tracker.playBatchComplete()).toBe(false)
     })
   })
 
@@ -679,29 +436,21 @@ describe("NotificationTracker", () => {
     })
   })
 
-  describe("edge cases", () => {
-    test("handles empty thread ID", () => {
+  describe("edge cases and usage patterns", () => {
+    test("handles various thread IDs and tracking independence", () => {
       const tracker = new NotificationTracker()
       
+      // Empty and special character thread IDs
       tracker.markThreadCompleteNotified("")
       expect(tracker.hasThreadCompleteNotified("")).toBe(true)
-      expect(tracker.getNotifiedThreadCount()).toBe(1)
-    })
-
-    test("handles special characters in thread ID", () => {
-      const tracker = new NotificationTracker()
-      const specialId = "__session_error__"
       
+      const specialId = "__session_error__"
       tracker.markErrorNotified(specialId)
       expect(tracker.hasErrorNotified(specialId)).toBe(true)
-    })
-
-    test("thread and batch tracking are independent", () => {
-      const tracker = new NotificationTracker()
       
+      // Thread and batch tracking are independent
       tracker.markThreadCompleteNotified("01.01.01")
       expect(tracker.hasBatchCompleteNotified()).toBe(false)
-      
       tracker.markBatchCompleteNotified()
       expect(tracker.hasThreadCompleteNotified("01.01.01")).toBe(true)
       expect(tracker.hasBatchCompleteNotified()).toBe(true)

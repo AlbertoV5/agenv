@@ -487,6 +487,59 @@ export function getThreadGitHubIssue(
 }
 
 // ============================================
+// CONVENIENCE HELPERS
+// ============================================
+
+/**
+ * Get the last (most recent) session for a thread
+ *
+ * Sessions are sorted by startedAt timestamp descending,
+ * returning the most recently started session.
+ *
+ * @param repoRoot - Repository root path
+ * @param streamId - Workstream ID
+ * @param threadId - Thread ID (e.g., "01.02.03")
+ * @returns Most recent session record, or null if no sessions exist
+ */
+export function getLastSessionForThread(
+  repoRoot: string,
+  streamId: string,
+  threadId: string,
+): SessionRecord | null {
+  const thread = getThreadMetadata(repoRoot, streamId, threadId)
+  if (!thread || thread.sessions.length === 0) {
+    return null
+  }
+
+  // Sort by startedAt descending and return most recent
+  const sortedSessions = [...thread.sessions].sort(
+    (a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime()
+  )
+
+  return sortedSessions[0] || null
+}
+
+/**
+ * Get the opencode session ID for a thread
+ *
+ * This is the session ID captured from opencode after a multi run,
+ * which can be used to resume the session in opencode TUI.
+ *
+ * @param repoRoot - Repository root path
+ * @param streamId - Workstream ID
+ * @param threadId - Thread ID (e.g., "01.02.03")
+ * @returns Opencode session ID string, or null if not set
+ */
+export function getOpencodeSessionId(
+  repoRoot: string,
+  streamId: string,
+  threadId: string,
+): string | null {
+  const thread = getThreadMetadata(repoRoot, streamId, threadId)
+  return thread?.opencodeSessionId || null
+}
+
+// ============================================
 // MIGRATION UTILITIES
 // ============================================
 

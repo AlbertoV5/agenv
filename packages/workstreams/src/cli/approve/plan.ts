@@ -1,0 +1,505 @@
+/**
+ * Approve CLI - Plan Approval Handler
+ *
+ * Handles plan and stage-level approval/revocation workflows.
+ */
+
+import { existsSync, readFileSync } from "fs"
+import { join } from "path"
+
+import {
+  approveStream,
+  revokeApproval,
+  getApprovalStatus,
+  formatApprovalStatus,
+  checkOpenQuestions,
+  approveStage,
+  revokeStageApproval,
+  getStageApprovalStatus,
+} from "../../lib/approval.ts"
+import {
+  loadGitHubConfig,
+  createStageApprovalCommit,
+} from "../../lib/github/index.ts"
+import { generateTasksMdFromPlan } from "../../lib/tasks-md.ts"
+import { parseStreamDocument } from "../../lib/stream-parser.ts"
+import { getWorkDir } from "../../lib/repo.ts"
+import { atomicWriteFile, getResolvedStream } from "../../lib/index.ts"
+import { getTasks, parseTaskId } from "../../lib/tasks.ts"
+
+import type { ApproveCliArgs } from "./utils.ts"
+
+/**
+ * Result of TASKS.md generation attempt
+ */
+interface TasksMdGenerationResult {
+  success: boolean
+  path?: string
+  overwritten?: boolean
+  error?: string
+}
+
+/**
+ * Generate TASKS.md file after plan approval
+ *
+ * @param repoRoot - Repository root path
+ * @param streamId - Workstream ID
+ * @param streamName - Workstream name for the file header
+ * @returns Result of the generation attempt
+ */
+function generateTasksMdAfterApproval(
+  repoRoot: string,
+  streamId: string,
+  streamName: string
+): TasksMdGenerationResult {
+  try {
+    const workDir = getWorkDir(repoRoot)
+    const streamDir = join(workDir, streamId)
+    const tasksMdPath = join(streamDir, "TASKS.md")
+    const planMdPath = join(streamDir, "PLAN.md")
+
+    // Check if PLAN.md exists
+    if (!existsSync(planMdPath)) {
+      return {
+        success: false,
+        error: `PLAN.md not found at ${planMdPath}`,
+      }
+    }
+
+    // Check if TASKS.md already exists
+    const overwritten = existsSync(tasksMdPath)
+
+    // Parse PLAN.md to get the stream document
+    const planContent = readFileSync(planMdPath, "utf-8")
+    const errors: any[] = []
+    const doc = parseStreamDocument(planContent, errors)
+
+    if (!doc) {
+      return {
+        success: false,
+        error: `Failed to parse PLAN.md: ${errors.map((e) => e.message).join(", ")}`,
+      }
+    }
+
+    // Generate TASKS.md content from the plan structure
+    const content = generateTasksMdFromPlan(streamName, doc)
+
+    // Write the file
+    atomicWriteFile(tasksMdPath, content)
+
+    return {
+      success: true,
+      path: tasksMdPath,
+      overwritten,
+    }
+  } catch (e) {
+    return {
+      success: false,
+      error: (e as Error).message,
+    }
+  }
+}
+
+/**
+ * Handle plan approval/revocation workflow
+ *
+ * This includes both top-level plan approval and stage-level approvals.
+ */
+export async function handlePlanApproval(
+  repoRoot: string,
+  stream: ReturnType<typeof getResolvedStream>,
+  cliArgs: ApproveCliArgs
+): Promise<void> {
+  // Handle Stage-level operations
+  if (cliArgs.stage !== undefined) {
+    const stageNum = cliArgs.stage
+
+    if (cliArgs.revoke) {
+      try {
+        // Check if stage is approved
+        const stageStatus = getStageApprovalStatus(stream, stageNum)
+        if (stageStatus !== "approved") {
+          console.error(
+            `Error: Stage ${stageNum} is not approved, nothing to revoke`
+          )
+          process.exit(1)
+        }
+
+        const updatedStream = revokeStageApproval(
+          repoRoot,
+          stream.id,
+          stageNum,
+          cliArgs.reason
+        )
+
+        if (cliArgs.json) {
+          console.log(
+            JSON.stringify(
+              {
+                action: "revoked",
+                scope: "stage",
+                stage: stageNum,
+                streamId: updatedStream.id,
+                reason: cliArgs.reason,
+                approval: updatedStream.approval?.stages?.[stageNum],
+              },
+              null,
+              2
+            )
+          )
+        } else {
+          console.log(
+            `Revoked approval for Stage ${stageNum} of workstream "${updatedStream.name}"`
+          )
+          if (cliArgs.reason) {
+            console.log(`  Reason: ${cliArgs.reason}`)
+          }
+        }
+      } catch (e) {
+        console.error((e as Error).message)
+        process.exit(1)
+      }
+      return
+    }
+
+    // Handle Stage Approve
+    const stageStatus = getStageApprovalStatus(stream, stageNum)
+    if (stageStatus === "approved" && !cliArgs.force) {
+      if (cliArgs.json) {
+        console.log(
+          JSON.stringify(
+            {
+              action: "already_approved",
+              scope: "stage",
+              stage: stageNum,
+              streamId: stream.id,
+              approval: stream.approval?.stages?.[stageNum],
+            },
+            null,
+            2
+          )
+        )
+      } else {
+        console.log(
+          `Stage ${stageNum} of workstream "${stream.name}" is already approved`
+        )
+      }
+      return
+    }
+
+    // Validate that all tasks in the stage are completed
+    if (!cliArgs.force) {
+      const allTasks = getTasks(repoRoot, stream.id)
+      const stageTasks = allTasks.filter((t) => {
+        try {
+          const parsed = parseTaskId(t.id)
+          return parsed.stage === stageNum
+        } catch {
+          return false
+        }
+      })
+
+      const incompleteTasks = stageTasks.filter((t) => t.status !== "completed" && t.status !== "cancelled")
+
+      // Group incomplete tasks by thread
+      const incompleteThreads = new Map<
+        string,
+        { count: number; name: string }
+      >()
+
+      incompleteTasks.forEach((t) => {
+        try {
+          const parsed = parseTaskId(t.id)
+          // Format thread ID: stage.batch.thread
+          const threadId = `${parsed.stage.toString().padStart(2, "0")}.${parsed.batch.toString().padStart(2, "0")}.${parsed.thread.toString().padStart(2, "0")}`
+
+          if (!incompleteThreads.has(threadId)) {
+            incompleteThreads.set(threadId, {
+              count: 0,
+              name: t.thread_name || `Thread ${parsed.thread}`,
+            })
+          }
+
+          const threadInfo = incompleteThreads.get(threadId)!
+          threadInfo.count++
+        } catch {
+          // ignore parsing errors
+        }
+      })
+
+      if (incompleteThreads.size > 0) {
+        if (cliArgs.json) {
+          console.log(
+            JSON.stringify(
+              {
+                action: "blocked",
+                scope: "stage",
+                stage: stageNum,
+                streamId: stream.id,
+                reason: "incomplete_tasks",
+                incompleteThreadCount: incompleteThreads.size,
+                incompleteTaskCount: incompleteTasks.length,
+                incompleteThreads: Array.from(incompleteThreads.entries()).map(
+                  ([id, info]) => ({
+                    id,
+                    name: info.name,
+                    incompleteTasks: info.count,
+                  })
+                ),
+              },
+              null,
+              2
+            )
+          )
+        } else {
+          console.error(
+            `Error: Cannot approve Stage ${stageNum} because ${incompleteThreads.size} thread(s) are not approved.`
+          )
+          console.log("\nIncomplete threads:")
+
+          // Sort threads by ID
+          const sortedThreads = Array.from(incompleteThreads.entries()).sort(
+            (a, b) => a[0].localeCompare(b[0])
+          )
+
+          for (const [threadId, info] of sortedThreads) {
+            console.log(
+              `  - ${threadId} (${info.name}): ${info.count} task(s) remaining`
+            )
+          }
+
+          console.log("\nUse --force to approve anyway.")
+        }
+        process.exit(1)
+      }
+    }
+
+    try {
+      const updatedStream = approveStage(repoRoot, stream.id, stageNum, "user")
+
+      // Auto-commit on stage approval if enabled
+      let commitResult:
+        | {
+            success: boolean
+            commitSha?: string
+            skipped?: boolean
+            error?: string
+          }
+        | undefined
+      const githubConfig = await loadGitHubConfig(repoRoot)
+      if (githubConfig.enabled && githubConfig.auto_commit_on_approval) {
+        const stageName = `Stage ${stageNum}` // Use generic name; could be enhanced to parse from PLAN.md
+        commitResult = createStageApprovalCommit(
+          repoRoot,
+          updatedStream,
+          stageNum,
+          stageName
+        )
+      }
+
+      if (cliArgs.json) {
+        console.log(
+          JSON.stringify(
+            {
+              action: "approved",
+              scope: "stage",
+              stage: stageNum,
+              streamId: updatedStream.id,
+              approval: updatedStream.approval?.stages?.[stageNum],
+              commit: commitResult
+                ? {
+                    created: commitResult.success && !commitResult.skipped,
+                    sha: commitResult.commitSha,
+                    skipped: commitResult.skipped,
+                    error: commitResult.error,
+                  }
+                : undefined,
+            },
+            null,
+            2
+          )
+        )
+      } else {
+        console.log(
+          `Approved Stage ${stageNum} of workstream "${updatedStream.name}"`
+        )
+        if (commitResult?.success && commitResult.commitSha) {
+          console.log(`  Committed: ${commitResult.commitSha.substring(0, 7)}`)
+        } else if (commitResult?.skipped) {
+          console.log(`  No changes to commit`)
+        } else if (commitResult?.error) {
+          console.log(`  Commit skipped: ${commitResult.error}`)
+        }
+      }
+    } catch (e) {
+      console.error((e as Error).message)
+      process.exit(1)
+    }
+    return
+  }
+
+  // Handle revoke
+  if (cliArgs.revoke) {
+    const currentStatus = getApprovalStatus(stream)
+    if (currentStatus === "draft") {
+      console.error("Error: Plan is not approved, nothing to revoke")
+      process.exit(1)
+    }
+
+    try {
+      const updatedStream = revokeApproval(repoRoot, stream.id, cliArgs.reason)
+
+      if (cliArgs.json) {
+        console.log(
+          JSON.stringify(
+            {
+              action: "revoked",
+              target: "plan",
+              streamId: updatedStream.id,
+              streamName: updatedStream.name,
+              reason: cliArgs.reason,
+              approval: updatedStream.approval,
+            },
+            null,
+            2
+          )
+        )
+      } else {
+        console.log(
+          `Revoked plan approval for workstream "${updatedStream.name}" (${updatedStream.id})`
+        )
+        if (cliArgs.reason) {
+          console.log(`  Reason: ${cliArgs.reason}`)
+        }
+      }
+    } catch (e) {
+      console.error((e as Error).message)
+      process.exit(1)
+    }
+
+    return
+  }
+
+  // Handle approve
+  const currentStatus = getApprovalStatus(stream)
+  if (currentStatus === "approved") {
+    if (cliArgs.json) {
+      console.log(
+        JSON.stringify(
+          {
+            action: "already_approved",
+            target: "plan",
+            streamId: stream.id,
+            streamName: stream.name,
+            approval: stream.approval,
+          },
+          null,
+          2
+        )
+      )
+    } else {
+      console.log(`Plan for workstream "${stream.name}" is already approved`)
+      console.log(`  Status: ${formatApprovalStatus(stream)}`)
+    }
+    return
+  }
+
+  // Check for open questions
+  const questionsResult = checkOpenQuestions(repoRoot, stream.id)
+
+  if (questionsResult.hasOpenQuestions && !cliArgs.force) {
+    if (cliArgs.json) {
+      console.log(
+        JSON.stringify(
+          {
+            action: "blocked",
+            target: "plan",
+            reason: "open_questions",
+            streamId: stream.id,
+            streamName: stream.name,
+            openQuestions: questionsResult.questions,
+            openCount: questionsResult.openCount,
+            resolvedCount: questionsResult.resolvedCount,
+          },
+          null,
+          2
+        )
+      )
+    } else {
+      console.error("Error: Cannot approve plan with open questions")
+      console.error("")
+      console.error(`Found ${questionsResult.openCount} open question(s):`)
+      for (const q of questionsResult.questions) {
+        console.error(`  Stage ${q.stage} (${q.stageName}): ${q.question}`)
+      }
+      console.error("")
+      console.error("Options:")
+      console.error("  1. Resolve questions in PLAN.md (mark with [x])")
+      console.error("  2. Use --force to approve anyway")
+    }
+    process.exit(1)
+  }
+
+  if (questionsResult.hasOpenQuestions && cliArgs.force) {
+    console.log(
+      `Warning: Approving with ${questionsResult.openCount} open question(s)`
+    )
+  }
+
+  try {
+    const updatedStream = approveStream(repoRoot, stream.id, "user")
+
+    // Auto-generate TASKS.md after successful plan approval
+    const tasksMdResult = generateTasksMdAfterApproval(
+      repoRoot,
+      updatedStream.id,
+      updatedStream.name
+    )
+
+    if (cliArgs.json) {
+      console.log(
+        JSON.stringify(
+          {
+            action: "approved",
+            target: "plan",
+            streamId: updatedStream.id,
+            streamName: updatedStream.name,
+            approval: updatedStream.approval,
+            openQuestions: questionsResult.hasOpenQuestions
+              ? questionsResult.openCount
+              : 0,
+            forcedApproval: questionsResult.hasOpenQuestions && cliArgs.force,
+            tasksMd: {
+              generated: tasksMdResult.success,
+              path: tasksMdResult.path,
+              overwritten: tasksMdResult.overwritten,
+              error: tasksMdResult.error,
+            },
+          },
+          null,
+          2
+        )
+      )
+    } else {
+      console.log(
+        `Approved plan for workstream "${updatedStream.name}" (${updatedStream.id})`
+      )
+      console.log(`  Status: ${formatApprovalStatus(updatedStream)}`)
+
+      // Report TASKS.md generation result
+      if (tasksMdResult.success) {
+        if (tasksMdResult.overwritten) {
+          console.log(`  Warning: Overwrote existing TASKS.md`)
+        }
+        console.log(`  TASKS.md generated at ${tasksMdResult.path}`)
+      } else {
+        console.log(
+          `  Warning: Failed to generate TASKS.md: ${tasksMdResult.error}`
+        )
+      }
+    }
+  } catch (e) {
+    console.error((e as Error).message)
+    process.exit(1)
+  }
+}

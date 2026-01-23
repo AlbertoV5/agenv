@@ -81,7 +81,7 @@ describe("Stage Approval Validation", () => {
     });
 
     test("should block stage approval if tasks are pending", async () => {
-        const { main } = await import("../src/cli/approve.ts");
+        const { main } = await import("../src/cli/approve/index.ts");
 
         // Mock process.exit
         const originalExit = process.exit;
@@ -146,7 +146,7 @@ describe("Stage Approval Validation", () => {
             ]
         }, null, 2));
 
-        const { main } = await import("../src/cli/approve.ts");
+        const { main } = await import("../src/cli/approve/index.ts");
 
         const logs: string[] = [];
         const originalError = console.error;
@@ -171,7 +171,7 @@ describe("Stage Approval Validation", () => {
     });
 
     test("should allow stage approval with --force even if tasks pending", async () => {
-        const { main } = await import("../src/cli/approve.ts");
+        const { main } = await import("../src/cli/approve/index.ts");
 
         const logs: string[] = [];
         const originalError = console.error;

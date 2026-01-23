@@ -5,20 +5,19 @@
  */
 
 import { spawn } from "child_process"
-import { join } from "path"
-import { existsSync, readFileSync } from "fs"
-import { getRepoRoot, getWorkDir } from "../lib/repo.ts"
+import { existsSync } from "fs"
+import { getRepoRoot } from "../lib/repo.ts"
 import { loadIndex, getResolvedStream } from "../lib/index.ts"
 import {
   getTasks,
-  readTasksFile,
   parseThreadId,
   getTasksByThread,
   startTaskSession,
   completeTaskSession,
 } from "../lib/tasks.ts"
 import { loadAgentsConfig, getAgentModels } from "../lib/agents-yaml.ts"
-import { parseStreamDocument } from "../lib/stream-parser.ts"
+import { resolvePromptPath } from "../lib/prompt-paths.ts"
+import { getLastSessionForThread } from "../lib/threads.ts"
 import type { Task, SessionRecord, SessionStatus, NormalizedModelSpec } from "../lib/types.ts"
 import {
   sessionExists,
@@ -190,90 +189,7 @@ function getFixSessionName(threadId: string): string {
   return `work-fix-${safeThreadId}`
 }
 
-/**
- * Get the last session for a thread from tasks
- */
-function getLastSessionForThread(
-  repoRoot: string,
-  streamId: string,
-  threadId: string
-): SessionRecord | null {
-  const tasksFile = readTasksFile(repoRoot, streamId)
-  if (!tasksFile) return null
 
-  // Get all sessions from tasks in this thread
-  const allSessions: SessionRecord[] = []
-  for (const task of tasksFile.tasks) {
-    if (task.id.startsWith(threadId + ".") && task.sessions) {
-      allSessions.push(...task.sessions)
-    }
-  }
-
-  if (allSessions.length === 0) return null
-
-  // Sort by startedAt descending and return most recent
-  allSessions.sort(
-    (a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime()
-  )
-
-  return allSessions[0] || null
-}
-
-/**
- * Get the prompt file path for a thread
- */
-function getPromptFilePath(
-  repoRoot: string,
-  streamId: string,
-  threadId: string
-): string | null {
-  const workDir = getWorkDir(repoRoot)
-  const planPath = join(workDir, streamId, "PLAN.md")
-
-  if (!existsSync(planPath)) {
-    return null
-  }
-
-  const planContent = readFileSync(planPath, "utf-8")
-  const errors: { message: string }[] = []
-  const doc = parseStreamDocument(planContent, errors)
-
-  if (!doc) {
-    return null
-  }
-
-  // Parse thread ID: "01.02.03" -> stage 1, batch 2, thread 3
-  const parts = threadId.split(".").map((p) => parseInt(p, 10))
-  if (parts.length !== 3 || parts.some(isNaN)) {
-    return null
-  }
-  const [stageNum, batchNum, threadNum] = parts
-
-  const stage = doc.stages.find((s) => s.id === stageNum)
-  if (!stage) return null
-
-  const batch = stage.batches.find((b) => b.id === batchNum)
-  if (!batch) return null
-
-  const thread = batch.threads.find((t) => t.id === threadNum)
-  if (!thread) return null
-
-  // Build path matching prompt.ts logic
-  const safeStageName = stage.name.replace(/[^a-zA-Z0-9_-]/g, "-").toLowerCase()
-  const safeBatchName = batch.name.replace(/[^a-zA-Z0-9_-]/g, "-").toLowerCase()
-  const safeThreadName = thread.name.replace(/[^a-zA-Z0-9_-]/g, "-").toLowerCase()
-
-  const stagePrefix = stageNum!.toString().padStart(2, "0")
-
-  return join(
-    workDir,
-    streamId,
-    "prompts",
-    `${stagePrefix}-${safeStageName}`,
-    `${batch.prefix}-${safeBatchName}`,
-    `${safeThreadName}.md`
-  )
-}
 
 /**
  * Execute resume action - opens opencode TUI with existing session
@@ -413,7 +329,7 @@ async function executeRetry(
   dryRun?: boolean,
   noTmux?: boolean
 ): Promise<void> {
-  const promptPath = getPromptFilePath(repoRoot, streamId, threadStatus.threadId)
+  const promptPath = resolvePromptPath(repoRoot, streamId, threadStatus.threadId)
 
   if (!promptPath || !existsSync(promptPath)) {
     console.error(`Error: Prompt file not found for thread ${threadStatus.threadId}`)
@@ -605,7 +521,7 @@ function findIncompleteThreads(tasks: any[]): string[] {
   // Filter to incomplete or failed threads
   const incompleteThreads: string[] = []
   for (const [threadId, threadTasks] of threadMap.entries()) {
-    const allCompleted = threadTasks.every(t => t.status === "completed")
+    const allCompleted = threadTasks.every(t => t.status === "completed" || t.status === "cancelled")
     if (!allCompleted) {
       incompleteThreads.push(threadId)
     }

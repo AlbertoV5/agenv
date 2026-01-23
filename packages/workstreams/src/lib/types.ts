@@ -619,3 +619,41 @@ export interface AgentsConfigYaml {
   agents: AgentDefinitionYaml[]
 }
 
+// ============================================
+// MULTI COMMAND TYPES (Parallel Execution)
+// ============================================
+
+/**
+ * Thread information for parallel execution
+ * Contains all metadata needed to spawn and track a thread
+ */
+export interface ThreadInfo {
+  threadId: string // "01.01.01"
+  threadName: string
+  stageName: string
+  batchName: string
+  promptPath: string
+  models: NormalizedModelSpec[] // List of models to try in order
+  agentName: string
+  githubIssue?: {
+    number: number
+    url: string
+    state: "open" | "closed"
+  }
+  // Session tracking (populated before spawn)
+  sessionId?: string
+  firstTaskId?: string // First task in thread (for session tracking)
+}
+
+/**
+ * Mapping of thread sessions to pane IDs
+ * Used to track which pane is running which thread's session
+ */
+export interface ThreadSessionMap {
+  threadId: string
+  sessionId: string
+  taskId: string // First task in thread
+  paneId: string
+  windowIndex: number
+}
+

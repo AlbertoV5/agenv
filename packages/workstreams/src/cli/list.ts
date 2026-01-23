@@ -6,7 +6,7 @@
 
 import { getRepoRoot } from "../lib/repo.ts"
 import { loadIndex, getResolvedStream } from "../lib/index.ts"
-import { getTasks, getTaskCounts, groupTasksByStageAndBatchAndThread } from "../lib/tasks.ts"
+import { getTasks, getTaskCounts, groupTasks } from "../lib/tasks.ts"
 import type { Task, TaskStatus } from "../lib/types.ts"
 
 interface ListCliArgs {
@@ -191,7 +191,7 @@ function formatTaskList(streamId: string, tasks: Task[]): string {
   lines.push("")
 
   // Group tasks by stage, batch, and thread
-  const grouped = groupTasksByStageAndBatchAndThread(tasks)
+  const grouped = groupTasks(tasks, { byBatch: true })
 
   // Sort stages
   const stageEntries = Array.from(grouped.entries())

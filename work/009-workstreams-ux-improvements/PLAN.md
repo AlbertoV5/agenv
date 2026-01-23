@@ -440,3 +440,212 @@ Ensure only one notification per thread and one batch notification, regardless o
   - User closes tmux session early
   - Thread fails/errors
 - Add unit tests for notification deduplication logic
+
+### Stage 06: Revision - Code Refactoring
+
+#### Stage Definition
+
+Refactor the codebase to improve readability, separate concerns, and reduce duplication. Focus on the largest and most complex files while maintaining functionality. All threads must run tests first and last to ensure no regressions.
+
+#### Stage Constitution
+
+**Inputs:**
+- `packages/workstreams/src/cli/multi.ts` (1028 lines) - Main refactoring target
+- `packages/workstreams/src/cli/approve.ts` (1089 lines) - Monolithic approval handlers
+- `packages/workstreams/src/cli/fix.ts` (897 lines) - Duplicated utilities
+- `packages/workstreams/src/lib/tasks.ts` (1300 lines) - Mixed responsibilities
+- `packages/workstreams/tests/approval_flow.test.ts` (788 lines) - Setup duplication
+- `packages/workstreams/tests/notifications.test.ts` (766 lines) - Mock repetition
+- `packages/workstreams/tests/session-tracking.test.ts` (567 lines) - Legacy tests
+- `packages/workstreams/tests/multi.test.ts` (498 lines) - Simulation-heavy
+
+**Structure:**
+- Batch 01: Source file refactoring (4 threads in parallel)
+- Batch 02: Test file refactoring (4 threads in parallel)
+- Each thread runs tests first and last
+
+**Outputs:**
+- `src/lib/cli-utils.ts` - Shared CLI argument parsing and help formatting
+- `src/lib/multi-orchestrator.ts` - Tmux session orchestration extracted from multi.ts
+- `src/lib/marker-polling.ts` - Completion marker file handling
+- `src/cli/approve/` - Split approve.ts into modular handlers
+- `tests/helpers/` - Shared test utilities and mock factories
+- `tests/fixtures/` - Reusable PLAN.md and TASKS.md fixtures
+
+#### Stage Questions
+
+- [x] Should we split approve.ts into separate files or a subdirectory? **Answer: Subdirectory (src/cli/approve/)**
+- [x] Should legacy migration tests be removed? **Answer: Keep but mark as legacy, may remove in future**
+- [x] What's the target line count for multi.ts after refactoring? **Answer: ~400 lines (from 1028)**
+
+#### Stage Batches
+
+##### Batch 01: Source File Refactoring
+
+All threads run `bun run test` first and last to ensure no regressions.
+
+###### Thread 01: Multi.ts Decomposition
+
+**Summary:**
+Extract concerns from multi.ts (1028 lines) into focused modules, targeting ~400 lines remaining.
+
+**Details:**
+- Working packages: `./packages/workstreams`
+- Run tests first: `bun run test` in packages/workstreams
+- Create `src/lib/cli-utils.ts`:
+  - Extract `parseCliArgs()` pattern as reusable utility
+  - Extract help text formatting helpers
+  - Move common CLI types (could be used by fix.ts, execute.ts, etc.)
+- Create `src/lib/multi-orchestrator.ts`:
+  - Extract `collectThreadInfoFromTasks()` function
+  - Extract tmux session setup logic (createSession, createGridLayout calls)
+  - Extract pane command building and spawning
+  - Extract session cleanup functions
+- Create `src/lib/marker-polling.ts`:
+  - Extract `pollMarkerFiles()` async logic
+  - Extract `cleanupCompletionMarkers()` and `cleanupSessionFiles()`
+  - Handle marker file paths consistently
+- Move `ThreadInfo` type to `src/lib/types.ts`
+- Update multi.ts to import and use extracted modules
+- Run tests last: `bun run test` to verify no regressions
+
+###### Thread 02: Approve.ts Modularization
+
+**Summary:**
+Split approve.ts (1089 lines) into a modular directory structure with separate handlers.
+
+**Details:**
+- Working packages: `./packages/workstreams`
+- Run tests first: `bun run test` in packages/workstreams
+- Create `src/cli/approve/` directory structure:
+  - `src/cli/approve/index.ts` - Main entry point, CLI arg parsing, router
+  - `src/cli/approve/plan.ts` - `handlePlanApproval()` (~200 lines)
+  - `src/cli/approve/tasks.ts` - `handleTasksApproval()` and `serializeTasksMdToJson()` (~250 lines)
+  - `src/cli/approve/revision.ts` - `handleRevisionApproval()` (~200 lines)
+  - `src/cli/approve/utils.ts` - Shared formatting, stage validation, JSON output
+- Extract `checkStageCompletion()` to `src/lib/approval.ts` for reuse
+- Update imports in any files that reference approve.ts
+- Run tests last: `bun run test` to verify no regressions
+
+###### Thread 03: Fix.ts & Shared Utilities
+
+**Summary:**
+Extract duplicated utilities from fix.ts and create shared modules for prompt paths and session retrieval.
+
+**Details:**
+- Working packages: `./packages/workstreams`
+- Run tests first: `bun run test` in packages/workstreams
+- Create `src/lib/prompt-paths.ts`:
+  - Extract `getPromptFilePath()` from fix.ts
+  - Extract `getPromptFilePathFromMetadata()` from multi.ts
+  - Consolidate into single `resolvePromptPath(threadId, streamPath)` function
+- Update `src/lib/threads.ts`:
+  - Add `getLastSessionForThread(threadId)` helper
+  - Add `getOpencodeSessionId(threadId)` helper
+- Refactor fix.ts:
+  - Use shared `resolvePromptPath()` instead of inline logic
+  - Use threads.ts helpers instead of direct file access
+  - Consider extracting `executeResume()` and `executeRetry()` to `src/lib/fix-actions.ts`
+- Update multi.ts to use shared `resolvePromptPath()`
+- Run tests last: `bun run test` to verify no regressions
+
+###### Thread 04: Tasks.ts Simplification
+
+**Summary:**
+Simplify tasks.ts (1300 lines) by removing thin session wrappers and consolidating grouping utilities.
+
+**Details:**
+- Working packages: `./packages/workstreams`
+- Run tests first: `bun run test` in packages/workstreams
+- Remove thin session delegation functions that just extract threadId:
+  - Evaluate if `startTaskSession()`, `completeTaskSession()` wrappers are still needed
+  - If CLI code can call threads.ts directly, remove these wrappers
+  - Keep only functions that add value beyond delegation
+- Consolidate task grouping utilities:
+  - Merge `groupTasksByStageAndThread()` and `groupTasksByStageAndBatchAndThread()`
+  - Create single `groupTasks(tasks, { byStage, byBatch, byThread })` with options
+- Extract discovery logic:
+  - Consider moving `discoverThreadsInBatch()` to `src/lib/task-discovery.ts`
+  - This makes tasks.ts focused on CRUD operations
+- Update all callers of removed/changed functions
+- Run tests last: `bun run test` to verify no regressions
+
+##### Batch 02: Test Refactoring
+
+All threads improve test infrastructure and reduce duplication.
+
+###### Thread 01: Test Helpers Infrastructure
+
+**Summary:**
+Create shared test utilities to reduce setup duplication across all test files.
+
+**Details:**
+- Working packages: `./packages/workstreams`
+- Run tests first: `bun run test` in packages/workstreams
+- Create `tests/helpers/test-workspace.ts`:
+  - `createTestWorkstream()` - Creates temp directory with PLAN.md, tasks.json
+  - `cleanupTestWorkstream()` - Removes temp directory
+  - `withTestWorkstream(callback)` - Wrapper that handles setup/cleanup
+- Create `tests/helpers/cli-runner.ts`:
+  - `captureCliOutput(fn)` - Captures console.log/error during CLI execution
+  - `runCliCommand(command, args)` - Runs CLI and returns output
+- Create `tests/helpers/mocks.ts`:
+  - `createSpawnMock()` - Factory for child process spawn mocks
+  - `createChildProcessMock()` - Mock ChildProcess with events
+  - `mockPlayNotification()` - Notification mock with call tracking
+- Run tests last: `bun run test` to verify helpers work
+
+###### Thread 02: Approval Flow Test Refactoring
+
+**Summary:**
+Refactor approval_flow.test.ts (788 lines) to use shared helpers and fixtures.
+
+**Details:**
+- Working packages: `./packages/workstreams`
+- Run tests first: `bun run test` in packages/workstreams
+- Create `tests/fixtures/plans/` directory:
+  - `basic-plan.md` - Simple 2-stage plan for tests
+  - `multi-batch-plan.md` - Complex plan with multiple batches
+  - `revision-plan.md` - Plan with revision stage
+- Refactor approval_flow.test.ts:
+  - Replace inline PLAN.md strings with fixture imports
+  - Use `createTestWorkstream()` from helpers
+  - Use `captureCliOutput()` for console capture
+  - Consolidate three `beforeEach` blocks into shared setup
+- Target: Reduce from 788 to ~500 lines
+- Run tests last: `bun run test` to verify no regressions
+
+###### Thread 03: Notification Test Refactoring
+
+**Summary:**
+Refactor notifications.test.ts (766 lines) to use shared mock factories.
+
+**Details:**
+- Working packages: `./packages/workstreams`
+- Run tests first: `bun run test` in packages/workstreams
+- Refactor notifications.test.ts:
+  - Use `createSpawnMock()` from helpers instead of inline mocks
+  - Use `createChildProcessMock()` for ChildProcess mocks
+  - Extract repeated mock setup to `beforeEach` blocks
+  - Consolidate similar test cases where appropriate
+- Target: Reduce from 766 to ~500 lines
+- Run tests last: `bun run test` to verify no regressions
+
+###### Thread 04: Multi & Session Test Cleanup
+
+**Summary:**
+Refactor multi.test.ts and session-tracking.test.ts to use shared helpers and improve organization.
+
+**Details:**
+- Working packages: `./packages/workstreams`
+- Run tests first: `bun run test` in packages/workstreams
+- Refactor multi.test.ts:
+  - Use shared mock factories from helpers
+  - Review simulation tests - convert valuable ones to integration tests
+  - Remove redundant tests that don't test actual code
+- Refactor session-tracking.test.ts:
+  - Use `createTestWorkstream()` from helpers
+  - Mark legacy migration tests with `describe.skip` or `// LEGACY:` comments
+  - Share setup with threads.test.ts where possible
+- Target: Reduce combined lines by ~200
+- Run tests last: `bun run test` to verify no regressions

@@ -80,13 +80,13 @@ export function getStreamStatus(repoRoot: string, stream: StreamMetadata): Strea
 function calculateStageStatus(tasks: Task[]): StageStatus {
   if (tasks.length === 0) return "pending"
 
-  const completed = tasks.filter((t) => t.status === "completed").length
+  const done = tasks.filter((t) => t.status === "completed" || t.status === "cancelled").length
   const inProgress = tasks.filter((t) => t.status === "in_progress").length
   const blocked = tasks.filter((t) => t.status === "blocked").length
 
-  if (completed === tasks.length) return "complete"
-  if (blocked > 0 && inProgress === 0 && completed === 0) return "blocked"
-  if (inProgress > 0 || completed > 0) return "in_progress"
+  if (done === tasks.length) return "complete"
+  if (blocked > 0 && inProgress === 0 && done === 0) return "blocked"
+  if (inProgress > 0 || done > 0) return "in_progress"
   return "pending"
 }
 
@@ -123,7 +123,7 @@ export function getStreamProgress(
       title: stageName,
       status: calculateStageStatus(stageTasks),
       taskCount: stageTasks.length,
-      completedCount: stageTasks.filter((t) => t.status === "completed").length,
+      completedCount: stageTasks.filter((t) => t.status === "completed" || t.status === "cancelled").length,
     })
   }
 
@@ -161,12 +161,12 @@ export function getStreamProgress(
       file: "tasks.json",
     })),
     totalTasks: counts.total,
-    completedTasks: counts.completed,
+    completedTasks: counts.completed + counts.cancelled,
     inProgressTasks: counts.in_progress,
     blockedTasks: counts.blocked,
     pendingTasks: counts.pending,
     percentComplete:
-      counts.total > 0 ? Math.round((counts.completed / counts.total) * 100) : 0,
+      counts.total > 0 ? Math.round(((counts.completed + counts.cancelled) / counts.total) * 100) : 0,
   }
 }
 

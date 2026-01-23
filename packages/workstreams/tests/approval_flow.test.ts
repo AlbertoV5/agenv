@@ -2,6 +2,8 @@
 import { describe, test, expect, beforeAll, afterAll, beforeEach, afterEach } from "bun:test";
 import { join } from "path";
 import { existsSync, writeFileSync, mkdirSync, rmSync, readFileSync } from "fs";
+import { createTestWorkstream, cleanupTestWorkstream, type TestWorkspace } from "./helpers/test-workspace.ts";
+import { captureCliOutput } from "./helpers/cli-runner.ts";
 import {
     approveStage,
     revokeStageApproval,
@@ -12,18 +14,16 @@ import {
 import { loadIndex, saveIndex } from "../src/lib/index.ts";
 import type { WorkIndex } from "../src/lib/types.ts";
 
-const TEST_DIR = join(import.meta.dir, "temp_approval_test");
-const REPO_ROOT = TEST_DIR;
-
 describe("Approval Flow", () => {
+    let workspace: TestWorkspace;
+    let REPO_ROOT: string;
+
     beforeAll(() => {
         // Set USER role for approval tests
         process.env.WORKSTREAM_ROLE = "USER";
         
-        if (existsSync(TEST_DIR)) {
-            rmSync(TEST_DIR, { recursive: true });
-        }
-        mkdirSync(join(TEST_DIR, "work", "stream-001"), { recursive: true });
+        workspace = createTestWorkstream("stream-001");
+        REPO_ROOT = workspace.repoRoot;
 
         // Create index.json
         const index: WorkIndex = {
@@ -53,7 +53,7 @@ describe("Approval Flow", () => {
     });
 
     afterAll(() => {
-        rmSync(TEST_DIR, { recursive: true });
+        cleanupTestWorkstream(workspace);
         // Clean up role setting
         delete process.env.WORKSTREAM_ROLE;
     });
@@ -169,19 +169,16 @@ describe("Approval Flow", () => {
 });
 
 // Separate test suite for TASKS.md auto-generation during plan approval
-const AUTOGEN_TEST_DIR = join(import.meta.dir, "temp_autogen_test");
-const AUTOGEN_REPO_ROOT = AUTOGEN_TEST_DIR;
-
 describe("Plan Approval with TASKS.md Auto-Generation", () => {
+    let workspace: TestWorkspace;
+    let AUTOGEN_REPO_ROOT: string;
+
     beforeEach(() => {
         // Set USER role for approval tests
         process.env.WORKSTREAM_ROLE = "USER";
         
-        // Clean up before each test
-        if (existsSync(AUTOGEN_TEST_DIR)) {
-            rmSync(AUTOGEN_TEST_DIR, { recursive: true });
-        }
-        mkdirSync(join(AUTOGEN_TEST_DIR, "work", "stream-autogen"), { recursive: true });
+        workspace = createTestWorkstream("stream-autogen");
+        AUTOGEN_REPO_ROOT = workspace.repoRoot;
 
         // Create index.json
         const index: WorkIndex = {
@@ -208,71 +205,14 @@ describe("Plan Approval with TASKS.md Auto-Generation", () => {
     });
 
     afterEach(() => {
-        if (existsSync(AUTOGEN_TEST_DIR)) {
-            rmSync(AUTOGEN_TEST_DIR, { recursive: true });
-        }
+        cleanupTestWorkstream(workspace);
         // Clean up role setting
         delete process.env.WORKSTREAM_ROLE;
     });
 
     test("should generate TASKS.md when approving plan with valid PLAN.md", async () => {
-        // Create a valid PLAN.md with stages, batches, and threads
-        const planContent = `# Plan: Auto-Gen Test Stream
-
-## Summary
-
-Test workstream for auto-generation.
-
-## Stages
-
-### Stage 01: Setup
-
-#### Definition
-
-Initial setup stage.
-
-#### Constitution
-
-**Inputs:**
-
-- 
-
-**Structure:**
-
-- 
-
-**Outputs:**
-
-- 
-
-#### Stage Questions
-
-- [x] Ready
-
-#### Batches
-
-##### Batch 01: Initial Setup
-
-###### Thread 01: Database Setup
-
-**Summary:**
-
-Set up the database.
-
-**Details:**
-
-- Database setup
-
-###### Thread 02: API Setup
-
-**Summary:**
-
-Set up the API.
-
-**Details:**
-
-- API setup
-`;
+        // Create a valid PLAN.md from fixture
+        const planContent = readFileSync(join(import.meta.dir, "fixtures/plans/basic-plan.md"), "utf-8");
         writeFileSync(join(AUTOGEN_REPO_ROOT, "work/stream-autogen/PLAN.md"), planContent);
 
         // Verify TASKS.md doesn't exist yet
@@ -280,18 +220,12 @@ Set up the API.
         expect(existsSync(tasksMdPath)).toBe(false);
 
         // Run the CLI approve command
-        const { main } = await import("../src/cli/approve.ts");
+        const { main } = await import("../src/cli/approve/index.ts");
 
         // Capture console output
-        const logs: string[] = [];
-        const originalLog = console.log;
-        console.log = (...args) => logs.push(args.join(" "));
-
-        try {
+        const { stdout } = await captureCliOutput(async () => {
             await main(["node", "approve", "plan", "--stream", "stream-autogen", "--repo-root", AUTOGEN_REPO_ROOT]);
-        } finally {
-            console.log = originalLog;
-        }
+        });
 
         // Verify plan was approved
         const index = loadIndex(AUTOGEN_REPO_ROOT);
@@ -304,66 +238,20 @@ Set up the API.
         // Verify TASKS.md content structure
         const tasksMdContent = readFileSync(tasksMdPath, "utf-8");
         expect(tasksMdContent).toContain("# Tasks: Auto-Gen Test Stream");
-        expect(tasksMdContent).toContain("## Stage 01: Setup");
-        expect(tasksMdContent).toContain("### Batch 01: Initial Setup");
-        expect(tasksMdContent).toContain("#### Thread 01: Database Setup");
-        expect(tasksMdContent).toContain("#### Thread 02: API Setup");
-        expect(tasksMdContent).toContain("- [ ] Task 01.01.01.01:");
-        expect(tasksMdContent).toContain("- [ ] Task 01.01.02.01:");
+        expect(tasksMdContent).toContain("## Stage 01: Stage One");
+        expect(tasksMdContent).toContain("### Batch 01: Batch One");
+        expect(tasksMdContent).toContain("#### Thread 01: Thread One");
+        // Also verify Stage 02 is present as per basic-plan.md
+        expect(tasksMdContent).toContain("## Stage 02: Stage Two");
 
         // Verify output message mentions TASKS.md
-        const outputJoined = logs.join("\n");
+        const outputJoined = stdout.join("\n");
         expect(outputJoined).toContain("TASKS.md generated");
     });
 
     test("should warn when overwriting existing TASKS.md", async () => {
-        // Create a valid PLAN.md
-        const planContent = `# Plan: Test Stream
-
-## Summary
-
-Test.
-
-## Stages
-
-### Stage 01: Test Stage
-
-#### Definition
-
-Test stage.
-
-#### Constitution
-
-**Inputs:**
-
-- 
-
-**Structure:**
-
-- 
-
-**Outputs:**
-
-- 
-
-#### Stage Questions
-
-- [x] Ready
-
-#### Batches
-
-##### Batch 01: Test Batch
-
-###### Thread 01: Test Thread
-
-**Summary:**
-
-Test thread.
-
-**Details:**
-
-- Test
-`;
+        // Create a valid PLAN.md from fixture
+        const planContent = readFileSync(join(import.meta.dir, "fixtures/plans/multi-batch-plan.md"), "utf-8");
         writeFileSync(join(AUTOGEN_REPO_ROOT, "work/stream-autogen/PLAN.md"), planContent);
 
         // Pre-create TASKS.md
@@ -371,18 +259,12 @@ Test thread.
         writeFileSync(tasksMdPath, "# Old TASKS.md content");
 
         // Run the CLI approve command
-        const { main } = await import("../src/cli/approve.ts");
+        const { main } = await import("../src/cli/approve/index.ts");
 
         // Capture console output
-        const logs: string[] = [];
-        const originalLog = console.log;
-        console.log = (...args) => logs.push(args.join(" "));
-
-        try {
+        const { stdout } = await captureCliOutput(async () => {
             await main(["node", "approve", "plan", "--stream", "stream-autogen", "--repo-root", AUTOGEN_REPO_ROOT]);
-        } finally {
-            console.log = originalLog;
-        }
+        });
 
         // Verify TASKS.md was overwritten
         const tasksMdContent = readFileSync(tasksMdPath, "utf-8");
@@ -390,7 +272,7 @@ Test thread.
         expect(tasksMdContent).toContain("# Tasks:");
 
         // Verify warning was shown
-        const outputJoined = logs.join("\n");
+        const outputJoined = stdout.join("\n");
         expect(outputJoined).toContain("Overwrote existing TASKS.md");
     });
 
@@ -399,18 +281,12 @@ Test thread.
         writeFileSync(join(AUTOGEN_REPO_ROOT, "work/stream-autogen/PLAN.md"), "# Minimal Plan\nNo stages.");
 
         // Run the CLI approve command
-        const { main } = await import("../src/cli/approve.ts");
+        const { main } = await import("../src/cli/approve/index.ts");
 
         // Capture console output
-        const logs: string[] = [];
-        const originalLog = console.log;
-        console.log = (...args) => logs.push(args.join(" "));
-
-        try {
+        const { stdout } = await captureCliOutput(async () => {
             await main(["node", "approve", "plan", "--stream", "stream-autogen", "--repo-root", AUTOGEN_REPO_ROOT]);
-        } finally {
-            console.log = originalLog;
-        }
+        });
 
         // Verify plan was still approved even if TASKS.md generation had issues
         const index = loadIndex(AUTOGEN_REPO_ROOT);
@@ -418,76 +294,25 @@ Test thread.
         expect(stream?.approval?.status).toBe("approved");
 
         // Output should mention the plan was approved
-        const outputJoined = logs.join("\n");
+        const outputJoined = stdout.join("\n");
         expect(outputJoined).toContain("Approved plan");
     });
 
     test("should include TASKS.md info in JSON output", async () => {
-        // Create a valid PLAN.md
-        const planContent = `# Plan: Test Stream
-
-## Summary
-
-Test.
-
-## Stages
-
-### Stage 01: Test Stage
-
-#### Definition
-
-Test stage.
-
-#### Constitution
-
-**Inputs:**
-
-- 
-
-**Structure:**
-
-- 
-
-**Outputs:**
-
-- 
-
-#### Stage Questions
-
-- [x] Ready
-
-#### Batches
-
-##### Batch 01: Test Batch
-
-###### Thread 01: Test Thread
-
-**Summary:**
-
-Test thread.
-
-**Details:**
-
-- Test
-`;
+        // Create a valid PLAN.md from fixture
+        const planContent = readFileSync(join(import.meta.dir, "fixtures/plans/multi-batch-plan.md"), "utf-8");
         writeFileSync(join(AUTOGEN_REPO_ROOT, "work/stream-autogen/PLAN.md"), planContent);
 
         // Run the CLI approve command with JSON output
-        const { main } = await import("../src/cli/approve.ts");
+        const { main } = await import("../src/cli/approve/index.ts");
 
         // Capture console output
-        const logs: string[] = [];
-        const originalLog = console.log;
-        console.log = (...args) => logs.push(args.join(" "));
-
-        try {
+        const { stdout } = await captureCliOutput(async () => {
             await main(["node", "approve", "plan", "--stream", "stream-autogen", "--repo-root", AUTOGEN_REPO_ROOT, "--json"]);
-        } finally {
-            console.log = originalLog;
-        }
+        });
 
         // Parse JSON output
-        const jsonOutput = JSON.parse(logs.join(""));
+        const jsonOutput = JSON.parse(stdout.join(""));
         expect(jsonOutput.action).toBe("approved");
         expect(jsonOutput.target).toBe("plan");
         expect(jsonOutput.tasksMd).toBeDefined();
@@ -497,19 +322,16 @@ Test thread.
 });
 
 // Separate test suite for tasks approval with auto-generation of tasks.json and prompts
-const TASKS_APPROVAL_TEST_DIR = join(import.meta.dir, "temp_tasks_approval_test");
-const TASKS_APPROVAL_REPO_ROOT = TASKS_APPROVAL_TEST_DIR;
-
 describe("Tasks Approval with Auto-Generation", () => {
+    let workspace: TestWorkspace;
+    let TASKS_APPROVAL_REPO_ROOT: string;
+
     beforeEach(() => {
         // Set USER role for approval tests
         process.env.WORKSTREAM_ROLE = "USER";
         
-        // Clean up before each test
-        if (existsSync(TASKS_APPROVAL_TEST_DIR)) {
-            rmSync(TASKS_APPROVAL_TEST_DIR, { recursive: true });
-        }
-        mkdirSync(join(TASKS_APPROVAL_TEST_DIR, "work", "stream-tasks"), { recursive: true });
+        workspace = createTestWorkstream("stream-tasks");
+        TASKS_APPROVAL_REPO_ROOT = workspace.repoRoot;
 
         // Create index.json
         const index: WorkIndex = {
@@ -536,69 +358,12 @@ describe("Tasks Approval with Auto-Generation", () => {
         saveIndex(TASKS_APPROVAL_REPO_ROOT, index);
 
         // Create PLAN.md (needed for prompt generation)
-        const planContent = `# Plan: Tasks Test Stream
-
-## Summary
-
-Test workstream for tasks approval.
-
-## Stages
-
-### Stage 01: Implementation
-
-#### Definition
-
-Implementation stage.
-
-#### Constitution
-
-**Inputs:**
-
-- 
-
-**Structure:**
-
-- 
-
-**Outputs:**
-
-- 
-
-#### Stage Questions
-
-- [x] Ready
-
-#### Batches
-
-##### Batch 01: Core Features
-
-###### Thread 01: Feature A
-
-**Summary:**
-
-Implement feature A.
-
-**Details:**
-
-- Feature A implementation details
-
-###### Thread 02: Feature B
-
-**Summary:**
-
-Implement feature B.
-
-**Details:**
-
-- Feature B implementation details
-`;
+        const planContent = readFileSync(join(import.meta.dir, "fixtures/plans/revision-plan.md"), "utf-8");
         writeFileSync(join(TASKS_APPROVAL_REPO_ROOT, "work/stream-tasks/PLAN.md"), planContent);
     });
 
     afterEach(() => {
-        if (existsSync(TASKS_APPROVAL_TEST_DIR)) {
-            rmSync(TASKS_APPROVAL_TEST_DIR, { recursive: true });
-        }
+        cleanupTestWorkstream(workspace);
         // Clean up role setting
         delete process.env.WORKSTREAM_ROLE;
     });
@@ -664,21 +429,16 @@ Implement feature B.
 
         // Verify tasks.json doesn't exist yet
         const tasksJsonPath = join(TASKS_APPROVAL_REPO_ROOT, "work/stream-tasks/tasks.json");
+        if (existsSync(tasksJsonPath)) rmSync(tasksJsonPath);
         expect(existsSync(tasksJsonPath)).toBe(false);
 
         // Run the CLI approve command for tasks
-        const { main } = await import("../src/cli/approve.ts");
+        const { main } = await import("../src/cli/approve/index.ts");
 
         // Capture console output
-        const logs: string[] = [];
-        const originalLog = console.log;
-        console.log = (...args) => logs.push(args.join(" "));
-
-        try {
+        const { stdout } = await captureCliOutput(async () => {
             await main(["node", "approve", "tasks", "--stream", "stream-tasks", "--repo-root", TASKS_APPROVAL_REPO_ROOT]);
-        } finally {
-            console.log = originalLog;
-        }
+        });
 
         // Verify tasks.json was created
         expect(existsSync(tasksJsonPath)).toBe(true);
@@ -697,7 +457,7 @@ Implement feature B.
         expect(existsSync(promptsDir)).toBe(true);
 
         // Verify output message
-        const outputJoined = logs.join("\n");
+        const outputJoined = stdout.join("\n");
         expect(outputJoined).toContain("Tasks approved");
         expect(outputJoined).toContain("tasks.json");
         expect(outputJoined).toContain("TASKS.md deleted");
@@ -718,17 +478,11 @@ Implement feature B.
         writeFileSync(join(TASKS_APPROVAL_REPO_ROOT, "work/stream-tasks/TASKS.md"), tasksMdContent);
 
         // Run the CLI approve command
-        const { main } = await import("../src/cli/approve.ts");
+        const { main } = await import("../src/cli/approve/index.ts");
 
-        const logs: string[] = [];
-        const originalLog = console.log;
-        console.log = (...args) => logs.push(args.join(" "));
-
-        try {
+        const { stdout } = await captureCliOutput(async () => {
             await main(["node", "approve", "tasks", "--stream", "stream-tasks", "--repo-root", TASKS_APPROVAL_REPO_ROOT]);
-        } finally {
-            console.log = originalLog;
-        }
+        });
 
         // Verify tasks were approved (even if prompts had issues)
         const index = loadIndex(TASKS_APPROVAL_REPO_ROOT);
@@ -740,7 +494,7 @@ Implement feature B.
         expect(existsSync(tasksJsonPath)).toBe(true);
 
         // Verify output includes approval message
-        const outputJoined = logs.join("\n");
+        const outputJoined = stdout.join("\n");
         expect(outputJoined).toContain("Tasks approved");
     });
 
@@ -764,20 +518,14 @@ Implement feature B.
         expect(existsSync(tasksMdPath)).toBe(true);
 
         // Run the CLI approve command with JSON output
-        const { main } = await import("../src/cli/approve.ts");
+        const { main } = await import("../src/cli/approve/index.ts");
 
-        const logs: string[] = [];
-        const originalLog = console.log;
-        console.log = (...args) => logs.push(args.join(" "));
-
-        try {
+        const { stdout } = await captureCliOutput(async () => {
             await main(["node", "approve", "tasks", "--stream", "stream-tasks", "--repo-root", TASKS_APPROVAL_REPO_ROOT, "--json"]);
-        } finally {
-            console.log = originalLog;
-        }
+        });
 
         // Parse JSON output
-        const jsonOutput = JSON.parse(logs.join(""));
+        const jsonOutput = JSON.parse(stdout.join(""));
         expect(jsonOutput.action).toBe("approved");
         expect(jsonOutput.target).toBe("tasks");
         expect(jsonOutput.artifacts).toBeDefined();

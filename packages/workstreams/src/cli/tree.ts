@@ -6,7 +6,7 @@
 
 import { getRepoRoot } from "../lib/repo.ts"
 import { loadIndex, getResolvedStream } from "../lib/index.ts"
-import { getTasks, groupTasksByStageAndBatchAndThread } from "../lib/tasks.ts"
+import { getTasks, groupTasks } from "../lib/tasks.ts"
 import type { Task, TaskStatus } from "../lib/types.ts"
 
 interface TreeCliArgs {
@@ -175,7 +175,7 @@ export function main(argv: string[] = process.argv): void {
         }
     }
 
-    const grouped = groupTasksByStageAndBatchAndThread(tasks)
+    const grouped = groupTasks(tasks, { byBatch: true })
 
     // Calculate overall status
     const streamStatus = aggregateStatus(tasks)
@@ -188,11 +188,11 @@ export function main(argv: string[] = process.argv): void {
         // Just a heuristic sort based on stage name if we can't get ID easily, 
         // but typically stage names don't have numbers at start.
         // However, the grouping function returns Map<StageName, ...>
-        // We rely on the order returned by groupTasksByStageAndBatchAndThread 
+        // We rely on the order returned by groupTasks 
         // which might be effectively sorted if tasks were sorted.
 
         // Let's try to find numeric tasks to sort robustly
-        // Actually groupTasksByStageAndBatchAndThread preserves insertion order 
+        // Actually groupTasks preserves insertion order 
         // but tasks.ts doesn't guarantee stage sort order in the Map keys.
         // We'll trust the insertion order for now or sort by name if needed.
         // Better: finding the first task of each stage to compare IDs.
