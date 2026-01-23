@@ -670,7 +670,7 @@ export interface ThreadInfo {
   stageName: string
   batchName: string
   promptPath: string
-  models: NormalizedModelSpec[] // List of models to try in order
+  models: NormalizedModelSpec[] // List of models to try in order (working agent models)
   agentName: string
   githubIssue?: {
     number: number
@@ -680,6 +680,9 @@ export interface ThreadInfo {
   // Session tracking (populated before spawn)
   sessionId?: string
   firstTaskId?: string // First task in thread (for session tracking)
+  // Synthesis agent fields (optional - if present, synthesis mode is enabled)
+  synthesisAgentName?: string
+  synthesisModels?: NormalizedModelSpec[] // List of synthesis models to try
 }
 
 /**

@@ -17,7 +17,7 @@ You will receive an opencode command to execute. Run it exactly as provided:
 
 ```bash
 # Example command structure (actual command will be provided to you)
-opencode run "" --model
+opencode run "work on this task" --model "gemini-3-flash"
 ```
 
 **Important:**

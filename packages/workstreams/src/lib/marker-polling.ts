@@ -6,7 +6,7 @@
  */
 
 import { existsSync, unlinkSync } from "fs"
-import { getCompletionMarkerPath, getSessionFilePath } from "./opencode.ts"
+import { getCompletionMarkerPath, getSessionFilePath, getSynthesisOutputPath, getWorkingAgentSessionPath } from "./opencode.ts"
 import type { NotificationTracker } from "./notifications.ts"
 
 /**
@@ -58,6 +58,36 @@ export function cleanupSessionFiles(threadIds: string[]): void {
     try {
       if (existsSync(sessionPath)) {
         unlinkSync(sessionPath)
+      }
+    } catch {
+      // Ignore cleanup errors - files may already be deleted
+    }
+  }
+}
+
+/**
+ * Clean up synthesis-related temp files for all threads
+ * Called when batch completes to remove:
+ * - /tmp/workstream-{streamId}-{threadId}-synthesis.txt (synthesis output)
+ * - /tmp/workstream-{streamId}-{threadId}-working-session.txt (working agent session)
+ */
+export function cleanupSynthesisFiles(streamId: string, threadIds: string[]): void {
+  for (const threadId of threadIds) {
+    // Clean up synthesis output file
+    const synthesisPath = getSynthesisOutputPath(streamId, threadId)
+    try {
+      if (existsSync(synthesisPath)) {
+        unlinkSync(synthesisPath)
+      }
+    } catch {
+      // Ignore cleanup errors - files may already be deleted
+    }
+
+    // Clean up working agent session file
+    const workingSessionPath = getWorkingAgentSessionPath(streamId, threadId)
+    try {
+      if (existsSync(workingSessionPath)) {
+        unlinkSync(workingSessionPath)
       }
     } catch {
       // Ignore cleanup errors - files may already be deleted

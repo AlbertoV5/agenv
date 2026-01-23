@@ -539,6 +539,57 @@ export function getOpencodeSessionId(
   return thread?.opencodeSessionId || null
 }
 
+/**
+ * Set the working agent session ID for a thread
+ *
+ * The working agent session ID is the opencode session ID of the actual
+ * working agent. When synthesis is enabled, this is the inner agent that
+ * performs the actual work (the synthesis agent runs as the outer session).
+ *
+ * This session ID is used by `work fix --resume` to resume the working
+ * agent's session directly.
+ *
+ * @param repoRoot - Repository root path
+ * @param streamId - Workstream ID
+ * @param threadId - Thread ID (e.g., "01.02.03")
+ * @param sessionId - The working agent's opencode session ID
+ * @returns Updated thread metadata
+ */
+export function setWorkingAgentSessionId(
+  repoRoot: string,
+  streamId: string,
+  threadId: string,
+  sessionId: string,
+): ThreadMetadata {
+  return updateThreadMetadata(repoRoot, streamId, threadId, {
+    workingAgentSessionId: sessionId,
+  })
+}
+
+/**
+ * Get the working agent session ID for a thread
+ *
+ * Returns the opencode session ID of the working agent specifically.
+ * When synthesis is enabled, this is different from opencodeSessionId
+ * (which would be the synthesis agent's session).
+ *
+ * For `work fix --resume`, use this when available, falling back to
+ * `opencodeSessionId` for backwards compatibility.
+ *
+ * @param repoRoot - Repository root path
+ * @param streamId - Workstream ID
+ * @param threadId - Thread ID (e.g., "01.02.03")
+ * @returns Working agent session ID string, or null if not set
+ */
+export function getWorkingAgentSessionId(
+  repoRoot: string,
+  streamId: string,
+  threadId: string,
+): string | null {
+  const thread = getThreadMetadata(repoRoot, streamId, threadId)
+  return thread?.workingAgentSessionId || null
+}
+
 // ============================================
 // MIGRATION UTILITIES
 // ============================================

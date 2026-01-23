@@ -9,7 +9,7 @@
 import { existsSync, readFileSync } from "fs"
 import { getRepoRoot } from "../lib/repo.ts"
 import { loadIndex, getResolvedStream } from "../lib/index.ts"
-import { loadAgentsConfig } from "../lib/agents-yaml.ts"
+import { loadAgentsConfig, getDefaultSynthesisAgent, getSynthesisAgentModels } from "../lib/agents-yaml.ts"
 import {
   readTasksFile,
   parseTaskId,
@@ -38,6 +38,8 @@ import {
   buildRetryRunCommand,
   buildServeCommand,
   getSessionFilePath,
+  getWorkingAgentSessionPath,
+  getSynthesisOutputPath,
 } from "../lib/opencode.ts"
 import { NotificationTracker } from "../lib/notifications.ts"
 import { updateThreadMetadataLocked } from "../lib/threads.ts"
@@ -45,6 +47,7 @@ import { parseBatchId } from "../lib/cli-utils.ts"
 import {
   collectThreadInfoFromTasks,
   buildPaneTitle,
+  buildThreadRunCommand,
   setupTmuxSession,
   setupGridController,
   setupKillSessionKeybind,
@@ -55,6 +58,7 @@ import {
   stopPolling,
   cleanupCompletionMarkers,
   cleanupSessionFiles,
+  cleanupSynthesisFiles,
 } from "../lib/marker-polling.ts"
 
 const DEFAULT_PORT = 4096
@@ -233,12 +237,18 @@ function printDryRunOutput(
   noServer: boolean,
   repoRoot: string,
 ): void {
+  // Check if synthesis mode is enabled (any thread has synthesis models)
+  const synthesisEnabled = threads.some(t => t.synthesisModels && t.synthesisModels.length > 0)
+  
   console.log("=== DRY RUN ===\n")
   console.log(`Stream: ${stream.id}`)
   console.log(`Batch: ${batchId} (${stageName} -> ${batchName})`)
   console.log(`Threads: ${threads.length}`)
   console.log(`Session: ${sessionName}`)
   console.log(`Port: ${port}`)
+  if (synthesisEnabled) {
+    console.log(`Mode: Synthesis (working agents wrapped by synthesis agent)`)
+  }
   console.log("")
 
   if (!noServer) {
@@ -249,13 +259,7 @@ function printDryRunOutput(
 
   console.log("# Create tmux session (Window 0: Dashboard)")
   const firstThread = threads[0]!
-  const firstCmd = buildRetryRunCommand(
-    port,
-    firstThread.models,
-    firstThread.promptPath,
-    buildPaneTitle(firstThread),
-    firstThread.threadId,
-  )
+  const firstCmd = buildThreadRunCommand(firstThread, port, stream.id)
   console.log(buildCreateSessionCommand(sessionName, "Dashboard", firstCmd))
   console.log("")
 
@@ -263,13 +267,7 @@ function printDryRunOutput(
   if (threads.length > 1) {
     for (let i = 1; i < threads.length; i++) {
       const thread = threads[i]!
-      const cmd = buildRetryRunCommand(
-        port,
-        thread.models,
-        thread.promptPath,
-        buildPaneTitle(thread),
-        thread.threadId,
-      )
+      const cmd = buildThreadRunCommand(thread, port, stream.id)
       console.log(buildAddWindowCommand(sessionName, thread.threadId, cmd))
     }
     console.log("")
@@ -288,9 +286,13 @@ function printDryRunOutput(
 
   console.log("=== Thread Details ===")
   for (const thread of threads) {
-    console.log(`\n${thread.threadId}: ${thread.threadName}`)
+    const synthIndicator = thread.synthesisModels ? " [synthesis]" : ""
+    console.log(`\n${thread.threadId}: ${thread.threadName}${synthIndicator}`)
     console.log(`  Agent: ${thread.agentName}`)
-    console.log(`  Models: ${thread.models.map((m) => m.model).join(" → ")}`)
+    console.log(`  Working Models: ${thread.models.map((m) => m.model).join(" → ")}`)
+    if (thread.synthesisModels) {
+      console.log(`  Synthesis Models: ${thread.synthesisModels.map((m) => m.model).join(" → ")}`)
+    }
     console.log(`  Prompt: ${thread.promptPath}`)
     if (thread.githubIssue) {
       console.log(`  Issue: ${thread.githubIssue.url}`)
@@ -389,30 +391,101 @@ async function handleSessionClose(
       await completeMultipleSessionsLocked(repoRoot, streamId, completions)
     }
 
-    // Capture opencode session IDs from temp files
-    console.log(`\nCapturing opencode session IDs...`)
+    // Capture opencode session IDs and synthesis output from temp files
+    // This captures both the synthesis agent session (opencodeSessionId) and
+    // the working agent session (workingAgentSessionId) when synthesis is enabled
+    console.log(`\nCapturing opencode session IDs and synthesis output...`)
     for (const mapping of threadSessionMap) {
       const sessionFilePath = getSessionFilePath(mapping.threadId)
+      const workingAgentSessionPath = getWorkingAgentSessionPath(streamId, mapping.threadId)
+      const synthesisOutputPath = getSynthesisOutputPath(streamId, mapping.threadId)
+      
+      // Collect session IDs and synthesis output to update
+      const sessionUpdates: {
+        opencodeSessionId?: string
+        workingAgentSessionId?: string
+        synthesisOutput?: string | null
+      } = {}
+      
+      // Capture the primary session ID (synthesis agent when enabled, or working agent directly)
       if (existsSync(sessionFilePath)) {
         try {
           const opencodeSessionId = readFileSync(sessionFilePath, "utf-8").trim()
           if (opencodeSessionId) {
-            await updateThreadMetadataLocked(repoRoot, streamId, mapping.threadId, {
-              opencodeSessionId,
-            })
-            console.log(`  Thread ${mapping.threadId}: captured opencode session ${opencodeSessionId}`)
+            sessionUpdates.opencodeSessionId = opencodeSessionId
           }
         } catch (e) {
           console.log(`  Thread ${mapping.threadId}: failed to read session file (${(e as Error).message})`)
+        }
+      }
+      
+      // Capture the working agent session ID (only present when synthesis is enabled)
+      if (existsSync(workingAgentSessionPath)) {
+        try {
+          const workingAgentSessionId = readFileSync(workingAgentSessionPath, "utf-8").trim()
+          if (workingAgentSessionId) {
+            sessionUpdates.workingAgentSessionId = workingAgentSessionId
+          }
+        } catch (e) {
+          console.log(`  Thread ${mapping.threadId}: failed to read working agent session file (${(e as Error).message})`)
+        }
+      }
+      
+      // Capture synthesis output (only present when synthesis is enabled)
+      if (existsSync(synthesisOutputPath)) {
+        try {
+          const synthesisOutput = readFileSync(synthesisOutputPath, "utf-8").trim()
+          if (synthesisOutput) {
+            sessionUpdates.synthesisOutput = synthesisOutput
+          } else {
+            console.log(`  Thread ${mapping.threadId}: synthesis output file is empty`)
+            sessionUpdates.synthesisOutput = ""
+          }
+        } catch (e) {
+          console.log(`  Thread ${mapping.threadId}: failed to read synthesis output file (${(e as Error).message})`)
+          sessionUpdates.synthesisOutput = null
+        }
+      } else if (sessionUpdates.workingAgentSessionId) {
+        // Only warn about missing synthesis output if we have a working agent session
+        // (indicates synthesis was enabled but output file is missing)
+        console.log(`  Thread ${mapping.threadId}: synthesis output file not found`)
+        sessionUpdates.synthesisOutput = null
+      }
+      
+      // Update thread metadata with captured session IDs and synthesis output
+      if (sessionUpdates.opencodeSessionId || sessionUpdates.workingAgentSessionId || sessionUpdates.synthesisOutput !== undefined) {
+        // Convert null to undefined for the update (null means file missing/error, undefined means not set)
+        const updateData: {
+          opencodeSessionId?: string
+          workingAgentSessionId?: string
+          synthesisOutput?: string
+        } = {}
+        if (sessionUpdates.opencodeSessionId) updateData.opencodeSessionId = sessionUpdates.opencodeSessionId
+        if (sessionUpdates.workingAgentSessionId) updateData.workingAgentSessionId = sessionUpdates.workingAgentSessionId
+        if (sessionUpdates.synthesisOutput !== null && sessionUpdates.synthesisOutput !== undefined) {
+          updateData.synthesisOutput = sessionUpdates.synthesisOutput
+        }
+        
+        await updateThreadMetadataLocked(repoRoot, streamId, mapping.threadId, updateData)
+        
+        if (sessionUpdates.opencodeSessionId && sessionUpdates.workingAgentSessionId) {
+          console.log(`  Thread ${mapping.threadId}: captured synthesis session ${sessionUpdates.opencodeSessionId}, working session ${sessionUpdates.workingAgentSessionId}${sessionUpdates.synthesisOutput ? ', synthesis output' : ''}`)
+        } else if (sessionUpdates.opencodeSessionId) {
+          console.log(`  Thread ${mapping.threadId}: captured opencode session ${sessionUpdates.opencodeSessionId}`)
+        } else if (sessionUpdates.workingAgentSessionId) {
+          console.log(`  Thread ${mapping.threadId}: captured working agent session ${sessionUpdates.workingAgentSessionId}${sessionUpdates.synthesisOutput ? ', synthesis output' : ''}`)
+        } else if (sessionUpdates.synthesisOutput) {
+          console.log(`  Thread ${mapping.threadId}: captured synthesis output`)
         }
       } else {
         console.log(`  Thread ${mapping.threadId}: no session file found`)
       }
     }
 
-    // Clean up marker files and session files
+    // Clean up marker files, session files, and synthesis files
     cleanupCompletionMarkers(threadIds)
     cleanupSessionFiles(threadIds)
+    cleanupSynthesisFiles(streamId, threadIds)
   }
 
   process.exit(code ?? 0)
@@ -516,6 +589,13 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     process.exit(1)
   }
 
+  // Load synthesis agent config (optional - if present, synthesis mode is enabled)
+  const synthesisAgent = getDefaultSynthesisAgent(agentsConfig)
+  if (synthesisAgent) {
+    const synthModels = getSynthesisAgentModels(agentsConfig, synthesisAgent.name)
+    console.log(`Synthesis agent enabled: ${synthesisAgent.name} (${synthModels.length} model(s))`)
+  }
+
   // Discover threads from tasks.json
   const threads = collectThreadInfoFromTasks(
     repoRoot,
@@ -523,6 +603,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     batchParsed.stage,
     batchParsed.batch,
     agentsConfig,
+    synthesisAgent,
   )
 
   if (threads.length === 0) {
