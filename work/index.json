@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-01-23T22:51:24.144Z",
+  "last_updated": "2026-01-23T23:04:43.951Z",
   "current_stream": "010-synthesis-agents",
   "streams": [
     {
@@ -569,7 +569,7 @@
         ]
       },
       "created_at": "2026-01-23T22:40:48.401Z",
-      "updated_at": "2026-01-23T22:51:24.144Z",
+      "updated_at": "2026-01-23T23:04:43.951Z",
       "path": "work/010-synthesis-agents",
       "generated_by": {
         "workstreams": "0.1.0"
@@ -583,6 +583,13 @@
           "status": "approved",
           "approved_at": "2026-01-23T22:51:18.488Z",
           "task_count": 50
+        },
+        "stages": {
+          "1": {
+            "status": "approved",
+            "approved_at": "2026-01-23T23:04:43.951Z",
+            "approved_by": "user"
+          }
         }
       },
       "github": {

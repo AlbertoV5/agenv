@@ -1,0 +1,102 @@
+{
+  "version": "1.0.0",
+  "stream_id": "",
+  "last_updated": "2026-01-23T23:04:37.746Z",
+  "threads": [
+    {
+      "threadId": "01.01.01",
+      "sessions": [
+        {
+          "sessionId": "ses_mkrhcjzi_1lnycl",
+          "agentName": "systems-engineer",
+          "model": "anthropic/claude-opus-4-5",
+          "startedAt": "2026-01-23T22:56:22.833Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T22:59:16.675Z"
+        }
+      ],
+      "opencodeSessionId": "ses_412ed4926ffe8721VUmT2CBT1U"
+    },
+    {
+      "threadId": "01.02.01",
+      "sessions": [
+        {
+          "sessionId": "ses_mkrhgdw7_utw22p",
+          "agentName": "systems-engineer",
+          "model": "anthropic/claude-opus-4-5",
+          "startedAt": "2026-01-23T22:59:21.562Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T23:01:56.995Z"
+        }
+      ],
+      "opencodeSessionId": "ses_412ea9042ffeFhGpS7bw6jW2YQ"
+    },
+    {
+      "threadId": "01.02.02",
+      "sessions": [
+        {
+          "sessionId": "ses_mkrhgdw7_fbyqxm",
+          "agentName": "documentation-minimalist",
+          "model": "google/antigravity-gemini-3-pro",
+          "startedAt": "2026-01-23T22:59:21.562Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T23:01:56.995Z"
+        },
+        {
+          "sessionId": "ses_mkrhk16q_2a2d8l",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-23T23:02:11.714Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T23:04:37.745Z"
+        },
+        {
+          "sessionId": "ses_mkrhk16q_9lcs90",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-23T23:02:11.714Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T23:04:37.745Z"
+        },
+        {
+          "sessionId": "ses_mkrhk16q_lot5iw",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-23T23:02:11.714Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T23:04:37.745Z"
+        },
+        {
+          "sessionId": "ses_mkrhk16r_d9fjg1",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-23T23:02:11.715Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T23:04:37.746Z"
+        },
+        {
+          "sessionId": "ses_mkrhk16r_jjkjec",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-23T23:02:11.715Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T23:04:37.746Z"
+        }
+      ]
+    },
+    {
+      "threadId": "01.02.03",
+      "sessions": [
+        {
+          "sessionId": "ses_mkrhgdw7_z7mjaa",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-23T22:59:21.562Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T23:01:56.995Z"
+        }
+      ],
+      "opencodeSessionId": "ses_412ea85a2ffefQYAPw1I8YH0PG"
+    }
+  ]
+}

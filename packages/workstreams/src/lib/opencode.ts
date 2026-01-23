@@ -189,7 +189,7 @@ cat "${escapedPath}" | opencode run --port ${port} --model "${model}"${variantFl
 echo ""
 echo "Thread finished. Looking for session to resume..."
 if command -v jq >/dev/null 2>&1; then
-  SESSION_ID=$(opencode session list --max-count 10 --format json 2>/dev/null | jq -r ".[] | select(.title | contains(\\"__id=$TRACK_ID\\")) | .id" | head -1)
+  SESSION_ID=$(opencode session list --max-count 20 --format json 2>/dev/null | jq -r ".[] | select(.title | contains(\\"__id=$TRACK_ID\\")) | .id" | head -1)
   if [ -n "$SESSION_ID" ]; then${writeSessionCmd}
     echo "Resuming session $SESSION_ID..."
     opencode --session "$SESSION_ID"
@@ -322,7 +322,7 @@ ${completionMarkerCmd}
 echo ""
 echo "Thread finished. Looking for session to resume..."
 if command -v jq >/dev/null 2>&1; then
-  SESSION_ID=$(opencode session list --max-count 10 --format json 2>/dev/null | jq -r ".[] | select(.title | contains(\\"__id=$TRACK_ID\\")) | .id" | head -1)
+  SESSION_ID=$(opencode session list --max-count 20 --format json 2>/dev/null | jq -r ".[] | select(.title | contains(\\"__id=$TRACK_ID\\")) | .id" | head -1)
   if [ -n "$SESSION_ID" ]; then${writeSessionCmd}
     echo "Resuming session $SESSION_ID..."
     opencode --session "$SESSION_ID"
