@@ -3,11 +3,8 @@
 - [ ] ENHANCE: Add command to summarize plan so the planner can call an "assistant" agent to summarize it and play tts?
 - [ ] NOTE: Tooling prompt, eg: ```Can you create a test script file in ./scripts so I can run `bun run ./scripts/check-github-*.ts` So I Can test auth, config, label, and issue?``` 
 
-- [ ] ENHANCE: Improve the tmux to auto kill tmux session when both opencode sessions end.
-- [~] ENHANCE: Keep track of the opencode sessions per thread so we are able to resume incomplete work or ask for small fixes to the agent responsible for the implementation. So when we do `work fix` we have the option to go back to specific threads or create new stages. I think we may need to rename the current `work fix` to `work add stage` which is a more sensible approach.
-
+- [~] ENHANCE: Improve the `fix` command to be less complex, and to run the fix in tmux process so we dont pollute the main terminal logs.
 - [ ] ENHANCE: Create opencode plugin that will close the session after ~1 min of inactivity so we can auto close batched runs.
-- [ ] ENHANCE: Add parallel sync mechanism so agents know of filed being worked on at the same time.
 
 
 ## Notes prompts

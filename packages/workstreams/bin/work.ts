@@ -64,6 +64,18 @@ import { main as startMain } from "../src/cli/start.ts"
 import { main as sessionMain } from "../src/cli/session.ts"
 import { main as revisionMain } from "../src/cli/revision.ts"
 
+// Role and help utilities
+import {
+  canExecuteCommand,
+  getRoleDenialMessage,
+  getCurrentRole,
+} from "../src/lib/roles.ts"
+import {
+  filterCommandsForRole,
+  getRoleFooter,
+  isUserOnlyCommand,
+} from "../src/lib/help.ts"
+
 // Lazy loader for serve command (has JSX/React dependency)
 const serveMain = async (argv: string[]) => {
   const { main } = await import("../src/cli/serve.ts")
@@ -118,7 +130,68 @@ const SUBCOMMANDS = {
 
 type Subcommand = keyof typeof SUBCOMMANDS
 
-function printHelp(): void {
+/** Command descriptions for help output */
+const COMMAND_DESCRIPTIONS: Record<string, string> = {
+  init: "Initialize work/ directory with default config files",
+  create: "Create a new workstream",
+  current: "Get or set the current workstream",
+  continue: "Continue execution (alias for 'work multi --continue')",
+  context: "Show workstream context and resume information",
+  "add-stage": "Append a fix stage to a workstream",
+  fix: "(DEPRECATED) Use 'add stage' instead",
+  approve: "Approve workstream plan/tasks/prompts (subcommands: plan, tasks, prompts)",
+  start: "Start execution (requires all approvals, creates GitHub branch/issues)",
+  agents: "Manage agent definitions (list, add, remove)",
+  assign: "Assign agents to threads for batch execution",
+  prompt: "Generate thread execution prompt for agents",
+  execute: "Execute a thread prompt via opencode",
+  multi: "Execute all threads in a batch in parallel via tmux",
+  status: "Show workstream progress",
+  "set-status": "Set workstream status (pending, in_progress, completed, on_hold)",
+  update: "Update a task's status",
+  complete: "Mark a workstream as complete",
+  index: "Update workstream metadata fields",
+  read: "Read task details",
+  list: "List tasks in a workstream",
+  "add-task": "Add a task to a workstream (interactive if no flags)",
+  "add-batch": "Add a batch to a stage",
+  "add-thread": "Add a thread to a batch",
+  edit: "Open PLAN.md in editor",
+  delete: "Delete workstreams, stages, threads, or tasks",
+  files: "List and index files in files/ directory",
+  tasks: "Manage TASKS.md intermediate file (generate/serialize)",
+  review: "Review plan, tasks, or commits (plan, tasks, commits)",
+  validate: "Validate plan structure and content",
+  check: "Find unchecked items in plan",
+  preview: "Show PLAN.md structure",
+  metrics: "Evaluate workstream metrics and task analysis",
+  report: "Generate progress report",
+  changelog: "Generate changelog from completed tasks",
+  export: "Export workstream data (md, csv, json)",
+  serve: "Launch web visualization server",
+  tree: "Show workstream structure tree",
+  github: "Manage GitHub integration (enable, create-branch, etc.)",
+  session: "Manage agent sessions (complete stale sessions)",
+  revision: "Manage workstream revisions",
+  "multi-navigator": "Multi-session navigator mode",
+  "multi-grid": "Multi-session grid layout",
+}
+
+function printHelp(showAllCommands: boolean = false): void {
+  const allCommands = Object.keys(SUBCOMMANDS)
+  const availableCommands = showAllCommands
+    ? allCommands
+    : filterCommandsForRole(allCommands)
+
+  // Build command list with role indicators
+  const commandLines = availableCommands.map((cmd) => {
+    const description = COMMAND_DESCRIPTIONS[cmd] || ""
+    const roleIndicator = isUserOnlyCommand(cmd) ? " [USER]" : ""
+    // Format: "  cmd          description [USER]" with proper padding
+    const paddedCmd = cmd.padEnd(16)
+    return `  ${paddedCmd}${description}${roleIndicator}`
+  })
+
   console.log(`
 work - Workstream management CLI
 
@@ -126,50 +199,12 @@ Usage:
   work <command> [options]
 
 Commands:
-  init        Initialize work/ directory with default config files
-  create      Create a new workstream
-  current     Get or set the current workstream
-  continue    Continue execution (alias for 'work multi --continue')
-  context     Show workstream context and resume information
-  add stage   Append a fix stage to a workstream
-  fix         (DEPRECATED) Use 'add stage' instead
-  approve     Approve workstream plan/tasks/prompts (subcommands: plan, tasks, prompts)
-  start       Start execution (requires all approvals, creates GitHub branch/issues)
-  agents      Manage agent definitions (list, add, remove)
-  assign      Assign agents to threads for batch execution
-  prompt      Generate thread execution prompt for agents
-  execute     Execute a thread prompt via opencode
-  multi       Execute all threads in a batch in parallel via tmux
-  status      Show workstream progress
-  set-status  Set workstream status (pending, in_progress, completed, on_hold)
-  update      Update a task's status
-  complete    Mark a workstream as complete
-  index       Update workstream metadata fields
-  read        Read task details
-  list        List tasks in a workstream
-  add-task    Add a task to a workstream (interactive if no flags)
-  add-batch   Add a batch to a stage
-  add-thread  Add a thread to a batch
-  edit        Open PLAN.md in editor
-  delete      Delete workstreams, stages, threads, or tasks
-  files       List and index files in files/ directory
-  tasks       Manage TASKS.md intermediate file (generate/serialize)
-  review      Review plan, tasks, or commits (plan, tasks, commits)
-  validate    Validate plan structure and content
-  check       Find unchecked items in plan
-  preview     Show PLAN.md structure
-  metrics     Evaluate workstream metrics and task analysis
-  report      Generate progress report
-  changelog   Generate changelog from completed tasks
-  export      Export workstream data (md, csv, json)
-  serve       Launch web visualization server
-  tree        Show workstream structure tree
-  github      Manage GitHub integration (enable, create-branch, etc.)
-  session     Manage agent sessions (complete stale sessions)
+${commandLines.join("\n")}
 
 Options:
-  --help, -h    Show this help message
-  --version, -v Show version
+  --help, -h           Show this help message
+  --version, -v        Show version
+  --show-all-commands  Show all commands regardless of role restrictions
 
 Current Workstream:
   Set a current workstream to use as default for all commands:
@@ -193,6 +228,8 @@ Examples:
   work export --format csv
 
 Run 'work <command> --help' for more information on a command.
+
+${getRoleFooter()}${showAllCommands ? " (showing all commands)" : ""}
 `)
 }
 
@@ -203,16 +240,20 @@ function printVersion(): void {
 export function main(argv?: string[]): void {
   const args = argv ? argv.slice(2) : process.argv.slice(2)
 
-  if (args.length === 0) {
-    printHelp()
+  // Check for --show-all-commands flag
+  const showAllCommands = args.includes("--show-all-commands")
+  const filteredArgs = args.filter((arg) => arg !== "--show-all-commands")
+
+  if (filteredArgs.length === 0) {
+    printHelp(showAllCommands)
     process.exit(0)
   }
 
-  const firstArg = args[0]!
+  const firstArg = filteredArgs[0]!
 
   // Handle global flags
   if (firstArg === "--help" || firstArg === "-h") {
-    printHelp()
+    printHelp(showAllCommands)
     process.exit(0)
   }
 
@@ -223,11 +264,11 @@ export function main(argv?: string[]): void {
 
   // Handle multi-word command aliases (e.g., "add stage" -> "add-stage")
   let subcommand: string = firstArg
-  let remainingArgs = args.slice(1)
+  let remainingArgs = filteredArgs.slice(1)
   
-  if (firstArg === "add" && args[1] === "stage") {
+  if (firstArg === "add" && filteredArgs[1] === "stage") {
     subcommand = "add-stage"
-    remainingArgs = args.slice(2)
+    remainingArgs = filteredArgs.slice(2)
   }
 
   // Check if it's a valid subcommand
@@ -237,6 +278,12 @@ export function main(argv?: string[]): void {
       "\nAvailable commands: " + Object.keys(SUBCOMMANDS).join(", "),
     )
     console.error("\nRun 'work --help' for usage information.")
+    process.exit(1)
+  }
+
+  // Check role permissions before dispatching
+  if (!canExecuteCommand(subcommand)) {
+    console.error(getRoleDenialMessage(subcommand))
     process.exit(1)
   }
 

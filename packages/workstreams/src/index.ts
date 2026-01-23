@@ -165,3 +165,15 @@ export {
   type ThreadId,
   type GeneratePromptOptions,
 } from "./lib/prompts.ts"
+
+// Role-based access control
+export {
+  getCurrentRole,
+  canExecuteCommand,
+  getRoleDenialMessage,
+  getCommandsForRole,
+  getAllCommands,
+  COMMAND_PERMISSIONS,
+  type WorkstreamRole,
+  type CommandPermission,
+} from "./lib/roles.ts"

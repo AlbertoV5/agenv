@@ -17,6 +17,7 @@ import { isGitHubEnabled, loadGitHubConfig } from "../lib/github/config.ts"
 import { createWorkstreamBranch } from "../lib/github/branches.ts"
 import { createIssuesForWorkstream } from "../lib/github/sync.ts"
 import { ensureGitHubAuth } from "../lib/github/auth.ts"
+import { canExecuteCommand, getRoleDenialMessage } from "../lib/roles.ts"
 
 interface StartCliArgs {
     repoRoot?: string
@@ -27,6 +28,8 @@ interface StartCliArgs {
 function printHelp(): void {
     console.log(`
 work start - Start a workstream after approvals are complete
+
+Requires: USER role
 
 Usage:
   work start [--stream <id>] [--json]
@@ -110,6 +113,12 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     const cliArgs = parseCliArgs(argv)
     if (!cliArgs) {
         console.error("\nRun with --help for usage information.")
+        process.exit(1)
+    }
+
+    // Role-based access check
+    if (!canExecuteCommand("start")) {
+        console.error(getRoleDenialMessage("start"))
         process.exit(1)
     }
 
