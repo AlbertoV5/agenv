@@ -112,7 +112,7 @@ Optional:
   --port, -p       OpenCode server port (default: 4096)
   --dry-run        Show commands without executing
   --no-server      Skip starting opencode serve (assume already running)
-  --silent         Disable notification sounds
+  --silent         Disable notification sounds (audio only)
   --repo-root, -r  Repository root (auto-detected if omitted)
   --help, -h       Show this help message
 

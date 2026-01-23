@@ -65,7 +65,7 @@ Options:
   --retry              Retry with the same agent
   --agent <name>       Retry with a different agent
   --new-stage          Create a new fix stage (alias to add-stage)
-  --no-tmux            Run in foreground (no tmux session)
+  --no-tmux            Run in foreground (no tmux session, useful for debugging)
   --stream, -s         Workstream ID or name (uses current if not specified)
   --dry-run            Show what would be done without executing
   --json, -j           Output as JSON

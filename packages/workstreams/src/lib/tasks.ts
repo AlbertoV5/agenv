@@ -231,26 +231,7 @@ export function validateTasksFileSessions(tasksFile: TasksFile): SessionValidati
   return errors
 }
 
-/**
- * Migrate a single task to include session fields
- * @deprecated Session data is now stored in threads.json.
- * This function is kept for backwards compatibility but no longer adds session fields.
- * Returns the task unchanged (does not mutate original)
- */
-export function migrateTaskSessions(task: Task): Task {
-  // Session data is now stored in threads.json, not in tasks.json
-  // Just return the task as-is (no migration needed for deprecated fields)
-  return task
-}
 
-/**
- * Migrate all tasks in a TasksFile to include session fields
- * @deprecated Session data is now stored in threads.json.
- * Returns the TasksFile unchanged (does not mutate original)
- */
-export function migrateTasksFileSessions(tasksFile: TasksFile): TasksFile {
-  return tasksFile
-}
 
 // ============================================
 // SESSION DATA MIGRATION TO THREADS.JSON
@@ -629,6 +610,13 @@ export function readTasksFile(
 
   // Check for sessions in tasks.json and migrate to threads.json
   if (hasSessionsInTasksJson(tasksFile)) {
+    console.warn(
+      `\x1b[33mWarning: Deprecated session data found in tasks.json for stream ${streamId}.\x1b[0m`,
+    )
+    console.warn(
+      `\x1b[33mAuto-migrating sessions to threads.json and clearing from tasks.json...\x1b[0m`,
+    )
+
     const migrationResult = migrateSessionsToThreads(repoRoot, streamId, tasksFile)
     if (migrationResult.migrated) {
       // Re-read the cleaned tasks file
@@ -638,8 +626,7 @@ export function readTasksFile(
     // If migration failed, continue with the original data (sessions will still work via threads.ts fallback)
   }
 
-  // Migrate tasks to include session fields if missing (legacy compatibility)
-  return migrateTasksFileSessions(tasksFile)
+  return tasksFile
 }
 
 /**
@@ -764,8 +751,8 @@ export function addTasks(
         currentSessionId: existing.currentSessionId,
       })
     } else {
-      // Add new task (migrate to include sessions if needed)
-      existingTasksMap.set(newTask.id, migrateTaskSessions(newTask))
+      // Add new task
+      existingTasksMap.set(newTask.id, newTask)
     }
   }
 
