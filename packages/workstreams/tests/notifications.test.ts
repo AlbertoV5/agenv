@@ -21,8 +21,8 @@ import { createSpawnMock, createChildProcessMock } from "./helpers/mocks"
 
 describe("NotificationEvent types", () => {
   test("has expected event types", () => {
-    const events: NotificationEvent[] = ["thread_complete", "batch_complete", "error"]
-    expect(events).toHaveLength(3)
+    const events: NotificationEvent[] = ["thread_complete", "batch_complete", "error", "thread_synthesis_complete"]
+    expect(events).toHaveLength(4)
   })
 })
 
@@ -31,6 +31,7 @@ describe("DEFAULT_SOUNDS", () => {
     expect(DEFAULT_SOUNDS.thread_complete).toBe("/System/Library/Sounds/Glass.aiff")
     expect(DEFAULT_SOUNDS.batch_complete).toBe("/System/Library/Sounds/Hero.aiff")
     expect(DEFAULT_SOUNDS.error).toBe("/System/Library/Sounds/Basso.aiff")
+    expect(DEFAULT_SOUNDS.thread_synthesis_complete).toBe("/System/Library/Sounds/Purr.aiff")
   })
 })
 
@@ -117,13 +118,13 @@ describe("MacOSSoundProvider", () => {
 
     if (process.platform !== "darwin") return
 
-    // Spawns afplay with default sound
+    // Spawns afplay with default sound (no detached since we need exit events for queue)
     const defaultProvider = new MacOSSoundProvider()
     defaultProvider.playNotification("thread_complete")
     expect(spawnMock).toHaveBeenCalledWith(
       "afplay",
       [DEFAULT_SOUNDS.thread_complete],
-      expect.objectContaining({ detached: true, stdio: "ignore" })
+      expect.objectContaining({ stdio: "ignore" })
     )
 
     // Uses custom sound path when configured
@@ -136,6 +137,53 @@ describe("MacOSSoundProvider", () => {
     const fallbackProvider = new MacOSSoundProvider({ sounds: { thread_complete: "/nonexistent/custom.aiff" } })
     fallbackProvider.playNotification("thread_complete")
     expect(spawnMock).toHaveBeenCalledWith("afplay", [DEFAULT_SOUNDS.thread_complete], expect.anything())
+  })
+
+  test("sound queue prevents overlapping playback", () => {
+    if (process.platform !== "darwin") return
+
+    const provider = new MacOSSoundProvider()
+    
+    // Initially empty queue and not playing
+    expect(provider.getQueueLength()).toBe(0)
+    expect(provider.getIsPlaying()).toBe(false)
+
+    // First sound starts playing immediately
+    provider.playNotification("thread_complete")
+    expect(spawnMock).toHaveBeenCalledTimes(1)
+    expect(provider.getIsPlaying()).toBe(true)
+    // Queue should be empty since first sound is playing
+    expect(provider.getQueueLength()).toBe(0)
+
+    // Second sound gets queued (not spawned immediately)
+    provider.playNotification("batch_complete")
+    expect(spawnMock).toHaveBeenCalledTimes(1) // Still only 1 spawn
+    expect(provider.getQueueLength()).toBe(1) // One sound waiting in queue
+
+    // Third sound also gets queued
+    provider.playNotification("error")
+    expect(spawnMock).toHaveBeenCalledTimes(1) // Still only 1 spawn
+    expect(provider.getQueueLength()).toBe(2) // Two sounds waiting in queue
+  })
+
+  test("clearQueue resets state", () => {
+    if (process.platform !== "darwin") return
+
+    const provider = new MacOSSoundProvider()
+    
+    // Add some sounds
+    provider.playNotification("thread_complete")
+    provider.playNotification("batch_complete")
+    provider.playNotification("error")
+    
+    expect(provider.getIsPlaying()).toBe(true)
+    expect(provider.getQueueLength()).toBe(2)
+    
+    // Clear queue
+    provider.clearQueue()
+    
+    expect(provider.getIsPlaying()).toBe(false)
+    expect(provider.getQueueLength()).toBe(0)
   })
 })
 
@@ -257,8 +305,8 @@ describe("NotificationManager", () => {
 
     manager.playNotification("batch_complete")
 
-    expect(mockProvider1.playNotification).toHaveBeenCalledWith("batch_complete")
-    expect(mockProvider2.playNotification).toHaveBeenCalledWith("batch_complete")
+    expect(mockProvider1.playNotification).toHaveBeenCalledWith("batch_complete", undefined)
+    expect(mockProvider2.playNotification).toHaveBeenCalledWith("batch_complete", undefined)
     expect(unavailableProvider.playNotification).not.toHaveBeenCalled()
   })
 })
