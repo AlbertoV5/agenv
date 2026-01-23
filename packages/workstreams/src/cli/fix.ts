@@ -21,6 +21,12 @@ import { loadAgentsConfig, getAgentModels } from "../lib/agents-yaml.ts"
 import { parseStreamDocument } from "../lib/stream-parser.ts"
 import type { Task, SessionRecord, SessionStatus, NormalizedModelSpec } from "../lib/types.ts"
 import {
+  sessionExists,
+  createSession,
+  attachSession,
+  setGlobalOption,
+} from "../lib/tmux.ts"
+import {
   createReadlineInterface,
   buildThreadStatuses,
   selectThreadFromStatuses,
@@ -42,6 +48,7 @@ interface FixCliArgs {
   newStage?: boolean
   dryRun?: boolean
   json?: boolean
+  noTmux?: boolean
 }
 
 function printHelp(): void {
@@ -58,6 +65,7 @@ Options:
   --retry              Retry with the same agent
   --agent <name>       Retry with a different agent
   --new-stage          Create a new fix stage (alias to add-stage)
+  --no-tmux            Run in foreground (no tmux session)
   --stream, -s         Workstream ID or name (uses current if not specified)
   --dry-run            Show what would be done without executing
   --json, -j           Output as JSON
@@ -68,11 +76,18 @@ Interactive Mode:
   If --thread is not provided, displays a table of incomplete/failed threads
   and prompts for thread selection and action.
 
+Tmux Sessions:
+  By default, fix commands run in a tmux session (work-fix-{threadId}).
+  - Detach with Ctrl-B D to let the process continue in background.
+  - Reattach later with: tmux attach -t work-fix-{threadId}
+  - Use --no-tmux to run in foreground (old behavior).
+
 Examples:
   work fix                                    # Interactive mode
   work fix --thread 01.01.02 --resume         # Resume specific thread
   work fix --thread 01.01.02 --retry          # Retry with same agent
   work fix --thread 01.01.02 --agent backend  # Retry with different agent
+  work fix --thread 01.01.02 --retry --no-tmux # Retry in foreground
 `)
 }
 
@@ -148,6 +163,10 @@ function parseCliArgs(argv: string[]): FixCliArgs | null {
         parsed.json = true
         break
 
+      case "--no-tmux":
+        parsed.noTmux = true
+        break
+
       case "--help":
       case "-h":
         printHelp()
@@ -161,6 +180,15 @@ function parseCliArgs(argv: string[]): FixCliArgs | null {
 // ============================================
 // EXECUTION HELPERS
 // ============================================
+
+/**
+ * Generate the tmux session name for a fix operation
+ */
+function getFixSessionName(threadId: string): string {
+  // Replace dots with dashes for tmux-friendly session names
+  const safeThreadId = threadId.replace(/\./g, "-")
+  return `work-fix-${safeThreadId}`
+}
 
 /**
  * Get the last session for a thread from tasks
@@ -254,7 +282,8 @@ async function executeResume(
   repoRoot: string,
   streamId: string,
   threadStatus: ThreadStatus,
-  dryRun?: boolean
+  dryRun?: boolean,
+  noTmux?: boolean
 ): Promise<void> {
   const lastSession = getLastSessionForThread(repoRoot, streamId, threadStatus.threadId)
 
@@ -264,11 +293,22 @@ async function executeResume(
     process.exit(1)
   }
 
+  const tmuxSessionName = getFixSessionName(threadStatus.threadId)
   const command = `opencode --session "${lastSession.sessionId}"`
+
+  // Check if there's an existing fix tmux session to reattach to
+  const existingSession = !noTmux && sessionExists(tmuxSessionName)
 
   if (dryRun) {
     console.log("\nDry run - would execute:")
-    console.log(`  ${command}`)
+    if (existingSession) {
+      console.log(`  tmux attach -t "${tmuxSessionName}"`)
+      console.log(`\n(Reattaching to existing tmux session)`)
+    } else if (noTmux) {
+      console.log(`  ${command}`)
+    } else {
+      console.log(`  tmux new-session -s "${tmuxSessionName}" "${command}"`)
+    }
     console.log(`\nThread: ${threadStatus.threadName} (${threadStatus.threadId})`)
     console.log(`Session ID: ${lastSession.sessionId}`)
     console.log(`Agent: ${lastSession.agentName}`)
@@ -280,25 +320,82 @@ async function executeResume(
   console.log(`Session ID: ${lastSession.sessionId}`)
   console.log(`Agent: ${lastSession.agentName}`)
   console.log(`Model: ${lastSession.model}`)
+
+  // If there's an existing tmux session, reattach to it
+  if (existingSession) {
+    console.log(`\nReattaching to existing tmux session "${tmuxSessionName}"...`)
+    console.log("  Detach: Ctrl-B D")
+    console.log(`  Reattach: tmux attach -t ${tmuxSessionName}`)
+    console.log("")
+
+    const child = attachSession(tmuxSessionName)
+
+    await new Promise<void>((resolve, reject) => {
+      child.on("close", (code) => {
+        console.log(`\nDetached from session "${tmuxSessionName}".`)
+        console.log(`Process continues in background.`)
+        console.log(`Reattach: tmux attach -t ${tmuxSessionName}`)
+        resolve()
+      })
+
+      child.on("error", (err) => {
+        console.error(`Error attaching to tmux session: ${err.message}`)
+        reject(err)
+      })
+    })
+    return
+  }
+
+  // Run in foreground without tmux
+  if (noTmux) {
+    console.log("")
+
+    const child = spawn("opencode", ["--session", lastSession.sessionId], {
+      stdio: "inherit",
+      cwd: repoRoot,
+    })
+
+    await new Promise<void>((resolve, reject) => {
+      child.on("close", (code) => {
+        if (code === 0) {
+          resolve()
+        } else {
+          process.exit(code ?? 1)
+        }
+      })
+
+      child.on("error", (err) => {
+        console.error(`Error executing command: ${err.message}`)
+        reject(err)
+      })
+    })
+    return
+  }
+
+  // Create new tmux session with opencode
+  console.log(`\nCreating tmux session "${tmuxSessionName}"...`)
+  console.log("  Detach: Ctrl-B D")
+  console.log(`  Reattach: tmux attach -t ${tmuxSessionName}`)
   console.log("")
 
-  // Execute opencode with the session flag
-  const child = spawn("opencode", ["--session", lastSession.sessionId], {
-    stdio: "inherit",
-    cwd: repoRoot,
-  })
+  createSession(tmuxSessionName, threadStatus.threadName, command)
+
+  // Keep window open after command exits for reviewing output
+  setGlobalOption(tmuxSessionName, "remain-on-exit", "on")
+
+  // Attach to the session
+  const child = attachSession(tmuxSessionName)
 
   await new Promise<void>((resolve, reject) => {
     child.on("close", (code) => {
-      if (code === 0) {
-        resolve()
-      } else {
-        process.exit(code ?? 1)
-      }
+      console.log(`\nDetached from session "${tmuxSessionName}".`)
+      console.log(`Process continues in background.`)
+      console.log(`Reattach: tmux attach -t ${tmuxSessionName}`)
+      resolve()
     })
 
     child.on("error", (err) => {
-      console.error(`Error executing command: ${err.message}`)
+      console.error(`Error attaching to tmux session: ${err.message}`)
       reject(err)
     })
   })
@@ -313,7 +410,8 @@ async function executeRetry(
   threadStatus: ThreadStatus,
   agentName: string,
   models: NormalizedModelSpec[],
-  dryRun?: boolean
+  dryRun?: boolean,
+  noTmux?: boolean
 ): Promise<void> {
   const promptPath = getPromptFilePath(repoRoot, streamId, threadStatus.threadId)
 
@@ -327,15 +425,35 @@ async function executeRetry(
   const primaryModel = models[0]!
   const variantFlag = primaryModel.variant ? ` --variant "${primaryModel.variant}"` : ""
   const command = `cat "${promptPath}" | opencode run --model "${primaryModel.model}"${variantFlag}`
+  const tmuxSessionName = getFixSessionName(threadStatus.threadId)
 
   if (dryRun) {
     console.log("\nDry run - would execute:")
-    console.log(`  ${command}`)
+    if (noTmux) {
+      console.log(`  ${command}`)
+    } else {
+      console.log(`  tmux new-session -s "${tmuxSessionName}" "${command}"`)
+    }
     console.log(`\nThread: ${threadStatus.threadName} (${threadStatus.threadId})`)
     console.log(`Agent: ${agentName}`)
     console.log(`Model: ${primaryModel.model}${primaryModel.variant ? ` (variant: ${primaryModel.variant})` : ""}`)
     console.log(`Prompt: ${promptPath}`)
+    if (!noTmux) {
+      console.log(`\nTmux session: ${tmuxSessionName}`)
+      console.log(`  Detach: Ctrl-B D`)
+      console.log(`  Reattach: tmux attach -t ${tmuxSessionName}`)
+    }
     return
+  }
+
+  // Check if a fix session already exists for this thread
+  if (!noTmux && sessionExists(tmuxSessionName)) {
+    console.error(`Error: tmux session "${tmuxSessionName}" already exists.`)
+    console.error(`\nOptions:`)
+    console.error(`  1. Reattach: tmux attach -t "${tmuxSessionName}"`)
+    console.error(`  2. Kill it: tmux kill-session -t "${tmuxSessionName}"`)
+    console.error(`  3. Use --no-tmux to run in foreground`)
+    process.exit(1)
   }
 
   // Parse thread ID for task operations
@@ -371,29 +489,79 @@ async function executeRetry(
   console.log(`Model: ${primaryModel.model}${primaryModel.variant ? ` (variant: ${primaryModel.variant})` : ""}`)
   console.log(`Session tracking: ${sessionIds.size} task(s)`)
   console.log(`Prompt: ${promptPath}`)
+
+  // Run in foreground without tmux
+  if (noTmux) {
+    console.log("")
+
+    const child = spawn("sh", ["-c", command], {
+      stdio: "inherit",
+      cwd: repoRoot,
+    })
+
+    await new Promise<void>((resolve, reject) => {
+      child.on("close", (code) => {
+        // Determine session status based on exit code
+        const sessionStatus: SessionStatus = code === 0 ? "completed" : "failed"
+
+        // Complete all sessions for this thread
+        for (const [taskId, sessionId] of sessionIds) {
+          completeTaskSession(repoRoot, streamId, taskId, sessionId, sessionStatus, code ?? undefined)
+        }
+
+        if (code === 0) {
+          resolve()
+        } else {
+          process.exit(code ?? 1)
+        }
+      })
+
+      child.on("error", (err) => {
+        // Mark all sessions as failed on error
+        for (const [taskId, sessionId] of sessionIds) {
+          completeTaskSession(repoRoot, streamId, taskId, sessionId, "failed")
+        }
+
+        console.error(`Error executing command: ${err.message}`)
+        reject(err)
+      })
+    })
+    return
+  }
+
+  // Create tmux session with the command
+  console.log(`\nCreating tmux session "${tmuxSessionName}"...`)
+  console.log("  Detach: Ctrl-B D")
+  console.log(`  Reattach: tmux attach -t ${tmuxSessionName}`)
   console.log("")
 
-  // Execute via shell to handle pipe
-  const child = spawn("sh", ["-c", command], {
-    stdio: "inherit",
-    cwd: repoRoot,
-  })
+  createSession(tmuxSessionName, threadStatus.threadName, command)
+
+  // Keep window open after command exits for reviewing output
+  setGlobalOption(tmuxSessionName, "remain-on-exit", "on")
+
+  // Attach to the session
+  const child = attachSession(tmuxSessionName)
 
   await new Promise<void>((resolve, reject) => {
     child.on("close", (code) => {
-      // Determine session status based on exit code
-      const sessionStatus: SessionStatus = code === 0 ? "completed" : "failed"
-
-      // Complete all sessions for this thread
-      for (const [taskId, sessionId] of sessionIds) {
-        completeTaskSession(repoRoot, streamId, taskId, sessionId, sessionStatus, code ?? undefined)
-      }
-
-      if (code === 0) {
-        resolve()
+      // When user detaches, the process continues in background
+      // We can't determine exit status here since the process may still be running
+      console.log(`\nDetached from session "${tmuxSessionName}".`)
+      
+      // Check if the session still exists (process still running)
+      if (sessionExists(tmuxSessionName)) {
+        console.log(`Process continues in background.`)
+        console.log(`Reattach: tmux attach -t ${tmuxSessionName}`)
+        console.log(`\nNote: Session status will be updated when the process completes.`)
       } else {
-        process.exit(code ?? 1)
+        // Session was killed - mark as completed (user confirmed done)
+        console.log(`Session closed.`)
+        for (const [taskId, sessionId] of sessionIds) {
+          completeTaskSession(repoRoot, streamId, taskId, sessionId, "completed")
+        }
       }
+      resolve()
     })
 
     child.on("error", (err) => {
@@ -402,7 +570,7 @@ async function executeRetry(
         completeTaskSession(repoRoot, streamId, taskId, sessionId, "failed")
       }
 
-      console.error(`Error executing command: ${err.message}`)
+      console.error(`Error attaching to tmux session: ${err.message}`)
       reject(err)
     })
   })
@@ -523,7 +691,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     
     // Execute the specified action directly
     if (cliArgs.resume) {
-      await executeResume(repoRoot, stream.id, selectedStatus, cliArgs.dryRun)
+      await executeResume(repoRoot, stream.id, selectedStatus, cliArgs.dryRun, cliArgs.noTmux)
       return
     }
     
@@ -544,7 +712,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
         process.exit(1)
       }
       
-      await executeRetry(repoRoot, stream.id, selectedStatus, agentName, models, cliArgs.dryRun)
+      await executeRetry(repoRoot, stream.id, selectedStatus, agentName, models, cliArgs.dryRun, cliArgs.noTmux)
       return
     }
     
@@ -562,7 +730,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
         process.exit(1)
       }
       
-      await executeRetry(repoRoot, stream.id, selectedStatus, cliArgs.agent, models, cliArgs.dryRun)
+      await executeRetry(repoRoot, stream.id, selectedStatus, cliArgs.agent, models, cliArgs.dryRun, cliArgs.noTmux)
       return
     }
   }
@@ -662,7 +830,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     // Execute action
     switch (action) {
       case "resume":
-        await executeResume(repoRoot, stream.id, selectedStatus, cliArgs.dryRun)
+        await executeResume(repoRoot, stream.id, selectedStatus, cliArgs.dryRun, cliArgs.noTmux)
         break
         
       case "retry": {
@@ -680,7 +848,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
           process.exit(1)
         }
         
-        await executeRetry(repoRoot, stream.id, selectedStatus, agentName, models, cliArgs.dryRun)
+        await executeRetry(repoRoot, stream.id, selectedStatus, agentName, models, cliArgs.dryRun, cliArgs.noTmux)
         break
       }
         
@@ -703,7 +871,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
           process.exit(1)
         }
         
-        await executeRetry(repoRoot, stream.id, selectedStatus, selectedAgent, models, cliArgs.dryRun)
+        await executeRetry(repoRoot, stream.id, selectedStatus, selectedAgent, models, cliArgs.dryRun, cliArgs.noTmux)
         break
       }
         

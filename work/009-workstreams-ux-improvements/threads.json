@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "stream_id": "009-workstreams-ux-improvements",
-  "last_updated": "2026-01-23T21:13:49.913Z",
+  "last_updated": "2026-01-23T21:31:56.646Z",
   "threads": [
     {
       "threadId": "01.01.01",
@@ -77,7 +77,16 @@
     },
     {
       "threadId": "03.01.01",
-      "sessions": [],
+      "sessions": [
+        {
+          "sessionId": "ses_mkrdtpmi_1l8i18",
+          "agentName": "systems-engineer",
+          "model": "anthropic/claude-opus-4-5",
+          "startedAt": "2026-01-23T21:17:44.829Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T21:25:40.460Z"
+        }
+      ],
       "githubIssue": {
         "number": 29,
         "url": "https://github.com/AlbertoV5/agenv/issues/29",
@@ -86,7 +95,16 @@
     },
     {
       "threadId": "03.01.02",
-      "sessions": [],
+      "sessions": [
+        {
+          "sessionId": "ses_mkrdtpmi_eidc5z",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-23T21:17:44.829Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T21:25:40.460Z"
+        }
+      ],
       "githubIssue": {
         "number": 30,
         "url": "https://github.com/AlbertoV5/agenv/issues/30",
@@ -95,7 +113,16 @@
     },
     {
       "threadId": "03.01.03",
-      "sessions": [],
+      "sessions": [
+        {
+          "sessionId": "ses_mkrdtpmi_gcd83w",
+          "agentName": "code-reviewer",
+          "model": "google/antigravity-gemini-3-pro",
+          "startedAt": "2026-01-23T21:17:44.829Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T21:25:40.460Z"
+        }
+      ],
       "githubIssue": {
         "number": 31,
         "url": "https://github.com/AlbertoV5/agenv/issues/31",
@@ -104,7 +131,16 @@
     },
     {
       "threadId": "03.02.01",
-      "sessions": [],
+      "sessions": [
+        {
+          "sessionId": "ses_mkre46g8_25a38d",
+          "agentName": "systems-engineer",
+          "model": "anthropic/claude-opus-4-5",
+          "startedAt": "2026-01-23T21:25:53.195Z",
+          "status": "completed",
+          "completedAt": "2026-01-23T21:31:56.646Z"
+        }
+      ],
       "githubIssue": {
         "number": 32,
         "url": "https://github.com/AlbertoV5/agenv/issues/32",
