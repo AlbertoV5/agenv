@@ -374,6 +374,10 @@ function parseStages(
           state.currentSection = "batches"
           state.currentBatch = null
           state.currentThread = null
+        } else {
+          // Unknown H4 section (e.g., "Problem Analysis") - reset section state
+          // to avoid capturing its content as questions or other data
+          state.currentSection = null
         }
       }
 
