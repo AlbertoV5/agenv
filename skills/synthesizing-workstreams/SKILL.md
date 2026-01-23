@@ -7,97 +7,97 @@ description: How to synthesize workstream session results. Guides execution of w
 
 ## Purpose
 
-This skill guides synthesis agents through executing a working agent and generating a concise summary of the session results. The summary is used for tracking progress and understanding what was accomplished.
+This skill guides synthesis agents through the process of orchestrating a working agent to perform a task, and then synthesizing the results into a concise, tracking-friendly summary.
 
 ## Execution Workflow
 
+As a synthesis agent, you are the "manager" of the session. Your job is to run the worker, wait for it to finish, and report back.
+
 ### 1. Execute the Working Agent
 
-You will receive an opencode command to execute. Run it exactly as provided:
+You will be provided with a specific command to run the working agent. This command is pre-configured with the correct model, prompt, and session tracking.
+
+**Action:**
+Run the provided command exactly as is using the `bash` tool.
 
 ```bash
-# Example command structure (actual command will be provided to you)
-opencode run "work on this task" --model "gemini-3-flash"
+# Example (the actual command will be provided in your prompt)
+cat "/tmp/workstream-prompt.txt" | opencode run --port 4096 --model "claude-3-5-sonnet" --title "Working Agent"
 ```
 
-**Important:**
-- Execute the command as-is without modification
-- Wait for the agent session to complete
-- The session may take several minutes depending on task complexity
+**Wait:**
+The command will run the working agent in the foreground. It may take several minutes. Do not interrupt it unless it hangs for an unreasonable amount of time (e.g., > 10 minutes with no output).
 
-### 2. Review the Session Output
+### 2. Capture the Session ID
 
-After the agent completes, carefully review:
-- **Task status updates**: Which tasks were marked as completed, in_progress, or blocked
-- **Files changed**: What files were created, modified, or deleted
-- **Key decisions**: Any important technical decisions or approaches taken
-- **Issues encountered**: Errors, blockers, or challenges faced
-- **Overall outcome**: Did the agent complete its assigned work successfully?
+After the working agent finishes (success or failure), you must capture its session ID so the user can resume it later if needed.
 
-### 3. Generate the Synthesis Summary
+**Action:**
+Run the provided command to find and save the session ID.
 
-Create a concise 2-3 sentence summary that captures:
-- **What was done**: The primary work accomplished (specific files, features, fixes)
-- **Key changes**: Important technical changes or additions
-- **Issues or blockers**: Any problems encountered or tasks left incomplete
+```bash
+# Example command to capture session ID
+WORK_SESSION=$(opencode session list ... | jq ...)
+echo "$WORK_SESSION" > "/tmp/workstream-session.txt"
+```
 
-**Summary Guidelines:**
-- Be specific: Mention file names, function names, or feature names
-- Be concise: Maximum 3 sentences
-- Focus on outcomes: What changed in the codebase, not just what the agent tried to do
-- Note incomplete work: If tasks remain, state what's pending
-- Use clear technical language: Avoid vague terms like "worked on" or "dealt with"
+### 3. Analyze the Session
 
-### 4. Output the Summary
+Review the output of the working agent. Look for:
+- **Completed Tasks**: Did it mark tasks as `completed`?
+- **File Changes**: What files were modified?
+- **Errors**: Did it encounter syntax errors, test failures, or tool errors?
+- **Blockers**: Did it mark any task as `blocked`?
 
-Output your summary in this exact format for programmatic parsing:
+### 4. Generate the Synthesis Summary
 
+Your final output must be a structured summary block. This summary is parsed by the workstream system to update the thread status and notify the user.
+
+**Format:**
 ```
 SYNTHESIS_SUMMARY_START
-[Your 2-3 sentence summary here]
+[Your 2-3 sentence summary]
 SYNTHESIS_SUMMARY_END
 ```
 
-**Example Output:**
+**Content Guidelines:**
+- **Outcomes over Activities**: specific what *changed* or *worked*, not just "I tried to...".
+- **Specifics**: Name the files, functions, or tests involved.
+- **Status**: Clearly state if the task was fully completed, partially completed, or failed.
+- **Brevity**: Keep it under 50 words if possible.
+
+## Example Scenarios
+
+### Scenario A: Success
+The working agent implemented a new feature and tests passed.
 
 ```
 SYNTHESIS_SUMMARY_START
-Extended the YAML parser in agents-yaml.ts to parse synthesis_agents array and added getSynthesisAgent() and getDefaultSynthesisAgent() helper functions. Applied model validation logic to synthesis agents matching the validation used for regular agents. All four tasks in thread 01.02.01 were completed successfully with passing tests.
+Implemented the `getSynthesisAgent` function in `agents-yaml.ts` and added corresponding unit tests. Validated the changes by running the `test:unit` script, which passed successfully. All tasks in the thread are complete.
 SYNTHESIS_SUMMARY_END
 ```
 
-**Another Example with Issues:**
+### Scenario B: Partial Success / Blocker
+The working agent wrote code but tests failed.
 
 ```
 SYNTHESIS_SUMMARY_START
-Created the HTTP server infrastructure in packages/workstreams/src/server.ts using Hono framework and added route handlers for /status and /health endpoints. Implemented basic error handling middleware but encountered TypeScript errors in the request validation logic. Task 01.03.02.03 remains blocked pending resolution of type inference issues with Hono's context object.
+Created the `ProfileCard` component in `src/components/Profile.tsx` but encountered type errors during the build. The `User` interface is missing the `avatarUrl` property. Task marked as blocked pending schema update.
 SYNTHESIS_SUMMARY_END
 ```
 
-## Best Practices
+### Scenario C: Tool Error
+The working agent failed to run a command.
 
-- **Wait for completion**: Ensure the agent session finishes before reviewing
-- **Read all output**: Don't skip error messages or warnings
-- **Be accurate**: Only claim tasks as completed if explicitly marked so
-- **Include context**: Mention the thread or batch ID if relevant for clarity
-- **Flag problems**: If the agent failed or left work incomplete, clearly state this
+```
+SYNTHESIS_SUMMARY_START
+Attempted to run the database migration but failed due to a "Connection Refused" error from the `bash` tool. No code changes were made. Please verify the database container is running.
+SYNTHESIS_SUMMARY_END
+```
 
-## Common Scenarios
+## Troubleshooting
 
-### Successful Completion
-When all tasks are completed:
-- List the main files/features changed
-- Confirm all tasks in the thread are done
-- Note any tests that passed
+- **Working Agent Hangs**: If the working agent process seems stuck, you may need to kill it (using `ctrl+c` or `kill`) and report the timeout in your summary.
+- **No Session ID**: If you cannot find the session ID, note this in the summary ("Session ID could not be captured") but still provide the summary of what happened.
+- **Empty Output**: If the working agent produced no output, report "Working agent produced no output" and suggest checking the logs.
 
-### Partial Completion
-When some tasks remain:
-- Summarize what was completed
-- Clearly state what's pending
-- Mention why work stopped (blocker, error, dependency)
-
-### Failure or Error
-When the agent encountered critical errors:
-- Describe what the agent attempted
-- Specify the error or blocker
-- State which tasks could not be completed

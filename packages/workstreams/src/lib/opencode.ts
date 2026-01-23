@@ -120,7 +120,7 @@ export function getSessionFilePath(threadId: string): string {
  * 
  * @param streamId - Stream/workstream ID (e.g., "001-my-workstream")
  * @param threadId - Thread ID (e.g., "01.01.02")
- * @returns Path to the synthesis output file
+ * @returns Absolute path to the synthesis output file in /tmp
  */
 export function getSynthesisOutputPath(streamId: string, threadId: string): string {
   return `/tmp/workstream-${streamId}-${threadId}-synthesis.txt`
@@ -402,6 +402,7 @@ export interface SynthesisRunOptions {
  *
  * @param options - Synthesis run configuration
  * @returns Shell command string for tmux execution
+ * @throws Error if no synthesis models or working models are provided
  */
 export function buildSynthesisRunCommand(options: SynthesisRunOptions): string {
   const {

@@ -211,6 +211,44 @@ Skills are agent-specific instructions stored in `~/.agenv/skills/`. Each skill 
 
 Skills are installed to agent directories using `ag install skills`.
 
+## Synthesis Agents
+
+Synthesis agents are optional wrapper agents that observe working agent sessions and generate summaries. When enabled, `work multi` wraps each thread execution with a synthesis agent that:
+
+1. Runs the working agent with its assigned model
+2. Observes the complete session output
+3. Generates a concise 2-3 sentence summary
+4. Stores the summary in `threads.json` for notifications
+
+### Enabling Synthesis Agents
+
+Add a `synthesis_agents` section to `work/agents.yaml`:
+
+```yaml
+agents:
+  - name: default
+    description: General-purpose implementation agent.
+    best_for: Standard development tasks.
+    models: [anthropic/claude-sonnet-4-5]
+
+synthesis_agents:
+  - name: batch-synthesizer
+    description: Summarizes working agent outputs after thread completion.
+    best_for: Generating concise summaries of completed work.
+    models: [anthropic/claude-sonnet-4-5]
+```
+
+### Disabling Synthesis Agents
+
+To disable synthesis agents, remove or comment out the `synthesis_agents` section. When disabled, `work multi` runs working agents directly without the synthesis wrapper.
+
+### How It Works
+
+- The first synthesis agent in the list is used automatically
+- The working agent's session ID is tracked separately (`workingAgentSessionId`) for `work fix --resume`
+- Synthesis output is stored in `threads.json` under `synthesisOutput`
+- Future TTS integration will read synthesis summaries for audio notifications
+
 ## Usage from Agent Skills
 
 Agent skills can use agenv packages by:

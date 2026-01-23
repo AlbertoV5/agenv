@@ -470,6 +470,74 @@ Session data is stored in `tasks.json` alongside task definitions.
 - **Resume Capability**: Resuming a session relies on the underlying agent runner (e.g., `opencode`) retaining the session state. If the runner's temporary state is cleared, resuming may fail.
 - **Concurrent Sessions**: While multiple threads can run in parallel, resuming a specific session is an exclusive operation.
 
+## Synthesis Agents
+
+Synthesis agents are optional wrapper agents that observe working agent sessions and generate summaries. When enabled, `work multi` wraps each thread execution with a synthesis agent.
+
+### How It Works
+
+1. The synthesis agent runs `opencode` to execute the working agent
+2. After the working agent completes, the synthesis agent reviews the session output
+3. A concise 2-3 sentence summary is generated
+4. The summary is stored in `threads.json` under `synthesisOutput`
+
+### Configuration
+
+Add a `synthesis_agents` section to `work/agents.yaml`:
+
+```yaml
+agents:
+  - name: default
+    description: General-purpose implementation agent.
+    best_for: Standard development tasks.
+    models: [anthropic/claude-sonnet-4-5]
+
+synthesis_agents:
+  - name: batch-synthesizer
+    description: Summarizes working agent outputs after thread completion.
+    best_for: Generating concise summaries of completed work.
+    models: [anthropic/claude-sonnet-4-5]
+```
+
+### Enabling/Disabling
+
+- **Enable**: Add the `synthesis_agents` section to `agents.yaml`
+- **Disable**: Remove or comment out the `synthesis_agents` section
+
+When disabled, `work multi` runs working agents directly without the synthesis wrapper.
+
+### Session Tracking
+
+When synthesis agents are enabled, two session IDs are tracked:
+
+| Field | Description |
+|-------|-------------|
+| `opencodeSessionId` | The outermost agent session (synthesis agent) |
+| `workingAgentSessionId` | The inner working agent session |
+
+The `work fix --resume` command uses `workingAgentSessionId` when available, falling back to `opencodeSessionId`.
+
+### Synthesis Output
+
+Summaries are stored in `threads.json`:
+
+```json
+{
+  "threadId": "01.01.01",
+  "synthesisOutput": "Implemented the user authentication flow with JWT tokens. Added login, logout, and refresh token endpoints. All tests passing.",
+  "workingAgentSessionId": "ses_abc123...",
+  "opencodeSessionId": "ses_xyz789..."
+}
+```
+
+### Future: TTS Integration
+
+Synthesis output is designed to be consumed by future text-to-speech (TTS) integrations. The notification system includes:
+
+- Sound queueing to prevent overlapping audio
+- `playSynthesisComplete(threadId, synthesisOutput)` method for TTS providers
+- Extended `WebhookPayload` with `synthesisOutput` field
+
 ## Roles & Permissions
 
 The workstream system implements a Role-Based Access Control (RBAC) system to differentiate between human operators and AI agents. This ensures that critical decisions (like approving plans or starting workstreams) remain under human control.

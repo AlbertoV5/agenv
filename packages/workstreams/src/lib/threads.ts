@@ -553,7 +553,7 @@ export function getOpencodeSessionId(
  * @param streamId - Workstream ID
  * @param threadId - Thread ID (e.g., "01.02.03")
  * @param sessionId - The working agent's opencode session ID
- * @returns Updated thread metadata
+ * @returns Updated thread metadata object containing the new workingAgentSessionId
  */
 export function setWorkingAgentSessionId(
   repoRoot: string,
@@ -579,7 +579,7 @@ export function setWorkingAgentSessionId(
  * @param repoRoot - Repository root path
  * @param streamId - Workstream ID
  * @param threadId - Thread ID (e.g., "01.02.03")
- * @returns Working agent session ID string, or null if not set
+ * @returns The session ID string if found, or null if the thread has no working agent session
  */
 export function getWorkingAgentSessionId(
   repoRoot: string,

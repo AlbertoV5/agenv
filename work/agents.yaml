@@ -37,3 +37,16 @@ agents:
         { model: google/gemini-3-pro-preview, variant: low },
         anthropic/claude-sonnet-4-5,
       ]
+
+# Synthesis agents wrap working agents and generate summaries of completed work.
+# When enabled, `work multi` runs threads through a synthesis agent that:
+# 1. Executes the working agent with its assigned model
+# 2. Observes the session output
+# 3. Generates a concise summary stored in threads.json
+#
+# To disable synthesis agents, comment out or remove this section.
+synthesis_agents:
+  - name: batch-synthesizer
+    description: Summarizes working agent outputs after thread completion.
+    best_for: Generating concise summaries of completed work for notifications.
+    models: [anthropic/anthropic/claude-haiku-4-5]

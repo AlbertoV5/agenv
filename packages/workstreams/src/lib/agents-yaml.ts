@@ -6,6 +6,33 @@
  *
  * Supports multiple models per agent with optional variants for retry logic.
  * Agent-to-task assignments are stored in tasks.json (Task.assigned_agent).
+ *
+ * ## Schema
+ *
+ * The agents.yaml file supports two main sections:
+ *
+ * 1. `agents`: List of working agents (perform tasks)
+ * 2. `synthesis_agents`: (Optional) List of synthesis agents (orchestrate and summarize)
+ *
+ * Example configuration:
+ *
+ * ```yaml
+ * agents:
+ *   - name: "full-stack"
+ *     description: "General purpose developer"
+ *     best_for: "features, bugs, refactoring"
+ *     models:
+ *       - model: "claude-3-5-sonnet-20241022"
+ *       - model: "gpt-4o"
+ *         variant: "retry"
+ *
+ * synthesis_agents:
+ *   - name: "synthesis"
+ *     description: "Summarizes workstream sessions"
+ *     best_for: "tracking, reporting"
+ *     models:
+ *       - "gemini-1.5-pro-002"
+ * ```
  */
 
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs"
@@ -40,6 +67,12 @@ export function normalizeModelSpec(spec: ModelSpec): NormalizedModelSpec {
 
 /**
  * Parse agents.yaml content to extract AgentsConfigYaml
+ *
+ * Validates the YAML structure and ensures all required fields are present.
+ * Also parses and validates the optional `synthesis_agents` section if present.
+ *
+ * @param content - Raw YAML string content
+ * @returns Object containing the parsed config (if successful) and any validation errors
  */
 export function parseAgentsYaml(content: string): {
     config: AgentsConfigYaml | null
@@ -313,6 +346,10 @@ export function getPrimaryModel(
 /**
  * Get a synthesis agent by name from YAML config
  * Returns null if not found
+ *
+ * @param config - Parsed agents configuration
+ * @param name - Name of the synthesis agent to find
+ * @returns The synthesis agent definition or null
  */
 export function getSynthesisAgent(
     config: AgentsConfigYaml,
@@ -327,6 +364,9 @@ export function getSynthesisAgent(
 /**
  * Get the default (first) synthesis agent from YAML config
  * Returns null if no synthesis agents are defined
+ *
+ * @param config - Parsed agents configuration
+ * @returns The first synthesis agent in the list or null
  */
 export function getDefaultSynthesisAgent(
     config: AgentsConfigYaml
