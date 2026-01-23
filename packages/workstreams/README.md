@@ -470,6 +470,34 @@ Session data is stored in `tasks.json` alongside task definitions.
 - **Resume Capability**: Resuming a session relies on the underlying agent runner (e.g., `opencode`) retaining the session state. If the runner's temporary state is cleared, resuming may fail.
 - **Concurrent Sessions**: While multiple threads can run in parallel, resuming a specific session is an exclusive operation.
 
+## Roles & Permissions
+
+The workstream system implements a Role-Based Access Control (RBAC) system to differentiate between human operators and AI agents. This ensures that critical decisions (like approving plans or starting workstreams) remain under human control.
+
+### Roles
+
+| Role | Description | Default |
+|------|-------------|---------|
+| `AGENT` | Restricted access. Can perform work, update tasks, and generate content, but cannot approve plans or complete workstreams. | **Default** (if variable unset) |
+| `USER` | Full access. Can execute all commands, including approval gates. | Set via env var |
+
+### Configuration
+
+To run as a **USER** (human operator), set the environment variable:
+
+```bash
+export WORKSTREAM_ROLE=USER
+```
+
+### Protected Commands
+
+The following commands require `USER` role:
+- `work approve` - Review and approve plans/tasks
+- `work start` - Begin execution (requires approval)
+- `work complete` - Finalize workstream and create PR
+
+All other commands (update, list, tree, etc.) are available to both roles.
+
 ## CLI
 
 The package includes a CLI for workstream management:

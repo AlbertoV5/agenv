@@ -21,10 +21,16 @@ export interface CommandPermission {
 
 /**
  * Registry of command permissions
- * Commands not listed here are allowed for all roles by default
+ * Commands not listed here are allowed for all roles by default.
+ * 
+ * DESIGN NOTE: 
+ * The default permission is permissive (allow all) to ensure new commands 
+ * work out-of-the-box for agents. We only explicitly restrict high-risk 
+ * "approval gate" commands to USER role to enforce human-in-the-loop verification.
  */
 export const COMMAND_PERMISSIONS: Record<string, CommandPermission> = {
   // USER-only commands (approval gates)
+  // These commands control the lifecycle transition from planning -> execution
   approve: {
     allowedRoles: ["USER"],
     denialMessage:
@@ -60,6 +66,9 @@ export const COMMAND_PERMISSIONS: Record<string, CommandPermission> = {
  * @returns The current role, defaults to "AGENT" if not set or invalid
  */
 export function getCurrentRole(): WorkstreamRole {
+  // We use process.env.WORKSTREAM_ROLE to override the role.
+  // In a typical agent environment, this is unset or set to AGENT.
+  // Humans should set this to USER in their shell profile.
   const envRole = process.env.WORKSTREAM_ROLE?.toUpperCase()
   if (envRole === "USER") return "USER"
   return "AGENT" // Default to AGENT (primary CLI users are AI agents)
@@ -86,7 +95,7 @@ export function getRoleDenialMessage(command: string): string {
   const permission = COMMAND_PERMISSIONS[command]
   const baseMessage =
     permission?.denialMessage || `This command is not available for ${role} role`
-  return `Access denied: ${baseMessage}\n\nCurrent role: ${role}\nTo change role, set WORKSTREAM_ROLE environment variable.`
+  return `Access denied: ${baseMessage}\n\nCurrent role: ${role}\nTo change role, set WORKSTREAM_ROLE environment variable:\n  export WORKSTREAM_ROLE=USER`
 }
 
 /**
