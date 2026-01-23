@@ -518,6 +518,36 @@ export interface AgentsConfig {
 }
 
 // ============================================
+// THREAD METADATA STORE TYPES (threads.json)
+// ============================================
+
+/**
+ * Thread metadata stored in threads.json
+ * Contains session history and github issue links, migrated from tasks.json
+ */
+export interface ThreadMetadata {
+  threadId: string // Format: "SS.BB.TT" (e.g., "01.01.02")
+  sessions: SessionRecord[] // Session history for this thread
+  githubIssue?: {
+    number: number
+    url: string
+    state: "open" | "closed"
+  }
+  currentSessionId?: string // Active session ID for resume functionality
+}
+
+/**
+ * threads.json file structure
+ * Stores thread-level metadata separate from task definitions
+ */
+export interface ThreadsJson {
+  version: string // Schema version, e.g., "1.0.0"
+  stream_id: string // Reference to the workstream ID
+  last_updated: string // ISO date
+  threads: ThreadMetadata[]
+}
+
+// ============================================
 // SESSION TRACKING TYPES
 // ============================================
 
