@@ -73,11 +73,14 @@ export async function createWorkstreamBranch(
     }
   }
 
-  // Checkout locally
-  await checkoutBranchLocally(repoRoot, branchName);
-
-  // Store metadata
+  // Store metadata BEFORE checkout - the index.json must be updated while still
+  // on the original branch, so it gets committed and carried to the new branch.
+  // If we checkout first, the new branch has main's index.json which doesn't
+  // have this workstream.
   await storeWorkstreamBranchMeta(repoRoot, streamId, branchName);
+
+  // Checkout locally (this commits pending changes including the updated index.json)
+  await checkoutBranchLocally(repoRoot, branchName);
 
   return {
     branchName,
