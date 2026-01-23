@@ -115,6 +115,7 @@ export function updateThreadMetadata(
       sessions: data.sessions || [],
       ...(data.githubIssue && { githubIssue: data.githubIssue }),
       ...(data.currentSessionId && { currentSessionId: data.currentSessionId }),
+      ...(data.opencodeSessionId && { opencodeSessionId: data.opencodeSessionId }),
     }
     threadsFile.threads.push(newThread)
     saveThreads(repoRoot, streamId, threadsFile)
@@ -126,6 +127,7 @@ export function updateThreadMetadata(
   if (data.sessions !== undefined) thread.sessions = data.sessions
   if (data.githubIssue !== undefined) thread.githubIssue = data.githubIssue
   if (data.currentSessionId !== undefined) thread.currentSessionId = data.currentSessionId
+  if (data.opencodeSessionId !== undefined) thread.opencodeSessionId = data.opencodeSessionId
 
   saveThreads(repoRoot, streamId, threadsFile)
   return thread

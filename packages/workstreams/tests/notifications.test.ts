@@ -10,6 +10,7 @@ import {
   MacOSSoundProvider,
   ExternalApiProvider,
   NotificationManager,
+  NotificationTracker,
   loadConfig,
   DEFAULT_SOUNDS,
   playNotification,
@@ -394,5 +395,372 @@ describe("Convenience functions", () => {
     expect(() => playNotification("thread_complete")).not.toThrow()
     expect(() => playNotification("batch_complete")).not.toThrow()
     expect(() => playNotification("error")).not.toThrow()
+  })
+})
+
+describe("NotificationTracker", () => {
+  describe("thread completion deduplication", () => {
+    test("tracks thread completion notification", () => {
+      const tracker = new NotificationTracker()
+      
+      expect(tracker.hasThreadCompleteNotified("01.01.01")).toBe(false)
+      tracker.markThreadCompleteNotified("01.01.01")
+      expect(tracker.hasThreadCompleteNotified("01.01.01")).toBe(true)
+    })
+
+    test("tracks multiple threads independently", () => {
+      const tracker = new NotificationTracker()
+      
+      tracker.markThreadCompleteNotified("01.01.01")
+      tracker.markThreadCompleteNotified("01.01.02")
+      
+      expect(tracker.hasThreadCompleteNotified("01.01.01")).toBe(true)
+      expect(tracker.hasThreadCompleteNotified("01.01.02")).toBe(true)
+      expect(tracker.hasThreadCompleteNotified("01.01.03")).toBe(false)
+    })
+
+    test("getNotifiedThreadCount returns correct count", () => {
+      const tracker = new NotificationTracker()
+      
+      expect(tracker.getNotifiedThreadCount()).toBe(0)
+      
+      tracker.markThreadCompleteNotified("01.01.01")
+      expect(tracker.getNotifiedThreadCount()).toBe(1)
+      
+      tracker.markThreadCompleteNotified("01.01.02")
+      expect(tracker.getNotifiedThreadCount()).toBe(2)
+      
+      // Marking same thread again should not increase count
+      tracker.markThreadCompleteNotified("01.01.01")
+      expect(tracker.getNotifiedThreadCount()).toBe(2)
+    })
+  })
+
+  describe("error notification deduplication", () => {
+    test("tracks error notification per thread", () => {
+      const tracker = new NotificationTracker()
+      
+      expect(tracker.hasErrorNotified("01.01.01")).toBe(false)
+      tracker.markErrorNotified("01.01.01")
+      expect(tracker.hasErrorNotified("01.01.01")).toBe(true)
+    })
+
+    test("error and completion tracking are independent", () => {
+      const tracker = new NotificationTracker()
+      
+      tracker.markThreadCompleteNotified("01.01.01")
+      expect(tracker.hasThreadCompleteNotified("01.01.01")).toBe(true)
+      expect(tracker.hasErrorNotified("01.01.01")).toBe(false)
+      
+      tracker.markErrorNotified("01.01.01")
+      expect(tracker.hasErrorNotified("01.01.01")).toBe(true)
+    })
+
+    test("getErrorNotifiedThreadCount returns correct count", () => {
+      const tracker = new NotificationTracker()
+      
+      expect(tracker.getErrorNotifiedThreadCount()).toBe(0)
+      
+      tracker.markErrorNotified("01.01.01")
+      expect(tracker.getErrorNotifiedThreadCount()).toBe(1)
+      
+      tracker.markErrorNotified("01.01.02")
+      expect(tracker.getErrorNotifiedThreadCount()).toBe(2)
+    })
+  })
+
+  describe("batch completion deduplication", () => {
+    test("tracks batch completion notification", () => {
+      const tracker = new NotificationTracker()
+      
+      expect(tracker.hasBatchCompleteNotified()).toBe(false)
+      tracker.markBatchCompleteNotified()
+      expect(tracker.hasBatchCompleteNotified()).toBe(true)
+    })
+
+    test("marking batch complete multiple times has no effect", () => {
+      const tracker = new NotificationTracker()
+      
+      tracker.markBatchCompleteNotified()
+      tracker.markBatchCompleteNotified()
+      tracker.markBatchCompleteNotified()
+      
+      expect(tracker.hasBatchCompleteNotified()).toBe(true)
+    })
+  })
+
+  describe("playThreadComplete helper", () => {
+    let spawnMock: ReturnType<typeof spyOn>
+
+    beforeEach(() => {
+      resetNotificationManager()
+      // Mock spawn to prevent actual sound playback
+      // biome-ignore lint/suspicious/noExplicitAny: Mock needs flexible typing
+      spawnMock = spyOn(childProcess, "spawn").mockImplementation((): any => {
+        const mockChild = {
+          unref: mock(() => {}),
+          on: mock(() => mockChild),
+          stdout: null,
+          stderr: null,
+          stdin: null,
+          pid: 12345,
+          killed: false,
+          exitCode: null,
+          signalCode: null,
+          connected: false,
+          kill: mock(() => true),
+          send: mock(() => true),
+          disconnect: mock(() => {}),
+          ref: mock(() => {}),
+          [Symbol.dispose]: mock(() => {}),
+        } as unknown as childProcess.ChildProcess
+        return mockChild
+      })
+    })
+
+    afterEach(() => {
+      spawnMock.mockRestore()
+      resetNotificationManager()
+    })
+
+    test("plays notification on first call and marks as notified", () => {
+      const tracker = new NotificationTracker()
+      
+      const result1 = tracker.playThreadComplete("01.01.01")
+      expect(result1).toBe(true)
+      expect(tracker.hasThreadCompleteNotified("01.01.01")).toBe(true)
+    })
+
+    test("returns false and does not play on subsequent calls", () => {
+      const tracker = new NotificationTracker()
+      
+      tracker.playThreadComplete("01.01.01")
+      const result2 = tracker.playThreadComplete("01.01.01")
+      
+      expect(result2).toBe(false)
+    })
+
+    test("plays for different threads", () => {
+      const tracker = new NotificationTracker()
+      
+      expect(tracker.playThreadComplete("01.01.01")).toBe(true)
+      expect(tracker.playThreadComplete("01.01.02")).toBe(true)
+      expect(tracker.playThreadComplete("01.01.01")).toBe(false)
+      expect(tracker.playThreadComplete("01.01.02")).toBe(false)
+    })
+  })
+
+  describe("playError helper", () => {
+    let spawnMock: ReturnType<typeof spyOn>
+
+    beforeEach(() => {
+      resetNotificationManager()
+      // biome-ignore lint/suspicious/noExplicitAny: Mock needs flexible typing
+      spawnMock = spyOn(childProcess, "spawn").mockImplementation((): any => {
+        const mockChild = {
+          unref: mock(() => {}),
+          on: mock(() => mockChild),
+          stdout: null,
+          stderr: null,
+          stdin: null,
+          pid: 12345,
+          killed: false,
+          exitCode: null,
+          signalCode: null,
+          connected: false,
+          kill: mock(() => true),
+          send: mock(() => true),
+          disconnect: mock(() => {}),
+          ref: mock(() => {}),
+          [Symbol.dispose]: mock(() => {}),
+        } as unknown as childProcess.ChildProcess
+        return mockChild
+      })
+    })
+
+    afterEach(() => {
+      spawnMock.mockRestore()
+      resetNotificationManager()
+    })
+
+    test("plays error notification on first call", () => {
+      const tracker = new NotificationTracker()
+      
+      const result = tracker.playError("01.01.01")
+      expect(result).toBe(true)
+      expect(tracker.hasErrorNotified("01.01.01")).toBe(true)
+    })
+
+    test("returns false on subsequent calls for same thread", () => {
+      const tracker = new NotificationTracker()
+      
+      tracker.playError("01.01.01")
+      const result = tracker.playError("01.01.01")
+      
+      expect(result).toBe(false)
+    })
+  })
+
+  describe("playBatchComplete helper", () => {
+    let spawnMock: ReturnType<typeof spyOn>
+
+    beforeEach(() => {
+      resetNotificationManager()
+      // biome-ignore lint/suspicious/noExplicitAny: Mock needs flexible typing
+      spawnMock = spyOn(childProcess, "spawn").mockImplementation((): any => {
+        const mockChild = {
+          unref: mock(() => {}),
+          on: mock(() => mockChild),
+          stdout: null,
+          stderr: null,
+          stdin: null,
+          pid: 12345,
+          killed: false,
+          exitCode: null,
+          signalCode: null,
+          connected: false,
+          kill: mock(() => true),
+          send: mock(() => true),
+          disconnect: mock(() => {}),
+          ref: mock(() => {}),
+          [Symbol.dispose]: mock(() => {}),
+        } as unknown as childProcess.ChildProcess
+        return mockChild
+      })
+    })
+
+    afterEach(() => {
+      spawnMock.mockRestore()
+      resetNotificationManager()
+    })
+
+    test("plays batch notification on first call", () => {
+      const tracker = new NotificationTracker()
+      
+      const result = tracker.playBatchComplete()
+      expect(result).toBe(true)
+      expect(tracker.hasBatchCompleteNotified()).toBe(true)
+    })
+
+    test("returns false on subsequent calls", () => {
+      const tracker = new NotificationTracker()
+      
+      tracker.playBatchComplete()
+      const result = tracker.playBatchComplete()
+      
+      expect(result).toBe(false)
+    })
+  })
+
+  describe("reset", () => {
+    test("clears all tracked state", () => {
+      const tracker = new NotificationTracker()
+      
+      // Set up some state
+      tracker.markThreadCompleteNotified("01.01.01")
+      tracker.markThreadCompleteNotified("01.01.02")
+      tracker.markErrorNotified("01.01.03")
+      tracker.markBatchCompleteNotified()
+      
+      // Verify state exists
+      expect(tracker.getNotifiedThreadCount()).toBe(2)
+      expect(tracker.getErrorNotifiedThreadCount()).toBe(1)
+      expect(tracker.hasBatchCompleteNotified()).toBe(true)
+      
+      // Reset
+      tracker.reset()
+      
+      // Verify all state is cleared
+      expect(tracker.getNotifiedThreadCount()).toBe(0)
+      expect(tracker.getErrorNotifiedThreadCount()).toBe(0)
+      expect(tracker.hasBatchCompleteNotified()).toBe(false)
+      expect(tracker.hasThreadCompleteNotified("01.01.01")).toBe(false)
+      expect(tracker.hasErrorNotified("01.01.03")).toBe(false)
+    })
+  })
+
+  describe("edge cases", () => {
+    test("handles empty thread ID", () => {
+      const tracker = new NotificationTracker()
+      
+      tracker.markThreadCompleteNotified("")
+      expect(tracker.hasThreadCompleteNotified("")).toBe(true)
+      expect(tracker.getNotifiedThreadCount()).toBe(1)
+    })
+
+    test("handles special characters in thread ID", () => {
+      const tracker = new NotificationTracker()
+      const specialId = "__session_error__"
+      
+      tracker.markErrorNotified(specialId)
+      expect(tracker.hasErrorNotified(specialId)).toBe(true)
+    })
+
+    test("thread and batch tracking are independent", () => {
+      const tracker = new NotificationTracker()
+      
+      tracker.markThreadCompleteNotified("01.01.01")
+      expect(tracker.hasBatchCompleteNotified()).toBe(false)
+      
+      tracker.markBatchCompleteNotified()
+      expect(tracker.hasThreadCompleteNotified("01.01.01")).toBe(true)
+      expect(tracker.hasBatchCompleteNotified()).toBe(true)
+    })
+
+    test("simulates multi.ts usage pattern: normal completion", () => {
+      const tracker = new NotificationTracker()
+      
+      // Simulate 3 threads completing normally
+      const threads = ["01.01.01", "01.01.02", "01.01.03"]
+      
+      for (const threadId of threads) {
+        // First completion plays sound
+        expect(tracker.playThreadComplete(threadId)).toBe(true)
+      }
+      
+      // Then batch complete plays once
+      expect(tracker.playBatchComplete()).toBe(true)
+      expect(tracker.playBatchComplete()).toBe(false) // Duplicate blocked
+    })
+
+    test("simulates multi.ts usage pattern: early tmux close (Ctrl+b X)", () => {
+      const tracker = new NotificationTracker()
+      
+      // When user closes tmux session early, we only play batch_complete
+      // (not per-thread sounds)
+      const threads = ["01.01.01", "01.01.02", "01.01.03"]
+      
+      // Skip thread notifications entirely
+      // Just play batch_complete once
+      expect(tracker.playBatchComplete()).toBe(true)
+      expect(tracker.playBatchComplete()).toBe(false) // Duplicate blocked
+      
+      // Thread complete tracking should still be empty
+      expect(tracker.getNotifiedThreadCount()).toBe(0)
+    })
+
+    test("simulates multi.ts usage pattern: mixed success and failure", () => {
+      const tracker = new NotificationTracker()
+      
+      // Thread 1 completes successfully
+      expect(tracker.playThreadComplete("01.01.01")).toBe(true)
+      
+      // Thread 2 fails
+      expect(tracker.playError("01.01.02")).toBe(true)
+      
+      // Thread 3 completes successfully
+      expect(tracker.playThreadComplete("01.01.03")).toBe(true)
+      
+      // Duplicates are blocked
+      expect(tracker.playThreadComplete("01.01.01")).toBe(false)
+      expect(tracker.playError("01.01.02")).toBe(false)
+      
+      // Batch complete at the end
+      expect(tracker.playBatchComplete()).toBe(true)
+      
+      // Stats
+      expect(tracker.getNotifiedThreadCount()).toBe(2) // Only successes
+      expect(tracker.getErrorNotifiedThreadCount()).toBe(1) // Only failures
+    })
   })
 })

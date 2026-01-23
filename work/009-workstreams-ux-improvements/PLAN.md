@@ -343,3 +343,100 @@ Add deprecation warnings and clean up transitional code.
 ---
 
 *Last updated: 2026-01-23*
+
+### Stage 05: Revision - Session Tracking & Notification Fixes
+
+#### Stage Definition
+
+Fix critical issues discovered after initial implementation:
+1. **Session ID mismatch** - Store actual opencode session IDs (e.g., `ses_413402385ffe4rhZzbpafvjAUc`) instead of internal generated IDs
+2. **Multiple notification sounds** - Play sound only once when first `opencode run` command completes, not when tmux pane/session closes
+3. **First command detection** - Detect when the initial `opencode run` finishes (model done) vs when `opencode --session` TUI exits
+
+#### Stage Constitution
+
+**Inputs:**
+- `packages/workstreams/src/lib/opencode.ts` - Shell command builders (lines 140-165, 256-283)
+- `packages/workstreams/src/cli/multi.ts` - Thread execution and notification triggers (lines 808-896)
+- `packages/workstreams/src/lib/tasks.ts` - Session ID generation (lines 340-344)
+- `packages/workstreams/src/lib/threads.ts` - Thread metadata storage
+
+**Structure:**
+- Two parallel threads: session ID capture + notification timing fix
+- Both require changes to the shell script structure in opencode.ts
+
+**Outputs:**
+- Opencode session IDs captured and stored in threads.json
+- Single notification sound when `opencode run` completes (model finished)
+- No duplicate sounds on tmux close
+
+#### Stage Questions
+
+- [x] How to capture opencode session ID from shell script? **Answer: Write to a temp file that workstreams polls/reads, or use tmux pipe-pane**
+- [x] How to detect first command completion? **Answer: Add marker file or signal after `opencode run` exits, before `opencode --session`**
+- [x] Should we still play batch_complete sound? **Answer: Yes, once when all threads' first commands complete**
+
+#### Stage Batches
+
+##### Batch 01: Session & Notification Fixes
+
+###### Thread 01: Opencode Session ID Capture
+
+**Summary:**
+Modify the shell command structure to capture and report the actual opencode session ID back to workstreams for storage in threads.json.
+
+**Details:**
+- Working packages: `./packages/workstreams`
+- Modify `src/lib/opencode.ts` `buildRunCommand()` and `buildRetryRunCommand()`:
+  - After `opencode run` completes and session ID is looked up, write it to a known file path
+  - File path pattern: `/tmp/workstream-{threadId}-session.txt`
+  - Content: Just the opencode session ID (e.g., `ses_413402385ffe4rhZzbpafvjAUc`)
+- Modify `src/cli/multi.ts`:
+  - After detecting thread completion (first command), read the session file
+  - Update threads.json with the actual opencode session ID via ThreadsStore
+  - Clean up temp files after reading
+- Update `src/lib/threads.ts`:
+  - Add `opencodeSessionId` field to ThreadMetadata (separate from internal sessionId)
+  - Update `updateThreadMetadata()` to handle opencode session storage
+- Update tests to verify opencode session capture
+
+###### Thread 02: First Command Completion Detection
+
+**Summary:**
+Detect when `opencode run` finishes (model done, awaiting user input) and trigger notification at that moment, not when the pane/session closes.
+
+**Details:**
+- Working packages: `./packages/workstreams`
+- Modify `src/lib/opencode.ts` shell script structure:
+  - After `opencode run` exits, write a marker file: `/tmp/workstream-{threadId}-complete.txt`
+  - Marker indicates first command done, user can now interact with TUI
+- Modify `src/cli/multi.ts`:
+  - Add file watcher or polling loop to detect marker files
+  - When marker detected for a thread, trigger `playNotification('thread_complete')`
+  - Track which threads have notified to prevent duplicates
+  - Only play `batch_complete` when ALL threads have marker files (first commands done)
+- Remove notification triggers from the Ctrl-b X / session close handler
+- Remove per-thread notification from the `child.on("close")` handler
+- Update `--silent` flag to still suppress sounds
+- Add cleanup of marker files when batch completes
+- Update tests for new notification timing
+
+###### Thread 03: Notification Deduplication
+
+**Summary:**
+Ensure only one notification per thread and one batch notification, regardless of how tmux session ends.
+
+**Details:**
+- Working packages: `./packages/workstreams`
+- Create a notification state tracker in multi.ts:
+  - `Set<string>` to track threadIds that have already played `thread_complete`
+  - Boolean flag for `batch_complete` played
+- Modify all notification call sites:
+  - Check tracker before calling `playNotification()`
+  - Add threadId to tracker after playing sound
+- Remove the loop in Ctrl-b X handler that plays sound for each thread
+- Ensure edge cases don't cause duplicate sounds:
+  - Thread completes normally
+  - User closes tmux session early
+  - Thread fails/errors
+- Add unit tests for notification deduplication logic

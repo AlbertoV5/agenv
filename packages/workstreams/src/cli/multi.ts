@@ -7,7 +7,7 @@
  */
 
 import { join } from "path"
-import { existsSync } from "fs"
+import { existsSync, unlinkSync, readFileSync } from "fs"
 import { getRepoRoot, getWorkDir } from "../lib/repo.ts"
 import { loadIndex, getResolvedStream } from "../lib/index.ts"
 import { loadAgentsConfig, getAgentModels } from "../lib/agents-yaml.ts"
@@ -48,8 +48,11 @@ import {
   waitForServer,
   buildRetryRunCommand,
   buildServeCommand,
+  getCompletionMarkerPath,
+  getSessionFilePath,
 } from "../lib/opencode.ts"
-import { playNotification } from "../lib/notifications.ts"
+import { NotificationTracker } from "../lib/notifications.ts"
+import { updateThreadMetadataLocked } from "../lib/threads.ts"
 
 const DEFAULT_PORT = 4096
 
@@ -318,6 +321,40 @@ function buildPaneTitle(threadInfo: ThreadInfo): string {
 }
 
 /**
+ * Clean up completion marker files for all threads
+ * Called when batch completes to remove /tmp/workstream-*-complete.txt files
+ */
+function cleanupCompletionMarkers(threadIds: string[]): void {
+  for (const threadId of threadIds) {
+    const markerPath = getCompletionMarkerPath(threadId)
+    try {
+      if (existsSync(markerPath)) {
+        unlinkSync(markerPath)
+      }
+    } catch {
+      // Ignore cleanup errors - files may already be deleted
+    }
+  }
+}
+
+/**
+ * Clean up session ID files for all threads
+ * Called when batch completes to remove /tmp/workstream-*-session.txt files
+ */
+function cleanupSessionFiles(threadIds: string[]): void {
+  for (const threadId of threadIds) {
+    const sessionPath = getSessionFilePath(threadId)
+    try {
+      if (existsSync(sessionPath)) {
+        unlinkSync(sessionPath)
+      }
+    } catch {
+      // Ignore cleanup errors - files may already be deleted
+    }
+  }
+}
+
+/**
  * Collect thread information from tasks.json (not PLAN.md)
  * Discovers threads dynamically from tasks, including dynamically added ones
  */
@@ -562,6 +599,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
       firstThread.models,
       firstThread.promptPath,
       buildPaneTitle(firstThread),
+      firstThread.threadId,
     )
     console.log(buildCreateSessionCommand(sessionName, "Dashboard", firstCmd))
     console.log("")
@@ -575,6 +613,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
           thread.models,
           thread.promptPath,
           buildPaneTitle(thread),
+          thread.threadId,
         )
         // Use thread ID as window name
         console.log(buildAddWindowCommand(sessionName, thread.threadId, cmd))
@@ -674,6 +713,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     firstThread.models,
     firstThread.promptPath,
     buildPaneTitle(firstThread),
+    firstThread.threadId,
   )
 
   // Create session with first thread in Window 0
@@ -696,6 +736,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
       thread.models,
       thread.promptPath,
       buildPaneTitle(thread),
+      thread.threadId,
     )
     gridCommands.push(cmd)
     console.log(`  Grid: Thread ${i + 1} - ${thread.threadName}`)
@@ -732,6 +773,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
         thread.models,
         thread.promptPath,
         buildPaneTitle(thread),
+        thread.threadId,
       )
       const windowName = `T${i + 1}`
       addWindow(sessionName, windowName, cmd)
@@ -769,6 +811,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
           t.models,
           t.promptPath,
           buildPaneTitle(t),
+          t.threadId,
         )
         return `THREAD_CMD_${i + 1}="${cmd}"`
       })
@@ -805,7 +848,56 @@ Press Ctrl+b X to kill the session when done.
   // Attach to session (this takes over the terminal)
   const child = attachSession(sessionName)
 
+  // Create notification tracker for deduplication
+  // Ensures each thread only plays one notification, batch_complete plays once
+  const notificationTracker = cliArgs.silent ? null : new NotificationTracker()
+
+  // === MARKER FILE POLLING FOR NOTIFICATIONS ===
+  // Watch for completion marker files to trigger notifications when first command finishes
+  // This detects when `opencode run` exits (before session resume) - not when pane closes
+  let markerPollingActive = true
+  const threadIds = threads.map((t) => t.threadId)
+  const completedThreadIds = new Set<string>()
+
+  const pollMarkerFiles = async () => {
+    while (markerPollingActive) {
+      for (const threadId of threadIds) {
+        if (completedThreadIds.has(threadId)) continue
+
+        const markerPath = getCompletionMarkerPath(threadId)
+        if (existsSync(markerPath)) {
+          completedThreadIds.add(threadId)
+          // Play thread_complete notification (with deduplication)
+          notificationTracker?.playThreadComplete(threadId)
+        }
+      }
+
+      // Check if ALL threads have marker files -> batch complete
+      if (completedThreadIds.size === threadIds.length && threadIds.length > 0) {
+        // Small delay so batch sound plays after thread sounds
+        await Bun.sleep(100)
+        notificationTracker?.playBatchComplete()
+        // Stop polling once batch is complete
+        markerPollingActive = false
+        break
+      }
+
+      // Poll every 500ms
+      await Bun.sleep(500)
+    }
+  }
+
+  // Start polling in the background (don't await - runs concurrently)
+  const pollingPromise = pollMarkerFiles()
+
   child.on("close", async (code) => {
+    // Stop marker polling when session closes
+    markerPollingActive = false
+    try {
+      await pollingPromise
+    } catch {
+      // Ignore polling errors on close
+    }
     console.log(`\nSession detached. Checking thread statuses...`)
 
     const completions: Array<{
@@ -815,12 +907,13 @@ Press Ctrl+b X to kill the session when done.
       exitCode?: number
     }> = []
 
-    // Track completion stats for notifications
+    // Track completion stats
     let completedCount = 0
     let failedCount = 0
     let runningCount = 0
 
     // Update session statuses based on pane exit codes
+    // Note: Notifications are handled by marker file polling, not here
     if (threadSessionMap.length > 0) {
       if (sessionExists(sessionName)) {
         // Session still exists - check individual pane statuses
@@ -841,17 +934,13 @@ Press Ctrl+b X to kill the session when done.
               `  Thread ${mapping.threadId}: ${status}${exitCode !== undefined ? ` (exit ${exitCode})` : ""}`,
             )
 
-            // Track stats and play notifications
+            // Track stats (notifications already played by marker polling)
             if (status === "completed") {
               completedCount++
-              if (!cliArgs.silent) {
-                playNotification("thread_complete")
-              }
             } else {
               failedCount++
-              if (!cliArgs.silent) {
-                playNotification("error")
-              }
+              // Play error notification for failures (not detected by marker files)
+              notificationTracker?.playError(mapping.threadId)
             }
           } else if (paneStatus && !paneStatus.paneDead) {
             console.log(`  Thread ${mapping.threadId}: still running`)
@@ -873,6 +962,8 @@ Press Ctrl+b X to kill the session when done.
         console.log(`To kill: tmux kill-session -t "${sessionName}"`)
       } else {
         // Session was killed via Ctrl+b X - user confirmed threads are done
+        // Marker polling should have already played notifications if first commands completed
+        // If not (early close before first command finished), play batch_complete once
         console.log("Session closed. Marking all threads as completed...")
         for (const mapping of threadSessionMap) {
           completions.push({
@@ -882,17 +973,9 @@ Press Ctrl+b X to kill the session when done.
           })
           console.log(`  Thread ${mapping.threadId}: completed`)
           completedCount++
-          if (!cliArgs.silent) {
-            playNotification("thread_complete")
-          }
         }
-      }
-
-      // Play batch_complete if all threads finished (no running threads)
-      if (runningCount === 0 && completions.length > 0 && !cliArgs.silent) {
-        // Small delay so batch sound plays after thread sounds
-        await Bun.sleep(100)
-        playNotification("batch_complete")
+        // Play batch_complete if we haven't already (covers early close scenario)
+        notificationTracker?.playBatchComplete()
       }
 
       if (completions.length > 0) {
@@ -901,6 +984,31 @@ Press Ctrl+b X to kill the session when done.
         )
         await completeMultipleSessionsLocked(repoRoot, stream.id, completions)
       }
+
+      // Read and store opencode session IDs from temp files
+      console.log(`\nCapturing opencode session IDs...`)
+      for (const mapping of threadSessionMap) {
+        const sessionFilePath = getSessionFilePath(mapping.threadId)
+        if (existsSync(sessionFilePath)) {
+          try {
+            const opencodeSessionId = readFileSync(sessionFilePath, "utf-8").trim()
+            if (opencodeSessionId) {
+              await updateThreadMetadataLocked(repoRoot, stream.id, mapping.threadId, {
+                opencodeSessionId,
+              })
+              console.log(`  Thread ${mapping.threadId}: captured opencode session ${opencodeSessionId}`)
+            }
+          } catch (e) {
+            console.log(`  Thread ${mapping.threadId}: failed to read session file (${(e as Error).message})`)
+          }
+        } else {
+          console.log(`  Thread ${mapping.threadId}: no session file found`)
+        }
+      }
+
+      // Clean up marker files and session files
+      cleanupCompletionMarkers(threadIds)
+      cleanupSessionFiles(threadIds)
     }
 
     process.exit(code ?? 0)
@@ -908,9 +1016,8 @@ Press Ctrl+b X to kill the session when done.
 
   child.on("error", (err) => {
     console.error(`Error attaching to tmux session: ${err.message}`)
-    if (!cliArgs.silent) {
-      playNotification("error")
-    }
+    // Use a generic error notification (not thread-specific)
+    notificationTracker?.playError("__session_error__")
     process.exit(1)
   })
 }

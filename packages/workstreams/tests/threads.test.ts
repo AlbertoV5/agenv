@@ -159,6 +159,45 @@ describe("threads", () => {
       const all = getAllThreadMetadata(repoRoot, streamId)
       expect(all).toHaveLength(0)
     })
+
+    test("updateThreadMetadata stores opencodeSessionId", () => {
+      const thread = updateThreadMetadata(repoRoot, streamId, "01.01.01", {
+        sessions: [],
+        opencodeSessionId: "ses_413402385ffe4rhZzbpafvjAUc",
+      })
+
+      expect(thread.opencodeSessionId).toBe("ses_413402385ffe4rhZzbpafvjAUc")
+
+      const loaded = getThreadMetadata(repoRoot, streamId, "01.01.01")
+      expect(loaded).not.toBeNull()
+      expect(loaded!.opencodeSessionId).toBe("ses_413402385ffe4rhZzbpafvjAUc")
+    })
+
+    test("updateThreadMetadata can update opencodeSessionId separately", () => {
+      // Create thread first
+      updateThreadMetadata(repoRoot, streamId, "01.01.01", {
+        sessions: [],
+      })
+
+      // Update with opcodeSessionId
+      const updated = updateThreadMetadata(repoRoot, streamId, "01.01.01", {
+        opencodeSessionId: "ses_newSessionId123",
+      })
+
+      expect(updated.opencodeSessionId).toBe("ses_newSessionId123")
+    })
+
+    test("opencodeSessionId is separate from currentSessionId", () => {
+      const thread = updateThreadMetadata(repoRoot, streamId, "01.01.01", {
+        sessions: [],
+        currentSessionId: "internal-session-id",
+        opencodeSessionId: "ses_externalOpencodeSessionId",
+      })
+
+      // Both fields should be stored independently
+      expect(thread.currentSessionId).toBe("internal-session-id")
+      expect(thread.opencodeSessionId).toBe("ses_externalOpencodeSessionId")
+    })
   })
 
   describe("session management", () => {

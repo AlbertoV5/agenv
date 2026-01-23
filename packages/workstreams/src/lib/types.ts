@@ -543,6 +543,7 @@ export interface ThreadMetadata {
     state: "open" | "closed"
   }
   currentSessionId?: string // Active session ID for resume functionality
+  opencodeSessionId?: string // Actual opencode session ID (e.g., "ses_413402385ffe4rhZzbpafvjAUc") - separate from internal sessionId
 }
 
 /**

@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "stream_id": "009-workstreams-ux-improvements",
-  "last_updated": "2026-01-23T21:34:13.064Z",
+  "last_updated": "2026-01-23T21:46:30.150Z",
   "tasks": [
     {
       "id": "01.01.01.01",
@@ -12,13 +12,8 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.346Z",
       "updated_at": "2026-01-23T21:10:04.873Z",
-      "assigned_agent": "systems-engineer",
-      "github_issue": {
-        "number": 25,
-        "url": "https://github.com/AlbertoV5/agenv/issues/25",
-        "state": "closed"
-      },
       "report": "Created NotificationProvider interface with NotificationEvent type and playNotification method in src/lib/notifications.ts",
+      "assigned_agent": "systems-engineer",
       "sessions": []
     },
     {
@@ -30,8 +25,8 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.346Z",
       "updated_at": "2026-01-23T21:05:51.088Z",
-      "assigned_agent": "systems-engineer",
       "report": "Implemented MacOSSoundProvider class using afplay with default system sounds from /System/Library/Sounds/ (Glass.aiff, Hero.aiff, Basso.aiff)",
+      "assigned_agent": "systems-engineer",
       "sessions": []
     },
     {
@@ -43,8 +38,8 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.346Z",
       "updated_at": "2026-01-23T21:05:53.876Z",
-      "assigned_agent": "systems-engineer",
       "report": "Added loadConfig function that reads from ~/.config/agenv/notifications.json with SoundMappings and NotificationConfig interfaces",
+      "assigned_agent": "systems-engineer",
       "sessions": []
     },
     {
@@ -56,8 +51,8 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.346Z",
       "updated_at": "2026-01-23T21:05:56.561Z",
-      "assigned_agent": "systems-engineer",
       "report": "Created ExternalApiProvider stub class with WebhookPayload interface and buildPayload method for future webhook integrations",
+      "assigned_agent": "systems-engineer",
       "sessions": []
     },
     {
@@ -69,8 +64,8 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.346Z",
       "updated_at": "2026-01-23T21:07:04.307Z",
-      "assigned_agent": "systems-engineer",
       "report": "Created tests/notifications.test.ts with 30 tests covering loadConfig, MacOSSoundProvider, ExternalApiProvider, NotificationManager, and convenience functions. All tests pass with mocked audio playback.",
+      "assigned_agent": "systems-engineer",
       "sessions": []
     },
     {
@@ -82,13 +77,8 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.346Z",
       "updated_at": "2026-01-23T21:10:04.873Z",
-      "assigned_agent": "systems-engineer",
-      "github_issue": {
-        "number": 26,
-        "url": "https://github.com/AlbertoV5/agenv/issues/26",
-        "state": "closed"
-      },
       "report": "Added ThreadMetadata interface and ThreadsJson schema to types.ts",
+      "assigned_agent": "systems-engineer",
       "sessions": []
     },
     {
@@ -100,8 +90,8 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.346Z",
       "updated_at": "2026-01-23T21:06:18.736Z",
-      "assigned_agent": "systems-engineer",
       "report": "Created ThreadsStore with loadThreads, saveThreads, getThreadMetadata, updateThreadMetadata and CRUD operations",
+      "assigned_agent": "systems-engineer",
       "sessions": []
     },
     {
@@ -113,8 +103,8 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.346Z",
       "updated_at": "2026-01-23T21:06:20.204Z",
-      "assigned_agent": "systems-engineer",
       "report": "Implemented file locking with withThreadsLock, updateThreadMetadataLocked, modifyThreads, and session locking functions",
+      "assigned_agent": "systems-engineer",
       "sessions": []
     },
     {
@@ -126,8 +116,8 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.346Z",
       "updated_at": "2026-01-23T21:06:21.581Z",
-      "assigned_agent": "systems-engineer",
       "report": "Created migrateFromTasksJson utility to migrate sessions and github issues, plus validateMigration for verification",
+      "assigned_agent": "systems-engineer",
       "sessions": []
     },
     {
@@ -139,8 +129,8 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.346Z",
       "updated_at": "2026-01-23T21:08:11.002Z",
-      "assigned_agent": "systems-engineer",
       "report": "Created comprehensive tests for CRUD, sessions, locking, GitHub issues, migration, and concurrent access - all 35 tests pass",
+      "assigned_agent": "systems-engineer",
       "sessions": []
     },
     {
@@ -152,13 +142,8 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.346Z",
       "updated_at": "2026-01-23T21:16:39.216Z",
-      "assigned_agent": "systems-engineer",
-      "github_issue": {
-        "number": 27,
-        "url": "https://github.com/AlbertoV5/agenv/issues/27",
-        "state": "closed"
-      },
       "report": "Updated startTaskSession, startTaskSessionLocked, and startMultipleSessionsLocked to delegate to threads.ts",
+      "assigned_agent": "systems-engineer",
       "sessions": []
     },
     {
@@ -170,8 +155,8 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.346Z",
       "updated_at": "2026-01-23T21:12:19.135Z",
-      "assigned_agent": "systems-engineer",
       "report": "Updated completeTaskSession, completeTaskSessionLocked, and completeMultipleSessionsLocked to delegate to threads.ts",
+      "assigned_agent": "systems-engineer",
       "sessions": []
     },
     {
@@ -183,8 +168,8 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.346Z",
       "updated_at": "2026-01-23T21:12:52.135Z",
-      "assigned_agent": "systems-engineer",
       "report": "Updated getCurrentTaskSession and getTaskSessions to read from threads.json via getThreadMetadata. Removed unused withTasksLock function and lockfile import.",
+      "assigned_agent": "systems-engineer",
       "sessions": []
     },
     {
@@ -196,9 +181,9 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.346Z",
       "updated_at": "2026-01-23T21:13:49.914Z",
+      "report": "Added hasSessionsInTasksJson, createTasksJsonBackup, clearSessionsFromTasks, migrateSessionsToThreads functions. Updated readTasksFile to auto-migrate on load.",
       "assigned_agent": "systems-engineer",
-      "sessions": [],
-      "report": "Added hasSessionsInTasksJson, createTasksJsonBackup, clearSessionsFromTasks, migrateSessionsToThreads functions. Updated readTasksFile to auto-migrate on load."
+      "sessions": []
     },
     {
       "id": "02.01.01.05",
@@ -209,9 +194,9 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.346Z",
       "updated_at": "2026-01-23T21:16:37.684Z",
+      "report": "Marked sessions and currentSessionId fields as @deprecated in Task interface. Updated session-tracking.test.ts to verify data goes to threads.json. Added migration tests.",
       "assigned_agent": "systems-engineer",
-      "sessions": [],
-      "report": "Marked sessions and currentSessionId fields as @deprecated in Task interface. Updated session-tracking.test.ts to verify data goes to threads.json. Added migration tests."
+      "sessions": []
     },
     {
       "id": "02.01.02.01",
@@ -222,13 +207,8 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.346Z",
       "updated_at": "2026-01-23T21:12:55.575Z",
-      "assigned_agent": "systems-engineer",
-      "github_issue": {
-        "number": 28,
-        "url": "https://github.com/AlbertoV5/agenv/issues/28",
-        "state": "closed"
-      },
       "report": "Added import for playNotification from notifications.ts. Added --silent flag to MultiCliArgs interface, help text, and argument parsing.",
+      "assigned_agent": "systems-engineer",
       "sessions": []
     },
     {
@@ -240,8 +220,8 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.346Z",
       "updated_at": "2026-01-23T21:12:00.087Z",
-      "assigned_agent": "systems-engineer",
       "report": "Added thread_complete notification call when thread pane exits with code 0. Plays for each completed thread in the child.on(close) callback.",
+      "assigned_agent": "systems-engineer",
       "sessions": []
     },
     {
@@ -253,8 +233,8 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.346Z",
       "updated_at": "2026-01-23T21:12:01.379Z",
-      "assigned_agent": "systems-engineer",
       "report": "Added batch_complete notification after all threads in batch have exited (no running threads). Added 100ms delay to avoid sound overlap with thread sounds.",
+      "assigned_agent": "systems-engineer",
       "sessions": []
     },
     {
@@ -266,8 +246,8 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.346Z",
       "updated_at": "2026-01-23T21:12:02.689Z",
-      "assigned_agent": "systems-engineer",
       "report": "Added error notification when thread fails (non-zero exit code) and in child.on(error) handler for tmux attachment failures.",
+      "assigned_agent": "systems-engineer",
       "sessions": []
     },
     {
@@ -279,8 +259,8 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.346Z",
       "updated_at": "2026-01-23T21:12:54.352Z",
-      "assigned_agent": "systems-engineer",
       "report": "Added comprehensive notification integration tests to multi.test.ts with mocked playNotification. Tests cover: thread completion, thread failure, batch completion, silent mode, and mixed results scenarios. All 15 tests pass.",
+      "assigned_agent": "systems-engineer",
       "sessions": []
     },
     {
@@ -292,14 +272,9 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.346Z",
       "updated_at": "2026-01-23T21:20:56.546Z",
+      "report": "Identified pane index shift bug: after vertical split of pane 0, indices shift - pane 1 becomes BL not TR. Step 4 targets wrong pane.",
       "assigned_agent": "systems-engineer",
-      "github_issue": {
-        "number": 29,
-        "url": "https://github.com/AlbertoV5/agenv/issues/29",
-        "state": "closed"
-      },
-      "sessions": [],
-      "report": "Identified pane index shift bug: after vertical split of pane 0, indices shift - pane 1 becomes BL not TR. Step 4 targets wrong pane."
+      "sessions": []
     },
     {
       "id": "03.01.01.02",
@@ -310,9 +285,9 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.346Z",
       "updated_at": "2026-01-23T21:19:18.563Z",
+      "report": "Fixed by capturing right pane ID before vertical split (line 354), then using pane ID directly (line 367) instead of index-based targeting which shifts.",
       "assigned_agent": "systems-engineer",
-      "sessions": [],
-      "report": "Fixed by capturing right pane ID before vertical split (line 354), then using pane ID directly (line 367) instead of index-based targeting which shifts."
+      "sessions": []
     },
     {
       "id": "03.01.01.03",
@@ -323,9 +298,9 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.346Z",
       "updated_at": "2026-01-23T21:19:47.697Z",
+      "report": "Verified 1,2,3,4 pane configs all work. 4-pane produces correct 2x2 grid with TL/TR/BL/BR positions.",
       "assigned_agent": "systems-engineer",
-      "sessions": [],
-      "report": "Verified 1,2,3,4 pane configs all work. 4-pane produces correct 2x2 grid with TL/TR/BL/BR positions."
+      "sessions": []
     },
     {
       "id": "03.01.01.04",
@@ -336,9 +311,9 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.346Z",
       "updated_at": "2026-01-23T21:20:55.047Z",
+      "report": "Created tests/tmux-grid.test.ts with 7 tests covering 1-4 pane configs, 2x2 verification, and regression test for 1+3 stacked bug.",
       "assigned_agent": "systems-engineer",
-      "sessions": [],
-      "report": "Created tests/tmux-grid.test.ts with 7 tests covering 1-4 pane configs, 2x2 verification, and regression test for 1+3 stacked bug."
+      "sessions": []
     },
     {
       "id": "03.01.02.01",
@@ -349,14 +324,9 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.347Z",
       "updated_at": "2026-01-23T21:22:34.621Z",
+      "report": "Created scripts/preview-multi.ts with configurable thread count (1-8), mock prompts, and grid layout testing using claude-3-5-haiku-latest",
       "assigned_agent": "default",
-      "github_issue": {
-        "number": 30,
-        "url": "https://github.com/AlbertoV5/agenv/issues/30",
-        "state": "closed"
-      },
-      "sessions": [],
-      "report": "Created scripts/preview-multi.ts with configurable thread count (1-8), mock prompts, and grid layout testing using claude-3-5-haiku-latest"
+      "sessions": []
     },
     {
       "id": "03.01.02.02",
@@ -367,9 +337,9 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.347Z",
       "updated_at": "2026-01-23T21:20:11.649Z",
+      "report": "Created scripts/preview-grid.ts as standalone 2x2 grid tester with labeled panes showing their positions for visual verification",
       "assigned_agent": "default",
-      "sessions": [],
-      "report": "Created scripts/preview-grid.ts as standalone 2x2 grid tester with labeled panes showing their positions for visual verification"
+      "sessions": []
     },
     {
       "id": "03.01.02.03",
@@ -380,9 +350,9 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.347Z",
       "updated_at": "2026-01-23T21:21:39.235Z",
+      "report": "Created scripts/preview-fix.ts to test fix command retry flow with mock failed thread, session tracking, and cleanup functionality",
       "assigned_agent": "default",
-      "sessions": [],
-      "report": "Created scripts/preview-fix.ts to test fix command retry flow with mock failed thread, session tracking, and cleanup functionality"
+      "sessions": []
     },
     {
       "id": "03.01.02.04",
@@ -393,9 +363,9 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.347Z",
       "updated_at": "2026-01-23T21:22:33.196Z",
+      "report": "Added comprehensive scripts/README.md with detailed instructions, usage examples, troubleshooting tips, and development workflow for all preview scripts",
       "assigned_agent": "default",
-      "sessions": [],
-      "report": "Added comprehensive scripts/README.md with detailed instructions, usage examples, troubleshooting tips, and development workflow for all preview scripts"
+      "sessions": []
     },
     {
       "id": "03.01.03.01",
@@ -406,14 +376,9 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.347Z",
       "updated_at": "2026-01-23T21:24:27.674Z",
+      "report": "Added tests for createSession and addWindow in tmux.test.ts using actual tmux commands.",
       "assigned_agent": "code-reviewer",
-      "github_issue": {
-        "number": 31,
-        "url": "https://github.com/AlbertoV5/agenv/issues/31",
-        "state": "closed"
-      },
-      "sessions": [],
-      "report": "Added tests for createSession and addWindow in tmux.test.ts using actual tmux commands."
+      "sessions": []
     },
     {
       "id": "03.01.03.02",
@@ -424,9 +389,9 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.347Z",
       "updated_at": "2026-01-23T21:24:26.189Z",
+      "report": "Added tests for splitWindow and createGridLayout with layout verification.",
       "assigned_agent": "code-reviewer",
-      "sessions": [],
-      "report": "Added tests for splitWindow and createGridLayout with layout verification."
+      "sessions": []
     },
     {
       "id": "03.01.03.03",
@@ -437,9 +402,9 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.347Z",
       "updated_at": "2026-01-23T21:24:26.235Z",
+      "report": "Added tests for getSessionPaneStatuses and waitForAllPanesExit verifying status detection and timeouts.",
       "assigned_agent": "code-reviewer",
-      "sessions": [],
-      "report": "Added tests for getSessionPaneStatuses and waitForAllPanesExit verifying status detection and timeouts."
+      "sessions": []
     },
     {
       "id": "03.01.03.04",
@@ -450,9 +415,9 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.347Z",
       "updated_at": "2026-01-23T21:24:26.280Z",
+      "report": "Added tests for respawnPane and ensured cleanup using afterEach hook.",
       "assigned_agent": "code-reviewer",
-      "sessions": [],
-      "report": "Added tests for respawnPane and ensured cleanup using afterEach hook."
+      "sessions": []
     },
     {
       "id": "03.01.03.05",
@@ -463,9 +428,9 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.347Z",
       "updated_at": "2026-01-23T21:24:26.325Z",
+      "report": "Verified coverage of tmux.ts is 86.49% functions and 91.80% lines.",
       "assigned_agent": "code-reviewer",
-      "sessions": [],
-      "report": "Verified coverage of tmux.ts is 86.49% functions and 91.80% lines."
+      "sessions": []
     },
     {
       "id": "03.02.01.01",
@@ -476,14 +441,9 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.347Z",
       "updated_at": "2026-01-23T21:29:36.939Z",
+      "report": "Added getFixSessionName helper and tmux imports to fix.ts. Refactored executeRetry to create tmux session work-fix-{threadId} by default.",
       "assigned_agent": "systems-engineer",
-      "github_issue": {
-        "number": 32,
-        "url": "https://github.com/AlbertoV5/agenv/issues/32",
-        "state": "closed"
-      },
-      "sessions": [],
-      "report": "Added getFixSessionName helper and tmux imports to fix.ts. Refactored executeRetry to create tmux session work-fix-{threadId} by default."
+      "sessions": []
     },
     {
       "id": "03.02.01.02",
@@ -494,9 +454,9 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.347Z",
       "updated_at": "2026-01-23T21:28:42.623Z",
+      "report": "executeRetry now creates tmux session with createSession(), sets remain-on-exit option, and attaches user using attachSession().",
       "assigned_agent": "systems-engineer",
-      "sessions": [],
-      "report": "executeRetry now creates tmux session with createSession(), sets remain-on-exit option, and attaches user using attachSession()."
+      "sessions": []
     },
     {
       "id": "03.02.01.03",
@@ -507,9 +467,9 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.347Z",
       "updated_at": "2026-01-23T21:28:44.027Z",
+      "report": "Added detach handling with clear console output showing session name and reattach instructions. Process continues in background on detach.",
       "assigned_agent": "systems-engineer",
-      "sessions": [],
-      "report": "Added detach handling with clear console output showing session name and reattach instructions. Process continues in background on detach."
+      "sessions": []
     },
     {
       "id": "03.02.01.04",
@@ -520,9 +480,9 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.347Z",
       "updated_at": "2026-01-23T21:28:45.110Z",
+      "report": "Updated executeResume to check for existing fix tmux session and reattach to it if found. Also supports creating new tmux session for resume.",
       "assigned_agent": "systems-engineer",
-      "sessions": [],
-      "report": "Updated executeResume to check for existing fix tmux session and reattach to it if found. Also supports creating new tmux session for resume."
+      "sessions": []
     },
     {
       "id": "03.02.01.05",
@@ -533,9 +493,9 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.347Z",
       "updated_at": "2026-01-23T21:28:46.452Z",
+      "report": "Added --no-tmux flag to FixCliArgs interface, parseCliArgs, and printHelp. Both executeRetry and executeResume now accept noTmux parameter.",
       "assigned_agent": "systems-engineer",
-      "sessions": [],
-      "report": "Added --no-tmux flag to FixCliArgs interface, parseCliArgs, and printHelp. Both executeRetry and executeResume now accept noTmux parameter."
+      "sessions": []
     },
     {
       "id": "03.02.01.06",
@@ -546,9 +506,9 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.347Z",
       "updated_at": "2026-01-23T21:29:35.469Z",
+      "report": "Added 7 tmux integration tests to fix.test.ts covering session creation, naming, remain-on-exit option, existing session detection, and multiple session coexistence.",
       "assigned_agent": "systems-engineer",
-      "sessions": [],
-      "report": "Added 7 tmux integration tests to fix.test.ts covering session creation, naming, remain-on-exit option, existing session detection, and multiple session coexistence."
+      "sessions": []
     },
     {
       "id": "04.01.01.01",
@@ -559,14 +519,9 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.347Z",
       "updated_at": "2026-01-23T21:34:06.213Z",
+      "report": "Completed documentation for notifications, threads schema, and fix command. Created example config and updated CLI help text.",
       "assigned_agent": "documentation-minimalist",
-      "github_issue": {
-        "number": 33,
-        "url": "https://github.com/AlbertoV5/agenv/issues/33",
-        "state": "closed"
-      },
-      "sessions": [],
-      "report": "Completed documentation for notifications, threads schema, and fix command. Created example config and updated CLI help text."
+      "sessions": []
     },
     {
       "id": "04.01.01.02",
@@ -577,9 +532,9 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.347Z",
       "updated_at": "2026-01-23T21:34:06.213Z",
+      "report": "Completed documentation for notifications, threads schema, and fix command. Created example config and updated CLI help text.",
       "assigned_agent": "documentation-minimalist",
-      "sessions": [],
-      "report": "Completed documentation for notifications, threads schema, and fix command. Created example config and updated CLI help text."
+      "sessions": []
     },
     {
       "id": "04.01.01.03",
@@ -590,9 +545,9 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.347Z",
       "updated_at": "2026-01-23T21:34:06.213Z",
+      "report": "Completed documentation for notifications, threads schema, and fix command. Created example config and updated CLI help text.",
       "assigned_agent": "documentation-minimalist",
-      "sessions": [],
-      "report": "Completed documentation for notifications, threads schema, and fix command. Created example config and updated CLI help text."
+      "sessions": []
     },
     {
       "id": "04.01.01.04",
@@ -603,9 +558,9 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.347Z",
       "updated_at": "2026-01-23T21:34:06.213Z",
+      "report": "Completed documentation for notifications, threads schema, and fix command. Created example config and updated CLI help text.",
       "assigned_agent": "documentation-minimalist",
-      "sessions": [],
-      "report": "Completed documentation for notifications, threads schema, and fix command. Created example config and updated CLI help text."
+      "sessions": []
     },
     {
       "id": "04.01.01.05",
@@ -616,9 +571,9 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.347Z",
       "updated_at": "2026-01-23T21:34:06.213Z",
+      "report": "Completed documentation for notifications, threads schema, and fix command. Created example config and updated CLI help text.",
       "assigned_agent": "documentation-minimalist",
-      "sessions": [],
-      "report": "Completed documentation for notifications, threads schema, and fix command. Created example config and updated CLI help text."
+      "sessions": []
     },
     {
       "id": "04.01.02.01",
@@ -629,14 +584,9 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.347Z",
       "updated_at": "2026-01-23T21:34:13.064Z",
+      "report": "Added deprecation warnings for tasks.json sessions, updated Task interface with @deprecated annotations, cleaned up migration code, and verified tests.",
       "assigned_agent": "code-reviewer",
-      "github_issue": {
-        "number": 34,
-        "url": "https://github.com/AlbertoV5/agenv/issues/34",
-        "state": "closed"
-      },
-      "sessions": [],
-      "report": "Added deprecation warnings for tasks.json sessions, updated Task interface with @deprecated annotations, cleaned up migration code, and verified tests."
+      "sessions": []
     },
     {
       "id": "04.01.02.02",
@@ -647,9 +597,9 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.347Z",
       "updated_at": "2026-01-23T21:34:12.062Z",
+      "report": "Added deprecation warnings for tasks.json sessions, updated Task interface with @deprecated annotations, cleaned up migration code, and verified tests.",
       "assigned_agent": "code-reviewer",
-      "sessions": [],
-      "report": "Added deprecation warnings for tasks.json sessions, updated Task interface with @deprecated annotations, cleaned up migration code, and verified tests."
+      "sessions": []
     },
     {
       "id": "04.01.02.03",
@@ -660,9 +610,9 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.347Z",
       "updated_at": "2026-01-23T21:34:12.062Z",
+      "report": "Added deprecation warnings for tasks.json sessions, updated Task interface with @deprecated annotations, cleaned up migration code, and verified tests.",
       "assigned_agent": "code-reviewer",
-      "sessions": [],
-      "report": "Added deprecation warnings for tasks.json sessions, updated Task interface with @deprecated annotations, cleaned up migration code, and verified tests."
+      "sessions": []
     },
     {
       "id": "04.01.02.04",
@@ -673,9 +623,237 @@
       "status": "completed",
       "created_at": "2026-01-23T21:00:01.347Z",
       "updated_at": "2026-01-23T21:34:12.062Z",
+      "report": "Added deprecation warnings for tasks.json sessions, updated Task interface with @deprecated annotations, cleaned up migration code, and verified tests.",
       "assigned_agent": "code-reviewer",
-      "sessions": [],
-      "report": "Added deprecation warnings for tasks.json sessions, updated Task interface with @deprecated annotations, cleaned up migration code, and verified tests."
+      "sessions": []
+    },
+    {
+      "id": "05.01.01.01",
+      "name": "Modify buildRunCommand in opencode.ts to write opencode session ID to /tmp/workstream-{threadId}-session.txt after lookup",
+      "stage_name": "Revision - Session Tracking & Notification Fixes",
+      "batch_name": "Session & Notification Fixes",
+      "thread_name": "Opencode Session ID Capture",
+      "status": "completed",
+      "created_at": "2026-01-23T21:38:31.803Z",
+      "updated_at": "2026-01-23T21:40:54.049Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added getSessionFilePath() helper and modified buildRunCommand to write opencode session ID to /tmp/workstream-{threadId}-session.txt after lookup"
+    },
+    {
+      "id": "05.01.01.02",
+      "name": "Modify buildRetryRunCommand similarly to write session ID to temp file",
+      "stage_name": "Revision - Session Tracking & Notification Fixes",
+      "batch_name": "Session & Notification Fixes",
+      "thread_name": "Opencode Session ID Capture",
+      "status": "completed",
+      "created_at": "2026-01-23T21:38:31.803Z",
+      "updated_at": "2026-01-23T21:41:44.407Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Updated buildRetryRunCommand to write opencode session ID to temp file for multi-model case (single-model case already handled via buildRunCommand)"
+    },
+    {
+      "id": "05.01.01.03",
+      "name": "Add opcodeSessionId field to ThreadMetadata interface in types.ts (separate from internal sessionId)",
+      "stage_name": "Revision - Session Tracking & Notification Fixes",
+      "batch_name": "Session & Notification Fixes",
+      "thread_name": "Opencode Session ID Capture",
+      "status": "completed",
+      "created_at": "2026-01-23T21:38:31.803Z",
+      "updated_at": "2026-01-23T21:42:10.846Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added opcodeSessionId field to ThreadMetadata interface in types.ts - stores the actual opencode session ID from the temp file"
+    },
+    {
+      "id": "05.01.01.04",
+      "name": "Update multi.ts to read session file after thread first command completes and store in threads.json",
+      "stage_name": "Revision - Session Tracking & Notification Fixes",
+      "batch_name": "Session & Notification Fixes",
+      "thread_name": "Opencode Session ID Capture",
+      "status": "completed",
+      "created_at": "2026-01-23T21:38:31.803Z",
+      "updated_at": "2026-01-23T21:44:30.104Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Updated multi.ts to read session file after thread completion and store opencodeSessionId in threads.json via updateThreadMetadataLocked"
+    },
+    {
+      "id": "05.01.01.05",
+      "name": "Add cleanup of /tmp/workstream-*-session.txt files after batch completes",
+      "stage_name": "Revision - Session Tracking & Notification Fixes",
+      "batch_name": "Session & Notification Fixes",
+      "thread_name": "Opencode Session ID Capture",
+      "status": "completed",
+      "created_at": "2026-01-23T21:38:31.803Z",
+      "updated_at": "2026-01-23T21:44:44.940Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added cleanupSessionFiles function in multi.ts and call it after batch completes to remove /tmp/workstream-*-session.txt files"
+    },
+    {
+      "id": "05.01.01.06",
+      "name": "Update tests to verify opencode session ID capture and storage",
+      "stage_name": "Revision - Session Tracking & Notification Fixes",
+      "batch_name": "Session & Notification Fixes",
+      "thread_name": "Opencode Session ID Capture",
+      "status": "completed",
+      "created_at": "2026-01-23T21:38:31.803Z",
+      "updated_at": "2026-01-23T21:46:30.150Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added tests for getSessionFilePath, session file writing in buildRunCommand/buildRetryRunCommand, and opcodeSessionId storage in ThreadMetadata. Updated updateThreadMetadata to handle opcodeSessionId field."
+    },
+    {
+      "id": "05.01.02.01",
+      "name": "Modify buildRunCommand to write marker file /tmp/workstream-{threadId}-complete.txt after opencode run exits (before opencode --session)",
+      "stage_name": "Revision - Session Tracking & Notification Fixes",
+      "batch_name": "Session & Notification Fixes",
+      "thread_name": "First Command Completion Detection",
+      "status": "completed",
+      "created_at": "2026-01-23T21:38:31.803Z",
+      "updated_at": "2026-01-23T21:40:28.171Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added getCompletionMarkerPath() helper function and modified buildRunCommand to write marker file after opencode run exits when threadId is provided"
+    },
+    {
+      "id": "05.01.02.02",
+      "name": "Modify buildRetryRunCommand similarly to write completion marker",
+      "stage_name": "Revision - Session Tracking & Notification Fixes",
+      "batch_name": "Session & Notification Fixes",
+      "thread_name": "First Command Completion Detection",
+      "status": "completed",
+      "created_at": "2026-01-23T21:38:31.803Z",
+      "updated_at": "2026-01-23T21:41:26.182Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Modified buildRetryRunCommand to accept threadId parameter and write completion marker after model attempts, passes threadId to buildRunCommand for single-model case"
+    },
+    {
+      "id": "05.01.02.03",
+      "name": "Add file watcher/polling in multi.ts to detect marker files for each thread",
+      "stage_name": "Revision - Session Tracking & Notification Fixes",
+      "batch_name": "Session & Notification Fixes",
+      "thread_name": "First Command Completion Detection",
+      "status": "completed",
+      "created_at": "2026-01-23T21:38:31.803Z",
+      "updated_at": "2026-01-23T21:43:53.375Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added marker file polling in multi.ts that runs concurrently with tmux session, detects /tmp/workstream-{threadId}-complete.txt files, and passes threadId to all buildRetryRunCommand calls"
+    },
+    {
+      "id": "05.01.02.04",
+      "name": "Trigger playNotification('thread_complete') when marker detected, not when pane exits",
+      "stage_name": "Revision - Session Tracking & Notification Fixes",
+      "batch_name": "Session & Notification Fixes",
+      "thread_name": "First Command Completion Detection",
+      "status": "completed",
+      "created_at": "2026-01-23T21:38:31.803Z",
+      "updated_at": "2026-01-23T21:43:56.560Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Marker polling triggers playNotification('thread_complete') when marker file is detected, not when pane exits"
+    },
+    {
+      "id": "05.01.02.05",
+      "name": "Trigger playNotification('batch_complete') only when ALL threads have marker files",
+      "stage_name": "Revision - Session Tracking & Notification Fixes",
+      "batch_name": "Session & Notification Fixes",
+      "thread_name": "First Command Completion Detection",
+      "status": "completed",
+      "created_at": "2026-01-23T21:38:31.803Z",
+      "updated_at": "2026-01-23T21:44:01.276Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Marker polling triggers playNotification('batch_complete') only when ALL threads have marker files (completedThreadIds.size === threadIds.length)"
+    },
+    {
+      "id": "05.01.02.06",
+      "name": "Remove notification triggers from child.on('close') and Ctrl-b X handlers",
+      "stage_name": "Revision - Session Tracking & Notification Fixes",
+      "batch_name": "Session & Notification Fixes",
+      "thread_name": "First Command Completion Detection",
+      "status": "completed",
+      "created_at": "2026-01-23T21:38:31.803Z",
+      "updated_at": "2026-01-23T21:44:05.242Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Removed per-thread notification triggers from child.on('close') handler - notifications now come from marker detection. Error notifications still fire from close handler for failures not captured by markers."
+    },
+    {
+      "id": "05.01.02.07",
+      "name": "Add cleanup of /tmp/workstream-*-complete.txt marker files after batch completes",
+      "stage_name": "Revision - Session Tracking & Notification Fixes",
+      "batch_name": "Session & Notification Fixes",
+      "thread_name": "First Command Completion Detection",
+      "status": "completed",
+      "created_at": "2026-01-23T21:38:31.803Z",
+      "updated_at": "2026-01-23T21:44:08.627Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added cleanupCompletionMarkers() function that removes /tmp/workstream-{threadId}-complete.txt files when batch completes"
+    },
+    {
+      "id": "05.01.02.08",
+      "name": "Update tests for new marker-based notification timing",
+      "stage_name": "Revision - Session Tracking & Notification Fixes",
+      "batch_name": "Session & Notification Fixes",
+      "thread_name": "First Command Completion Detection",
+      "status": "completed",
+      "created_at": "2026-01-23T21:38:31.803Z",
+      "updated_at": "2026-01-23T21:45:32.181Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added tests for getCompletionMarkerPath, buildRunCommand/buildRetryRunCommand with threadId parameter, and marker-based notification timing simulation"
+    },
+    {
+      "id": "05.01.03.01",
+      "name": "Create NotificationTracker class/object with Set<string> for notified threadIds and batchCompleteNotified flag",
+      "stage_name": "Revision - Session Tracking & Notification Fixes",
+      "batch_name": "Session & Notification Fixes",
+      "thread_name": "Notification Deduplication",
+      "status": "completed",
+      "created_at": "2026-01-23T21:38:31.803Z",
+      "updated_at": "2026-01-23T21:39:31.861Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Created NotificationTracker class in notifications.ts with Set<string> for notified threadIds, error tracking, and batchCompleteNotified flag. Includes helper methods playThreadComplete(), playError(), playBatchComplete() that check tracker before playing."
+    },
+    {
+      "id": "05.01.03.02",
+      "name": "Wrap all playNotification calls to check tracker before playing, add to tracker after",
+      "stage_name": "Revision - Session Tracking & Notification Fixes",
+      "batch_name": "Session & Notification Fixes",
+      "thread_name": "Notification Deduplication",
+      "status": "completed",
+      "created_at": "2026-01-23T21:38:31.803Z",
+      "updated_at": "2026-01-23T21:40:20.768Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Updated multi.ts to import NotificationTracker. All playNotification calls now use tracker methods (playThreadComplete, playError, playBatchComplete) which handle deduplication internally."
+    },
+    {
+      "id": "05.01.03.03",
+      "name": "Remove the loop in Ctrl-b X handler that plays sound for each thread (lines 875-889 in multi.ts)",
+      "stage_name": "Revision - Session Tracking & Notification Fixes",
+      "batch_name": "Session & Notification Fixes",
+      "thread_name": "Notification Deduplication",
+      "status": "completed",
+      "created_at": "2026-01-23T21:38:31.803Z",
+      "updated_at": "2026-01-23T21:40:26.960Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Removed the loop in Ctrl-b X handler (lines 875-889) that played thread_complete for each thread. Now plays only batch_complete once for the entire session closure."
+    },
+    {
+      "id": "05.01.03.04",
+      "name": "Handle edge cases: normal completion, early tmux close, thread failure - ensure single notification per event",
+      "stage_name": "Revision - Session Tracking & Notification Fixes",
+      "batch_name": "Session & Notification Fixes",
+      "thread_name": "Notification Deduplication",
+      "status": "completed",
+      "created_at": "2026-01-23T21:38:31.803Z",
+      "updated_at": "2026-01-23T21:40:33.512Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Edge cases handled: (1) Normal completion - tracker.playThreadComplete per thread, then batch_complete once; (2) Early tmux close via Ctrl-b X - only batch_complete, no per-thread sounds; (3) Thread failure - tracker.playError with deduplication. All paths use tracker to prevent duplicates."
+    },
+    {
+      "id": "05.01.03.05",
+      "name": "Add unit tests for NotificationTracker deduplication logic",
+      "stage_name": "Revision - Session Tracking & Notification Fixes",
+      "batch_name": "Session & Notification Fixes",
+      "thread_name": "Notification Deduplication",
+      "status": "completed",
+      "created_at": "2026-01-23T21:38:31.803Z",
+      "updated_at": "2026-01-23T21:41:41.498Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added comprehensive unit tests for NotificationTracker in notifications.test.ts. Tests cover: thread completion deduplication, error tracking, batch completion, helper methods (playThreadComplete, playError, playBatchComplete), reset functionality, and edge cases simulating multi.ts usage patterns. All 52 tests pass."
     }
   ]
 }

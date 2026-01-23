@@ -1,6 +1,10 @@
 import { describe, expect, test, mock, beforeEach, afterEach, spyOn } from "bun:test"
+import { mkdtempSync, writeFileSync, rmSync, existsSync } from "fs"
+import { join } from "path"
+import { tmpdir } from "os"
 import { findNextIncompleteBatch } from "../src/cli/multi"
-import type { Task } from "../src/lib/types"
+import { getCompletionMarkerPath, getSessionFilePath, buildRunCommand, buildRetryRunCommand } from "../src/lib/opencode"
+import type { Task, NormalizedModelSpec } from "../src/lib/types"
 import * as notifications from "../src/lib/notifications"
 
 describe("multi cli", () => {
@@ -227,6 +231,267 @@ describe("multi cli", () => {
 
                 expect(threadCompleteCalls.length).toBe(2)
                 expect(errorCalls.length).toBe(1)
+            })
+        })
+    })
+
+    describe("completion marker files", () => {
+        describe("getCompletionMarkerPath", () => {
+            test("returns correct path for thread ID", () => {
+                expect(getCompletionMarkerPath("01.01.01")).toBe("/tmp/workstream-01.01.01-complete.txt")
+                expect(getCompletionMarkerPath("02.03.04")).toBe("/tmp/workstream-02.03.04-complete.txt")
+            })
+
+            test("handles various thread ID formats", () => {
+                // Standard format
+                expect(getCompletionMarkerPath("01.02.03")).toContain("01.02.03")
+                // Just numbers
+                expect(getCompletionMarkerPath("1.2.3")).toContain("1.2.3")
+            })
+        })
+
+        describe("getSessionFilePath", () => {
+            test("returns correct path for thread ID", () => {
+                expect(getSessionFilePath("01.01.01")).toBe("/tmp/workstream-01.01.01-session.txt")
+                expect(getSessionFilePath("02.03.04")).toBe("/tmp/workstream-02.03.04-session.txt")
+            })
+
+            test("handles various thread ID formats", () => {
+                // Standard format
+                expect(getSessionFilePath("01.02.03")).toContain("01.02.03")
+                expect(getSessionFilePath("01.02.03")).toContain("-session.txt")
+                // Just numbers
+                expect(getSessionFilePath("1.2.3")).toContain("1.2.3")
+            })
+        })
+
+        describe("buildRunCommand with threadId", () => {
+            test("includes completion marker write when threadId provided", () => {
+                const cmd = buildRunCommand(
+                    4096,
+                    "anthropic/claude-sonnet-4",
+                    "/path/to/prompt.md",
+                    "Test Thread",
+                    undefined,
+                    "01.01.01"
+                )
+                
+                // Should contain marker file write command
+                expect(cmd).toContain("/tmp/workstream-01.01.01-complete.txt")
+                expect(cmd).toContain('echo "done"')
+            })
+
+            test("includes session file write when threadId provided", () => {
+                const cmd = buildRunCommand(
+                    4096,
+                    "anthropic/claude-sonnet-4",
+                    "/path/to/prompt.md",
+                    "Test Thread",
+                    undefined,
+                    "01.01.01"
+                )
+                
+                // Should contain session file write command
+                expect(cmd).toContain("/tmp/workstream-01.01.01-session.txt")
+                expect(cmd).toContain('$SESSION_ID')
+            })
+
+            test("does not include marker write when threadId not provided", () => {
+                const cmd = buildRunCommand(
+                    4096,
+                    "anthropic/claude-sonnet-4",
+                    "/path/to/prompt.md",
+                    "Test Thread"
+                )
+                
+                // Should NOT contain marker file path
+                expect(cmd).not.toContain("-complete.txt")
+            })
+
+            test("does not include session file write when threadId not provided", () => {
+                const cmd = buildRunCommand(
+                    4096,
+                    "anthropic/claude-sonnet-4",
+                    "/path/to/prompt.md",
+                    "Test Thread"
+                )
+                
+                // Should NOT contain session file path
+                expect(cmd).not.toContain("-session.txt")
+            })
+        })
+
+        describe("buildRetryRunCommand with threadId", () => {
+            test("includes completion marker write when threadId provided (single model)", () => {
+                const models: NormalizedModelSpec[] = [
+                    { model: "anthropic/claude-sonnet-4" }
+                ]
+                
+                const cmd = buildRetryRunCommand(
+                    4096,
+                    models,
+                    "/path/to/prompt.md",
+                    "Test Thread",
+                    "01.02.03"
+                )
+                
+                // With single model, delegates to buildRunCommand which includes marker
+                expect(cmd).toContain("/tmp/workstream-01.02.03-complete.txt")
+            })
+
+            test("includes session file write when threadId provided (single model)", () => {
+                const models: NormalizedModelSpec[] = [
+                    { model: "anthropic/claude-sonnet-4" }
+                ]
+                
+                const cmd = buildRetryRunCommand(
+                    4096,
+                    models,
+                    "/path/to/prompt.md",
+                    "Test Thread",
+                    "01.02.03"
+                )
+                
+                // With single model, delegates to buildRunCommand which includes session file
+                expect(cmd).toContain("/tmp/workstream-01.02.03-session.txt")
+            })
+
+            test("includes completion marker write when threadId provided (multiple models)", () => {
+                const models: NormalizedModelSpec[] = [
+                    { model: "anthropic/claude-sonnet-4" },
+                    { model: "google/gemini-pro" }
+                ]
+                
+                const cmd = buildRetryRunCommand(
+                    4096,
+                    models,
+                    "/path/to/prompt.md",
+                    "Test Thread",
+                    "02.01.01"
+                )
+                
+                // With multiple models, should include marker after model attempts
+                expect(cmd).toContain("/tmp/workstream-02.01.01-complete.txt")
+            })
+
+            test("includes session file write when threadId provided (multiple models)", () => {
+                const models: NormalizedModelSpec[] = [
+                    { model: "anthropic/claude-sonnet-4" },
+                    { model: "google/gemini-pro" }
+                ]
+                
+                const cmd = buildRetryRunCommand(
+                    4096,
+                    models,
+                    "/path/to/prompt.md",
+                    "Test Thread",
+                    "02.01.01"
+                )
+                
+                // With multiple models, should include session file write
+                expect(cmd).toContain("/tmp/workstream-02.01.01-session.txt")
+            })
+
+            test("does not include marker write when threadId not provided", () => {
+                const models: NormalizedModelSpec[] = [
+                    { model: "anthropic/claude-sonnet-4" },
+                    { model: "google/gemini-pro" }
+                ]
+                
+                const cmd = buildRetryRunCommand(
+                    4096,
+                    models,
+                    "/path/to/prompt.md",
+                    "Test Thread"
+                )
+                
+                // Should NOT contain marker file path
+                expect(cmd).not.toContain("-complete.txt")
+            })
+
+            test("does not include session file write when threadId not provided", () => {
+                const models: NormalizedModelSpec[] = [
+                    { model: "anthropic/claude-sonnet-4" },
+                    { model: "google/gemini-pro" }
+                ]
+                
+                const cmd = buildRetryRunCommand(
+                    4096,
+                    models,
+                    "/path/to/prompt.md",
+                    "Test Thread"
+                )
+                
+                // Should NOT contain session file path
+                expect(cmd).not.toContain("-session.txt")
+            })
+        })
+
+        describe("marker-based notification timing simulation", () => {
+            let playNotificationMock: ReturnType<typeof spyOn>
+
+            beforeEach(() => {
+                playNotificationMock = spyOn(notifications, "playNotification").mockImplementation(() => {})
+            })
+
+            afterEach(() => {
+                playNotificationMock.mockRestore()
+            })
+
+            test("simulates marker file detection triggering thread_complete", () => {
+                // This simulates what the polling loop does when it detects a marker
+                const threadIds = ["01.01.01", "01.01.02", "01.01.03"]
+                const completedThreadIds = new Set<string>()
+                
+                // Simulate detecting marker for first thread
+                completedThreadIds.add("01.01.01")
+                notifications.playNotification("thread_complete")
+                
+                expect(playNotificationMock).toHaveBeenCalledTimes(1)
+                expect(playNotificationMock).toHaveBeenCalledWith("thread_complete")
+            })
+
+            test("simulates batch_complete when all markers detected", () => {
+                const threadIds = ["01.01.01", "01.01.02"]
+                const completedThreadIds = new Set<string>()
+                
+                // Simulate all threads completing
+                completedThreadIds.add("01.01.01")
+                notifications.playNotification("thread_complete")
+                
+                completedThreadIds.add("01.01.02")
+                notifications.playNotification("thread_complete")
+                
+                // Now all threads have markers - batch complete
+                if (completedThreadIds.size === threadIds.length) {
+                    notifications.playNotification("batch_complete")
+                }
+                
+                expect(playNotificationMock).toHaveBeenCalledTimes(3)
+                expect(playNotificationMock).toHaveBeenCalledWith("batch_complete")
+            })
+
+            test("batch_complete not triggered until ALL threads have markers", () => {
+                const threadIds = ["01.01.01", "01.01.02", "01.01.03"]
+                const completedThreadIds = new Set<string>()
+                
+                // Only 2 of 3 threads complete
+                completedThreadIds.add("01.01.01")
+                notifications.playNotification("thread_complete")
+                
+                completedThreadIds.add("01.01.02")
+                notifications.playNotification("thread_complete")
+                
+                // Check: should NOT trigger batch_complete yet
+                if (completedThreadIds.size === threadIds.length) {
+                    notifications.playNotification("batch_complete")
+                }
+                
+                // Should only have 2 thread_complete calls, no batch_complete
+                expect(playNotificationMock).toHaveBeenCalledTimes(2)
+                const calls = playNotificationMock.mock.calls
+                const batchCalls = calls.filter((c: unknown[]) => c[0] === "batch_complete")
+                expect(batchCalls.length).toBe(0)
             })
         })
     })
