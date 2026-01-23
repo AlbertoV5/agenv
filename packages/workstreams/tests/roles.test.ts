@@ -117,37 +117,77 @@ describe("roles", () => {
       delete process.env.WORKSTREAM_ROLE // defaults to AGENT
     })
 
-    test("returns custom denial message for approve command", () => {
+    test("returns agent-friendly denial message for approve command", () => {
       const message = getRoleDenialMessage("approve")
       expect(message).toContain("Access denied")
-      expect(message).toContain("human-in-the-loop")
-      expect(message).toContain("Current role: AGENT")
-      expect(message).toContain("WORKSTREAM_ROLE")
+      expect(message).toContain("Ask the user to run `work approve <target>`")
     })
 
-    test("returns custom denial message for start command", () => {
+    test("returns agent-friendly denial message for start command", () => {
       const message = getRoleDenialMessage("start")
       expect(message).toContain("Access denied")
-      expect(message).toContain("Starting workstreams requires USER role")
-      expect(message).toContain("Current role: AGENT")
+      expect(message).toContain("Ask the user to run `work start`")
     })
 
-    test("returns custom denial message for complete command", () => {
+    test("returns agent-friendly denial message for complete command", () => {
       const message = getRoleDenialMessage("complete")
       expect(message).toContain("Access denied")
-      expect(message).toContain("Completing workstreams requires USER role")
+      expect(message).toContain("Ask the user to run `work complete`")
     })
 
-    test("returns generic message for unknown commands", () => {
+    test("returns generic agent-friendly message for unknown commands", () => {
       const message = getRoleDenialMessage("unknown")
       expect(message).toContain("Access denied")
-      expect(message).toContain("not available for AGENT role")
+      expect(message).toContain("Ask the user to run `work unknown`")
     })
 
-    test("includes current role in message as USER", () => {
+    test("does not leak WORKSTREAM_ROLE in agent denial messages", () => {
+      delete process.env.WORKSTREAM_ROLE // AGENT role
+      
+      const approveMsg = getRoleDenialMessage("approve")
+      const startMsg = getRoleDenialMessage("start")
+      const completeMsg = getRoleDenialMessage("complete")
+      const unknownMsg = getRoleDenialMessage("unknown")
+      
+      expect(approveMsg).not.toContain("WORKSTREAM_ROLE")
+      expect(startMsg).not.toContain("WORKSTREAM_ROLE")
+      expect(completeMsg).not.toContain("WORKSTREAM_ROLE")
+      expect(unknownMsg).not.toContain("WORKSTREAM_ROLE")
+    })
+
+    test("does not include role-changing instructions in agent denial messages", () => {
+      delete process.env.WORKSTREAM_ROLE // AGENT role
+      
+      const approveMsg = getRoleDenialMessage("approve")
+      const startMsg = getRoleDenialMessage("start")
+      const completeMsg = getRoleDenialMessage("complete")
+      
+      // Should not contain "export", "set", "Current role", or similar instructions
+      expect(approveMsg).not.toContain("export")
+      expect(approveMsg).not.toContain("Current role")
+      expect(startMsg).not.toContain("export")
+      expect(startMsg).not.toContain("Current role")
+      expect(completeMsg).not.toContain("export")
+      expect(completeMsg).not.toContain("Current role")
+    })
+
+    test("agent denial messages are actionable and direct agents to ask user", () => {
+      delete process.env.WORKSTREAM_ROLE // AGENT role
+      
+      const approveMsg = getRoleDenialMessage("approve")
+      const startMsg = getRoleDenialMessage("start")
+      const completeMsg = getRoleDenialMessage("complete")
+      
+      // Should tell agent to ask the user
+      expect(approveMsg).toContain("Ask the user")
+      expect(startMsg).toContain("Ask the user")
+      expect(completeMsg).toContain("Ask the user")
+    })
+
+    test("USER role denial messages are graceful", () => {
       process.env.WORKSTREAM_ROLE = "USER"
       const message = getRoleDenialMessage("unknown")
-      expect(message).toContain("Current role: USER")
+      expect(message).toContain("Access denied")
     })
   })
 

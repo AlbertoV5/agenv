@@ -67,7 +67,7 @@ describe("CLI Role Enforcement Integration", () => {
           }
           expect(exitCode).toBe(1)
           expect(errorOutput.join("\n")).toContain("Access denied")
-          expect(errorOutput.join("\n")).toContain("AGENT")
+          expect(errorOutput.join("\n")).toContain("Ask the user")
         })
 
         test(`rejects execution when role is explicitly AGENT`, async () => {
@@ -79,7 +79,7 @@ describe("CLI Role Enforcement Integration", () => {
           }
           expect(exitCode).toBe(1)
           expect(errorOutput.join("\n")).toContain("Access denied")
-          expect(errorOutput.join("\n")).toContain("AGENT")
+          expect(errorOutput.join("\n")).toContain("Ask the user")
         })
 
         test(`allows execution when role is USER`, async () => {

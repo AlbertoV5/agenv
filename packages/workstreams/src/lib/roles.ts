@@ -34,15 +34,15 @@ export const COMMAND_PERMISSIONS: Record<string, CommandPermission> = {
   approve: {
     allowedRoles: ["USER"],
     denialMessage:
-      "Approval commands require USER role to maintain human-in-the-loop control",
+      "Approval requires human oversight. Ask the user to run `work approve <target>`",
   },
   start: {
     allowedRoles: ["USER"],
-    denialMessage: "Starting workstreams requires USER role",
+    denialMessage: "Starting a workstream requires human approval. Ask the user to run `work start`",
   },
   complete: {
     allowedRoles: ["USER"],
-    denialMessage: "Completing workstreams requires USER role",
+    denialMessage: "Completing a workstream requires human approval. Ask the user to run `work complete`",
   },
 
   // Commands available to both roles (explicit for documentation)
@@ -93,9 +93,19 @@ export function canExecuteCommand(command: string): boolean {
 export function getRoleDenialMessage(command: string): string {
   const role = getCurrentRole()
   const permission = COMMAND_PERMISSIONS[command]
+  
+  if (role === "AGENT") {
+    // Agent-friendly message: tell them what to ask the user to do
+    const agentMessage =
+      permission?.denialMessage ||
+      `This command requires human approval. Ask the user to run \`work ${command}\``
+    return `Access denied: ${agentMessage}`
+  }
+  
+  // For USER role (shouldn't normally happen, but handle gracefully)
   const baseMessage =
-    permission?.denialMessage || `This command is not available for ${role} role`
-  return `Access denied: ${baseMessage}\n\nCurrent role: ${role}\nTo change role, set WORKSTREAM_ROLE environment variable:\n  export WORKSTREAM_ROLE=USER`
+    permission?.denialMessage || `This command is not available`
+  return `Access denied: ${baseMessage}`
 }
 
 /**

@@ -263,3 +263,50 @@ Update documentation to explain the role system.
 ---
 
 *Last updated: 2026-01-23*
+
+### Stage 04: Revision - Agent-Friendly Error Messages
+
+#### Stage Definition
+
+Update error messages for role-restricted commands to be agent-friendly. When an agent tries to run a USER-only command, the error message should instruct the agent to ask the user for help, NOT explain how to change the role (which would be counterproductive).
+
+#### Stage Constitution
+
+**Inputs:**
+- Role system from Stage 01 (`packages/workstreams/src/lib/roles.ts`)
+- `getRoleDenialMessage()` function that generates error messages
+
+**Structure:**
+- Modify denial messages to guide agents toward asking the user
+- Remove any mention of `WORKSTREAM_ROLE` environment variable from agent-facing errors
+- Keep technical details for USER role errors (when a user somehow gets denied)
+
+**Outputs:**
+- Updated `getRoleDenialMessage()` with agent-appropriate messaging
+- Error messages that say "ask the user to run X" instead of "set WORKSTREAM_ROLE=USER"
+
+#### Stage Questions
+
+- [x] What should the agent error message say? "This command requires human approval. Ask the user to run `work <command>`"
+- [x] Should we differentiate messages based on role? Yes - agents get "ask the user" message, users get technical details
+
+#### Stage Batches
+
+##### Batch 01: Error Message Updates
+
+###### Thread 01: Agent-Friendly Denial Messages
+
+**Summary:**
+Update the role denial message generation to produce agent-appropriate error messages that direct agents to ask users for help.
+
+**Details:**
+- Working package: `./packages/workstreams`
+- Update `getRoleDenialMessage()` in `src/lib/roles.ts`:
+  - For AGENT role: "Access denied: This command requires human approval. Please ask the user to run `work <command>` to proceed."
+  - Do NOT mention WORKSTREAM_ROLE or how to change roles
+  - Keep the message actionable - tell the agent exactly what to ask for
+- Update `COMMAND_PERMISSIONS` denial messages to be agent-friendly:
+  - `approve`: "Approval requires human oversight. Ask the user to run `work approve <target>`"
+  - `start`: "Starting a workstream requires human approval. Ask the user to run `work start`"
+  - `complete`: "Completing a workstream requires human approval. Ask the user to run `work complete`"
+- Add tests to verify error messages don't leak role-changing instructions

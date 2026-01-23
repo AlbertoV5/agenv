@@ -51,7 +51,7 @@ describe("approve command role enforcement", () => {
 
     expect(exitCode).toBe(1)
     expect(errorOutput).toContain("Access denied")
-    expect(errorOutput).toContain("AGENT")
+    expect(errorOutput).toContain("Ask the user")
   })
 
   it("should allow access for USER role", async () => {
@@ -120,6 +120,6 @@ describe("approve command role enforcement", () => {
 
     expect(exitCode).toBe(1)
     expect(errorOutput).toContain("Access denied")
-    expect(errorOutput).toContain("AGENT")
+    expect(errorOutput).toContain("Ask the user")
   })
 })
