@@ -6,13 +6,30 @@ import { createGitHubClient } from "./client";
 import { ensureGitHubAuth } from "./auth";
 
 /**
+ * Sanitizes a value for use in a GitHub label name.
+ * GitHub labels cannot contain commas and have a 50 character limit.
+ * @param value The raw value to sanitize
+ * @returns The sanitized value safe for use in labels
+ */
+export function sanitizeLabelName(value: string): string {
+  return value
+    .replace(/,/g, '')         // Remove commas (GitHub doesn't allow them)
+    .replace(/\s+/g, ' ')      // Normalize whitespace
+    .trim();
+}
+
+/**
  * Formats a label with the given prefix and value.
+ * Sanitizes the value to remove characters not allowed in GitHub labels.
  * @param prefix The label prefix (e.g., "stream:")
  * @param value The label value
- * @returns The formatted label (e.g., "stream:name")
+ * @returns The formatted label (e.g., "stream:name"), max 50 chars
  */
 export function formatLabel(prefix: string, value: string): string {
-  return `${prefix}${value}`;
+  const sanitized = sanitizeLabelName(value);
+  const label = `${prefix}${sanitized}`;
+  // GitHub labels have a 50 character limit
+  return label.length > 50 ? label.slice(0, 50) : label;
 }
 
 /**

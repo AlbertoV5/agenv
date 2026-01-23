@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "stream_id": "010-synthesis-agents",
-  "last_updated": "2026-01-23T22:51:18.352Z",
+  "last_updated": "2026-01-23T22:55:31.043Z",
   "tasks": [
     {
       "id": "01.01.01.01",
@@ -12,7 +12,12 @@
       "status": "pending",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T22:51:18.350Z",
-      "assigned_agent": "systems-engineer"
+      "assigned_agent": "systems-engineer",
+      "github_issue": {
+        "number": 36,
+        "url": "https://github.com/AlbertoV5/agenv/issues/36",
+        "state": "open"
+      }
     },
     {
       "id": "01.01.01.02",
@@ -67,7 +72,12 @@
       "status": "pending",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T22:51:18.350Z",
-      "assigned_agent": "systems-engineer"
+      "assigned_agent": "systems-engineer",
+      "github_issue": {
+        "number": 37,
+        "url": "https://github.com/AlbertoV5/agenv/issues/37",
+        "state": "open"
+      }
     },
     {
       "id": "01.02.01.02",
@@ -111,7 +121,12 @@
       "status": "pending",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T22:51:18.350Z",
-      "assigned_agent": "documentation-minimalist"
+      "assigned_agent": "documentation-minimalist",
+      "github_issue": {
+        "number": 38,
+        "url": "https://github.com/AlbertoV5/agenv/issues/38",
+        "state": "open"
+      }
     },
     {
       "id": "01.02.02.02",
@@ -166,7 +181,12 @@
       "status": "pending",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T22:51:18.350Z",
-      "assigned_agent": "default"
+      "assigned_agent": "default",
+      "github_issue": {
+        "number": 39,
+        "url": "https://github.com/AlbertoV5/agenv/issues/39",
+        "state": "open"
+      }
     },
     {
       "id": "01.02.03.02",
@@ -199,7 +219,12 @@
       "status": "pending",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T22:51:18.350Z",
-      "assigned_agent": "systems-engineer"
+      "assigned_agent": "systems-engineer",
+      "github_issue": {
+        "number": 40,
+        "url": "https://github.com/AlbertoV5/agenv/issues/40",
+        "state": "open"
+      }
     },
     {
       "id": "02.01.01.02",
@@ -254,7 +279,12 @@
       "status": "pending",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T22:51:18.350Z",
-      "assigned_agent": "systems-engineer"
+      "assigned_agent": "systems-engineer",
+      "github_issue": {
+        "number": 41,
+        "url": "https://github.com/AlbertoV5/agenv/issues/41",
+        "state": "open"
+      }
     },
     {
       "id": "02.01.02.02",
@@ -298,7 +328,12 @@
       "status": "pending",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T22:51:18.350Z",
-      "assigned_agent": "systems-engineer"
+      "assigned_agent": "systems-engineer",
+      "github_issue": {
+        "number": 42,
+        "url": "https://github.com/AlbertoV5/agenv/issues/42",
+        "state": "open"
+      }
     },
     {
       "id": "02.02.01.02",
@@ -353,7 +388,12 @@
       "status": "pending",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T22:51:18.350Z",
-      "assigned_agent": "systems-engineer"
+      "assigned_agent": "systems-engineer",
+      "github_issue": {
+        "number": 43,
+        "url": "https://github.com/AlbertoV5/agenv/issues/43",
+        "state": "open"
+      }
     },
     {
       "id": "02.02.02.02",
@@ -397,7 +437,12 @@
       "status": "pending",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T22:51:18.350Z",
-      "assigned_agent": "systems-engineer"
+      "assigned_agent": "systems-engineer",
+      "github_issue": {
+        "number": 44,
+        "url": "https://github.com/AlbertoV5/agenv/issues/44",
+        "state": "open"
+      }
     },
     {
       "id": "03.01.01.02",
@@ -452,7 +497,12 @@
       "status": "pending",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T22:51:18.350Z",
-      "assigned_agent": "systems-engineer"
+      "assigned_agent": "systems-engineer",
+      "github_issue": {
+        "number": 45,
+        "url": "https://github.com/AlbertoV5/agenv/issues/45",
+        "state": "open"
+      }
     },
     {
       "id": "03.01.02.02",
@@ -507,7 +557,12 @@
       "status": "pending",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T22:51:18.350Z",
-      "assigned_agent": "documentation-minimalist"
+      "assigned_agent": "documentation-minimalist",
+      "github_issue": {
+        "number": 46,
+        "url": "https://github.com/AlbertoV5/agenv/issues/46",
+        "state": "open"
+      }
     },
     {
       "id": "04.01.01.02",
