@@ -15,11 +15,16 @@
 
 ## Flow
 
-- prompt planner
+- create
 - approve plan
 - approve tasks
-- start workstream
-- continue work
-- approve stage
-- continue work
-- approve stage
+- start
+- Loop
+  - continue
+  - approve stage
+  - fix?
+- revision
+- approve revision
+- approve tasks
+- Loop
+- complete
