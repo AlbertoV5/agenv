@@ -5,6 +5,7 @@
  *   skills    - Install skills to agent directories
  *   hooks     - Install hooks to agent directories
  *   plugins   - Install plugins to agent directories
+ *   tools     - Install tools to agent directories
  */
 
 import {
@@ -22,6 +23,7 @@ const AGENV_HOME = process.env.HOME + "/.agenv"
 const AGENV_SKILLS = join(AGENV_HOME, "skills")
 const AGENV_HOOKS = join(AGENV_HOME, "hooks")
 const AGENV_PLUGINS = join(AGENV_HOME, "plugins")
+const AGENV_TOOLS = join(AGENV_HOME, "tools")
 
 // Target directories for different agents
 const TARGETS: Record<string, string> = {
@@ -48,6 +50,7 @@ Subcommands:
   skills     Install skills to agent directories
   hooks      Install hooks to agent settings.json
   plugins    Install plugins to agent directories
+  tools      Install tools to agent directories
 
 Run 'ag install <subcommand> --help' for more information.
 `)
@@ -589,6 +592,224 @@ function pluginsCommand(args: string[]): void {
   }
 }
 
+// ============================================================================
+// Tools Installation
+// ============================================================================
+
+// Target directories for tools
+const TOOLS_TARGETS: Record<string, string> = {
+  opencode: process.env.HOME + "/.config/opencode/tools",
+} as Record<string, string>
+
+function printToolsHelp(): void {
+  console.log(`
+ag install tools - Install tools to agent directories
+
+Usage:
+  ag install tools [options]
+
+Options:
+  --opencode     Install to ~/.config/opencode/tools (default)
+  --target PATH  Install to a custom directory
+  --clean        Remove ALL existing tools in target before installing
+  --list         List available tools without installing
+  --dry-run      Show what would be installed without making changes
+  --help, -h     Show this help message
+
+Examples:
+  ag install tools --opencode
+  ag install tools --clean --opencode
+  ag install tools --target ~/my-project/.opencode/tools
+  ag install tools --list
+`)
+}
+
+function listTools(): void {
+  console.log(`Available tools in ${AGENV_TOOLS}:`)
+  console.log("")
+
+  if (!existsSync(AGENV_TOOLS)) {
+    console.log(`${YELLOW}No tools directory found${NC}`)
+    return
+  }
+
+  const entries = readdirSync(AGENV_TOOLS)
+  for (const entry of entries) {
+    const toolPath = join(AGENV_TOOLS, entry)
+    const isDir = statSync(toolPath).isDirectory()
+    const ext = entry.split(".").pop()
+
+    if (isDir || ext === "ts" || ext === "js") {
+      console.log(`  ${entry}`)
+    }
+  }
+}
+
+function cleanToolsTarget(targetDir: string, dryRun: boolean): number {
+  if (!existsSync(targetDir)) return 0
+
+  let removedCount = 0
+  const entries = readdirSync(targetDir)
+
+  for (const entry of entries) {
+    const toolPath = join(targetDir, entry)
+    const isDir = statSync(toolPath).isDirectory()
+    const ext = entry.split(".").pop()
+
+    if (isDir || ext === "ts" || ext === "js") {
+      if (dryRun) {
+        console.log(`  [REMOVE] ${entry}`)
+      } else {
+        rmSync(toolPath, { recursive: true, force: true })
+        console.log(`  ${RED}✗${NC} ${entry} (removed)`)
+      }
+      removedCount++
+    }
+  }
+
+  if (removedCount > 0 && !dryRun) {
+    console.log(`${YELLOW}Removed ${removedCount} existing tools${NC}`)
+  }
+
+  return removedCount
+}
+
+function installToolsTo(
+  targetDir: string,
+  dryRun: boolean,
+  clean: boolean,
+): void {
+  if (!existsSync(AGENV_TOOLS)) {
+    console.error(
+      `${RED}Error: Source tools directory not found: ${AGENV_TOOLS}${NC}`,
+    )
+    process.exit(1)
+  }
+
+  const entries = readdirSync(AGENV_TOOLS).filter((e) => {
+    const toolPath = join(AGENV_TOOLS, e)
+    const isDir = statSync(toolPath).isDirectory()
+    const ext = e.split(".").pop()
+    return isDir || ext === "ts" || ext === "js"
+  })
+
+  if (entries.length === 0) {
+    console.log(`${YELLOW}No tools found in ${AGENV_TOOLS}${NC}`)
+    return
+  }
+
+  if (dryRun) {
+    console.log(`${YELLOW}[DRY RUN]${NC} Would install to: ${targetDir}`)
+  } else {
+    console.log(`Installing tools to: ${targetDir}`)
+    mkdirSync(targetDir, { recursive: true })
+  }
+
+  // Clean existing tools if requested
+  if (clean) {
+    if (dryRun) {
+      console.log(`${YELLOW}[DRY RUN]${NC} Would remove existing tools:`)
+    } else {
+      console.log("Removing existing tools...")
+    }
+    cleanToolsTarget(targetDir, dryRun)
+    console.log("")
+  }
+
+  if (dryRun) {
+    console.log("Would install:")
+  } else {
+    console.log("Installing:")
+  }
+
+  for (const entry of entries) {
+    const toolPath = join(AGENV_TOOLS, entry)
+    const targetTool = join(targetDir, entry)
+
+    if (dryRun) {
+      if (existsSync(targetTool) && !clean) {
+        console.log(`  [UPDATE] ${entry}`)
+      } else {
+        console.log(`  [NEW]    ${entry}`)
+      }
+    } else {
+      // Remove existing and copy fresh
+      if (existsSync(targetTool)) {
+        rmSync(targetTool, { recursive: true, force: true })
+      }
+      cpSync(toolPath, targetTool, { recursive: true })
+      console.log(`  ${GREEN}✓${NC} ${entry}`)
+    }
+  }
+
+  if (!dryRun) {
+    console.log(
+      `${GREEN}Done!${NC} Installed ${entries.length} tools to ${targetDir}`,
+    )
+  }
+}
+
+function toolsCommand(args: string[]): void {
+  const targets: (string | undefined)[] = []
+  let dryRun = false
+  let listOnly = false
+  let clean = false
+
+  let i = 0
+  while (i < args.length) {
+    const arg = args[i]
+    switch (arg) {
+      case "--opencode":
+        targets.push(TOOLS_TARGETS.opencode!)
+        break
+      case "--target":
+        i++
+        if (!args[i]) {
+          console.error(`${RED}Error: --target requires a path${NC}`)
+          process.exit(1)
+        }
+        targets.push(args[i])
+        break
+      case "--clean":
+        clean = true
+        break
+      case "--list":
+        listOnly = true
+        break
+      case "--dry-run":
+        dryRun = true
+        break
+      case "--help":
+      case "-h":
+        printToolsHelp()
+        process.exit(0)
+      default:
+        console.error(`${RED}Error: Unknown option: ${arg}${NC}`)
+        printToolsHelp()
+        process.exit(1)
+    }
+    i++
+  }
+
+  // Handle list mode
+  if (listOnly) {
+    listTools()
+    return
+  }
+
+  // Default to OpenCode if no targets specified
+  if (targets.length === 0) {
+    targets.push(TOOLS_TARGETS.opencode!)
+  }
+
+  // Install to each target
+  for (const target of targets) {
+    if (!target) continue
+    installToolsTo(target, dryRun, clean)
+    console.log("")
+  }
+}
+
 function skillsCommand(args: string[]): void {
   const targets: (string | undefined)[] = []
   let dryRun = false
@@ -692,9 +913,12 @@ export function main(argv: string[]): void {
     case "plugins":
       pluginsCommand(args.slice(1))
       break
+    case "tools":
+      toolsCommand(args.slice(1))
+      break
     default:
       console.error(`Error: Unknown subcommand "${subcommand}"`)
-      console.error("\nAvailable subcommands: skills, hooks, plugins")
+      console.error("\nAvailable subcommands: skills, hooks, plugins, tools")
       console.error("\nRun 'ag install --help' for usage information.")
       process.exit(1)
   }

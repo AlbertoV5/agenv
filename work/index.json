@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-01-24T21:55:12.047Z",
-  "current_stream": "011-synthesis-output-parsing",
+  "last_updated": "2026-01-24T22:16:38.099Z",
+  "current_stream": "012-migrate-github-issues-to-threads",
   "streams": [
     {
       "id": "000-web-visualization",
@@ -708,10 +708,16 @@
         ]
       },
       "created_at": "2026-01-24T21:49:31.323Z",
-      "updated_at": "2026-01-24T21:49:31.323Z",
+      "updated_at": "2026-01-24T22:16:38.099Z",
       "path": "work/012-migrate-github-issues-to-threads",
       "generated_by": {
         "workstreams": "0.1.0"
+      },
+      "approval": {
+        "status": "approved",
+        "approved_at": "2026-01-24T21:56:24.874Z",
+        "approved_by": "user",
+        "plan_hash": "34b8d04c44a9ee964c82fec65db08964a718fae4fcf7bc5bdc91bf9c92788000"
       }
     }
   ]

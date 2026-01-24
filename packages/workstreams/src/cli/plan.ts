@@ -29,47 +29,27 @@ Usage:
   work plan [options]
 
 Description:
-  Opens the planning opencode session for the current (or specified) workstream.
-  If a planning session exists, it will be resumed using opencode.
-  
-  Use --set to manually store a planning session ID if you created one outside
-  of the normal workflow.
+  Resumes the planning session for a workstream. A planning session links an
+  opencode conversation to a workstream, allowing you to resume later.
+
+  To link a session from within opencode, use the workstream_link_planning_session
+  tool after creating a workstream.
 
 Options:
   --stream, -s <id>    Workstream ID or name (uses current if not specified)
-  --set <sessionId>    Set the planning session ID for the workstream
+  --set <sessionId>    Link a session ID to the workstream (used by tools)
   --repo-root, -r      Repository root (auto-detected if omitted)
   --help, -h           Show this help message
 
-Manual Workflow for Capturing Planning Session:
-  If you run the planning agent manually using opencode, you can capture
-  the session ID for later resumption:
-  
-  1. Create a workstream:
-     work create --name my-feature --stages 3
-  
-  2. Run the planning agent manually:
-     opencode
-     # The planning agent will display a session ID (e.g., "ses_abc123xyz")
-  
-  3. Capture the session ID:
-     work plan --set ses_abc123xyz
-  
-  4. Later, resume the planning session:
-     work plan
+Workflow:
+  1. Open opencode and discuss the problem
+  2. Ask agent to create workstream with planning skill
+  3. Use the workstream_link_planning_session tool to link session
+  4. Later, resume with: work plan
 
 Examples:
-  # Resume planning session for current workstream
-  work plan
-
-  # Resume planning session for specific workstream
-  work plan --stream "001-my-feature"
-
-  # Set planning session ID for current workstream
-  work plan --set "ses_abc123xyz"
-
-  # Set planning session ID for specific workstream
-  work plan --stream "001-my-feature" --set "ses_abc123xyz"
+  work plan                        # Resume planning session
+  work plan --stream "001-feature" # Resume specific workstream
 `)
 }
 
@@ -238,7 +218,7 @@ export function main(argv: string[] = process.argv): void {
     process.exit(1)
   }
 
-  // Handle --set flag
+  // Handle flags
   if (cliArgs.set) {
     handleSetSession(repoRoot, resolvedStreamId, cliArgs.set)
   } else {

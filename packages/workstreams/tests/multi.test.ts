@@ -288,7 +288,6 @@ describe("multi cli", () => {
                 threadTitle: "Test Thread",
                 streamId: "001-test",
                 threadId: "01.01.01",
-                synthesisPromptPath: "/path/to/synthesis.md",
             })
 
             // Working agent should appear BEFORE synthesis agent in command
@@ -309,7 +308,6 @@ describe("multi cli", () => {
                 threadTitle: "Test Thread",
                 streamId: "001-test",
                 threadId: "01.01.01",
-                synthesisPromptPath: "/path/to/synthesis.md",
             })
 
             // Working agent's opencode run command should NOT have --format json
@@ -334,7 +332,6 @@ describe("multi cli", () => {
                 threadTitle: "Test Thread",
                 streamId: "001-test",
                 threadId: "01.01.01",
-                synthesisPromptPath: "/path/to/synthesis.md",
             })
 
             // Synthesis section should have --format json (headless mode)
@@ -353,7 +350,6 @@ describe("multi cli", () => {
                 threadTitle: "Test Thread",
                 streamId: "001-test",
                 threadId: "01.01.01",
-                synthesisPromptPath: "/path/to/synthesis.md",
             })
 
             // Should resume with WORK_SESSION_ID (working agent), not synthesis
@@ -370,7 +366,6 @@ describe("multi cli", () => {
                 threadTitle: "Test Thread",
                 streamId: "001-test",
                 threadId: "01.01.01",
-                synthesisPromptPath: "/path/to/synthesis.md",
             })
 
             // Should write working session ID to session file
@@ -387,7 +382,6 @@ describe("multi cli", () => {
                 threadTitle: "Test Thread",
                 streamId: "001-test",
                 threadId: "01.01.01",
-                synthesisPromptPath: "/path/to/synthesis.md",
             })
 
             // Should write synthesis output to JSON file (raw JSONL)
@@ -405,7 +399,6 @@ describe("multi cli", () => {
                 threadTitle: "Test Thread",
                 streamId: "001-test",
                 threadId: "01.01.01",
-                synthesisPromptPath: "/path/to/synthesis.md",
             })
 
             expect(cmd).toContain("Mode: Post-Session Synthesis")

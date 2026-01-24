@@ -725,8 +725,6 @@ export interface PostSynthesisOptions {
   streamId: string
   /** Thread ID for file paths */
   threadId: string
-  /** Path to the synthesis prompt file */
-  synthesisPromptPath: string
 }
 
 /**
@@ -768,7 +766,6 @@ export function buildPostSynthesisCommand(options: PostSynthesisOptions): string
     threadTitle,
     streamId,
     threadId,
-    synthesisPromptPath,
   } = options
 
   if (workingModels.length === 0) {
@@ -780,7 +777,6 @@ export function buildPostSynthesisCommand(options: PostSynthesisOptions): string
 
   // Escape paths and title for shell safety
   const escapedPath = promptPath.replace(/'/g, "'\\''")
-  const escapedSynthesisPromptPath = synthesisPromptPath.replace(/'/g, "'\\''")
   const truncated = truncateTitle(threadTitle, 32)
   const escapedTitle = escapeForShell(truncated)
 
@@ -811,7 +807,6 @@ export function buildPostSynthesisCommand(options: PostSynthesisOptions): string
   const synthesisModelAttempts = buildPostSynthesisSynthesisAgentAttempts(
     port,
     synthesisModels,
-    escapedSynthesisPromptPath,
     extractedContextPath,
     synthesisJsonPath,
   )
@@ -962,7 +957,6 @@ fi`
 function buildPostSynthesisSynthesisAgentAttempts(
   port: number,
   models: NormalizedModelSpec[],
-  synthesisPromptPath: string,
   contextPath: string,
   outputJsonPath: string,
 ): string {
@@ -974,7 +968,7 @@ function buildPostSynthesisSynthesisAgentAttempts(
       // Build the synthesis command with context injection
       // The synthesis prompt file should contain placeholders or instructions
       // We pipe the prompt with context appended
-      const synthCommand = `(cat "${synthesisPromptPath}"; echo ""; echo "## Working Agent Session Context"; echo ""; cat "${contextPath}" 2>/dev/null || echo "(no context available)") | opencode run --port ${port} --model "${m.model}"${variantFlag} --format json > "${outputJsonPath}" 2>&1`
+      const synthCommand = `(echo "You are a synthesis agent reviewing a completed working agent session. Use the synthesizing-workstreams skill to continue"; echo ""; echo "## Working Agent Session Context"; echo ""; echo "The working agent session context follows below. Analyze it and provide your summary."; echo ""; cat "${contextPath}" 2>/dev/null || echo "(no context available)") | opencode run --port ${port} --model "${m.model}"${variantFlag} --format json > "${outputJsonPath}" 2>&1`
 
       if (i === 0) {
         return `

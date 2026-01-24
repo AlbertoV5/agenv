@@ -661,8 +661,6 @@ export interface SynthesisAgentDefinitionYaml {
   description: string
   best_for: string
   models: ModelSpec[] // List of models to try in order on failure
-  /** Optional path to synthesis prompt file (relative to workdir or absolute) */
-  prompt_path?: string
 }
 
 /**
@@ -700,7 +698,6 @@ export interface ThreadInfo {
   // Synthesis agent fields (optional - if present, post-session synthesis mode is enabled)
   synthesisAgentName?: string
   synthesisModels?: NormalizedModelSpec[] // List of synthesis models to try
-  synthesisPromptPath?: string // Path to the synthesis prompt file
 }
 
 /**

@@ -16,9 +16,12 @@ Your scope is **planning only** — you do not implement code. Follow this workf
 5. **Fill out TASKS.md** — Define task descriptions and assign agents to threads.
 6. **Review TASKS.md** — Ask user to review the tasks and assignments.
 7. **Approve Tasks** — User runs `work approve tasks`. This serializes tasks and generates prompts automatically.
-8. **Handoff** — Ask user to run agents.
+8. **Link Session** — Use `workstream_link_planning_session` tool to link this session to the workstream.
+9. **Handoff** — Ask user to run agents.
 
 **CRITICAL:** Steps 3, 4, 6, and 7 are review checkpoints. You MUST wait for explicit user confirmation before proceeding past each checkpoint. Never assume approval.
+
+**IMPORTANT:** Always use the `workstream_link_planning_session` tool after task approval. This allows the user to resume this planning conversation later with `work plan`.
 
 ---
 

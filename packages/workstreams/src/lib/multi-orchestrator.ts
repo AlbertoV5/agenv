@@ -8,7 +8,7 @@
 import { join } from "path"
 import { existsSync } from "fs"
 import { getWorkDir } from "./repo.ts"
-import { loadAgentsConfig, getAgentModels, getSynthesisAgentModels, getSynthesisPromptPath } from "./agents-yaml.ts"
+import { loadAgentsConfig, getAgentModels, getSynthesisAgentModels } from "./agents-yaml.ts"
 import type { SynthesisAgentDefinitionYaml, AgentsConfigYaml } from "./types.ts"
 import { discoverThreadsInBatch } from "./tasks.ts"
 import {
@@ -151,7 +151,6 @@ export function collectThreadInfoFromTasks(
     if (synthesisAgent && synthesisModels && synthesisModels.length > 0) {
       threadInfo.synthesisAgentName = synthesisAgent.name
       threadInfo.synthesisModels = synthesisModels
-      threadInfo.synthesisPromptPath = getSynthesisPromptPath(repoRoot, agentsConfig!, synthesisAgent.name)
     }
 
     threads.push(threadInfo)
@@ -189,7 +188,7 @@ export function buildThreadRunCommand(
   const paneTitle = buildPaneTitle(thread)
 
   // Check if post-session synthesis is enabled for this thread
-  if (thread.synthesisModels && thread.synthesisModels.length > 0 && thread.synthesisPromptPath) {
+  if (thread.synthesisModels && thread.synthesisModels.length > 0) {
     return buildPostSynthesisCommand({
       port,
       workingModels: thread.models,
@@ -198,7 +197,6 @@ export function buildThreadRunCommand(
       threadTitle: paneTitle,
       streamId,
       threadId: thread.threadId,
-      synthesisPromptPath: thread.synthesisPromptPath,
     })
   }
 
