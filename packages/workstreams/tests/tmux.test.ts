@@ -119,7 +119,7 @@ describe("tmux lib", () => {
             const result = await waitForAllPanesExit(sessionName, 100, 2000)
             expect(result).not.toBeNull()
             expect(result).toHaveLength(1)
-            expect(result![0].paneDead).toBe(true)
+            expect(result![0]!.paneDead).toBe(true)
         })
 
         test("waitForAllPanesExit times out if panes stay alive", async () => {

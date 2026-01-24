@@ -6,6 +6,33 @@
  *
  * Supports multiple models per agent with optional variants for retry logic.
  * Agent-to-task assignments are stored in tasks.json (Task.assigned_agent).
+ *
+ * ## Schema
+ *
+ * The agents.yaml file supports two main sections:
+ *
+ * 1. `agents`: List of working agents (perform tasks)
+ * 2. `synthesis_agents`: (Optional) List of synthesis agents (orchestrate and summarize)
+ *
+ * Example configuration:
+ *
+ * ```yaml
+ * agents:
+ *   - name: "full-stack"
+ *     description: "General purpose developer"
+ *     best_for: "features, bugs, refactoring"
+ *     models:
+ *       - model: "claude-3-5-sonnet-20241022"
+ *       - model: "gpt-4o"
+ *         variant: "retry"
+ *
+ * synthesis_agents:
+ *   - name: "synthesis"
+ *     description: "Summarizes workstream sessions"
+ *     best_for: "tracking, reporting"
+ *     models:
+ *       - "gemini-1.5-pro-002"
+ * ```
  */
 
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs"
@@ -14,6 +41,7 @@ import { parse as parseYaml, stringify as stringifyYaml } from "yaml"
 import type {
     AgentsConfigYaml,
     AgentDefinitionYaml,
+    SynthesisAgentDefinitionYaml,
     ModelSpec,
     NormalizedModelSpec,
 } from "./types.ts"
@@ -39,6 +67,12 @@ export function normalizeModelSpec(spec: ModelSpec): NormalizedModelSpec {
 
 /**
  * Parse agents.yaml content to extract AgentsConfigYaml
+ *
+ * Validates the YAML structure and ensures all required fields are present.
+ * Also parses and validates the optional `synthesis_agents` section if present.
+ *
+ * @param content - Raw YAML string content
+ * @returns Object containing the parsed config (if successful) and any validation errors
  */
 export function parseAgentsYaml(content: string): {
     config: AgentsConfigYaml | null
@@ -129,7 +163,89 @@ export function parseAgentsYaml(content: string): {
             })
         }
 
-        return { config: { agents }, errors }
+        // Parse synthesis_agents if present
+        const synthesisAgents: SynthesisAgentDefinitionYaml[] = []
+
+        if (parsed.synthesis_agents !== undefined) {
+            if (!Array.isArray(parsed.synthesis_agents)) {
+                errors.push("Invalid YAML: 'synthesis_agents' must be an array if present")
+            } else {
+                for (let i = 0; i < parsed.synthesis_agents.length; i++) {
+                    const agent = parsed.synthesis_agents[i]
+                    const prefix = `Synthesis agent ${i + 1}`
+
+                    if (!agent || typeof agent !== "object") {
+                        errors.push(`${prefix}: expected object`)
+                        continue
+                    }
+
+                    if (!agent.name || typeof agent.name !== "string") {
+                        errors.push(`${prefix}: missing or invalid 'name'`)
+                        continue
+                    }
+
+                    if (!agent.description || typeof agent.description !== "string") {
+                        errors.push(`Synthesis agent "${agent.name}": missing or invalid 'description'`)
+                        continue
+                    }
+
+                    if (!agent.best_for || typeof agent.best_for !== "string") {
+                        errors.push(`Synthesis agent "${agent.name}": missing or invalid 'best_for'`)
+                        continue
+                    }
+
+                    if (!Array.isArray(agent.models) || agent.models.length === 0) {
+                        errors.push(`Synthesis agent "${agent.name}": 'models' must be a non-empty array`)
+                        continue
+                    }
+
+                    // Validate each model (same logic as regular agents)
+                    const validModels: ModelSpec[] = []
+                    for (let j = 0; j < agent.models.length; j++) {
+                        const model = agent.models[j]
+                        let modelStr: string
+
+                        if (typeof model === "string") {
+                            modelStr = model
+                            validModels.push(model)
+                        } else if (model && typeof model === "object" && model.model) {
+                            modelStr = model.model
+                            validModels.push({ model: model.model, variant: model.variant })
+                        } else {
+                            errors.push(
+                                `Synthesis agent "${agent.name}": model ${j + 1} must be a string or object with 'model' field`
+                            )
+                            continue
+                        }
+
+                        if (!isValidModelFormat(modelStr)) {
+                            errors.push(
+                                `Synthesis agent "${agent.name}": model "${modelStr}" is not in provider/model format`
+                            )
+                        }
+                    }
+
+                    if (validModels.length === 0) {
+                        errors.push(`Synthesis agent "${agent.name}": no valid models found`)
+                        continue
+                    }
+
+                    synthesisAgents.push({
+                        name: agent.name,
+                        description: agent.description,
+                        best_for: agent.best_for,
+                        models: validModels,
+                    })
+                }
+            }
+        }
+
+        const config: AgentsConfigYaml = { agents }
+        if (synthesisAgents.length > 0) {
+            config.synthesis_agents = synthesisAgents
+        }
+
+        return { config, errors }
     } catch (e) {
         errors.push(`YAML parse error: ${e instanceof Error ? e.message : String(e)}`)
         return { config: null, errors }
@@ -225,4 +341,87 @@ export function getPrimaryModel(
 ): NormalizedModelSpec | null {
     const models = getAgentModels(config, agentName)
     return models.length > 0 ? models[0]! : null
+}
+
+/**
+ * Get a synthesis agent by name from YAML config
+ * Returns null if not found
+ *
+ * @param config - Parsed agents configuration
+ * @param name - Name of the synthesis agent to find
+ * @returns The synthesis agent definition or null
+ */
+export function getSynthesisAgent(
+    config: AgentsConfigYaml,
+    name: string
+): SynthesisAgentDefinitionYaml | null {
+    if (!config.synthesis_agents) {
+        return null
+    }
+    return config.synthesis_agents.find((a) => a.name === name) || null
+}
+
+/**
+ * Get the default (first) synthesis agent from YAML config
+ * Returns null if no synthesis agents are defined
+ *
+ * @param config - Parsed agents configuration
+ * @returns The first synthesis agent in the list or null
+ */
+export function getDefaultSynthesisAgent(
+    config: AgentsConfigYaml
+): SynthesisAgentDefinitionYaml | null {
+    if (!config.synthesis_agents || config.synthesis_agents.length === 0) {
+        return null
+    }
+    return config.synthesis_agents[0]!
+}
+
+/**
+ * List all synthesis agents from YAML config
+ */
+export function listSynthesisAgents(
+    config: AgentsConfigYaml
+): SynthesisAgentDefinitionYaml[] {
+    return config.synthesis_agents || []
+}
+
+/**
+ * Get all models for a synthesis agent as normalized specs
+ */
+export function getSynthesisAgentModels(
+    config: AgentsConfigYaml,
+    agentName: string
+): NormalizedModelSpec[] {
+    const agent = getSynthesisAgent(config, agentName)
+    if (!agent) {
+        return []
+    }
+    return agent.models.map(normalizeModelSpec)
+}
+
+/**
+ * Get the synthesis prompt path for a synthesis agent
+ * Returns the configured path or a default path based on workdir
+ *
+ * @param repoRoot - Repository root path
+ * @param config - Parsed agents configuration
+ * @param agentName - Name of the synthesis agent
+ * @returns Absolute path to the synthesis prompt file
+ */
+export function getSynthesisPromptPath(
+    repoRoot: string,
+    config: AgentsConfigYaml,
+    agentName: string
+): string {
+    const agent = getSynthesisAgent(config, agentName)
+    if (agent?.prompt_path) {
+        // If prompt_path is relative, resolve against workdir
+        if (!agent.prompt_path.startsWith("/")) {
+            return join(getWorkDir(repoRoot), agent.prompt_path)
+        }
+        return agent.prompt_path
+    }
+    // Default synthesis prompt location
+    return join(getWorkDir(repoRoot), "prompts", "synthesis", `${agentName}.md`)
 }

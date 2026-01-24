@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-01-23T22:28:36.576Z",
-  "current_stream": "009-workstreams-ux-improvements",
+  "last_updated": "2026-01-24T01:33:46.673Z",
+  "current_stream": "010-synthesis-agents",
   "streams": [
     {
       "id": "000-web-visualization",
@@ -548,6 +548,88 @@
       "github": {
         "branch": "workstream/009-workstreams-ux-improvements",
         "completed_at": "2026-01-23T22:28:36.576Z"
+      },
+      "status": "completed"
+    },
+    {
+      "id": "010-synthesis-agents",
+      "name": "synthesis-agents",
+      "order": 10,
+      "size": "medium",
+      "session_estimated": {
+        "length": 4,
+        "unit": "session",
+        "session_minutes": [
+          30,
+          45
+        ],
+        "session_iterations": [
+          4,
+          8
+        ]
+      },
+      "created_at": "2026-01-23T22:40:48.401Z",
+      "updated_at": "2026-01-24T01:33:46.673Z",
+      "path": "work/010-synthesis-agents",
+      "generated_by": {
+        "workstreams": "0.1.0"
+      },
+      "approval": {
+        "status": "approved",
+        "approved_at": "2026-01-23T22:49:13.599Z",
+        "approved_by": "user",
+        "plan_hash": "359756d9bf40c38b18991dd4bc3fcf20d2bb2eb027dfd308e9449fe0487992f2",
+        "tasks": {
+          "status": "approved",
+          "approved_at": "2026-01-24T01:15:11.828Z",
+          "task_count": 154
+        },
+        "stages": {
+          "1": {
+            "status": "approved",
+            "approved_at": "2026-01-23T23:04:43.951Z",
+            "approved_by": "user"
+          },
+          "2": {
+            "status": "approved",
+            "approved_at": "2026-01-23T23:13:47.723Z",
+            "approved_by": "user"
+          },
+          "3": {
+            "status": "approved",
+            "approved_at": "2026-01-23T23:27:06.053Z",
+            "approved_by": "user"
+          },
+          "4": {
+            "status": "approved",
+            "approved_at": "2026-01-23T23:34:13.313Z",
+            "approved_by": "user"
+          },
+          "5": {
+            "status": "approved",
+            "approved_at": "2026-01-24T00:07:23.917Z",
+            "approved_by": "user"
+          },
+          "6": {
+            "status": "approved",
+            "approved_at": "2026-01-24T00:42:23.385Z",
+            "approved_by": "user"
+          },
+          "7": {
+            "status": "approved",
+            "approved_at": "2026-01-24T01:02:25.612Z",
+            "approved_by": "user"
+          },
+          "8": {
+            "status": "approved",
+            "approved_at": "2026-01-24T01:28:32.420Z",
+            "approved_by": "user"
+          }
+        }
+      },
+      "github": {
+        "branch": "workstream/010-synthesis-agents",
+        "completed_at": "2026-01-24T01:33:46.673Z"
       },
       "status": "completed"
     }

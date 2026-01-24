@@ -211,6 +211,48 @@ Skills are agent-specific instructions stored in `~/.agenv/skills/`. Each skill 
 
 Skills are installed to agent directories using `ag install skills`.
 
+## Synthesis Agents
+
+Synthesis agents are optional observer agents that run after working agent sessions to generate summaries. When enabled, `work multi` executes each thread in a two-phase process:
+
+1. **Working Phase**: The working agent runs with full TUI visibility, allowing the user to interact with the session directly.
+2. **Synthesis Phase**: After the working agent completes, the synthesis agent runs headless (in the background) to analyze the session and generate a summary.
+
+### Enabling Synthesis Agents
+
+1. Define synthesis agents in `work/agents.yaml`:
+
+```yaml
+synthesis_agents:
+  - name: batch-synthesizer
+    description: Summarizes working agent outputs after thread completion.
+    best_for: Generating concise summaries of completed work.
+    models: [anthropic/claude-sonnet-4-5]
+```
+
+2. Enable synthesis in `work/notifications.json` (opt-in):
+
+```json
+{
+  "synthesis": {
+    "enabled": true
+  }
+}
+```
+
+### Disabling Synthesis Agents
+
+To disable synthesis agents, set `enabled: false` in `work/notifications.json` or remove the `synthesis_agents` section from `agents.yaml`. When disabled, `work multi` runs working agents normally without the post-session synthesis phase.
+
+### How It Works
+
+- The first synthesis agent in the list is used automatically
+- The working agent runs first, and its session is tracked as the primary session
+- Synthesis runs headless after the working agent completes
+- Users always resume into the **working agent** session for review
+- Synthesis output is stored in `threads.json` under `synthesisOutput`
+- Future TTS integration will read synthesis summaries for audio notifications
+
 ## Usage from Agent Skills
 
 Agent skills can use agenv packages by:

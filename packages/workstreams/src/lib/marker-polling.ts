@@ -5,8 +5,8 @@
  * Used by the multi command to track thread completion and trigger notifications.
  */
 
-import { existsSync, unlinkSync } from "fs"
-import { getCompletionMarkerPath, getSessionFilePath } from "./opencode.ts"
+import { existsSync, unlinkSync, readFileSync } from "fs"
+import { getCompletionMarkerPath, getSessionFilePath, getSynthesisOutputPath, getWorkingAgentSessionPath } from "./opencode.ts"
 import type { NotificationTracker } from "./notifications.ts"
 
 /**
@@ -19,6 +19,8 @@ export interface MarkerPollingConfig {
   notificationTracker: NotificationTracker | null
   /** Polling interval in milliseconds (default: 500) */
   pollIntervalMs?: number
+  /** Stream ID for reading synthesis output files (optional, enables synthesis notifications) */
+  streamId?: string
 }
 
 /**
@@ -66,6 +68,36 @@ export function cleanupSessionFiles(threadIds: string[]): void {
 }
 
 /**
+ * Clean up synthesis-related temp files for all threads
+ * Called when batch completes to remove:
+ * - /tmp/workstream-{streamId}-{threadId}-synthesis.txt (synthesis output)
+ * - /tmp/workstream-{streamId}-{threadId}-working-session.txt (working agent session)
+ */
+export function cleanupSynthesisFiles(streamId: string, threadIds: string[]): void {
+  for (const threadId of threadIds) {
+    // Clean up synthesis output file
+    const synthesisPath = getSynthesisOutputPath(streamId, threadId)
+    try {
+      if (existsSync(synthesisPath)) {
+        unlinkSync(synthesisPath)
+      }
+    } catch {
+      // Ignore cleanup errors - files may already be deleted
+    }
+
+    // Clean up working agent session file
+    const workingSessionPath = getWorkingAgentSessionPath(streamId, threadId)
+    try {
+      if (existsSync(workingSessionPath)) {
+        unlinkSync(workingSessionPath)
+      }
+    } catch {
+      // Ignore cleanup errors - files may already be deleted
+    }
+  }
+}
+
+/**
  * Create a new polling state
  */
 export function createPollingState(): MarkerPollingState {
@@ -79,7 +111,8 @@ export function createPollingState(): MarkerPollingState {
  * Poll for marker files to detect thread completion
  *
  * Watches for completion marker files created by opencode when a thread finishes.
- * This detects when `opencode run` exits (before session resume) - not when pane closes.
+ * With post-session synthesis, the marker is written AFTER synthesis completes,
+ * so synthesis output is available when notifications fire.
  *
  * @param config Polling configuration
  * @param state Polling state (can be modified externally to stop polling)
@@ -89,7 +122,7 @@ export async function pollMarkerFiles(
   config: MarkerPollingConfig,
   state: MarkerPollingState,
 ): Promise<void> {
-  const { threadIds, notificationTracker, pollIntervalMs = 500 } = config
+  const { threadIds, notificationTracker, pollIntervalMs = 500, streamId } = config
 
   while (state.active) {
     for (const threadId of threadIds) {
@@ -98,8 +131,27 @@ export async function pollMarkerFiles(
       const markerPath = getCompletionMarkerPath(threadId)
       if (existsSync(markerPath)) {
         state.completedThreadIds.add(threadId)
-        // Play thread_complete notification (with deduplication)
-        notificationTracker?.playThreadComplete(threadId)
+        
+        // Check for synthesis output (only if streamId provided)
+        let synthesisOutput: string | undefined
+        if (streamId) {
+          const synthesisPath = getSynthesisOutputPath(streamId, threadId)
+          if (existsSync(synthesisPath)) {
+            try {
+              synthesisOutput = readFileSync(synthesisPath, "utf-8").trim()
+            } catch {
+              // Ignore read errors, synthesisOutput stays undefined
+            }
+          }
+        }
+        
+        // If synthesis output exists, play synthesis notification with output
+        // Otherwise, play regular thread_complete notification
+        if (synthesisOutput) {
+          notificationTracker?.playSynthesisComplete(threadId, synthesisOutput)
+        } else {
+          notificationTracker?.playThreadComplete(threadId)
+        }
       }
     }
 

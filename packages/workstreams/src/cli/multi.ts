@@ -9,7 +9,7 @@
 import { existsSync, readFileSync } from "fs"
 import { getRepoRoot } from "../lib/repo.ts"
 import { loadIndex, getResolvedStream } from "../lib/index.ts"
-import { loadAgentsConfig } from "../lib/agents-yaml.ts"
+import { loadAgentsConfig, getDefaultSynthesisAgent, getSynthesisAgent, getSynthesisAgentModels } from "../lib/agents-yaml.ts"
 import {
   readTasksFile,
   parseTaskId,
@@ -38,13 +38,17 @@ import {
   buildRetryRunCommand,
   buildServeCommand,
   getSessionFilePath,
+  getWorkingAgentSessionPath,
+  getSynthesisOutputPath,
 } from "../lib/opencode.ts"
 import { NotificationTracker } from "../lib/notifications.ts"
-import { updateThreadMetadataLocked } from "../lib/threads.ts"
+import { isSynthesisEnabled, getSynthesisAgentOverride } from "../lib/synthesis/config.ts"
+import { updateThreadMetadataLocked, setSynthesisOutput } from "../lib/threads.ts"
 import { parseBatchId } from "../lib/cli-utils.ts"
 import {
   collectThreadInfoFromTasks,
   buildPaneTitle,
+  buildThreadRunCommand,
   setupTmuxSession,
   setupGridController,
   setupKillSessionKeybind,
@@ -55,6 +59,7 @@ import {
   stopPolling,
   cleanupCompletionMarkers,
   cleanupSessionFiles,
+  cleanupSynthesisFiles,
 } from "../lib/marker-polling.ts"
 
 const DEFAULT_PORT = 4096
@@ -232,13 +237,31 @@ function printDryRunOutput(
   port: number,
   noServer: boolean,
   repoRoot: string,
+  synthesisConfigEnabled: boolean,
+  synthesisAgentName: string | null,
 ): void {
+  // Check if synthesis mode is enabled based on config and agent availability
+  const synthesisEnabled = synthesisConfigEnabled && threads.some(t => t.synthesisModels && t.synthesisModels.length > 0)
+  
   console.log("=== DRY RUN ===\n")
   console.log(`Stream: ${stream.id}`)
   console.log(`Batch: ${batchId} (${stageName} -> ${batchName})`)
   console.log(`Threads: ${threads.length}`)
   console.log(`Session: ${sessionName}`)
   console.log(`Port: ${port}`)
+  console.log(`Synthesis config: work/synthesis.json`)
+  if (synthesisConfigEnabled) {
+    if (synthesisAgentName) {
+      console.log(`Synthesis: enabled (${synthesisAgentName})`)
+      if (synthesisEnabled) {
+        console.log(`Mode: Post-Session Synthesis (working agent runs first with TUI, synthesis runs after)`)
+      }
+    } else {
+      console.log(`Synthesis: enabled but no agent configured`)
+    }
+  } else {
+    console.log(`Synthesis: disabled`)
+  }
   console.log("")
 
   if (!noServer) {
@@ -249,13 +272,7 @@ function printDryRunOutput(
 
   console.log("# Create tmux session (Window 0: Dashboard)")
   const firstThread = threads[0]!
-  const firstCmd = buildRetryRunCommand(
-    port,
-    firstThread.models,
-    firstThread.promptPath,
-    buildPaneTitle(firstThread),
-    firstThread.threadId,
-  )
+  const firstCmd = buildThreadRunCommand(firstThread, port, stream.id)
   console.log(buildCreateSessionCommand(sessionName, "Dashboard", firstCmd))
   console.log("")
 
@@ -263,13 +280,7 @@ function printDryRunOutput(
   if (threads.length > 1) {
     for (let i = 1; i < threads.length; i++) {
       const thread = threads[i]!
-      const cmd = buildRetryRunCommand(
-        port,
-        thread.models,
-        thread.promptPath,
-        buildPaneTitle(thread),
-        thread.threadId,
-      )
+      const cmd = buildThreadRunCommand(thread, port, stream.id)
       console.log(buildAddWindowCommand(sessionName, thread.threadId, cmd))
     }
     console.log("")
@@ -288,9 +299,13 @@ function printDryRunOutput(
 
   console.log("=== Thread Details ===")
   for (const thread of threads) {
-    console.log(`\n${thread.threadId}: ${thread.threadName}`)
+    const synthIndicator = thread.synthesisModels ? " [synthesis]" : ""
+    console.log(`\n${thread.threadId}: ${thread.threadName}${synthIndicator}`)
     console.log(`  Agent: ${thread.agentName}`)
-    console.log(`  Models: ${thread.models.map((m) => m.model).join(" → ")}`)
+    console.log(`  Working Models: ${thread.models.map((m) => m.model).join(" → ")}`)
+    if (thread.synthesisModels) {
+      console.log(`  Synthesis Models: ${thread.synthesisModels.map((m) => m.model).join(" → ")}`)
+    }
     console.log(`  Prompt: ${thread.promptPath}`)
     if (thread.githubIssue) {
       console.log(`  Issue: ${thread.githubIssue.url}`)
@@ -389,30 +404,106 @@ async function handleSessionClose(
       await completeMultipleSessionsLocked(repoRoot, streamId, completions)
     }
 
-    // Capture opencode session IDs from temp files
-    console.log(`\nCapturing opencode session IDs...`)
+    // Capture opencode session IDs and synthesis output from temp files
+    // With post-session synthesis (modern flow):
+    // - sessionFilePath contains the WORKING agent session ID (this is the primary session)
+    // - synthesisOutputPath contains the synthesis agent's output (synthesis ran headless)
+    // - workingAgentSessionPath is not used in post-session mode (kept for backwards compatibility with legacy wrapper)
+    console.log(`\nCapturing opencode session IDs and synthesis output...`)
     for (const mapping of threadSessionMap) {
       const sessionFilePath = getSessionFilePath(mapping.threadId)
+      const workingAgentSessionPath = getWorkingAgentSessionPath(streamId, mapping.threadId)
+      const synthesisOutputPath = getSynthesisOutputPath(streamId, mapping.threadId)
+      
+      // Collect session IDs and synthesis output to update
+      const sessionUpdates: {
+        opencodeSessionId?: string
+        workingAgentSessionId?: string
+        synthesisOutput?: string | null
+      } = {}
+      
+      // Capture the working agent session ID (stored as primary session in post-session mode)
       if (existsSync(sessionFilePath)) {
         try {
           const opencodeSessionId = readFileSync(sessionFilePath, "utf-8").trim()
           if (opencodeSessionId) {
-            await updateThreadMetadataLocked(repoRoot, streamId, mapping.threadId, {
-              opencodeSessionId,
-            })
-            console.log(`  Thread ${mapping.threadId}: captured opencode session ${opencodeSessionId}`)
+            sessionUpdates.opencodeSessionId = opencodeSessionId
           }
         } catch (e) {
           console.log(`  Thread ${mapping.threadId}: failed to read session file (${(e as Error).message})`)
         }
-      } else {
+      }
+      
+      // Check legacy working agent session path (backwards compatibility)
+      // In post-session synthesis, this file won't exist; working session is in sessionFilePath
+      if (existsSync(workingAgentSessionPath)) {
+        try {
+          const workingAgentSessionId = readFileSync(workingAgentSessionPath, "utf-8").trim()
+          if (workingAgentSessionId) {
+            sessionUpdates.workingAgentSessionId = workingAgentSessionId
+          }
+        } catch (e) {
+          console.log(`  Thread ${mapping.threadId}: failed to read working agent session file (${(e as Error).message})`)
+        }
+      }
+      
+      // Capture synthesis output (only present when synthesis is enabled)
+      // In post-session synthesis, this file contains the headless synthesis agent's output
+      let synthesisOutputText: string | null = null
+      if (existsSync(synthesisOutputPath)) {
+        try {
+          synthesisOutputText = readFileSync(synthesisOutputPath, "utf-8").trim()
+          if (!synthesisOutputText) {
+            console.log(`  Thread ${mapping.threadId}: synthesis output file is empty`)
+            synthesisOutputText = ""
+          }
+        } catch (e) {
+          console.log(`  Thread ${mapping.threadId}: failed to read synthesis output file (${(e as Error).message})`)
+          synthesisOutputText = null
+        }
+      }
+      
+      // Update thread metadata with captured session IDs
+      if (sessionUpdates.opencodeSessionId || sessionUpdates.workingAgentSessionId) {
+        const updateData: {
+          opencodeSessionId?: string
+          workingAgentSessionId?: string
+        } = {}
+        if (sessionUpdates.opencodeSessionId) updateData.opencodeSessionId = sessionUpdates.opencodeSessionId
+        if (sessionUpdates.workingAgentSessionId) updateData.workingAgentSessionId = sessionUpdates.workingAgentSessionId
+        
+        await updateThreadMetadataLocked(repoRoot, streamId, mapping.threadId, updateData)
+      }
+      
+      // Store synthesis output using setSynthesisOutput() with structured data
+      // This stores sessionId, output text, and completedAt timestamp in threads.json
+      if (synthesisOutputText !== null) {
+        const completedAt = new Date().toISOString()
+        // Generate a unique sessionId for the synthesis run (synthesis runs headless, no persistent session)
+        const synthesisSessionId = `synthesis-${mapping.threadId}-${Date.now()}`
+        
+        await setSynthesisOutput(repoRoot, streamId, mapping.threadId, {
+          sessionId: synthesisSessionId,
+          output: synthesisOutputText,
+          completedAt,
+        })
+      }
+      
+      // Log what was captured (simplified for post-session synthesis)
+      const hasSynthOutput = synthesisOutputText !== null
+      if (sessionUpdates.opencodeSessionId) {
+        console.log(`  Thread ${mapping.threadId}: captured working session ${sessionUpdates.opencodeSessionId}${hasSynthOutput ? ', synthesis output' : ''}`)
+      } else if (hasSynthOutput) {
+        console.log(`  Thread ${mapping.threadId}: captured synthesis output`)
+      } else if (!sessionUpdates.opencodeSessionId && !sessionUpdates.workingAgentSessionId) {
         console.log(`  Thread ${mapping.threadId}: no session file found`)
       }
     }
 
-    // Clean up marker files and session files
+    // Clean up marker files, session files, and synthesis files
     cleanupCompletionMarkers(threadIds)
     cleanupSessionFiles(threadIds)
+    cleanupSynthesisFiles(streamId, threadIds)
   }
 
   process.exit(code ?? 0)
@@ -516,6 +607,35 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     process.exit(1)
   }
 
+  // Check if synthesis is enabled via synthesis.json config before loading synthesis agent
+  const synthesisConfigEnabled = isSynthesisEnabled(repoRoot)
+  
+  // Load synthesis agent config only if synthesis is enabled in config
+  // If synthesis is disabled in config, set synthesisAgent to null regardless of agents.yaml
+  let synthesisAgent = null
+  if (synthesisConfigEnabled) {
+    // Check for agent override in synthesis.json, otherwise use default from agents.yaml
+    const agentOverride = getSynthesisAgentOverride(repoRoot)
+    if (agentOverride) {
+      synthesisAgent = getSynthesisAgent(agentsConfig, agentOverride)
+      if (!synthesisAgent) {
+        console.log(`Synthesis agent override "${agentOverride}" not found in agents.yaml, using default`)
+        synthesisAgent = getDefaultSynthesisAgent(agentsConfig)
+      }
+    } else {
+      synthesisAgent = getDefaultSynthesisAgent(agentsConfig)
+    }
+    
+    if (synthesisAgent) {
+      const synthModels = getSynthesisAgentModels(agentsConfig, synthesisAgent.name)
+      console.log(`Synthesis enabled: ${synthesisAgent.name} (${synthModels.length} model(s))`)
+    } else {
+      console.log(`Synthesis enabled but no synthesis agent configured in agents.yaml`)
+    }
+  } else {
+    console.log(`Synthesis: disabled (work/synthesis.json)`)
+  }
+
   // Discover threads from tasks.json
   const threads = collectThreadInfoFromTasks(
     repoRoot,
@@ -523,6 +643,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     batchParsed.stage,
     batchParsed.batch,
     agentsConfig,
+    synthesisAgent,
   )
 
   if (threads.length === 0) {
@@ -581,6 +702,8 @@ export async function main(argv: string[] = process.argv): Promise<void> {
       port,
       cliArgs.noServer ?? false,
       repoRoot,
+      synthesisConfigEnabled,
+      synthesisAgent?.name ?? null,
     )
     return
   }
@@ -672,14 +795,16 @@ Press Ctrl+b X to kill the session when done.
   // Attach to session
   const child = attachSession(sessionName)
 
-  // Create notification tracker
-  const notificationTracker = cliArgs.silent ? null : new NotificationTracker()
+  // Create notification tracker with workstream-specific config
+  const notificationTracker = cliArgs.silent ? null : new NotificationTracker({ repoRoot })
 
   // Start marker file polling for notifications
+  // Pass streamId to enable synthesis output in notifications
   const threadIds = threads.map((t) => t.threadId)
   const { promise: pollingPromise, state: pollingState } = startMarkerPolling({
     threadIds,
     notificationTracker,
+    streamId: stream.id,
   })
 
   child.on("close", async (code) => {

@@ -115,6 +115,30 @@ export function getSessionFilePath(threadId: string): string {
 }
 
 /**
+ * Get the synthesis output file path for capturing synthesis agent output
+ * Used for the synthesis agent to write its summary output
+ * 
+ * @param streamId - Stream/workstream ID (e.g., "001-my-workstream")
+ * @param threadId - Thread ID (e.g., "01.01.02")
+ * @returns Absolute path to the synthesis output file in /tmp
+ */
+export function getSynthesisOutputPath(streamId: string, threadId: string): string {
+  return `/tmp/workstream-${streamId}-${threadId}-synthesis.txt`
+}
+
+/**
+ * Get the working agent session file path for synthesis mode
+ * Used to capture the inner working agent's session ID
+ * 
+ * @param streamId - Stream/workstream ID (e.g., "001-my-workstream")
+ * @param threadId - Thread ID (e.g., "01.01.02")
+ * @returns Path to the working agent session file
+ */
+export function getWorkingAgentSessionPath(streamId: string, threadId: string): string {
+  return `/tmp/workstream-${streamId}-${threadId}-working-session.txt`
+}
+
+/**
  * Escape a string for use in shell commands wrapped in sh -c '...'
  * Handles both the outer single-quote wrapper and inner double-quoted strings
  */
@@ -189,7 +213,7 @@ cat "${escapedPath}" | opencode run --port ${port} --model "${model}"${variantFl
 echo ""
 echo "Thread finished. Looking for session to resume..."
 if command -v jq >/dev/null 2>&1; then
-  SESSION_ID=$(opencode session list --max-count 10 --format json 2>/dev/null | jq -r ".[] | select(.title | contains(\\"__id=$TRACK_ID\\")) | .id" | head -1)
+  SESSION_ID=$(opencode session list --max-count 20 --format json 2>/dev/null | jq -r ".[] | select(.title | contains(\\"__id=$TRACK_ID\\")) | .id" | head -1)
   if [ -n "$SESSION_ID" ]; then${writeSessionCmd}
     echo "Resuming session $SESSION_ID..."
     opencode --session "$SESSION_ID"
@@ -322,7 +346,7 @@ ${completionMarkerCmd}
 echo ""
 echo "Thread finished. Looking for session to resume..."
 if command -v jq >/dev/null 2>&1; then
-  SESSION_ID=$(opencode session list --max-count 10 --format json 2>/dev/null | jq -r ".[] | select(.title | contains(\\"__id=$TRACK_ID\\")) | .id" | head -1)
+  SESSION_ID=$(opencode session list --max-count 20 --format json 2>/dev/null | jq -r ".[] | select(.title | contains(\\"__id=$TRACK_ID\\")) | .id" | head -1)
   if [ -n "$SESSION_ID" ]; then${writeSessionCmd}
     echo "Resuming session $SESSION_ID..."
     opencode --session "$SESSION_ID"
@@ -336,6 +360,650 @@ else
   read
 fi
 '`
+}
+
+/**
+ * Options for building synthesis run command
+ */
+export interface SynthesisRunOptions {
+  port: number
+  /** Models for the synthesis agent (outer agent) */
+  synthesisModels: NormalizedModelSpec[]
+  /** Models for the working agent (inner agent) */
+  workingModels: NormalizedModelSpec[]
+  /** Path to the prompt file for the working agent */
+  promptPath: string
+  /** Thread title for display */
+  threadTitle: string
+  /** Stream/workstream ID for file paths */
+  streamId: string
+  /** Thread ID for file paths */
+  threadId: string
+}
+
+/**
+ * Build the opencode run command with synthesis agent wrapping
+ *
+ * This creates a two-level agent execution (LEGACY APPROACH):
+ * 1. Outer: Synthesis agent that orchestrates and summarizes
+ * 2. Inner: Working agent that executes the actual task
+ *
+ * Flow:
+ * - Generate unique tracking IDs for both agents
+ * - Synthesis agent receives prompt with working agent command embedded
+ * - Working agent executes the task (via opencode run)
+ * - Synthesis agent summarizes after working agent completes
+ * - Output written to synthesis output file for capture
+ *
+ * Error Handling:
+ * - If synthesis agent fails, still capture working agent session ID if available
+ * - If working agent crashes, synthesis agent notes this in summary
+ * - If synthesis output file is empty/missing, consumers should log warning but not fail
+ *
+ * @deprecated Use {@link buildPostSynthesisCommand} instead. This "wrapper" approach
+ * has been replaced by a post-session approach where the working agent runs first
+ * with full TUI visibility, then synthesis runs headless after completion.
+ * The new approach provides better user experience as users can see and interact
+ * with the working agent directly, and resume directly into that session.
+ *
+ * @param options - Synthesis run configuration
+ * @returns Shell command string for tmux execution
+ * @throws Error if no synthesis models or working models are provided
+ */
+export function buildSynthesisRunCommand(options: SynthesisRunOptions): string {
+  const {
+    port,
+    synthesisModels,
+    workingModels,
+    promptPath,
+    threadTitle,
+    streamId,
+    threadId,
+  } = options
+
+  if (synthesisModels.length === 0) {
+    throw new Error("At least one synthesis model must be provided")
+  }
+  if (workingModels.length === 0) {
+    throw new Error("At least one working model must be provided")
+  }
+
+  // Escape paths and title for shell safety
+  const escapedPath = promptPath.replace(/'/g, "'\\''")
+  const truncated = truncateTitle(threadTitle, 32)
+  const escapedTitle = escapeForShell(truncated)
+
+  // File paths for tracking
+  const synthesisOutputPath = getSynthesisOutputPath(streamId, threadId)
+  const workingSessionPath = getWorkingAgentSessionPath(streamId, threadId)
+  const completionMarkerPath = getCompletionMarkerPath(threadId)
+  const sessionFilePath = getSessionFilePath(threadId)
+
+  // Build model lists for display
+  const synthesisModelList = synthesisModels
+    .map((m) => (m.variant ? `${m.model} (${m.variant})` : m.model))
+    .join(" -> ")
+  const workingModelList = workingModels
+    .map((m) => (m.variant ? `${m.model} (${m.variant})` : m.model))
+    .join(" -> ")
+
+  // Build the working agent command that synthesis agent will execute
+  // This is a simplified version without session resume (synthesis agent handles that)
+  const workingModelAttempts = buildWorkingAgentModelAttempts(
+    port,
+    workingModels,
+    escapedPath,
+  )
+
+  // Build synthesis model attempts for the outer agent
+  const synthesisModelAttempts = buildSynthesisModelAttempts(
+    port,
+    synthesisModels,
+    escapedTitle,
+    workingModelAttempts,
+    workingSessionPath,
+    synthesisOutputPath,
+  )
+
+  return `sh -c '
+SYNTH_TRACK_ID=$(date +%s%N | head -c 16)
+WORK_TRACK_ID=$(date +%s%N | tail -c 16 | head -c 16)
+SYNTH_TITLE="${escapedTitle}__synth_id=$SYNTH_TRACK_ID"
+WORK_TITLE="${escapedTitle}__work_id=$WORK_TRACK_ID"
+FINAL_EXIT=""
+echo "════════════════════════════════════════"
+echo "Thread: ${escapedTitle}"
+echo "Mode: Synthesis"
+echo "Synthesis Models: ${synthesisModelList}"
+echo "Working Models: ${workingModelList}"
+echo "════════════════════════════════════════"
+echo ""
+
+# Initialize output files
+echo "" > "${synthesisOutputPath}"
+echo "" > "${workingSessionPath}"
+
+${synthesisModelAttempts}
+
+# Write completion marker
+echo "done" > "${completionMarkerPath}"
+
+echo ""
+echo "Synthesis complete. Looking for session to resume..."
+if command -v jq >/dev/null 2>&1; then
+  # Try to find synthesis agent session first
+  SESSION_ID=$(opencode session list --max-count 30 --format json 2>/dev/null | jq -r ".[] | select(.title | contains(\\"__synth_id=$SYNTH_TRACK_ID\\")) | .id" | head -1)
+  if [ -n "$SESSION_ID" ]; then
+    echo "$SESSION_ID" > "${sessionFilePath}"
+    echo "Resuming synthesis session $SESSION_ID..."
+    opencode --session "$SESSION_ID"
+  else
+    # Fallback: try working agent session
+    WORK_SESSION_ID=$(cat "${workingSessionPath}" 2>/dev/null | tr -d "\\n")
+    if [ -n "$WORK_SESSION_ID" ]; then
+      echo "$WORK_SESSION_ID" > "${sessionFilePath}"
+      echo "Resuming working session $WORK_SESSION_ID..."
+      opencode --session "$WORK_SESSION_ID"
+    else
+      echo "No session found. Press Enter to close."
+      read
+    fi
+  fi
+else
+  echo "jq not found - install jq to enable session resume"
+  echo "Press Enter to close."
+  read
+fi
+'`
+}
+
+/**
+ * Build the working agent model attempts (inner loop for synthesis)
+ * This is a simplified version that doesn't include session resume
+ */
+function buildWorkingAgentModelAttempts(
+  port: number,
+  models: NormalizedModelSpec[],
+  escapedPath: string,
+): string {
+  return models
+    .map((m, i) => {
+      const variantFlag = m.variant ? ` --variant \\"${m.variant}\\"` : ""
+      const isLast = i === models.length - 1
+
+      if (i === 0) {
+        return `
+START_TIME=$(date +%s)
+echo \\"Trying working model ${i + 1}/${models.length}: ${m.model}${m.variant ? ` (variant: ${m.variant})` : ""}\\"
+cat \\"${escapedPath}\\" | opencode run --port ${port} --model \\"${m.model}\\"${variantFlag} --title \\"$WORK_TITLE\\"
+WORK_EXIT=$?
+ELAPSED=$(($(date +%s) - START_TIME))
+if [ $WORK_EXIT -eq 0 ] || [ $ELAPSED -ge ${EARLY_FAILURE_THRESHOLD_SECONDS} ]; then
+  WORK_FINAL_EXIT=$WORK_EXIT
+else
+  echo \\"\\"
+  echo \\"Working model failed within ${EARLY_FAILURE_THRESHOLD_SECONDS}s. Trying next...\\"
+fi`
+      } else if (isLast) {
+        return `
+if [ -z \\"$WORK_FINAL_EXIT\\" ]; then
+  echo \\"Trying working model ${i + 1}/${models.length}: ${m.model}${m.variant ? ` (variant: ${m.variant})` : ""}\\"
+  cat \\"${escapedPath}\\" | opencode run --port ${port} --model \\"${m.model}\\"${variantFlag} --title \\"$WORK_TITLE\\"
+  WORK_FINAL_EXIT=$?
+fi`
+      } else {
+        return `
+if [ -z \\"$WORK_FINAL_EXIT\\" ]; then
+  START_TIME=$(date +%s)
+  echo \\"Trying working model ${i + 1}/${models.length}: ${m.model}${m.variant ? ` (variant: ${m.variant})` : ""}\\"
+  cat \\"${escapedPath}\\" | opencode run --port ${port} --model \\"${m.model}\\"${variantFlag} --title \\"$WORK_TITLE\\"
+  WORK_EXIT=$?
+  ELAPSED=$(($(date +%s) - START_TIME))
+  if [ $WORK_EXIT -eq 0 ] || [ $ELAPSED -ge ${EARLY_FAILURE_THRESHOLD_SECONDS} ]; then
+    WORK_FINAL_EXIT=$WORK_EXIT
+  else
+    echo \\"\\"
+    echo \\"Working model failed within ${EARLY_FAILURE_THRESHOLD_SECONDS}s. Trying next...\\"
+  fi
+fi`
+      }
+    })
+    .join("\n")
+}
+
+/**
+ * Build the synthesis prompt that instructs synthesis agent to:
+ * 1. Execute the working agent command
+ * 2. Capture the working agent session ID
+ * 3. Summarize the results after completion
+ */
+function buildSynthesisPrompt(
+  workingAgentCmd: string,
+  workingSessionPath: string,
+  synthesisOutputPath: string,
+): string {
+  // The synthesis prompt tells the synthesis agent what to do
+  // It will be piped to the synthesis agent via stdin
+  return `You are a synthesis agent orchestrating a working agent session.
+
+## Your Tasks
+
+1. **Execute the working agent**: Run the following shell command to spawn the working agent:
+
+\\\`\\\`\\\`bash
+${workingAgentCmd}
+\\\`\\\`\\\`
+
+2. **Capture session ID**: After the working agent completes, find its session ID and save it:
+
+\\\`\\\`\\\`bash
+# Find working agent session by tracking ID
+WORK_SESSION=$(opencode session list --max-count 20 --format json 2>/dev/null | jq -r '.[] | select(.title | contains("__work_id=")) | .id' | head -1)
+echo "$WORK_SESSION" > "${workingSessionPath}"
+\\\`\\\`\\\`
+
+3. **Summarize results**: Review what the working agent accomplished and write a brief summary to the synthesis output file:
+
+\\\`\\\`\\\`bash
+echo "YOUR_SUMMARY_HERE" > "${synthesisOutputPath}"
+\\\`\\\`\\\`
+
+## Error Handling
+
+- If the working agent fails or crashes, note this in your summary
+- Always try to capture the working agent session ID, even on failure
+- Write something to the synthesis output file even if it's just an error note
+
+## Summary Guidelines
+
+Your summary should include:
+- What task was assigned to the working agent
+- Whether it completed successfully
+- Key changes or outcomes (if any)
+- Any errors or issues encountered
+
+Keep the summary concise (2-5 sentences).`
+}
+
+/**
+ * Build the synthesis model attempts (outer loop)
+ */
+function buildSynthesisModelAttempts(
+  port: number,
+  models: NormalizedModelSpec[],
+  escapedTitle: string,
+  workingAgentCmd: string,
+  workingSessionPath: string,
+  synthesisOutputPath: string,
+): string {
+  // Build the synthesis prompt
+  const synthesisPrompt = buildSynthesisPrompt(
+    workingAgentCmd,
+    workingSessionPath,
+    synthesisOutputPath,
+  )
+
+  // Escape the prompt for shell embedding (it will be echo'd)
+  const escapedPrompt = synthesisPrompt
+    .replace(/\\/g, "\\\\")
+    .replace(/'/g, "'\\''")
+    .replace(/"/g, '\\"')
+    .replace(/\$/g, "\\$")
+    .replace(/`/g, "\\`")
+
+  return models
+    .map((m, i) => {
+      const variantFlag = m.variant ? ` --variant "${m.variant}"` : ""
+      const isLast = i === models.length - 1
+
+      if (i === 0) {
+        return `
+START_TIME=$(date +%s)
+echo "Starting synthesis agent (model ${i + 1}/${models.length}: ${m.model}${m.variant ? ` (variant: ${m.variant})` : ""})..."
+echo "${escapedPrompt}" | opencode run --port ${port} --model "${m.model}"${variantFlag} --title "$SYNTH_TITLE"
+SYNTH_EXIT=$?
+ELAPSED=$(($(date +%s) - START_TIME))
+if [ $SYNTH_EXIT -eq 0 ] || [ $ELAPSED -ge ${EARLY_FAILURE_THRESHOLD_SECONDS} ]; then
+  FINAL_EXIT=$SYNTH_EXIT
+else
+  echo ""
+  echo "Synthesis model failed within ${EARLY_FAILURE_THRESHOLD_SECONDS}s. Trying next..."
+fi`
+      } else if (isLast) {
+        return `
+if [ -z "$FINAL_EXIT" ]; then
+  echo "Starting synthesis agent (model ${i + 1}/${models.length}: ${m.model}${m.variant ? ` (variant: ${m.variant})` : ""})..."
+  echo "${escapedPrompt}" | opencode run --port ${port} --model "${m.model}"${variantFlag} --title "$SYNTH_TITLE"
+  FINAL_EXIT=$?
+fi`
+      } else {
+        return `
+if [ -z "$FINAL_EXIT" ]; then
+  START_TIME=$(date +%s)
+  echo "Starting synthesis agent (model ${i + 1}/${models.length}: ${m.model}${m.variant ? ` (variant: ${m.variant})` : ""})..."
+  echo "${escapedPrompt}" | opencode run --port ${port} --model "${m.model}"${variantFlag} --title "$SYNTH_TITLE"
+  SYNTH_EXIT=$?
+  ELAPSED=$(($(date +%s) - START_TIME))
+  if [ $SYNTH_EXIT -eq 0 ] || [ $ELAPSED -ge ${EARLY_FAILURE_THRESHOLD_SECONDS} ]; then
+    FINAL_EXIT=$SYNTH_EXIT
+  else
+    echo ""
+    echo "Synthesis model failed within ${EARLY_FAILURE_THRESHOLD_SECONDS}s. Trying next..."
+  fi
+fi`
+      }
+    })
+    .join("\n")
+}
+
+/**
+ * Options for building post-synthesis run command
+ */
+export interface PostSynthesisOptions {
+  port: number
+  /** Models for the working agent (runs first with TUI) */
+  workingModels: NormalizedModelSpec[]
+  /** Models for the synthesis agent (runs after, headless) */
+  synthesisModels: NormalizedModelSpec[]
+  /** Path to the prompt file for the working agent */
+  promptPath: string
+  /** Thread title for display */
+  threadTitle: string
+  /** Stream/workstream ID for file paths */
+  streamId: string
+  /** Thread ID for file paths */
+  threadId: string
+  /** Path to the synthesis prompt file */
+  synthesisPromptPath: string
+}
+
+/**
+ * Build the opencode run command with post-session synthesis
+ *
+ * This creates a sequential two-phase execution:
+ * 1. Working agent runs with full TUI (user can interact)
+ * 2. After completion, synthesis agent runs headless to summarize
+ *
+ * Flow:
+ * - Generate unique tracking ID for working agent
+ * - Run working agent with full TUI
+ * - Find working agent session ID by tracking ID
+ * - Export session to JSON
+ * - Extract assistant text messages using jq
+ * - Run synthesis agent headless with context piped in
+ * - Capture synthesis output to temp file
+ * - Write completion marker (notification fires here, synthesis output available)
+ * - Resume WORKING agent session (not synthesis) for user review
+ *
+ * Key benefits over legacy wrapper approach:
+ * - Working agent runs first (not wrapped by synthesis)
+ * - User sees working agent TUI directly and can interact with it
+ * - Synthesis runs headless after completion, not blocking the user
+ * - Completion marker written AFTER synthesis (so output is available for notifications)
+ * - Session resume ALWAYS opens the working agent session (the one the user cares about),
+ *   never the synthesis agent session.
+ *
+ * @param options - Post-synthesis run configuration
+ * @returns Shell command string for tmux execution
+ * @throws Error if no synthesis models or working models are provided
+ */
+export function buildPostSynthesisCommand(options: PostSynthesisOptions): string {
+  const {
+    port,
+    workingModels,
+    synthesisModels,
+    promptPath,
+    threadTitle,
+    streamId,
+    threadId,
+    synthesisPromptPath,
+  } = options
+
+  if (workingModels.length === 0) {
+    throw new Error("At least one working model must be provided")
+  }
+  if (synthesisModels.length === 0) {
+    throw new Error("At least one synthesis model must be provided")
+  }
+
+  // Escape paths and title for shell safety
+  const escapedPath = promptPath.replace(/'/g, "'\\''")
+  const escapedSynthesisPromptPath = synthesisPromptPath.replace(/'/g, "'\\''")
+  const truncated = truncateTitle(threadTitle, 32)
+  const escapedTitle = escapeForShell(truncated)
+
+  // File paths for tracking
+  const synthesisOutputPath = getSynthesisOutputPath(streamId, threadId)
+  const completionMarkerPath = getCompletionMarkerPath(threadId)
+  const sessionFilePath = getSessionFilePath(threadId)
+  const exportedSessionPath = `/tmp/workstream-${streamId}-${threadId}-exported-session.json`
+  const extractedContextPath = `/tmp/workstream-${streamId}-${threadId}-context.txt`
+  const synthesisJsonPath = `/tmp/workstream-${streamId}-${threadId}-synthesis.json`
+
+  // Build model lists for display
+  const workingModelList = workingModels
+    .map((m) => (m.variant ? `${m.model} (${m.variant})` : m.model))
+    .join(" -> ")
+  const synthesisModelList = synthesisModels
+    .map((m) => (m.variant ? `${m.model} (${m.variant})` : m.model))
+    .join(" -> ")
+
+  // Build working agent model attempts (with retry logic)
+  const workingModelAttempts = buildPostSynthesisWorkingAgentAttempts(
+    port,
+    workingModels,
+    escapedPath,
+  )
+
+  // Build synthesis agent model attempts (headless with --format json)
+  const synthesisModelAttempts = buildPostSynthesisSynthesisAgentAttempts(
+    port,
+    synthesisModels,
+    escapedSynthesisPromptPath,
+    extractedContextPath,
+    synthesisJsonPath,
+  )
+
+  // jq command to extract assistant text messages from exported session
+  // Format: .messages[] | select(.info.role=="assistant") | .parts[] | select(.type=="text") | .text
+  // Note: Use double quotes for the jq filter to avoid escaping issues inside sh -c '...'
+  const jqExtractCommand = `jq -r ".messages[] | select(.info.role==\\"assistant\\") | .parts[] | select(.type==\\"text\\") | .text"`
+
+  return `sh -c '
+WORK_TRACK_ID=$(date +%s%N | head -c 16)
+WORK_TITLE="${escapedTitle}__work_id=$WORK_TRACK_ID"
+WORK_FINAL_EXIT=""
+SYNTH_FINAL_EXIT=""
+echo "════════════════════════════════════════"
+echo "Thread: ${escapedTitle}"
+echo "Mode: Post-Session Synthesis"
+echo "Working Models: ${workingModelList}"
+echo "Synthesis Models: ${synthesisModelList}"
+echo "════════════════════════════════════════"
+echo ""
+
+# Phase 1: Run working agent with full TUI
+echo "▶ Phase 1: Running working agent..."
+echo ""
+${workingModelAttempts}
+
+echo ""
+echo "Working agent finished (exit: $WORK_FINAL_EXIT)."
+echo ""
+
+# Find working agent session ID by tracking ID
+WORK_SESSION_ID=""
+if command -v jq >/dev/null 2>&1; then
+  WORK_SESSION_ID=$(opencode session list --max-count 20 --format json 2>/dev/null | jq -r ".[] | select(.title | contains(\\"__work_id=$WORK_TRACK_ID\\")) | .id" | head -1)
+fi
+
+if [ -z "$WORK_SESSION_ID" ]; then
+  echo "Warning: Could not find working agent session ID."
+  echo "Synthesis will run without session context."
+else
+  echo "Found working session: $WORK_SESSION_ID"
+  
+  # Export session to JSON
+  echo "Exporting session..."
+  opencode export "$WORK_SESSION_ID" > "${exportedSessionPath}" 2>/dev/null
+  
+  # Extract assistant text messages using jq
+  echo "Extracting context..."
+  ${jqExtractCommand} "${exportedSessionPath}" > "${extractedContextPath}" 2>/dev/null
+fi
+
+# Phase 2: Run synthesis agent headless
+echo ""
+echo "▶ Phase 2: Running synthesis agent (headless)..."
+echo ""
+${synthesisModelAttempts}
+
+# Extract synthesis output from JSON (final assistant message)
+if [ -f "${synthesisJsonPath}" ] && command -v jq >/dev/null 2>&1; then
+  jq -r ".messages[-1].content // empty" "${synthesisJsonPath}" > "${synthesisOutputPath}" 2>/dev/null
+  if [ ! -s "${synthesisOutputPath}" ]; then
+    # Try alternative extraction
+    jq -r ".[].content // empty" "${synthesisJsonPath}" > "${synthesisOutputPath}" 2>/dev/null
+  fi
+fi
+
+echo ""
+echo "Synthesis complete."
+
+# Write completion marker AFTER synthesis completes
+# This ensures synthesis output is available when notification fires
+echo "done" > "${completionMarkerPath}"
+
+# Save working session ID for workstream tracking
+if [ -n "$WORK_SESSION_ID" ]; then
+  echo "$WORK_SESSION_ID" > "${sessionFilePath}"
+fi
+
+# Resume WORKING agent session (not synthesis)
+echo ""
+echo "Opening working session for review..."
+if [ -n "$WORK_SESSION_ID" ]; then
+  opencode --session "$WORK_SESSION_ID"
+else
+  echo "No working session available. Press Enter to close."
+  read
+fi
+'`
+}
+
+/**
+ * Build working agent model attempts for post-synthesis command
+ * Similar to buildRetryRunCommand but without session resume logic
+ */
+function buildPostSynthesisWorkingAgentAttempts(
+  port: number,
+  models: NormalizedModelSpec[],
+  escapedPath: string,
+): string {
+  return models
+    .map((m, i) => {
+      const variantFlag = m.variant ? ` --variant "${m.variant}"` : ""
+      const isLast = i === models.length - 1
+
+      if (i === 0) {
+        return `
+START_TIME=$(date +%s)
+echo "Trying working model ${i + 1}/${models.length}: ${m.model}${m.variant ? ` (variant: ${m.variant})` : ""}"
+cat "${escapedPath}" | opencode run --port ${port} --model "${m.model}"${variantFlag} --title "$WORK_TITLE"
+WORK_EXIT=$?
+ELAPSED=$(($(date +%s) - START_TIME))
+if [ $WORK_EXIT -eq 0 ] || [ $ELAPSED -ge ${EARLY_FAILURE_THRESHOLD_SECONDS} ]; then
+  WORK_FINAL_EXIT=$WORK_EXIT
+else
+  echo ""
+  echo "Working model failed within ${EARLY_FAILURE_THRESHOLD_SECONDS}s (exit: $WORK_EXIT). Trying next..."
+fi`
+      } else if (isLast) {
+        return `
+if [ -z "$WORK_FINAL_EXIT" ]; then
+  echo "Trying working model ${i + 1}/${models.length}: ${m.model}${m.variant ? ` (variant: ${m.variant})` : ""}"
+  cat "${escapedPath}" | opencode run --port ${port} --model "${m.model}"${variantFlag} --title "$WORK_TITLE"
+  WORK_FINAL_EXIT=$?
+fi`
+      } else {
+        return `
+if [ -z "$WORK_FINAL_EXIT" ]; then
+  START_TIME=$(date +%s)
+  echo "Trying working model ${i + 1}/${models.length}: ${m.model}${m.variant ? ` (variant: ${m.variant})` : ""}"
+  cat "${escapedPath}" | opencode run --port ${port} --model "${m.model}"${variantFlag} --title "$WORK_TITLE"
+  WORK_EXIT=$?
+  ELAPSED=$(($(date +%s) - START_TIME))
+  if [ $WORK_EXIT -eq 0 ] || [ $ELAPSED -ge ${EARLY_FAILURE_THRESHOLD_SECONDS} ]; then
+    WORK_FINAL_EXIT=$WORK_EXIT
+  else
+    echo ""
+    echo "Working model failed within ${EARLY_FAILURE_THRESHOLD_SECONDS}s (exit: $WORK_EXIT). Trying next..."
+  fi
+fi`
+      }
+    })
+    .join("\n")
+}
+
+/**
+ * Build synthesis agent model attempts for post-synthesis command
+ * Runs headless with --format json to capture output
+ */
+function buildPostSynthesisSynthesisAgentAttempts(
+  port: number,
+  models: NormalizedModelSpec[],
+  synthesisPromptPath: string,
+  contextPath: string,
+  outputJsonPath: string,
+): string {
+  return models
+    .map((m, i) => {
+      const variantFlag = m.variant ? ` --variant "${m.variant}"` : ""
+      const isLast = i === models.length - 1
+
+      // Build the synthesis command with context injection
+      // The synthesis prompt file should contain placeholders or instructions
+      // We pipe the prompt with context appended
+      const synthCommand = `(cat "${synthesisPromptPath}"; echo ""; echo "## Working Agent Session Context"; echo ""; cat "${contextPath}" 2>/dev/null || echo "(no context available)") | opencode run --port ${port} --model "${m.model}"${variantFlag} --format json > "${outputJsonPath}" 2>&1`
+
+      if (i === 0) {
+        return `
+START_TIME=$(date +%s)
+echo "Trying synthesis model ${i + 1}/${models.length}: ${m.model}${m.variant ? ` (variant: ${m.variant})` : ""}"
+${synthCommand}
+SYNTH_EXIT=$?
+ELAPSED=$(($(date +%s) - START_TIME))
+if [ $SYNTH_EXIT -eq 0 ] || [ $ELAPSED -ge ${EARLY_FAILURE_THRESHOLD_SECONDS} ]; then
+  SYNTH_FINAL_EXIT=$SYNTH_EXIT
+else
+  echo ""
+  echo "Synthesis model failed within ${EARLY_FAILURE_THRESHOLD_SECONDS}s (exit: $SYNTH_EXIT). Trying next..."
+fi`
+      } else if (isLast) {
+        return `
+if [ -z "$SYNTH_FINAL_EXIT" ]; then
+  echo "Trying synthesis model ${i + 1}/${models.length}: ${m.model}${m.variant ? ` (variant: ${m.variant})` : ""}"
+  ${synthCommand}
+  SYNTH_FINAL_EXIT=$?
+fi`
+      } else {
+        return `
+if [ -z "$SYNTH_FINAL_EXIT" ]; then
+  START_TIME=$(date +%s)
+  echo "Trying synthesis model ${i + 1}/${models.length}: ${m.model}${m.variant ? ` (variant: ${m.variant})` : ""}"
+  ${synthCommand}
+  SYNTH_EXIT=$?
+  ELAPSED=$(($(date +%s) - START_TIME))
+  if [ $SYNTH_EXIT -eq 0 ] || [ $ELAPSED -ge ${EARLY_FAILURE_THRESHOLD_SECONDS} ]; then
+    SYNTH_FINAL_EXIT=$SYNTH_EXIT
+  else
+    echo ""
+    echo "Synthesis model failed within ${EARLY_FAILURE_THRESHOLD_SECONDS}s (exit: $SYNTH_EXIT). Trying next..."
+  fi
+fi`
+      }
+    })
+    .join("\n")
 }
 
 /**

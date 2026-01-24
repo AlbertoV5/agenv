@@ -17,7 +17,7 @@ import {
 } from "../lib/tasks.ts"
 import { loadAgentsConfig, getAgentModels } from "../lib/agents-yaml.ts"
 import { resolvePromptPath } from "../lib/prompt-paths.ts"
-import { getLastSessionForThread } from "../lib/threads.ts"
+import { getLastSessionForThread, getWorkingAgentSessionId, getOpencodeSessionId } from "../lib/threads.ts"
 import type { Task, SessionRecord, SessionStatus, NormalizedModelSpec } from "../lib/types.ts"
 import {
   sessionExists,
@@ -193,6 +193,14 @@ function getFixSessionName(threadId: string): string {
 
 /**
  * Execute resume action - opens opencode TUI with existing session
+ * 
+ * Session ID priority:
+ * 1. workingAgentSessionId - Legacy field for backwards compatibility 
+ * 2. opencodeSessionId - The working agent session (in post-session synthesis mode)
+ * 3. lastSession.sessionId - Fallback to session record's tracking ID
+ * 
+ * Note: In post-session synthesis mode, opencodeSessionId contains the working
+ * agent session ID since synthesis runs headless (no TUI).
  */
 async function executeResume(
   repoRoot: string,
@@ -209,8 +217,22 @@ async function executeResume(
     process.exit(1)
   }
 
+  // Determine which session ID to use for resume
+  // Priority: workingAgentSessionId > opencodeSessionId > lastSession.sessionId
+  // With post-session synthesis, opencodeSessionId IS the working agent session
+  const workingSessionId = getWorkingAgentSessionId(repoRoot, streamId, threadStatus.threadId)
+  const opencodeSessionId = getOpencodeSessionId(repoRoot, streamId, threadStatus.threadId)
+  const resumeSessionId = workingSessionId || opencodeSessionId || lastSession.sessionId
+  
+  // Determine the source of the session ID for logging
+  const sessionSource = workingSessionId 
+    ? "working agent" 
+    : opencodeSessionId 
+      ? "opencode" 
+      : "session record"
+
   const tmuxSessionName = getFixSessionName(threadStatus.threadId)
-  const command = `opencode --session "${lastSession.sessionId}"`
+  const command = `opencode --session "${resumeSessionId}"`
 
   // Check if there's an existing fix tmux session to reattach to
   const existingSession = !noTmux && sessionExists(tmuxSessionName)
@@ -226,14 +248,14 @@ async function executeResume(
       console.log(`  tmux new-session -s "${tmuxSessionName}" "${command}"`)
     }
     console.log(`\nThread: ${threadStatus.threadName} (${threadStatus.threadId})`)
-    console.log(`Session ID: ${lastSession.sessionId}`)
+    console.log(`Session ID: ${resumeSessionId} (${sessionSource})`)
     console.log(`Agent: ${lastSession.agentName}`)
     console.log(`Model: ${lastSession.model}`)
     return
   }
 
   console.log(`\nResuming session for thread ${threadStatus.threadName} (${threadStatus.threadId})...`)
-  console.log(`Session ID: ${lastSession.sessionId}`)
+  console.log(`Session ID: ${resumeSessionId} (${sessionSource})`)
   console.log(`Agent: ${lastSession.agentName}`)
   console.log(`Model: ${lastSession.model}`)
 
@@ -266,7 +288,7 @@ async function executeResume(
   if (noTmux) {
     console.log("")
 
-    const child = spawn("opencode", ["--session", lastSession.sessionId], {
+    const child = spawn("opencode", ["--session", resumeSessionId], {
       stdio: "inherit",
       cwd: repoRoot,
     })

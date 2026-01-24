@@ -166,7 +166,7 @@ describe("Stage Approval Validation", () => {
 
         // Check index state
         const index = loadIndex(REPO_ROOT);
-        const stream = index.streams[0];
+        const stream = index.streams[0]!;
         expect(stream.approval?.stages?.[1]?.status).toBe("approved");
     });
 
@@ -191,7 +191,7 @@ describe("Stage Approval Validation", () => {
 
         // Check index state
         const index = loadIndex(REPO_ROOT);
-        const stream = index.streams[0];
+        const stream = index.streams[0]!;
         expect(stream.approval?.stages?.[1]?.status).toBe("approved");
     });
 });

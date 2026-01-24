@@ -470,6 +470,167 @@ Session data is stored in `tasks.json` alongside task definitions.
 - **Resume Capability**: Resuming a session relies on the underlying agent runner (e.g., `opencode`) retaining the session state. If the runner's temporary state is cleared, resuming may fail.
 - **Concurrent Sessions**: While multiple threads can run in parallel, resuming a specific session is an exclusive operation.
 
+## Synthesis Agents
+
+Synthesis agents are optional observer agents that run after working agent sessions to generate summaries. When enabled, `work multi` executes each thread in a two-phase process:
+
+1. **Working Phase**: The working agent runs with full TUI visibility, allowing the user to interact with the session directly.
+2. **Synthesis Phase**: After the working agent completes, the synthesis agent runs headless (in the background) to analyze the session and generate a summary.
+
+### How It Works
+
+1. The working agent runs `opencode` to execute the assigned task.
+2. Upon completion, the session is exported and context (assistant messages) is extracted.
+3. The synthesis agent runs headless, receiving the context via stdin.
+4. A concise 2-3 sentence summary is generated.
+5. The summary is stored in `threads.json` under `synthesisOutput`.
+6. Users always resume into the **working agent** session for review, not the synthesis session.
+
+### Configuration
+
+Add a `synthesis_agents` section to `work/agents.yaml`:
+
+```yaml
+agents:
+  - name: default
+    description: General-purpose implementation agent.
+    best_for: Standard development tasks.
+    models: [anthropic/claude-sonnet-4-5]
+
+synthesis_agents:
+  - name: batch-synthesizer
+    description: Summarizes working agent outputs after thread completion.
+    best_for: Generating concise summaries of completed work.
+    models: [anthropic/claude-sonnet-4-5]
+```
+
+### Enabling/Disabling
+
+Synthesis agents are enabled via `work/synthesis.json`. This file is created by `work init` with sensible defaults.
+
+```json
+{
+  "enabled": true
+}
+```
+
+You can also specify a specific agent to use (overriding the default) and configure output storage:
+
+```json
+{
+  "enabled": true,
+  "agent": "custom-summarizer",
+  "output": {
+    "store_in_threads": true
+  }
+}
+```
+
+When disabled (default), `work multi` runs working agents normally without the post-session synthesis phase.
+
+### Session Tracking
+
+When synthesis agents are enabled, two session IDs are tracked:
+
+| Field | Description |
+|-------|-------------|
+| `opencodeSessionId` | The working agent session (primary session for review) |
+| `workingAgentSessionId` | Legacy field (same as opencodeSessionId in new flow) |
+
+The `work fix --resume` command always resumes the `opencodeSessionId` (the working agent session).
+
+### Synthesis Output
+
+Summaries are stored in `threads.json`:
+
+```json
+{
+  "threadId": "01.01.01",
+  "synthesis": {
+    "sessionId": "ses_synth123...",
+    "output": "Implemented the user authentication flow with JWT tokens. Added login, logout, and refresh token endpoints. All tests passing.",
+    "completedAt": "2024-01-20T10:05:00Z"
+  },
+  "workingAgentSessionId": "ses_abc123...",
+  "opencodeSessionId": "ses_xyz789..."
+}
+```
+
+### Migration Guide
+
+If you are upgrading from an older version, please note that synthesis configuration has moved from `notifications.json` to `synthesis.json`.
+
+1. Create `work/synthesis.json`:
+   ```json
+   {
+     "enabled": false,
+     "output": {
+       "store_in_threads": true
+     }
+   }
+   ```
+2. Remove the `synthesis` section from `work/notifications.json`.
+
+### Future: TTS Integration
+
+Synthesis output is designed to be consumed by future text-to-speech (TTS) integrations. The notification system includes:
+
+- Sound queueing to prevent overlapping audio
+- `playSynthesisComplete(threadId, synthesisOutput)` method for TTS providers
+- Extended `WebhookPayload` with `synthesisOutput` field
+
+## Notifications
+
+The workstream system provides configurable notifications for key events like thread completion, errors, and batch completion.
+
+### Configuration
+
+Notifications are configured in `work/notifications.json`. This file is created by `work init` with sensible defaults.
+
+```json
+{
+  "enabled": true,
+  "providers": {
+    "sound": {
+      "enabled": true,
+      "volume": 1.0
+    },
+    "notification_center": {
+      "enabled": true
+    },
+    "terminal_notifier": {
+      "enabled": false,
+      "click_action": "none"
+    }
+  },
+  "events": {
+    "thread_complete": true,
+    "batch_complete": true,
+    "error": true,
+    "synthesis_complete": true
+  }
+}
+```
+
+### Providers
+
+| Provider | Description |
+|----------|-------------|
+| `sound` | Plays system sounds for events (macOS only) |
+| `notification_center` | Uses macOS Notification Center (macOS only) |
+| `terminal_notifier` | Uses `terminal-notifier` CLI tool (if installed) |
+| `tts` | Text-to-speech for synthesis summaries |
+
+### CLI
+
+You can view the current notification configuration and provider status:
+
+```bash
+work notifications
+# Or as JSON
+work notifications --json
+```
+
 ## Roles & Permissions
 
 The workstream system implements a Role-Based Access Control (RBAC) system to differentiate between human operators and AI agents. This ensures that critical decisions (like approving plans or starting workstreams) remain under human control.

@@ -23,9 +23,28 @@ agents:
   - name: code-reviewer
     description: Specialized on code analysis.
     best_for: Debugging, testing, code reviews.
-    models: [{ model: google/antigravity-gemini-3-pro, variant: high }]
+    models:
+      [
+        { model: google/gemini-3-pro-preview, variant: high },
+        anthropic/claude-sonnet-4-5,
+      ]
 
   - name: documentation-minimalist
     description: Model that creates short and sweet docs.
     best_for: Documentation, reviews.
-    models: [{ model: google/antigravity-gemini-3-pro, variant: low }]
+    models:
+      [
+        { model: google/gemini-3-pro-preview, variant: low },
+        anthropic/claude-sonnet-4-5,
+      ]
+
+synthesis_agents:
+  - name: batch-synthesizer
+    description: Summarizes working agent outputs after thread completion.
+    best_for: Generating concise summaries of completed work for notifications.
+    models:
+      [
+        google/gemini-3-flash-preview,
+        google/antigravity-gemini-3-flash,
+        anthropic/claude-haiku-4-5,
+      ]

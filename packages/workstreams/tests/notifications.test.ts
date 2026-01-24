@@ -9,6 +9,7 @@ import {
   type NotificationConfig,
   MacOSSoundProvider,
   ExternalApiProvider,
+  MacOSNotificationCenterProvider,
   NotificationManager,
   NotificationTracker,
   loadConfig,
@@ -21,8 +22,8 @@ import { createSpawnMock, createChildProcessMock } from "./helpers/mocks"
 
 describe("NotificationEvent types", () => {
   test("has expected event types", () => {
-    const events: NotificationEvent[] = ["thread_complete", "batch_complete", "error"]
-    expect(events).toHaveLength(3)
+    const events: NotificationEvent[] = ["thread_complete", "batch_complete", "error", "thread_synthesis_complete"]
+    expect(events).toHaveLength(4)
   })
 })
 
@@ -31,6 +32,7 @@ describe("DEFAULT_SOUNDS", () => {
     expect(DEFAULT_SOUNDS.thread_complete).toBe("/System/Library/Sounds/Glass.aiff")
     expect(DEFAULT_SOUNDS.batch_complete).toBe("/System/Library/Sounds/Hero.aiff")
     expect(DEFAULT_SOUNDS.error).toBe("/System/Library/Sounds/Basso.aiff")
+    expect(DEFAULT_SOUNDS.thread_synthesis_complete).toBe("/System/Library/Sounds/Purr.aiff")
   })
 })
 
@@ -117,13 +119,13 @@ describe("MacOSSoundProvider", () => {
 
     if (process.platform !== "darwin") return
 
-    // Spawns afplay with default sound
+    // Spawns afplay with default sound (no detached since we need exit events for queue)
     const defaultProvider = new MacOSSoundProvider()
     defaultProvider.playNotification("thread_complete")
     expect(spawnMock).toHaveBeenCalledWith(
       "afplay",
       [DEFAULT_SOUNDS.thread_complete],
-      expect.objectContaining({ detached: true, stdio: "ignore" })
+      expect.objectContaining({ stdio: "ignore" })
     )
 
     // Uses custom sound path when configured
@@ -136,6 +138,188 @@ describe("MacOSSoundProvider", () => {
     const fallbackProvider = new MacOSSoundProvider({ sounds: { thread_complete: "/nonexistent/custom.aiff" } })
     fallbackProvider.playNotification("thread_complete")
     expect(spawnMock).toHaveBeenCalledWith("afplay", [DEFAULT_SOUNDS.thread_complete], expect.anything())
+  })
+
+  test("sound queue prevents overlapping playback", () => {
+    if (process.platform !== "darwin") return
+
+    const provider = new MacOSSoundProvider()
+    
+    // Initially empty queue and not playing
+    expect(provider.getQueueLength()).toBe(0)
+    expect(provider.getIsPlaying()).toBe(false)
+
+    // First sound starts playing immediately
+    provider.playNotification("thread_complete")
+    expect(spawnMock).toHaveBeenCalledTimes(1)
+    expect(provider.getIsPlaying()).toBe(true)
+    // Queue should be empty since first sound is playing
+    expect(provider.getQueueLength()).toBe(0)
+
+    // Second sound gets queued (not spawned immediately)
+    provider.playNotification("batch_complete")
+    expect(spawnMock).toHaveBeenCalledTimes(1) // Still only 1 spawn
+    expect(provider.getQueueLength()).toBe(1) // One sound waiting in queue
+
+    // Third sound also gets queued
+    provider.playNotification("error")
+    expect(spawnMock).toHaveBeenCalledTimes(1) // Still only 1 spawn
+    expect(provider.getQueueLength()).toBe(2) // Two sounds waiting in queue
+  })
+
+  test("clearQueue resets state", () => {
+    if (process.platform !== "darwin") return
+
+    const provider = new MacOSSoundProvider()
+    
+    // Add some sounds
+    provider.playNotification("thread_complete")
+    provider.playNotification("batch_complete")
+    provider.playNotification("error")
+    
+    expect(provider.getIsPlaying()).toBe(true)
+    expect(provider.getQueueLength()).toBe(2)
+    
+    // Clear queue
+    provider.clearQueue()
+    
+    expect(provider.getIsPlaying()).toBe(false)
+    expect(provider.getQueueLength()).toBe(0)
+  })
+})
+
+describe("MacOSNotificationCenterProvider", () => {
+  let spawnMock: ReturnType<typeof spyOn>
+
+  beforeEach(() => {
+    spawnMock = createSpawnMock()
+  })
+
+  afterEach(() => {
+    spawnMock.mockRestore()
+  })
+
+  test("provider name and availability", () => {
+    const provider = new MacOSNotificationCenterProvider()
+    expect(provider.name).toBe("macos-notification-center")
+    // Only available on macOS
+    expect(provider.isAvailable()).toBe(process.platform === "darwin")
+  })
+
+  test("does not play notification when disabled", () => {
+    const disabledProvider = new MacOSNotificationCenterProvider({ enabled: false })
+    disabledProvider.playNotification("thread_complete")
+    expect(spawnMock).not.toHaveBeenCalled()
+  })
+
+  test("plays notification with osascript on macOS", () => {
+    if (process.platform !== "darwin") return
+
+    const provider = new MacOSNotificationCenterProvider()
+    provider.playNotification("thread_complete")
+
+    expect(spawnMock).toHaveBeenCalledWith(
+      "osascript",
+      ["-e", expect.stringContaining('display notification')],
+      expect.objectContaining({ stdio: "ignore", detached: true })
+    )
+  })
+
+  test("includes title and message in osascript command", () => {
+    if (process.platform !== "darwin") return
+
+    const provider = new MacOSNotificationCenterProvider()
+    provider.playNotification("batch_complete")
+
+    const call = spawnMock.mock.calls[0]
+    const script = call[1][1]
+    expect(script).toContain('with title "Batch Complete"')
+    expect(script).toContain('sound name "default"')
+  })
+
+  test("includes thread ID in message when provided", () => {
+    if (process.platform !== "darwin") return
+
+    const provider = new MacOSNotificationCenterProvider()
+    provider.playNotification("thread_complete", { threadId: "01.01.01" })
+
+    const call = spawnMock.mock.calls[0]
+    const script = call[1][1]
+    expect(script).toContain("Thread 01.01.01")
+  })
+
+  test("includes synthesis output in message when provided", () => {
+    if (process.platform !== "darwin") return
+
+    const provider = new MacOSNotificationCenterProvider()
+    provider.playNotification("thread_synthesis_complete", {
+      synthesisOutput: "All tasks completed successfully"
+    })
+
+    const call = spawnMock.mock.calls[0]
+    const script = call[1][1]
+    expect(script).toContain("All tasks completed successfully")
+  })
+
+  test("truncates long synthesis output to 200 chars", () => {
+    if (process.platform !== "darwin") return
+
+    const provider = new MacOSNotificationCenterProvider()
+    const longOutput = "A".repeat(250) // 250 characters
+    provider.playNotification("thread_synthesis_complete", {
+      synthesisOutput: longOutput
+    })
+
+    const call = spawnMock.mock.calls[0]
+    const script = call[1][1]
+    // Should be truncated to 197 chars + "..."
+    expect(script).toContain("A".repeat(197) + "...")
+    expect(script).not.toContain("A".repeat(200))
+  })
+
+  test("escapes special characters for AppleScript", () => {
+    if (process.platform !== "darwin") return
+
+    const provider = new MacOSNotificationCenterProvider()
+    provider.playNotification("thread_complete", {
+      synthesisOutput: 'Message with "quotes" and \\ backslash'
+    })
+
+    const call = spawnMock.mock.calls[0]
+    const script = call[1][1]
+    // Double quotes should be escaped
+    expect(script).toContain('\\"quotes\\"')
+    // Backslashes should be escaped
+    expect(script).toContain('\\\\')
+  })
+
+  test("handles all event types", () => {
+    if (process.platform !== "darwin") return
+
+    const provider = new MacOSNotificationCenterProvider()
+    const events: NotificationEvent[] = [
+      "thread_complete",
+      "batch_complete",
+      "error",
+      "thread_synthesis_complete"
+    ]
+
+    for (const event of events) {
+      provider.playNotification(event)
+    }
+
+    expect(spawnMock).toHaveBeenCalledTimes(4)
+  })
+
+  test("does not spawn when not available (non-macOS)", () => {
+    // This test is relevant on non-macOS platforms
+    if (process.platform === "darwin") return
+
+    const provider = new MacOSNotificationCenterProvider()
+    expect(provider.isAvailable()).toBe(false)
+    
+    provider.playNotification("thread_complete")
+    expect(spawnMock).not.toHaveBeenCalled()
   })
 })
 
@@ -257,8 +441,8 @@ describe("NotificationManager", () => {
 
     manager.playNotification("batch_complete")
 
-    expect(mockProvider1.playNotification).toHaveBeenCalledWith("batch_complete")
-    expect(mockProvider2.playNotification).toHaveBeenCalledWith("batch_complete")
+    expect(mockProvider1.playNotification).toHaveBeenCalledWith("batch_complete", undefined)
+    expect(mockProvider2.playNotification).toHaveBeenCalledWith("batch_complete", undefined)
     expect(unavailableProvider.playNotification).not.toHaveBeenCalled()
   })
 })
