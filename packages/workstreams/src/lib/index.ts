@@ -361,3 +361,50 @@ export function setStreamGitHubMeta(
 
   return stream
 }
+
+/**
+ * Set the planning session metadata for a stream
+ */
+export function setStreamPlanningSession(
+  repoRoot: string,
+  streamIdOrName: string,
+  sessionId: string
+): StreamMetadata {
+  const index = loadIndex(repoRoot)
+  const streamIndex = index.streams.findIndex(
+    (s) => s.id === streamIdOrName || s.name === streamIdOrName
+  )
+
+  if (streamIndex === -1) {
+    throw new Error(`Workstream "${streamIdOrName}" not found`)
+  }
+
+  const stream = index.streams[streamIndex]!
+
+  stream.planningSession = {
+    sessionId,
+    createdAt: new Date().toISOString(),
+  }
+
+  stream.updated_at = new Date().toISOString()
+  saveIndex(repoRoot, index)
+
+  return stream
+}
+
+/**
+ * Get the planning session ID for a stream
+ */
+export function getPlanningSessionId(
+  repoRoot: string,
+  streamIdOrName: string
+): string | null {
+  const index = loadIndex(repoRoot)
+  const stream = findStream(index, streamIdOrName)
+  
+  if (!stream) {
+    throw new Error(`Workstream "${streamIdOrName}" not found`)
+  }
+
+  return stream.planningSession?.sessionId ?? null
+}

@@ -182,3 +182,89 @@ Create unit tests for the JSONL parser to ensure correct extraction of text cont
 ---
 
 *Last updated: 2026-01-24*
+
+### Stage 03: Revision - Planning Session Resume
+
+#### Stage Definition
+
+Implement `work plan` command that resumes the opencode session used during workstream planning. This allows users to continue conversations with the planning agent after initial workstream creation.
+
+#### Stage Constitution
+
+**Inputs:**
+- Existing session tracking patterns in `packages/workstreams/src/lib/threads.ts` and `packages/workstreams/src/lib/index.ts`
+- Opencode session management via `opencode --session <id>`
+- Current `work create` implementation in `packages/workstreams/src/cli/create.ts`
+
+**Structure:**
+- Batch 1: Add session storage to types and index (parallel threads)
+- Batch 2: Create the `work plan` CLI command
+
+**Outputs:**
+- `planningSession` field in `StreamMetadata` type
+- Helper functions to get/set planning session ID
+- New `work plan` CLI command that resumes the planning session
+
+#### Stage Questions
+
+- [x] Where to store the planning session ID? **Decision: In index.json as part of StreamMetadata**
+- [x] How to capture the session ID after `work create`? **Decision: Use tracking ID in title, find session via `opencode session list`**
+
+#### Stage Batches
+
+##### Batch 01: Session Storage Infrastructure
+
+Add the types and helper functions needed to store and retrieve planning session IDs.
+
+###### Thread 01: Add Types and Index Helpers
+
+**Summary:**
+Add `planningSession` field to `StreamMetadata` type and create helper functions in `index.ts` to get/set planning session IDs.
+
+**Details:**
+- Working package: `./packages/workstreams`
+- Update `packages/workstreams/src/lib/types.ts`:
+  - Add `PlanningSession` interface with `sessionId: string` and `createdAt: string`
+  - Add optional `planningSession?: PlanningSession` field to `StreamMetadata`
+- Update `packages/workstreams/src/lib/index.ts`:
+  - Add `setStreamPlanningSession(repoRoot, streamId, sessionId)` function
+  - Add `getPlanningSessionId(repoRoot, streamId): string | null` function
+  - Follow existing pattern from `setStreamGitHubMeta()`
+
+##### Batch 02: CLI Command
+
+Create the `work plan` command that resumes the planning session.
+
+###### Thread 01: Create work plan CLI
+
+**Summary:**
+Create the `work plan` CLI command that opens the planning opencode session for the current workstream.
+
+**Details:**
+- Working package: `./packages/workstreams`
+- Create `packages/workstreams/src/cli/plan.ts`:
+  - Parse CLI args: `--stream` (optional, uses current), `--help`
+  - Get current workstream if not specified
+  - Look up planning session ID from index
+  - If session exists: run `opencode --session <id>`
+  - If no session: print helpful message about running `work create` first or offer to start a new planning session
+- Update `packages/workstreams/src/bin/work.ts` to add the `plan` subcommand
+- The command should:
+  - Support `work plan` (uses current workstream)
+  - Support `work plan --stream "001-my-stream"` (explicit workstream)
+  - Print the session ID being resumed for user reference
+
+###### Thread 02: Update work create to capture session
+
+**Summary:**
+Update `work create` to capture the opencode session ID after the planning agent completes, so it can be resumed later with `work plan`.
+
+**Details:**
+- Working package: `./packages/workstreams`
+- Note: This may require changes to how `work create` invokes the planning agent
+- Options to investigate:
+  1. If `work create` already runs opencode, add tracking ID to title and capture session after
+  2. If `work create` doesn't run opencode yet, this thread may just document the manual flow
+- For now, implement a way to manually set the planning session: `work plan --set <sessionId>`
+- This allows users to run `work plan --set ses_xxx` after creating a workstream
+- The auto-capture can be added later when we understand the full `work create` flow

@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-01-24T20:20:38.656Z",
+  "last_updated": "2026-01-24T20:39:15.151Z",
   "current_stream": "011-synthesis-output-parsing",
   "streams": [
     {
@@ -651,7 +651,7 @@
         ]
       },
       "created_at": "2026-01-24T20:03:28.148Z",
-      "updated_at": "2026-01-24T20:20:38.656Z",
+      "updated_at": "2026-01-24T20:39:15.151Z",
       "path": "work/011-synthesis-output-parsing",
       "generated_by": {
         "workstreams": "0.1.0"
@@ -663,8 +663,8 @@
         "plan_hash": "41b18d38e40e70c1e30befd7aa13328f50560716ef8ee3df6ccfee152b1ba929",
         "tasks": {
           "status": "approved",
-          "approved_at": "2026-01-24T20:06:16.358Z",
-          "task_count": 18
+          "approved_at": "2026-01-24T20:31:01.094Z",
+          "task_count": 30
         },
         "stages": {
           "1": {
@@ -675,6 +675,11 @@
           "2": {
             "status": "approved",
             "approved_at": "2026-01-24T20:20:38.656Z",
+            "approved_by": "user"
+          },
+          "3": {
+            "status": "approved",
+            "approved_at": "2026-01-24T20:39:15.151Z",
             "approved_by": "user"
           }
         }

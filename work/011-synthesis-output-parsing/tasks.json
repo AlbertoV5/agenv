@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "stream_id": "011-synthesis-output-parsing",
-  "last_updated": "2026-01-24T20:20:20.569Z",
+  "last_updated": "2026-01-24T20:37:22.269Z",
   "tasks": [
     {
       "id": "01.01.01.01",
@@ -12,13 +12,8 @@
       "status": "completed",
       "created_at": "2026-01-24T20:06:16.331Z",
       "updated_at": "2026-01-24T20:08:38.001Z",
-      "assigned_agent": "default",
-      "github_issue": {
-        "number": 48,
-        "url": "https://github.com/AlbertoV5/agenv/issues/48",
-        "state": "closed"
-      },
-      "report": "Created JSONL parser module with parseSynthesisJsonl() and parseSynthesisOutputFile() functions. Module extracts text from type:text events in opencode JSONL output. Added types and exports to synthesis/index.ts. All TypeScript checks passing."
+      "report": "Created JSONL parser module with parseSynthesisJsonl() and parseSynthesisOutputFile() functions. Module extracts text from type:text events in opencode JSONL output. Added types and exports to synthesis/index.ts. All TypeScript checks passing.",
+      "assigned_agent": "default"
     },
     {
       "id": "01.01.01.02",
@@ -29,8 +24,8 @@
       "status": "completed",
       "created_at": "2026-01-24T20:06:16.331Z",
       "updated_at": "2026-01-24T20:08:36.799Z",
-      "assigned_agent": "default",
-      "report": "Created JSONL parser module with parseSynthesisJsonl() and parseSynthesisOutputFile() functions. Module extracts text from type:text events in opencode JSONL output. Added types and exports to synthesis/index.ts. All TypeScript checks passing."
+      "report": "Created JSONL parser module with parseSynthesisJsonl() and parseSynthesisOutputFile() functions. Module extracts text from type:text events in opencode JSONL output. Added types and exports to synthesis/index.ts. All TypeScript checks passing.",
+      "assigned_agent": "default"
     },
     {
       "id": "01.01.01.03",
@@ -41,8 +36,8 @@
       "status": "completed",
       "created_at": "2026-01-24T20:06:16.331Z",
       "updated_at": "2026-01-24T20:08:36.799Z",
-      "assigned_agent": "default",
-      "report": "Created JSONL parser module with parseSynthesisJsonl() and parseSynthesisOutputFile() functions. Module extracts text from type:text events in opencode JSONL output. Added types and exports to synthesis/index.ts. All TypeScript checks passing."
+      "report": "Created JSONL parser module with parseSynthesisJsonl() and parseSynthesisOutputFile() functions. Module extracts text from type:text events in opencode JSONL output. Added types and exports to synthesis/index.ts. All TypeScript checks passing.",
+      "assigned_agent": "default"
     },
     {
       "id": "01.01.01.04",
@@ -53,8 +48,8 @@
       "status": "completed",
       "created_at": "2026-01-24T20:06:16.331Z",
       "updated_at": "2026-01-24T20:08:36.799Z",
-      "assigned_agent": "default",
-      "report": "Created JSONL parser module with parseSynthesisJsonl() and parseSynthesisOutputFile() functions. Module extracts text from type:text events in opencode JSONL output. Added types and exports to synthesis/index.ts. All TypeScript checks passing."
+      "report": "Created JSONL parser module with parseSynthesisJsonl() and parseSynthesisOutputFile() functions. Module extracts text from type:text events in opencode JSONL output. Added types and exports to synthesis/index.ts. All TypeScript checks passing.",
+      "assigned_agent": "default"
     },
     {
       "id": "01.01.02.01",
@@ -65,13 +60,8 @@
       "status": "completed",
       "created_at": "2026-01-24T20:06:16.331Z",
       "updated_at": "2026-01-24T20:08:02.472Z",
-      "assigned_agent": "default",
-      "github_issue": {
-        "number": 49,
-        "url": "https://github.com/AlbertoV5/agenv/issues/49",
-        "state": "closed"
-      },
-      "report": "Added getSynthesisLogPath function to opencode.ts that returns /tmp/workstream-{streamId}-{threadId}-synthesis.log"
+      "report": "Added getSynthesisLogPath function to opencode.ts that returns /tmp/workstream-{streamId}-{threadId}-synthesis.log",
+      "assigned_agent": "default"
     },
     {
       "id": "01.01.02.02",
@@ -82,8 +72,8 @@
       "status": "completed",
       "created_at": "2026-01-24T20:06:16.331Z",
       "updated_at": "2026-01-24T20:07:54.403Z",
-      "assigned_agent": "default",
-      "report": "Removed jq extraction code from buildPostSynthesisCommand (lines 862-868). Synthesis output now remains as raw JSONL in .json file"
+      "report": "Removed jq extraction code from buildPostSynthesisCommand (lines 862-868). Synthesis output now remains as raw JSONL in .json file",
+      "assigned_agent": "default"
     },
     {
       "id": "01.01.02.03",
@@ -94,8 +84,8 @@
       "status": "completed",
       "created_at": "2026-01-24T20:06:16.331Z",
       "updated_at": "2026-01-24T20:07:58.047Z",
-      "assigned_agent": "default",
-      "report": "Removed synthesisOutputPath (.txt file) references from buildPostSynthesisCommand. Only synthesisJsonPath is used for raw JSONL output"
+      "report": "Removed synthesisOutputPath (.txt file) references from buildPostSynthesisCommand. Only synthesisJsonPath is used for raw JSONL output",
+      "assigned_agent": "default"
     },
     {
       "id": "01.01.02.04",
@@ -106,8 +96,8 @@
       "status": "completed",
       "created_at": "2026-01-24T20:06:16.331Z",
       "updated_at": "2026-01-24T20:08:00.973Z",
-      "assigned_agent": "default",
-      "report": "Added shell logging to synthesis log path with timestamp and file size logging after synthesis completes"
+      "report": "Added shell logging to synthesis log path with timestamp and file size logging after synthesis completes",
+      "assigned_agent": "default"
     },
     {
       "id": "01.02.01.01",
@@ -118,13 +108,8 @@
       "status": "completed",
       "created_at": "2026-01-24T20:06:16.331Z",
       "updated_at": "2026-01-24T20:13:39.464Z",
-      "assigned_agent": "default",
-      "github_issue": {
-        "number": 50,
-        "url": "https://github.com/AlbertoV5/agenv/issues/50",
-        "state": "closed"
-      },
-      "report": "Added imports for parseSynthesisOutputFile and getSynthesisLogPath to multi.ts"
+      "report": "Added imports for parseSynthesisOutputFile and getSynthesisLogPath to multi.ts",
+      "assigned_agent": "default"
     },
     {
       "id": "01.02.01.02",
@@ -135,8 +120,8 @@
       "status": "completed",
       "created_at": "2026-01-24T20:06:16.331Z",
       "updated_at": "2026-01-24T20:13:36.417Z",
-      "assigned_agent": "default",
-      "report": "Updated handleSessionClose() to read synthesis.json using parseSynthesisOutputFile() instead of reading .txt directly"
+      "report": "Updated handleSessionClose() to read synthesis.json using parseSynthesisOutputFile() instead of reading .txt directly",
+      "assigned_agent": "default"
     },
     {
       "id": "01.02.01.03",
@@ -147,8 +132,8 @@
       "status": "completed",
       "created_at": "2026-01-24T20:06:16.331Z",
       "updated_at": "2026-01-24T20:13:38.385Z",
-      "assigned_agent": "default",
-      "report": "Added warning log when parseResult.success is false with reference to log file path. Also updated cleanupSynthesisFiles() to clean up all new temp files (.json, .log, exported-session.json, context.txt)"
+      "report": "Added warning log when parseResult.success is false with reference to log file path. Also updated cleanupSynthesisFiles() to clean up all new temp files (.json, .log, exported-session.json, context.txt)",
+      "assigned_agent": "default"
     },
     {
       "id": "01.02.02.01",
@@ -159,13 +144,8 @@
       "status": "completed",
       "created_at": "2026-01-24T20:06:16.331Z",
       "updated_at": "2026-01-24T20:13:01.136Z",
-      "assigned_agent": "default",
-      "github_issue": {
-        "number": 51,
-        "url": "https://github.com/AlbertoV5/agenv/issues/51",
-        "state": "closed"
-      },
-      "report": "Updated marker-polling.ts to use new JSONL parser. Changed pollMarkerFiles() to parse .json files using parseSynthesisOutputFile(), and updated cleanupSynthesisFiles() to clean up .json and .log files instead of .txt files."
+      "report": "Updated marker-polling.ts to use new JSONL parser. Changed pollMarkerFiles() to parse .json files using parseSynthesisOutputFile(), and updated cleanupSynthesisFiles() to clean up .json and .log files instead of .txt files.",
+      "assigned_agent": "default"
     },
     {
       "id": "01.02.02.02",
@@ -176,8 +156,8 @@
       "status": "completed",
       "created_at": "2026-01-24T20:06:16.331Z",
       "updated_at": "2026-01-24T20:13:01.136Z",
-      "assigned_agent": "default",
-      "report": "Updated marker-polling.ts to use new JSONL parser. Changed pollMarkerFiles() to parse .json files using parseSynthesisOutputFile(), and updated cleanupSynthesisFiles() to clean up .json and .log files instead of .txt files."
+      "report": "Updated marker-polling.ts to use new JSONL parser. Changed pollMarkerFiles() to parse .json files using parseSynthesisOutputFile(), and updated cleanupSynthesisFiles() to clean up .json and .log files instead of .txt files.",
+      "assigned_agent": "default"
     },
     {
       "id": "01.02.02.03",
@@ -188,8 +168,8 @@
       "status": "completed",
       "created_at": "2026-01-24T20:06:16.331Z",
       "updated_at": "2026-01-24T20:13:01.136Z",
-      "assigned_agent": "default",
-      "report": "Updated marker-polling.ts to use new JSONL parser. Changed pollMarkerFiles() to parse .json files using parseSynthesisOutputFile(), and updated cleanupSynthesisFiles() to clean up .json and .log files instead of .txt files."
+      "report": "Updated marker-polling.ts to use new JSONL parser. Changed pollMarkerFiles() to parse .json files using parseSynthesisOutputFile(), and updated cleanupSynthesisFiles() to clean up .json and .log files instead of .txt files.",
+      "assigned_agent": "default"
     },
     {
       "id": "02.01.01.01",
@@ -200,13 +180,8 @@
       "status": "completed",
       "created_at": "2026-01-24T20:06:16.331Z",
       "updated_at": "2026-01-24T20:20:20.569Z",
-      "assigned_agent": "code-reviewer",
-      "github_issue": {
-        "number": 52,
-        "url": "https://github.com/AlbertoV5/agenv/issues/52",
-        "state": "closed"
-      },
-      "report": "Implemented unit tests for JSONL parser covering valid output, concatenation, empty/missing files, and malformed input. All tests passed with bun test v1.3.6 (d530ed99)\nCreating /var/folders/10/fg4xckzs73153g1nhtd_f0km0000gn/T/work-init-test-n98QhY/work/...\nCreating github.json (disabled by default)...\nInitializing index.json...\nInitializing agents.yaml...\nInitializing notifications.json...\nInitializing synthesis.json...\n\nInitialization complete.\nCreating github.json (disabled by default)...\nInitializing index.json...\nagents.yaml already exists, skipping.\nnotifications.json already exists, skipping.\nInitializing synthesis.json...\n\nInitialization complete.\nCreating github.json (disabled by default)...\nInitializing index.json...\nOverwriting agents.yaml...\nInitializing notifications.json...\nInitializing synthesis.json...\n\nInitialization complete.\nDoc: {\n  \"streamName\": \"Test Stream\",\n  \"summary\": \"Summary text.\",\n  \"references\": [],\n  \"stages\": [\n    {\n      \"id\": 1,\n      \"name\": \"Initial\",\n      \"definition\": \"\",\n      \"constitution\": \"\",\n      \"questions\": [],\n      \"batches\": [\n        {\n          \"id\": 1,\n          \"prefix\": \"01\",\n          \"name\": \"Setup\",\n          \"summary\": \"\",\n          \"threads\": [\n            {\n              \"id\": 1,\n              \"name\": \"Init\",\n              \"summary\": \"\",\n              \"details\": \"\"\n            }\n          ]\n        }\n      ]\n    },\n    {\n      \"id\": 2,\n      \"name\": \"Next\",\n      \"definition\": \"\",\n      \"constitution\": \"\",\n      \"questions\": [],\n      \"batches\": []\n    }\n  ]\n}\nApproval Status for \"synthesis-output-parsing\" (011-synthesis-output-parsing)\n\n  APPROVED Plan:    approved\n  APPROVED Tasks:   approved\n\nAll approvals complete. Run 'work start' to begin.."
+      "report": "Implemented unit tests for JSONL parser covering valid output, concatenation, empty/missing files, and malformed input. All tests passed with bun test v1.3.6 (d530ed99)",
+      "assigned_agent": "code-reviewer"
     },
     {
       "id": "02.01.01.02",
@@ -217,8 +192,8 @@
       "status": "completed",
       "created_at": "2026-01-24T20:06:16.331Z",
       "updated_at": "2026-01-24T20:20:19.124Z",
-      "assigned_agent": "code-reviewer",
-      "report": "Implemented unit tests for JSONL parser covering valid output, concatenation, empty/missing files, and malformed input. All tests passed with bun test v1.3.6 (d530ed99)\nCreating /var/folders/10/fg4xckzs73153g1nhtd_f0km0000gn/T/work-init-test-n98QhY/work/...\nCreating github.json (disabled by default)...\nInitializing index.json...\nInitializing agents.yaml...\nInitializing notifications.json...\nInitializing synthesis.json...\n\nInitialization complete.\nCreating github.json (disabled by default)...\nInitializing index.json...\nagents.yaml already exists, skipping.\nnotifications.json already exists, skipping.\nInitializing synthesis.json...\n\nInitialization complete.\nCreating github.json (disabled by default)...\nInitializing index.json...\nOverwriting agents.yaml...\nInitializing notifications.json...\nInitializing synthesis.json...\n\nInitialization complete.\nDoc: {\n  \"streamName\": \"Test Stream\",\n  \"summary\": \"Summary text.\",\n  \"references\": [],\n  \"stages\": [\n    {\n      \"id\": 1,\n      \"name\": \"Initial\",\n      \"definition\": \"\",\n      \"constitution\": \"\",\n      \"questions\": [],\n      \"batches\": [\n        {\n          \"id\": 1,\n          \"prefix\": \"01\",\n          \"name\": \"Setup\",\n          \"summary\": \"\",\n          \"threads\": [\n            {\n              \"id\": 1,\n              \"name\": \"Init\",\n              \"summary\": \"\",\n              \"details\": \"\"\n            }\n          ]\n        }\n      ]\n    },\n    {\n      \"id\": 2,\n      \"name\": \"Next\",\n      \"definition\": \"\",\n      \"constitution\": \"\",\n      \"questions\": [],\n      \"batches\": []\n    }\n  ]\n}\nApproval Status for \"synthesis-output-parsing\" (011-synthesis-output-parsing)\n\n  APPROVED Plan:    approved\n  APPROVED Tasks:   approved\n\nAll approvals complete. Run 'work start' to begin.."
+      "report": "Implemented unit tests for JSONL parser covering valid output, concatenation, empty/missing files, and malformed input. All tests passed with bun test v1.3.6 (d530ed99)",
+      "assigned_agent": "code-reviewer"
     },
     {
       "id": "02.01.01.03",
@@ -229,8 +204,8 @@
       "status": "completed",
       "created_at": "2026-01-24T20:06:16.331Z",
       "updated_at": "2026-01-24T20:20:19.124Z",
-      "assigned_agent": "code-reviewer",
-      "report": "Implemented unit tests for JSONL parser covering valid output, concatenation, empty/missing files, and malformed input. All tests passed with bun test v1.3.6 (d530ed99)\nCreating /var/folders/10/fg4xckzs73153g1nhtd_f0km0000gn/T/work-init-test-n98QhY/work/...\nCreating github.json (disabled by default)...\nInitializing index.json...\nInitializing agents.yaml...\nInitializing notifications.json...\nInitializing synthesis.json...\n\nInitialization complete.\nCreating github.json (disabled by default)...\nInitializing index.json...\nagents.yaml already exists, skipping.\nnotifications.json already exists, skipping.\nInitializing synthesis.json...\n\nInitialization complete.\nCreating github.json (disabled by default)...\nInitializing index.json...\nOverwriting agents.yaml...\nInitializing notifications.json...\nInitializing synthesis.json...\n\nInitialization complete.\nDoc: {\n  \"streamName\": \"Test Stream\",\n  \"summary\": \"Summary text.\",\n  \"references\": [],\n  \"stages\": [\n    {\n      \"id\": 1,\n      \"name\": \"Initial\",\n      \"definition\": \"\",\n      \"constitution\": \"\",\n      \"questions\": [],\n      \"batches\": [\n        {\n          \"id\": 1,\n          \"prefix\": \"01\",\n          \"name\": \"Setup\",\n          \"summary\": \"\",\n          \"threads\": [\n            {\n              \"id\": 1,\n              \"name\": \"Init\",\n              \"summary\": \"\",\n              \"details\": \"\"\n            }\n          ]\n        }\n      ]\n    },\n    {\n      \"id\": 2,\n      \"name\": \"Next\",\n      \"definition\": \"\",\n      \"constitution\": \"\",\n      \"questions\": [],\n      \"batches\": []\n    }\n  ]\n}\nApproval Status for \"synthesis-output-parsing\" (011-synthesis-output-parsing)\n\n  APPROVED Plan:    approved\n  APPROVED Tasks:   approved\n\nAll approvals complete. Run 'work start' to begin.."
+      "report": "Implemented unit tests for JSONL parser covering valid output, concatenation, empty/missing files, and malformed input. All tests passed with bun test v1.3.6 (d530ed99)",
+      "assigned_agent": "code-reviewer"
     },
     {
       "id": "02.01.01.04",
@@ -241,8 +216,152 @@
       "status": "completed",
       "created_at": "2026-01-24T20:06:16.331Z",
       "updated_at": "2026-01-24T20:20:19.124Z",
-      "assigned_agent": "code-reviewer",
-      "report": "Implemented unit tests for JSONL parser covering valid output, concatenation, empty/missing files, and malformed input. All tests passed with bun test v1.3.6 (d530ed99)\nCreating /var/folders/10/fg4xckzs73153g1nhtd_f0km0000gn/T/work-init-test-n98QhY/work/...\nCreating github.json (disabled by default)...\nInitializing index.json...\nInitializing agents.yaml...\nInitializing notifications.json...\nInitializing synthesis.json...\n\nInitialization complete.\nCreating github.json (disabled by default)...\nInitializing index.json...\nagents.yaml already exists, skipping.\nnotifications.json already exists, skipping.\nInitializing synthesis.json...\n\nInitialization complete.\nCreating github.json (disabled by default)...\nInitializing index.json...\nOverwriting agents.yaml...\nInitializing notifications.json...\nInitializing synthesis.json...\n\nInitialization complete.\nDoc: {\n  \"streamName\": \"Test Stream\",\n  \"summary\": \"Summary text.\",\n  \"references\": [],\n  \"stages\": [\n    {\n      \"id\": 1,\n      \"name\": \"Initial\",\n      \"definition\": \"\",\n      \"constitution\": \"\",\n      \"questions\": [],\n      \"batches\": [\n        {\n          \"id\": 1,\n          \"prefix\": \"01\",\n          \"name\": \"Setup\",\n          \"summary\": \"\",\n          \"threads\": [\n            {\n              \"id\": 1,\n              \"name\": \"Init\",\n              \"summary\": \"\",\n              \"details\": \"\"\n            }\n          ]\n        }\n      ]\n    },\n    {\n      \"id\": 2,\n      \"name\": \"Next\",\n      \"definition\": \"\",\n      \"constitution\": \"\",\n      \"questions\": [],\n      \"batches\": []\n    }\n  ]\n}\nApproval Status for \"synthesis-output-parsing\" (011-synthesis-output-parsing)\n\n  APPROVED Plan:    approved\n  APPROVED Tasks:   approved\n\nAll approvals complete. Run 'work start' to begin.."
+      "report": "Implemented unit tests for JSONL parser covering valid output, concatenation, empty/missing files, and malformed input. All tests passed with bun test v1.3.6 (d530ed99)",
+      "assigned_agent": "code-reviewer"
+    },
+    {
+      "id": "03.01.01.01",
+      "name": "Add `PlanningSession` interface to `packages/workstreams/src/lib/types.ts` with `sessionId: string` and `createdAt: string` fields",
+      "stage_name": "Revision - Planning Session Resume",
+      "batch_name": "Session Storage Infrastructure",
+      "thread_name": "Add Types and Index Helpers",
+      "status": "completed",
+      "created_at": "2026-01-24T20:31:01.025Z",
+      "updated_at": "2026-01-24T20:32:33.121Z",
+      "assigned_agent": "default",
+      "report": "Added PlanningSession interface to types.ts with sessionId and createdAt fields"
+    },
+    {
+      "id": "03.01.01.02",
+      "name": "Add optional `planningSession?: PlanningSession` field to `StreamMetadata` interface in types.ts",
+      "stage_name": "Revision - Planning Session Resume",
+      "batch_name": "Session Storage Infrastructure",
+      "thread_name": "Add Types and Index Helpers",
+      "status": "completed",
+      "created_at": "2026-01-24T20:31:01.025Z",
+      "updated_at": "2026-01-24T20:32:34.135Z",
+      "assigned_agent": "default",
+      "report": "Added optional planningSession field to StreamMetadata interface in types.ts"
+    },
+    {
+      "id": "03.01.01.03",
+      "name": "Add `setStreamPlanningSession(repoRoot, streamId, sessionId)` function to `packages/workstreams/src/lib/index.ts`",
+      "stage_name": "Revision - Planning Session Resume",
+      "batch_name": "Session Storage Infrastructure",
+      "thread_name": "Add Types and Index Helpers",
+      "status": "completed",
+      "created_at": "2026-01-24T20:31:01.025Z",
+      "updated_at": "2026-01-24T20:32:35.496Z",
+      "assigned_agent": "default",
+      "report": "Added setStreamPlanningSession function to index.ts following pattern from setStreamGitHubMeta"
+    },
+    {
+      "id": "03.01.01.04",
+      "name": "Add `getPlanningSessionId(repoRoot, streamId): string | null` function to index.ts",
+      "stage_name": "Revision - Planning Session Resume",
+      "batch_name": "Session Storage Infrastructure",
+      "thread_name": "Add Types and Index Helpers",
+      "status": "completed",
+      "created_at": "2026-01-24T20:31:01.025Z",
+      "updated_at": "2026-01-24T20:32:36.555Z",
+      "assigned_agent": "default",
+      "report": "Added getPlanningSessionId function to index.ts returning string | null"
+    },
+    {
+      "id": "03.02.01.01",
+      "name": "Create `packages/workstreams/src/cli/plan.ts` with CLI argument parsing (--stream, --set, --help)",
+      "stage_name": "Revision - Planning Session Resume",
+      "batch_name": "CLI Command",
+      "thread_name": "Create work plan CLI",
+      "status": "completed",
+      "created_at": "2026-01-24T20:31:01.025Z",
+      "updated_at": "2026-01-24T20:37:22.269Z",
+      "assigned_agent": "default",
+      "report": "Implemented work plan CLI command with session resume, --set flag, and comprehensive help documentation. All tests passing."
+    },
+    {
+      "id": "03.02.01.02",
+      "name": "Implement session resume logic: if session exists, run `opencode --session <id>`",
+      "stage_name": "Revision - Planning Session Resume",
+      "batch_name": "CLI Command",
+      "thread_name": "Create work plan CLI",
+      "status": "completed",
+      "created_at": "2026-01-24T20:31:01.025Z",
+      "updated_at": "2026-01-24T20:37:22.269Z",
+      "assigned_agent": "default",
+      "report": "Implemented work plan CLI command with session resume, --set flag, and comprehensive help documentation. All tests passing."
+    },
+    {
+      "id": "03.02.01.03",
+      "name": "Implement `--set <sessionId>` flag to manually store a planning session ID",
+      "stage_name": "Revision - Planning Session Resume",
+      "batch_name": "CLI Command",
+      "thread_name": "Create work plan CLI",
+      "status": "completed",
+      "created_at": "2026-01-24T20:31:01.025Z",
+      "updated_at": "2026-01-24T20:37:22.269Z",
+      "assigned_agent": "default",
+      "report": "Implemented work plan CLI command with session resume, --set flag, and comprehensive help documentation. All tests passing."
+    },
+    {
+      "id": "03.02.01.04",
+      "name": "Add helpful messages when no session exists (suggest using --set or running work create)",
+      "stage_name": "Revision - Planning Session Resume",
+      "batch_name": "CLI Command",
+      "thread_name": "Create work plan CLI",
+      "status": "completed",
+      "created_at": "2026-01-24T20:31:01.025Z",
+      "updated_at": "2026-01-24T20:37:22.269Z",
+      "assigned_agent": "default",
+      "report": "Implemented work plan CLI command with session resume, --set flag, and comprehensive help documentation. All tests passing."
+    },
+    {
+      "id": "03.02.01.05",
+      "name": "Update `packages/workstreams/src/bin/work.ts` to add the `plan` subcommand",
+      "stage_name": "Revision - Planning Session Resume",
+      "batch_name": "CLI Command",
+      "thread_name": "Create work plan CLI",
+      "status": "completed",
+      "created_at": "2026-01-24T20:31:01.025Z",
+      "updated_at": "2026-01-24T20:37:22.269Z",
+      "assigned_agent": "default",
+      "report": "Implemented work plan CLI command with session resume, --set flag, and comprehensive help documentation. All tests passing."
+    },
+    {
+      "id": "03.02.02.01",
+      "name": "Investigate how `work create` currently works and whether it invokes opencode",
+      "stage_name": "Revision - Planning Session Resume",
+      "batch_name": "CLI Command",
+      "thread_name": "Update work create to capture session",
+      "status": "completed",
+      "created_at": "2026-01-24T20:31:01.025Z",
+      "updated_at": "2026-01-24T20:36:03.617Z",
+      "assigned_agent": "default",
+      "report": "Completed documentation for manual planning session capture. Enhanced work plan --help with step-by-step workflow showing how to capture session ID after running opencode manually and resume it later with work plan."
+    },
+    {
+      "id": "03.02.02.02",
+      "name": "Document the manual flow for capturing planning session (user runs opencode, then `work plan --set`)",
+      "stage_name": "Revision - Planning Session Resume",
+      "batch_name": "CLI Command",
+      "thread_name": "Update work create to capture session",
+      "status": "completed",
+      "created_at": "2026-01-24T20:31:01.025Z",
+      "updated_at": "2026-01-24T20:36:03.617Z",
+      "assigned_agent": "default",
+      "report": "Completed documentation for manual planning session capture. Enhanced work plan --help with step-by-step workflow showing how to capture session ID after running opencode manually and resume it later with work plan."
+    },
+    {
+      "id": "03.02.02.03",
+      "name": "Add a note in `work plan --help` about how to capture the planning session ID",
+      "stage_name": "Revision - Planning Session Resume",
+      "batch_name": "CLI Command",
+      "thread_name": "Update work create to capture session",
+      "status": "completed",
+      "created_at": "2026-01-24T20:31:01.025Z",
+      "updated_at": "2026-01-24T20:36:03.617Z",
+      "assigned_agent": "default",
+      "report": "Completed documentation for manual planning session capture. Enhanced work plan --help with step-by-step workflow showing how to capture session ID after running opencode manually and resume it later with work plan."
     }
   ]
 }

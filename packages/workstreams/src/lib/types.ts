@@ -83,6 +83,12 @@ export interface GeneratedBy {
   workstreams: string // @agenv/workstreams version
 }
 
+// Planning session metadata
+export interface PlanningSession {
+  sessionId: string
+  createdAt: string
+}
+
 // Individual workstream metadata
 export interface StreamMetadata {
   id: string // e.g., "001-migrate-sql-to-orm"
@@ -98,6 +104,7 @@ export interface StreamMetadata {
   generated_by: GeneratedBy // versions of tools that created this workstream
   files?: string[] // list of file names in the files/ directory
   current_batch?: string // ID of the current batch (e.g. "01.01")
+  planningSession?: PlanningSession // planning session metadata
   github?: {
     branch?: string
     completed_at?: string
