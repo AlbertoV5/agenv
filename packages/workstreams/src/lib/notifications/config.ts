@@ -50,6 +50,9 @@ export function getDefaultNotificationsConfig(): NotificationsConfig {
       error: true,
       synthesis_complete: true,
     },
+    synthesis: {
+      enabled: false,
+    },
   }
 }
 
@@ -104,9 +107,24 @@ export function loadNotificationsConfig(repoRoot: string): NotificationsConfig {
         error: loaded.events?.error ?? defaults.events.error,
         synthesis_complete: loaded.events?.synthesis_complete ?? defaults.events.synthesis_complete,
       },
+      synthesis: {
+        enabled: loaded.synthesis?.enabled ?? defaults.synthesis!.enabled,
+        agent: loaded.synthesis?.agent ?? defaults.synthesis!.agent,
+      },
     }
   } catch {
     // Invalid JSON or read error - return default config
     return defaults
   }
+}
+
+/**
+ * Check if synthesis agents are enabled for the given repository
+ *
+ * @param repoRoot - The root directory of the repository
+ * @returns true if synthesis is enabled in the notifications config, false otherwise
+ */
+export function isSynthesisEnabled(repoRoot: string): boolean {
+  const config = loadNotificationsConfig(repoRoot)
+  return config.synthesis?.enabled ?? false
 }

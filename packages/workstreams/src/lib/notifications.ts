@@ -27,6 +27,20 @@ export {
   CONFIG_PATH,
   DEFAULT_SOUNDS,
   loadConfig,
+  // Workstream notifications config types
+  type SoundProviderConfig,
+  type NotificationCenterConfig,
+  type TerminalNotifierConfig,
+  type TTSProviderConfig,
+  type NotificationProvidersConfig,
+  type NotificationEventsConfig,
+  type NotificationsConfig,
+  type SynthesisConfig,
+  // Workstream notifications config loader
+  getNotificationsConfigPath,
+  getDefaultNotificationsConfig,
+  loadNotificationsConfig,
+  isSynthesisEnabled,
   // Providers
   MacOSSoundProvider,
   ExternalApiProvider,

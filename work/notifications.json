@@ -1,0 +1,12 @@
+{
+  "enabled": true,
+  "providers": {
+    "sound": { "enabled": true, "volume": 0.5 },
+    "notification_center": { "enabled": true }
+  },
+  "events": {
+    "thread_complete": true,
+    "batch_complete": true,
+    "error": true
+  }
+}

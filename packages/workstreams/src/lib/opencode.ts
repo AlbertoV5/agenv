@@ -806,7 +806,8 @@ export function buildPostSynthesisCommand(options: PostSynthesisOptions): string
 
   // jq command to extract assistant text messages from exported session
   // Format: .messages[] | select(.info.role=="assistant") | .parts[] | select(.type=="text") | .text
-  const jqExtractCommand = `jq -r '.messages[] | select(.info.role=="assistant") | .parts[] | select(.type=="text") | .text'`
+  // Note: Use double quotes for the jq filter to avoid escaping issues inside sh -c '...'
+  const jqExtractCommand = `jq -r ".messages[] | select(.info.role==\\"assistant\\") | .parts[] | select(.type==\\"text\\") | .text"`
 
   return `sh -c '
 WORK_TRACK_ID=$(date +%s%N | head -c 16)

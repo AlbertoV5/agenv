@@ -220,15 +220,9 @@ Synthesis agents are optional observer agents that run after working agent sessi
 
 ### Enabling Synthesis Agents
 
-Add a `synthesis_agents` section to `work/agents.yaml`:
+1. Define synthesis agents in `work/agents.yaml`:
 
 ```yaml
-agents:
-  - name: default
-    description: General-purpose implementation agent.
-    best_for: Standard development tasks.
-    models: [anthropic/claude-sonnet-4-5]
-
 synthesis_agents:
   - name: batch-synthesizer
     description: Summarizes working agent outputs after thread completion.
@@ -236,9 +230,19 @@ synthesis_agents:
     models: [anthropic/claude-sonnet-4-5]
 ```
 
+2. Enable synthesis in `work/notifications.json` (opt-in):
+
+```json
+{
+  "synthesis": {
+    "enabled": true
+  }
+}
+```
+
 ### Disabling Synthesis Agents
 
-To disable synthesis agents, remove or comment out the `synthesis_agents` section. When disabled, `work multi` runs working agents normally without the post-session synthesis phase.
+To disable synthesis agents, set `enabled: false` in `work/notifications.json` or remove the `synthesis_agents` section from `agents.yaml`. When disabled, `work multi` runs working agents normally without the post-session synthesis phase.
 
 ### How It Works
 

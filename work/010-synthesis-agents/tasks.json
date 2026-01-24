@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "stream_id": "010-synthesis-agents",
-  "last_updated": "2026-01-24T00:25:17.767Z",
+  "last_updated": "2026-01-24T01:00:13.151Z",
   "tasks": [
     {
       "id": "01.01.01.01",
@@ -912,8 +912,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:08:37.674Z",
       "updated_at": "2026-01-24T00:11:03.105Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Created session-export.ts with full SessionExport interface, MessagePart discriminated union (5 types), exportSession() for running opencode export CLI, extractTextMessages() for assistant message extraction, and 30 passing unit tests covering all edge cases."
+      "report": "Created session-export.ts with full SessionExport interface, MessagePart discriminated union (5 types), exportSession() for running opencode export CLI, extractTextMessages() for assistant message extraction, and 30 passing unit tests covering all edge cases.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "06.01.01.02",
@@ -924,8 +924,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:08:37.674Z",
       "updated_at": "2026-01-24T00:11:03.105Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Created session-export.ts with full SessionExport interface, MessagePart discriminated union (5 types), exportSession() for running opencode export CLI, extractTextMessages() for assistant message extraction, and 30 passing unit tests covering all edge cases."
+      "report": "Created session-export.ts with full SessionExport interface, MessagePart discriminated union (5 types), exportSession() for running opencode export CLI, extractTextMessages() for assistant message extraction, and 30 passing unit tests covering all edge cases.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "06.01.01.03",
@@ -936,8 +936,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:08:37.674Z",
       "updated_at": "2026-01-24T00:11:03.105Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Created session-export.ts with full SessionExport interface, MessagePart discriminated union (5 types), exportSession() for running opencode export CLI, extractTextMessages() for assistant message extraction, and 30 passing unit tests covering all edge cases."
+      "report": "Created session-export.ts with full SessionExport interface, MessagePart discriminated union (5 types), exportSession() for running opencode export CLI, extractTextMessages() for assistant message extraction, and 30 passing unit tests covering all edge cases.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "06.01.01.04",
@@ -948,8 +948,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:08:37.674Z",
       "updated_at": "2026-01-24T00:11:03.105Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Created session-export.ts with full SessionExport interface, MessagePart discriminated union (5 types), exportSession() for running opencode export CLI, extractTextMessages() for assistant message extraction, and 30 passing unit tests covering all edge cases."
+      "report": "Created session-export.ts with full SessionExport interface, MessagePart discriminated union (5 types), exportSession() for running opencode export CLI, extractTextMessages() for assistant message extraction, and 30 passing unit tests covering all edge cases.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "06.01.01.05",
@@ -960,8 +960,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:08:37.674Z",
       "updated_at": "2026-01-24T00:11:03.105Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Created session-export.ts with full SessionExport interface, MessagePart discriminated union (5 types), exportSession() for running opencode export CLI, extractTextMessages() for assistant message extraction, and 30 passing unit tests covering all edge cases."
+      "report": "Created session-export.ts with full SessionExport interface, MessagePart discriminated union (5 types), exportSession() for running opencode export CLI, extractTextMessages() for assistant message extraction, and 30 passing unit tests covering all edge cases.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "06.01.01.06",
@@ -972,8 +972,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:08:37.674Z",
       "updated_at": "2026-01-24T00:11:03.105Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Created session-export.ts with full SessionExport interface, MessagePart discriminated union (5 types), exportSession() for running opencode export CLI, extractTextMessages() for assistant message extraction, and 30 passing unit tests covering all edge cases."
+      "report": "Created session-export.ts with full SessionExport interface, MessagePart discriminated union (5 types), exportSession() for running opencode export CLI, extractTextMessages() for assistant message extraction, and 30 passing unit tests covering all edge cases.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "06.02.01.01",
@@ -984,8 +984,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:08:37.674Z",
       "updated_at": "2026-01-24T00:13:50.679Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Added buildPostSynthesisCommand() with PostSynthesisOptions interface. Implements post-session synthesis: working agent runs first with TUI, then exports session, extracts assistant text via jq, runs synthesis headless with --format json, and resumes WORKING session. Deprecated buildSynthesisRunCommand() with @deprecated JSDoc pointing to new function."
+      "report": "Added buildPostSynthesisCommand() with PostSynthesisOptions interface. Implements post-session synthesis: working agent runs first with TUI, then exports session, extracts assistant text via jq, runs synthesis headless with --format json, and resumes WORKING session. Deprecated buildSynthesisRunCommand() with @deprecated JSDoc pointing to new function.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "06.02.01.02",
@@ -996,8 +996,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:08:37.674Z",
       "updated_at": "2026-01-24T00:13:50.679Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Added buildPostSynthesisCommand() with PostSynthesisOptions interface. Implements post-session synthesis: working agent runs first with TUI, then exports session, extracts assistant text via jq, runs synthesis headless with --format json, and resumes WORKING session. Deprecated buildSynthesisRunCommand() with @deprecated JSDoc pointing to new function."
+      "report": "Added buildPostSynthesisCommand() with PostSynthesisOptions interface. Implements post-session synthesis: working agent runs first with TUI, then exports session, extracts assistant text via jq, runs synthesis headless with --format json, and resumes WORKING session. Deprecated buildSynthesisRunCommand() with @deprecated JSDoc pointing to new function.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "06.02.01.03",
@@ -1008,8 +1008,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:08:37.674Z",
       "updated_at": "2026-01-24T00:13:50.679Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Added buildPostSynthesisCommand() with PostSynthesisOptions interface. Implements post-session synthesis: working agent runs first with TUI, then exports session, extracts assistant text via jq, runs synthesis headless with --format json, and resumes WORKING session. Deprecated buildSynthesisRunCommand() with @deprecated JSDoc pointing to new function."
+      "report": "Added buildPostSynthesisCommand() with PostSynthesisOptions interface. Implements post-session synthesis: working agent runs first with TUI, then exports session, extracts assistant text via jq, runs synthesis headless with --format json, and resumes WORKING session. Deprecated buildSynthesisRunCommand() with @deprecated JSDoc pointing to new function.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "06.02.01.04",
@@ -1020,8 +1020,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:08:37.674Z",
       "updated_at": "2026-01-24T00:13:50.679Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Added buildPostSynthesisCommand() with PostSynthesisOptions interface. Implements post-session synthesis: working agent runs first with TUI, then exports session, extracts assistant text via jq, runs synthesis headless with --format json, and resumes WORKING session. Deprecated buildSynthesisRunCommand() with @deprecated JSDoc pointing to new function."
+      "report": "Added buildPostSynthesisCommand() with PostSynthesisOptions interface. Implements post-session synthesis: working agent runs first with TUI, then exports session, extracts assistant text via jq, runs synthesis headless with --format json, and resumes WORKING session. Deprecated buildSynthesisRunCommand() with @deprecated JSDoc pointing to new function.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "06.02.01.05",
@@ -1032,8 +1032,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:08:37.674Z",
       "updated_at": "2026-01-24T00:13:50.679Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Added buildPostSynthesisCommand() with PostSynthesisOptions interface. Implements post-session synthesis: working agent runs first with TUI, then exports session, extracts assistant text via jq, runs synthesis headless with --format json, and resumes WORKING session. Deprecated buildSynthesisRunCommand() with @deprecated JSDoc pointing to new function."
+      "report": "Added buildPostSynthesisCommand() with PostSynthesisOptions interface. Implements post-session synthesis: working agent runs first with TUI, then exports session, extracts assistant text via jq, runs synthesis headless with --format json, and resumes WORKING session. Deprecated buildSynthesisRunCommand() with @deprecated JSDoc pointing to new function.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "06.02.01.06",
@@ -1044,8 +1044,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:08:37.674Z",
       "updated_at": "2026-01-24T00:13:50.679Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Added buildPostSynthesisCommand() with PostSynthesisOptions interface. Implements post-session synthesis: working agent runs first with TUI, then exports session, extracts assistant text via jq, runs synthesis headless with --format json, and resumes WORKING session. Deprecated buildSynthesisRunCommand() with @deprecated JSDoc pointing to new function."
+      "report": "Added buildPostSynthesisCommand() with PostSynthesisOptions interface. Implements post-session synthesis: working agent runs first with TUI, then exports session, extracts assistant text via jq, runs synthesis headless with --format json, and resumes WORKING session. Deprecated buildSynthesisRunCommand() with @deprecated JSDoc pointing to new function.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "06.02.02.01",
@@ -1056,8 +1056,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:08:37.674Z",
       "updated_at": "2026-01-24T00:15:15.105Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Updated buildThreadRunCommand() to use buildPostSynthesisCommand() instead of buildSynthesisRunCommand(). Added synthesisPromptPath to ThreadInfo, updated collectThreadInfoFromTasks to populate it, and imported getSynthesisPromptPath from agents-yaml.ts"
+      "report": "Updated buildThreadRunCommand() to use buildPostSynthesisCommand() instead of buildSynthesisRunCommand(). Added synthesisPromptPath to ThreadInfo, updated collectThreadInfoFromTasks to populate it, and imported getSynthesisPromptPath from agents-yaml.ts",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "06.02.02.02",
@@ -1068,8 +1068,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:08:37.674Z",
       "updated_at": "2026-01-24T00:16:13.390Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Updated session capture logic in handleSessionClose to focus on working agent session ID. In post-session synthesis, sessionFilePath contains the working agent session (not synthesis). Updated comments to reflect the new approach while maintaining backwards compatibility for workingAgentSessionPath."
+      "report": "Updated session capture logic in handleSessionClose to focus on working agent session ID. In post-session synthesis, sessionFilePath contains the working agent session (not synthesis). Updated comments to reflect the new approach while maintaining backwards compatibility for workingAgentSessionPath.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "06.02.02.03",
@@ -1080,8 +1080,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:08:37.674Z",
       "updated_at": "2026-01-24T00:17:15.960Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Updated comments in multi.ts, fix.ts, and threads.ts to reflect post-session synthesis approach. Changed 'synthesis wrapping working agent' to 'post-session synthesis' where working agent runs first with TUI, then synthesis runs headless after completion."
+      "report": "Updated comments in multi.ts, fix.ts, and threads.ts to reflect post-session synthesis approach. Changed 'synthesis wrapping working agent' to 'post-session synthesis' where working agent runs first with TUI, then synthesis runs headless after completion.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "06.02.02.04",
@@ -1092,8 +1092,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:08:37.674Z",
       "updated_at": "2026-01-24T00:18:08.161Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Verified notification behavior: completion marker fires after working agent completes (notification tells user they can resume session), then synthesis runs headless. Synthesis output IS available in temp file when handleSessionClose runs (on detach), which is when output is captured. This is correct design - notify when interactive work is done."
+      "report": "Verified notification behavior: completion marker fires after working agent completes (notification tells user they can resume session), then synthesis runs headless. Synthesis output IS available in temp file when handleSessionClose runs (on detach), which is when output is captured. This is correct design - notify when interactive work is done.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "06.02.02.05",
@@ -1104,8 +1104,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:08:37.674Z",
       "updated_at": "2026-01-24T00:19:45.272Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Added 7 integration tests for buildPostSynthesisCommand verifying: 1) Working agent runs BEFORE synthesis, 2) Working agent uses TUI (no --format json), 3) Synthesis runs headless with --format json, 4) Session resume opens working agent session, 5) Working session ID stored in session file, 6) Synthesis output captured, 7) Correct mode displayed. All tests pass."
+      "report": "Added 7 integration tests for buildPostSynthesisCommand verifying: 1) Working agent runs BEFORE synthesis, 2) Working agent uses TUI (no --format json), 3) Synthesis runs headless with --format json, 4) Session resume opens working agent session, 5) Working session ID stored in session file, 6) Synthesis output captured, 7) Correct mode displayed. All tests pass.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "06.03.01.01",
@@ -1116,8 +1116,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:08:37.674Z",
       "updated_at": "2026-01-24T00:23:38.173Z",
-      "assigned_agent": "documentation-minimalist",
-      "report": "Rewrote synthesizing-workstreams skill for post-session context. Removed wrapper instructions and focused on summarizing piped input."
+      "report": "Rewrote synthesizing-workstreams skill for post-session context. Removed wrapper instructions and focused on summarizing piped input.",
+      "assigned_agent": "documentation-minimalist"
     },
     {
       "id": "06.03.01.02",
@@ -1128,8 +1128,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:08:37.674Z",
       "updated_at": "2026-01-24T00:23:38.173Z",
-      "assigned_agent": "documentation-minimalist",
-      "report": "Rewrote synthesizing-workstreams skill for post-session context. Removed wrapper instructions and focused on summarizing piped input."
+      "report": "Rewrote synthesizing-workstreams skill for post-session context. Removed wrapper instructions and focused on summarizing piped input.",
+      "assigned_agent": "documentation-minimalist"
     },
     {
       "id": "06.03.01.03",
@@ -1140,8 +1140,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:08:37.674Z",
       "updated_at": "2026-01-24T00:23:38.173Z",
-      "assigned_agent": "documentation-minimalist",
-      "report": "Rewrote synthesizing-workstreams skill for post-session context. Removed wrapper instructions and focused on summarizing piped input."
+      "report": "Rewrote synthesizing-workstreams skill for post-session context. Removed wrapper instructions and focused on summarizing piped input.",
+      "assigned_agent": "documentation-minimalist"
     },
     {
       "id": "06.03.01.04",
@@ -1152,8 +1152,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:08:37.674Z",
       "updated_at": "2026-01-24T00:23:38.173Z",
-      "assigned_agent": "documentation-minimalist",
-      "report": "Rewrote synthesizing-workstreams skill for post-session context. Removed wrapper instructions and focused on summarizing piped input."
+      "report": "Rewrote synthesizing-workstreams skill for post-session context. Removed wrapper instructions and focused on summarizing piped input.",
+      "assigned_agent": "documentation-minimalist"
     },
     {
       "id": "06.03.01.05",
@@ -1164,8 +1164,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:08:37.674Z",
       "updated_at": "2026-01-24T00:23:38.173Z",
-      "assigned_agent": "documentation-minimalist",
-      "report": "Rewrote synthesizing-workstreams skill for post-session context. Removed wrapper instructions and focused on summarizing piped input."
+      "report": "Rewrote synthesizing-workstreams skill for post-session context. Removed wrapper instructions and focused on summarizing piped input.",
+      "assigned_agent": "documentation-minimalist"
     },
     {
       "id": "06.03.02.01",
@@ -1176,8 +1176,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:08:37.674Z",
       "updated_at": "2026-01-24T00:25:17.767Z",
-      "assigned_agent": "documentation-minimalist",
-      "report": "Updated documentation and inline comments to reflect the new post-session synthesis flow. Updated opencode.ts, multi.ts, multi-orchestrator.ts, and READMEs. Clarified that working agent runs first with TUI, followed by headless synthesis, and users resume into the working agent session."
+      "report": "Updated documentation and inline comments to reflect the new post-session synthesis flow. Updated opencode.ts, multi.ts, multi-orchestrator.ts, and READMEs. Clarified that working agent runs first with TUI, followed by headless synthesis, and users resume into the working agent session.",
+      "assigned_agent": "documentation-minimalist"
     },
     {
       "id": "06.03.02.02",
@@ -1188,8 +1188,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:08:37.674Z",
       "updated_at": "2026-01-24T00:25:17.767Z",
-      "assigned_agent": "documentation-minimalist",
-      "report": "Updated documentation and inline comments to reflect the new post-session synthesis flow. Updated opencode.ts, multi.ts, multi-orchestrator.ts, and READMEs. Clarified that working agent runs first with TUI, followed by headless synthesis, and users resume into the working agent session."
+      "report": "Updated documentation and inline comments to reflect the new post-session synthesis flow. Updated opencode.ts, multi.ts, multi-orchestrator.ts, and READMEs. Clarified that working agent runs first with TUI, followed by headless synthesis, and users resume into the working agent session.",
+      "assigned_agent": "documentation-minimalist"
     },
     {
       "id": "06.03.02.03",
@@ -1200,8 +1200,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:08:37.674Z",
       "updated_at": "2026-01-24T00:25:17.767Z",
-      "assigned_agent": "documentation-minimalist",
-      "report": "Updated documentation and inline comments to reflect the new post-session synthesis flow. Updated opencode.ts, multi.ts, multi-orchestrator.ts, and READMEs. Clarified that working agent runs first with TUI, followed by headless synthesis, and users resume into the working agent session."
+      "report": "Updated documentation and inline comments to reflect the new post-session synthesis flow. Updated opencode.ts, multi.ts, multi-orchestrator.ts, and READMEs. Clarified that working agent runs first with TUI, followed by headless synthesis, and users resume into the working agent session.",
+      "assigned_agent": "documentation-minimalist"
     },
     {
       "id": "06.03.02.04",
@@ -1212,8 +1212,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:08:37.674Z",
       "updated_at": "2026-01-24T00:25:17.767Z",
-      "assigned_agent": "documentation-minimalist",
-      "report": "Updated documentation and inline comments to reflect the new post-session synthesis flow. Updated opencode.ts, multi.ts, multi-orchestrator.ts, and READMEs. Clarified that working agent runs first with TUI, followed by headless synthesis, and users resume into the working agent session."
+      "report": "Updated documentation and inline comments to reflect the new post-session synthesis flow. Updated opencode.ts, multi.ts, multi-orchestrator.ts, and READMEs. Clarified that working agent runs first with TUI, followed by headless synthesis, and users resume into the working agent session.",
+      "assigned_agent": "documentation-minimalist"
     },
     {
       "id": "06.03.02.05",
@@ -1224,8 +1224,200 @@
       "status": "completed",
       "created_at": "2026-01-24T00:08:37.674Z",
       "updated_at": "2026-01-24T00:25:17.767Z",
+      "report": "Updated documentation and inline comments to reflect the new post-session synthesis flow. Updated opencode.ts, multi.ts, multi-orchestrator.ts, and READMEs. Clarified that working agent runs first with TUI, followed by headless synthesis, and users resume into the working agent session.",
+      "assigned_agent": "documentation-minimalist"
+    },
+    {
+      "id": "07.01.01.01",
+      "name": "Add `SynthesisConfig` interface to `notifications/types.ts` with `enabled: boolean` and optional `agent?: string` fields",
+      "stage_name": "Revision - Synthesis Config Toggle",
+      "batch_name": "Config Schema and Integration",
+      "thread_name": "Synthesis Config Schema",
+      "status": "completed",
+      "created_at": "2026-01-24T00:50:46.869Z",
+      "updated_at": "2026-01-24T00:57:54.660Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added SynthesisConfig interface with enabled:boolean and agent?:string fields to types.ts"
+    },
+    {
+      "id": "07.01.01.02",
+      "name": "Add `synthesis?: SynthesisConfig` field to existing `NotificationsConfig` interface",
+      "stage_name": "Revision - Synthesis Config Toggle",
+      "batch_name": "Config Schema and Integration",
+      "thread_name": "Synthesis Config Schema",
+      "status": "completed",
+      "created_at": "2026-01-24T00:50:46.869Z",
+      "updated_at": "2026-01-24T00:57:55.480Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added synthesis?: SynthesisConfig optional field to NotificationsConfig interface"
+    },
+    {
+      "id": "07.01.01.03",
+      "name": "Update `getDefaultNotificationsConfig()` in `notifications/config.ts` to include `synthesis: { enabled: false }`",
+      "stage_name": "Revision - Synthesis Config Toggle",
+      "batch_name": "Config Schema and Integration",
+      "thread_name": "Synthesis Config Schema",
+      "status": "completed",
+      "created_at": "2026-01-24T00:50:46.869Z",
+      "updated_at": "2026-01-24T00:58:38.304Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added synthesis: { enabled: false } to getDefaultNotificationsConfig() return value"
+    },
+    {
+      "id": "07.01.01.04",
+      "name": "Update `loadNotificationsConfig()` to merge synthesis config with defaults (handle missing synthesis section)",
+      "stage_name": "Revision - Synthesis Config Toggle",
+      "batch_name": "Config Schema and Integration",
+      "thread_name": "Synthesis Config Schema",
+      "status": "completed",
+      "created_at": "2026-01-24T00:50:46.869Z",
+      "updated_at": "2026-01-24T00:58:39.258Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Updated loadNotificationsConfig() to merge synthesis config fields (enabled, agent) with defaults"
+    },
+    {
+      "id": "07.01.01.05",
+      "name": "Create `isSynthesisEnabled(repoRoot: string): boolean` function that loads config and returns `config.synthesis?.enabled ?? false`",
+      "stage_name": "Revision - Synthesis Config Toggle",
+      "batch_name": "Config Schema and Integration",
+      "thread_name": "Synthesis Config Schema",
+      "status": "completed",
+      "created_at": "2026-01-24T00:50:46.869Z",
+      "updated_at": "2026-01-24T00:58:40.328Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Created isSynthesisEnabled(repoRoot) function that loads config and returns synthesis.enabled ?? false"
+    },
+    {
+      "id": "07.01.01.06",
+      "name": "Add unit tests for synthesis config loading and `isSynthesisEnabled()` function",
+      "stage_name": "Revision - Synthesis Config Toggle",
+      "batch_name": "Config Schema and Integration",
+      "thread_name": "Synthesis Config Schema",
+      "status": "completed",
+      "created_at": "2026-01-24T00:50:46.869Z",
+      "updated_at": "2026-01-24T01:00:13.151Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added synthesis-config.test.ts with 14 tests covering getDefaultNotificationsConfig, loadNotificationsConfig synthesis merging, and isSynthesisEnabled function"
+    },
+    {
+      "id": "07.01.02.01",
+      "name": "Import `isSynthesisEnabled` from `notifications/config.ts` in multi.ts",
+      "stage_name": "Revision - Synthesis Config Toggle",
+      "batch_name": "Config Schema and Integration",
+      "thread_name": "Multi.ts Integration",
+      "status": "completed",
+      "created_at": "2026-01-24T00:50:46.869Z",
+      "updated_at": "2026-01-24T00:58:49.463Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added import for isSynthesisEnabled from notifications/config.ts in multi.ts"
+    },
+    {
+      "id": "07.01.02.02",
+      "name": "Call `isSynthesisEnabled(repoRoot)` in multi.ts `main()` before loading synthesis agent from agents.yaml",
+      "stage_name": "Revision - Synthesis Config Toggle",
+      "batch_name": "Config Schema and Integration",
+      "thread_name": "Multi.ts Integration",
+      "status": "completed",
+      "created_at": "2026-01-24T00:50:46.869Z",
+      "updated_at": "2026-01-24T00:59:18.124Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added isSynthesisEnabled(repoRoot) check before loading synthesis agent"
+    },
+    {
+      "id": "07.01.02.03",
+      "name": "Only call `getDefaultSynthesisAgent()` if `isSynthesisEnabled()` returns true, otherwise set `synthesisAgent = null`",
+      "stage_name": "Revision - Synthesis Config Toggle",
+      "batch_name": "Config Schema and Integration",
+      "thread_name": "Multi.ts Integration",
+      "status": "completed",
+      "created_at": "2026-01-24T00:50:46.869Z",
+      "updated_at": "2026-01-24T00:59:19.062Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Only call getDefaultSynthesisAgent() if isSynthesisEnabled() returns true, otherwise set synthesisAgent = null"
+    },
+    {
+      "id": "07.01.02.04",
+      "name": "Update console log to show \"Synthesis: disabled (config)\" when synthesis is disabled, or \"Synthesis enabled: {agent}\" when enabled",
+      "stage_name": "Revision - Synthesis Config Toggle",
+      "batch_name": "Config Schema and Integration",
+      "thread_name": "Multi.ts Integration",
+      "status": "completed",
+      "created_at": "2026-01-24T00:50:46.869Z",
+      "updated_at": "2026-01-24T00:59:20.231Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Updated console log to show 'Synthesis: disabled (config)' when disabled, or 'Synthesis enabled: {agent}' when enabled"
+    },
+    {
+      "id": "07.01.02.05",
+      "name": "Update dry run output to show synthesis status based on config check",
+      "stage_name": "Revision - Synthesis Config Toggle",
+      "batch_name": "Config Schema and Integration",
+      "thread_name": "Multi.ts Integration",
+      "status": "completed",
+      "created_at": "2026-01-24T00:50:46.869Z",
+      "updated_at": "2026-01-24T01:00:05.327Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Updated printDryRunOutput to accept synthesis config status params and display 'Synthesis: disabled (config)' or 'Synthesis: enabled ({agent})' based on config check"
+    },
+    {
+      "id": "07.01.03.01",
+      "name": "Update `work init` command to create notifications.json with `synthesis: { enabled: false }` section",
+      "stage_name": "Revision - Synthesis Config Toggle",
+      "batch_name": "Config Schema and Integration",
+      "thread_name": "Documentation and Defaults",
+      "status": "completed",
+      "created_at": "2026-01-24T00:50:46.869Z",
+      "updated_at": "2026-01-24T00:59:46.671Z",
       "assigned_agent": "documentation-minimalist",
-      "report": "Updated documentation and inline comments to reflect the new post-session synthesis flow. Updated opencode.ts, multi.ts, multi-orchestrator.ts, and READMEs. Clarified that working agent runs first with TUI, followed by headless synthesis, and users resume into the working agent session."
+      "report": "Updated work init to include synthesis config, updated work notifications to show synthesis status, added JSDoc, and updated documentation in READMEs."
+    },
+    {
+      "id": "07.01.03.02",
+      "name": "Update `work notifications` command output to display synthesis configuration status",
+      "stage_name": "Revision - Synthesis Config Toggle",
+      "batch_name": "Config Schema and Integration",
+      "thread_name": "Documentation and Defaults",
+      "status": "completed",
+      "created_at": "2026-01-24T00:50:46.869Z",
+      "updated_at": "2026-01-24T00:59:46.671Z",
+      "assigned_agent": "documentation-minimalist",
+      "report": "Updated work init to include synthesis config, updated work notifications to show synthesis status, added JSDoc, and updated documentation in READMEs."
+    },
+    {
+      "id": "07.01.03.03",
+      "name": "Add synthesis configuration section to packages/workstreams/README.md explaining the enable toggle",
+      "stage_name": "Revision - Synthesis Config Toggle",
+      "batch_name": "Config Schema and Integration",
+      "thread_name": "Documentation and Defaults",
+      "status": "completed",
+      "created_at": "2026-01-24T00:50:46.869Z",
+      "updated_at": "2026-01-24T00:59:46.671Z",
+      "assigned_agent": "documentation-minimalist",
+      "report": "Updated work init to include synthesis config, updated work notifications to show synthesis status, added JSDoc, and updated documentation in READMEs."
+    },
+    {
+      "id": "07.01.03.04",
+      "name": "Add JSDoc comments to `SynthesisConfig` interface and `isSynthesisEnabled()` function",
+      "stage_name": "Revision - Synthesis Config Toggle",
+      "batch_name": "Config Schema and Integration",
+      "thread_name": "Documentation and Defaults",
+      "status": "completed",
+      "created_at": "2026-01-24T00:50:46.869Z",
+      "updated_at": "2026-01-24T00:59:46.671Z",
+      "assigned_agent": "documentation-minimalist",
+      "report": "Updated work init to include synthesis config, updated work notifications to show synthesis status, added JSDoc, and updated documentation in READMEs."
+    },
+    {
+      "id": "07.01.03.05",
+      "name": "Update root README.md with note about synthesis being opt-in via notifications.json",
+      "stage_name": "Revision - Synthesis Config Toggle",
+      "batch_name": "Config Schema and Integration",
+      "thread_name": "Documentation and Defaults",
+      "status": "completed",
+      "created_at": "2026-01-24T00:50:46.869Z",
+      "updated_at": "2026-01-24T00:59:46.671Z",
+      "assigned_agent": "documentation-minimalist",
+      "report": "Updated work init to include synthesis config, updated work notifications to show synthesis status, added JSDoc, and updated documentation in READMEs."
     }
   ]
 }

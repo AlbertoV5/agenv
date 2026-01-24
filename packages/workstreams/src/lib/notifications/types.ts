@@ -74,6 +74,17 @@ export interface NotificationEventsConfig {
 }
 
 /**
+ * Synthesis configuration
+ * Controls whether synthesis agents are enabled for workstream execution
+ */
+export interface SynthesisConfig {
+  /** Enable/disable synthesis agents */
+  enabled: boolean
+  /** Optional: override default synthesis agent name from agents.yaml */
+  agent?: string
+}
+
+/**
  * Workstream notifications configuration
  * Stored in work/notifications.json within each repository
  *
@@ -98,6 +109,8 @@ export interface NotificationsConfig {
   providers: NotificationProvidersConfig
   /** Event-specific enable/disable flags */
   events: NotificationEventsConfig
+  /** Synthesis agent configuration */
+  synthesis?: SynthesisConfig
 }
 
 // ============================================

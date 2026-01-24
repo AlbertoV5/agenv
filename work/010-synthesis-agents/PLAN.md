@@ -722,3 +722,110 @@ Update documentation to reflect the new post-session synthesis flow.
   - Synthesis runs after, headless
   - User always resumes into working agent session
 - Remove references to "wrapper" or "nested" execution
+
+### Stage 07: Revision - Synthesis Config Toggle
+
+#### Stage Definition
+
+Add a `synthesis` configuration section to `notifications.json` that controls whether synthesis agents run. This makes `notifications.json` the single source of truth for enabling synthesis, while `agents.yaml` provides the agent configuration.
+
+**Key Principle:**
+- `notifications.json` controls **if** synthesis runs (the decision)
+- `agents.yaml` controls **how** synthesis runs (which agent/models)
+
+**Enable Logic:**
+```
+run_synthesis = notifications.json.synthesis.enabled == true
+```
+
+If `synthesis.enabled` is false (or missing, defaults to false), synthesis is skipped entirely - even if `agents.yaml` has `synthesis_agents` defined.
+
+#### Stage Constitution
+
+**Inputs:**
+- `packages/workstreams/src/lib/notifications/types.ts` - NotificationsConfig interface
+- `packages/workstreams/src/lib/notifications/config.ts` - Config loader
+- `packages/workstreams/src/cli/multi.ts` - Current synthesis agent detection
+- `packages/workstreams/src/lib/multi-orchestrator.ts` - Thread command building
+
+**Structure:**
+- Single batch: Add config schema and update multi.ts check
+
+**Outputs:**
+- `SynthesisConfig` interface added to types
+- `synthesis` field in `NotificationsConfig`
+- `isSynthesisEnabled(repoRoot)` helper function
+- Updated multi.ts to check synthesis enabled before using synthesis flow
+- Updated default `notifications.json` with synthesis section
+
+#### Stage Questions
+
+- [x] What is the default for synthesis.enabled? `false` (opt-in, not breaking existing behavior)
+- [x] Should we support per-agent override? Not in this stage, keep it simple
+- [x] Where does the check happen? In multi.ts before calling collectThreadInfoFromTasks with synthesis agent
+
+#### Stage Batches
+
+##### Batch 01: Config Schema and Integration
+
+Add synthesis config and integrate with multi.ts.
+
+###### Thread 01: Synthesis Config Schema
+
+**Summary:**
+Add synthesis configuration to NotificationsConfig and create helper function.
+
+**Details:**
+- Working packages: `./packages/workstreams`
+- Add `SynthesisConfig` interface to `notifications/types.ts`:
+  ```typescript
+  interface SynthesisConfig {
+    enabled: boolean
+    agent?: string  // Optional: override default synthesis agent name
+  }
+  ```
+- Add `synthesis?: SynthesisConfig` field to `NotificationsConfig` interface
+- Update `getDefaultNotificationsConfig()` to include `synthesis: { enabled: false }`
+- Update `loadNotificationsConfig()` to merge synthesis config with defaults
+- Create `isSynthesisEnabled(repoRoot: string): boolean` function in `notifications/config.ts`:
+  - Loads notifications config
+  - Returns `config.synthesis?.enabled ?? false`
+- Add unit tests for synthesis config loading and isSynthesisEnabled
+
+###### Thread 02: Multi.ts Integration
+
+**Summary:**
+Update multi.ts to check synthesis enabled before using synthesis flow.
+
+**Details:**
+- Working packages: `./packages/workstreams`
+- Import `isSynthesisEnabled` from notifications config
+- In multi.ts `main()`:
+  - Call `isSynthesisEnabled(repoRoot)` before loading synthesis agent
+  - Only call `getDefaultSynthesisAgent()` if synthesis is enabled
+  - If synthesis disabled, set `synthesisAgent = null` regardless of agents.yaml
+- Update dry run output to show "Synthesis: disabled" when not enabled
+- Update console log: "Synthesis enabled: {agent name}" or "Synthesis disabled (config)"
+- Ensure backward compatibility: if no notifications.json exists, synthesis defaults to disabled
+
+###### Thread 03: Documentation and Defaults
+
+**Summary:**
+Update documentation and default config files.
+
+**Details:**
+- Working packages: `./packages/workstreams`
+- Update `work init` to create notifications.json with synthesis section:
+  ```json
+  {
+    "enabled": true,
+    "synthesis": {
+      "enabled": false
+    },
+    "providers": { ... },
+    "events": { ... }
+  }
+  ```
+- Update `work notifications` command to show synthesis status
+- Add synthesis configuration section to README
+- Update JSDoc comments for new functions and interfaces

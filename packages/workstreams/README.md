@@ -506,10 +506,28 @@ synthesis_agents:
 
 ### Enabling/Disabling
 
-- **Enable**: Add the `synthesis_agents` section to `agents.yaml`
-- **Disable**: Remove or comment out the `synthesis_agents` section
+Synthesis agents are enabled via `work/notifications.json`.
 
-When disabled, `work multi` runs working agents normally without the post-session synthesis phase.
+```json
+{
+  "synthesis": {
+    "enabled": true
+  }
+}
+```
+
+You can also specify a specific agent to use (overriding the default):
+
+```json
+{
+  "synthesis": {
+    "enabled": true,
+    "agent": "custom-summarizer"
+  }
+}
+```
+
+When disabled (default), `work multi` runs working agents normally without the post-session synthesis phase.
 
 ### Session Tracking
 

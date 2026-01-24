@@ -42,6 +42,7 @@ import {
   getSynthesisOutputPath,
 } from "../lib/opencode.ts"
 import { NotificationTracker } from "../lib/notifications.ts"
+import { isSynthesisEnabled } from "../lib/notifications/config.ts"
 import { updateThreadMetadataLocked } from "../lib/threads.ts"
 import { parseBatchId } from "../lib/cli-utils.ts"
 import {
@@ -236,9 +237,11 @@ function printDryRunOutput(
   port: number,
   noServer: boolean,
   repoRoot: string,
+  synthesisConfigEnabled: boolean,
+  synthesisAgentName: string | null,
 ): void {
-  // Check if synthesis mode is enabled (any thread has synthesis models)
-  const synthesisEnabled = threads.some(t => t.synthesisModels && t.synthesisModels.length > 0)
+  // Check if synthesis mode is enabled based on config and agent availability
+  const synthesisEnabled = synthesisConfigEnabled && threads.some(t => t.synthesisModels && t.synthesisModels.length > 0)
   
   console.log("=== DRY RUN ===\n")
   console.log(`Stream: ${stream.id}`)
@@ -246,8 +249,17 @@ function printDryRunOutput(
   console.log(`Threads: ${threads.length}`)
   console.log(`Session: ${sessionName}`)
   console.log(`Port: ${port}`)
-  if (synthesisEnabled) {
-    console.log(`Mode: Post-Session Synthesis (working agent runs first with TUI, synthesis runs after)`)
+  if (synthesisConfigEnabled) {
+    if (synthesisAgentName) {
+      console.log(`Synthesis: enabled (${synthesisAgentName})`)
+      if (synthesisEnabled) {
+        console.log(`Mode: Post-Session Synthesis (working agent runs first with TUI, synthesis runs after)`)
+      }
+    } else {
+      console.log(`Synthesis: enabled but no agent configured`)
+    }
+  } else {
+    console.log(`Synthesis: disabled (config)`)
   }
   console.log("")
 
@@ -586,11 +598,22 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     process.exit(1)
   }
 
-  // Load synthesis agent config (optional - if present, synthesis mode is enabled)
-  const synthesisAgent = getDefaultSynthesisAgent(agentsConfig)
-  if (synthesisAgent) {
-    const synthModels = getSynthesisAgentModels(agentsConfig, synthesisAgent.name)
-    console.log(`Synthesis agent enabled: ${synthesisAgent.name} (${synthModels.length} model(s))`)
+  // Check if synthesis is enabled via notifications config before loading synthesis agent
+  const synthesisConfigEnabled = isSynthesisEnabled(repoRoot)
+  
+  // Load synthesis agent config only if synthesis is enabled in config
+  // If synthesis is disabled in config, set synthesisAgent to null regardless of agents.yaml
+  let synthesisAgent = null
+  if (synthesisConfigEnabled) {
+    synthesisAgent = getDefaultSynthesisAgent(agentsConfig)
+    if (synthesisAgent) {
+      const synthModels = getSynthesisAgentModels(agentsConfig, synthesisAgent.name)
+      console.log(`Synthesis enabled: ${synthesisAgent.name} (${synthModels.length} model(s))`)
+    } else {
+      console.log(`Synthesis enabled but no synthesis agent configured in agents.yaml`)
+    }
+  } else {
+    console.log(`Synthesis: disabled (config)`)
   }
 
   // Discover threads from tasks.json
@@ -659,6 +682,8 @@ export async function main(argv: string[] = process.argv): Promise<void> {
       port,
       cliArgs.noServer ?? false,
       repoRoot,
+      synthesisConfigEnabled,
+      synthesisAgent?.name ?? null,
     )
     return
   }
