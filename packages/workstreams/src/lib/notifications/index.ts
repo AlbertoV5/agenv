@@ -54,7 +54,6 @@ export {
   getNotificationsConfigPath,
   getDefaultNotificationsConfig,
   loadNotificationsConfig,
-  isSynthesisEnabled,
 } from "./config"
 
 // Providers

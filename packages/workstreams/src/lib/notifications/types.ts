@@ -73,16 +73,8 @@ export interface NotificationEventsConfig {
   synthesis_complete?: boolean
 }
 
-/**
- * Synthesis configuration
- * Controls whether synthesis agents are enabled for workstream execution
- */
-export interface SynthesisConfig {
-  /** Enable/disable synthesis agents */
-  enabled: boolean
-  /** Optional: override default synthesis agent name from agents.yaml */
-  agent?: string
-}
+// SynthesisConfig is imported from ../synthesis/types.js
+export type { SynthesisConfig } from "../synthesis/types.js"
 
 /**
  * Workstream notifications configuration
@@ -109,8 +101,6 @@ export interface NotificationsConfig {
   providers: NotificationProvidersConfig
   /** Event-specific enable/disable flags */
   events: NotificationEventsConfig
-  /** Synthesis agent configuration */
-  synthesis?: SynthesisConfig
 }
 
 // ============================================

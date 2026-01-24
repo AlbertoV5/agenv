@@ -40,7 +40,6 @@ export {
   getNotificationsConfigPath,
   getDefaultNotificationsConfig,
   loadNotificationsConfig,
-  isSynthesisEnabled,
   // Providers
   MacOSSoundProvider,
   ExternalApiProvider,

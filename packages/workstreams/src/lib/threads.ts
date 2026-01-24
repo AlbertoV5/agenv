@@ -10,6 +10,7 @@ import { existsSync, readFileSync } from "fs"
 import { join } from "path"
 import * as lockfile from "proper-lockfile"
 import type { ThreadMetadata, ThreadsJson, SessionRecord, TasksFile } from "./types.ts"
+import type { ThreadSynthesis } from "./synthesis/types.ts"
 import { atomicWriteFile } from "./index.ts"
 import { getWorkDir } from "./repo.ts"
 
@@ -484,6 +485,73 @@ export function getThreadGitHubIssue(
 ): ThreadMetadata["githubIssue"] | null {
   const thread = getThreadMetadata(repoRoot, streamId, threadId)
   return thread?.githubIssue || null
+}
+
+// ============================================
+// SYNTHESIS OUTPUT MANAGEMENT
+// ============================================
+
+/**
+ * Set synthesis output for a thread
+ * 
+ * Stores the synthesis result from a synthesis agent run.
+ * Uses file locking for safe concurrent access.
+ * 
+ * @param repoRoot - Repository root path
+ * @param streamId - Workstream ID
+ * @param threadId - Thread ID (e.g., "01.02.03")
+ * @param synthesis - The synthesis output to store
+ * @returns Promise that resolves when the synthesis is saved
+ */
+export async function setSynthesisOutput(
+  repoRoot: string,
+  streamId: string,
+  threadId: string,
+  synthesis: ThreadSynthesis,
+): Promise<void> {
+  const filePath = getThreadsFilePath(repoRoot, streamId)
+
+  await withThreadsLock(filePath, () => {
+    let threadsFile = loadThreads(repoRoot, streamId)
+    if (!threadsFile) {
+      threadsFile = createEmptyThreadsFile(streamId)
+    }
+
+    const threadIndex = threadsFile.threads.findIndex((t) => t.threadId === threadId)
+
+    if (threadIndex === -1) {
+      console.warn(`[threads] setSynthesisOutput: Thread ${threadId} not found in stream ${streamId}`)
+      return
+    }
+
+    threadsFile.threads[threadIndex]!.synthesis = synthesis
+    saveThreads(repoRoot, streamId, threadsFile)
+  })
+}
+
+/**
+ * Get synthesis output for a thread
+ * 
+ * Retrieves the synthesis result if it exists for the thread.
+ * 
+ * @param repoRoot - Repository root path
+ * @param streamId - Workstream ID
+ * @param threadId - Thread ID (e.g., "01.02.03")
+ * @returns The synthesis output if found, null otherwise
+ */
+export function getSynthesisOutput(
+  repoRoot: string,
+  streamId: string,
+  threadId: string,
+): ThreadSynthesis | null {
+  const thread = getThreadMetadata(repoRoot, streamId, threadId)
+  
+  if (!thread) {
+    console.warn(`[threads] getSynthesisOutput: Thread ${threadId} not found in stream ${streamId}`)
+    return null
+  }
+
+  return thread.synthesis || null
 }
 
 // ============================================

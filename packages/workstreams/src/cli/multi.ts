@@ -9,7 +9,7 @@
 import { existsSync, readFileSync } from "fs"
 import { getRepoRoot } from "../lib/repo.ts"
 import { loadIndex, getResolvedStream } from "../lib/index.ts"
-import { loadAgentsConfig, getDefaultSynthesisAgent, getSynthesisAgentModels } from "../lib/agents-yaml.ts"
+import { loadAgentsConfig, getDefaultSynthesisAgent, getSynthesisAgent, getSynthesisAgentModels } from "../lib/agents-yaml.ts"
 import {
   readTasksFile,
   parseTaskId,
@@ -42,8 +42,8 @@ import {
   getSynthesisOutputPath,
 } from "../lib/opencode.ts"
 import { NotificationTracker } from "../lib/notifications.ts"
-import { isSynthesisEnabled } from "../lib/notifications/config.ts"
-import { updateThreadMetadataLocked } from "../lib/threads.ts"
+import { isSynthesisEnabled, getSynthesisAgentOverride } from "../lib/synthesis/config.ts"
+import { updateThreadMetadataLocked, setSynthesisOutput } from "../lib/threads.ts"
 import { parseBatchId } from "../lib/cli-utils.ts"
 import {
   collectThreadInfoFromTasks,
@@ -249,6 +249,7 @@ function printDryRunOutput(
   console.log(`Threads: ${threads.length}`)
   console.log(`Session: ${sessionName}`)
   console.log(`Port: ${port}`)
+  console.log(`Synthesis config: work/synthesis.json`)
   if (synthesisConfigEnabled) {
     if (synthesisAgentName) {
       console.log(`Synthesis: enabled (${synthesisAgentName})`)
@@ -259,7 +260,7 @@ function printDryRunOutput(
       console.log(`Synthesis: enabled but no agent configured`)
     }
   } else {
-    console.log(`Synthesis: disabled (config)`)
+    console.log(`Synthesis: disabled`)
   }
   console.log("")
 
@@ -448,45 +449,53 @@ async function handleSessionClose(
       
       // Capture synthesis output (only present when synthesis is enabled)
       // In post-session synthesis, this file contains the headless synthesis agent's output
+      let synthesisOutputText: string | null = null
       if (existsSync(synthesisOutputPath)) {
         try {
-          const synthesisOutput = readFileSync(synthesisOutputPath, "utf-8").trim()
-          if (synthesisOutput) {
-            sessionUpdates.synthesisOutput = synthesisOutput
-          } else {
+          synthesisOutputText = readFileSync(synthesisOutputPath, "utf-8").trim()
+          if (!synthesisOutputText) {
             console.log(`  Thread ${mapping.threadId}: synthesis output file is empty`)
-            sessionUpdates.synthesisOutput = ""
+            synthesisOutputText = ""
           }
         } catch (e) {
           console.log(`  Thread ${mapping.threadId}: failed to read synthesis output file (${(e as Error).message})`)
-          sessionUpdates.synthesisOutput = null
+          synthesisOutputText = null
         }
       }
       
-      // Update thread metadata with captured session IDs and synthesis output
-      if (sessionUpdates.opencodeSessionId || sessionUpdates.workingAgentSessionId || sessionUpdates.synthesisOutput !== undefined) {
-        // Convert null to undefined for the update (null means file missing/error, undefined means not set)
+      // Update thread metadata with captured session IDs
+      if (sessionUpdates.opencodeSessionId || sessionUpdates.workingAgentSessionId) {
         const updateData: {
           opencodeSessionId?: string
           workingAgentSessionId?: string
-          synthesisOutput?: string
         } = {}
         if (sessionUpdates.opencodeSessionId) updateData.opencodeSessionId = sessionUpdates.opencodeSessionId
         if (sessionUpdates.workingAgentSessionId) updateData.workingAgentSessionId = sessionUpdates.workingAgentSessionId
-        if (sessionUpdates.synthesisOutput !== null && sessionUpdates.synthesisOutput !== undefined) {
-          updateData.synthesisOutput = sessionUpdates.synthesisOutput
-        }
         
         await updateThreadMetadataLocked(repoRoot, streamId, mapping.threadId, updateData)
+      }
+      
+      // Store synthesis output using setSynthesisOutput() with structured data
+      // This stores sessionId, output text, and completedAt timestamp in threads.json
+      if (synthesisOutputText !== null) {
+        const completedAt = new Date().toISOString()
+        // Generate a unique sessionId for the synthesis run (synthesis runs headless, no persistent session)
+        const synthesisSessionId = `synthesis-${mapping.threadId}-${Date.now()}`
         
-        // Log what was captured (simplified for post-session synthesis)
-        const hasSynthOutput = sessionUpdates.synthesisOutput !== undefined && sessionUpdates.synthesisOutput !== null
-        if (sessionUpdates.opencodeSessionId) {
-          console.log(`  Thread ${mapping.threadId}: captured working session ${sessionUpdates.opencodeSessionId}${hasSynthOutput ? ', synthesis output' : ''}`)
-        } else if (hasSynthOutput) {
-          console.log(`  Thread ${mapping.threadId}: captured synthesis output`)
-        }
-      } else {
+        await setSynthesisOutput(repoRoot, streamId, mapping.threadId, {
+          sessionId: synthesisSessionId,
+          output: synthesisOutputText,
+          completedAt,
+        })
+      }
+      
+      // Log what was captured (simplified for post-session synthesis)
+      const hasSynthOutput = synthesisOutputText !== null
+      if (sessionUpdates.opencodeSessionId) {
+        console.log(`  Thread ${mapping.threadId}: captured working session ${sessionUpdates.opencodeSessionId}${hasSynthOutput ? ', synthesis output' : ''}`)
+      } else if (hasSynthOutput) {
+        console.log(`  Thread ${mapping.threadId}: captured synthesis output`)
+      } else if (!sessionUpdates.opencodeSessionId && !sessionUpdates.workingAgentSessionId) {
         console.log(`  Thread ${mapping.threadId}: no session file found`)
       }
     }
@@ -598,14 +607,25 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     process.exit(1)
   }
 
-  // Check if synthesis is enabled via notifications config before loading synthesis agent
+  // Check if synthesis is enabled via synthesis.json config before loading synthesis agent
   const synthesisConfigEnabled = isSynthesisEnabled(repoRoot)
   
   // Load synthesis agent config only if synthesis is enabled in config
   // If synthesis is disabled in config, set synthesisAgent to null regardless of agents.yaml
   let synthesisAgent = null
   if (synthesisConfigEnabled) {
-    synthesisAgent = getDefaultSynthesisAgent(agentsConfig)
+    // Check for agent override in synthesis.json, otherwise use default from agents.yaml
+    const agentOverride = getSynthesisAgentOverride(repoRoot)
+    if (agentOverride) {
+      synthesisAgent = getSynthesisAgent(agentsConfig, agentOverride)
+      if (!synthesisAgent) {
+        console.log(`Synthesis agent override "${agentOverride}" not found in agents.yaml, using default`)
+        synthesisAgent = getDefaultSynthesisAgent(agentsConfig)
+      }
+    } else {
+      synthesisAgent = getDefaultSynthesisAgent(agentsConfig)
+    }
+    
     if (synthesisAgent) {
       const synthModels = getSynthesisAgentModels(agentsConfig, synthesisAgent.name)
       console.log(`Synthesis enabled: ${synthesisAgent.name} (${synthModels.length} model(s))`)
@@ -613,7 +633,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
       console.log(`Synthesis enabled but no synthesis agent configured in agents.yaml`)
     }
   } else {
-    console.log(`Synthesis: disabled (config)`)
+    console.log(`Synthesis: disabled (work/synthesis.json)`)
   }
 
   // Discover threads from tasks.json

@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "stream_id": "010-synthesis-agents",
-  "last_updated": "2026-01-24T01:00:13.151Z",
+  "last_updated": "2026-01-24T01:27:16.142Z",
   "tasks": [
     {
       "id": "01.01.01.01",
@@ -1236,8 +1236,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:50:46.869Z",
       "updated_at": "2026-01-24T00:57:54.660Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Added SynthesisConfig interface with enabled:boolean and agent?:string fields to types.ts"
+      "report": "Added SynthesisConfig interface with enabled:boolean and agent?:string fields to types.ts",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "07.01.01.02",
@@ -1248,8 +1248,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:50:46.869Z",
       "updated_at": "2026-01-24T00:57:55.480Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Added synthesis?: SynthesisConfig optional field to NotificationsConfig interface"
+      "report": "Added synthesis?: SynthesisConfig optional field to NotificationsConfig interface",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "07.01.01.03",
@@ -1260,8 +1260,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:50:46.869Z",
       "updated_at": "2026-01-24T00:58:38.304Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Added synthesis: { enabled: false } to getDefaultNotificationsConfig() return value"
+      "report": "Added synthesis: { enabled: false } to getDefaultNotificationsConfig() return value",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "07.01.01.04",
@@ -1272,8 +1272,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:50:46.869Z",
       "updated_at": "2026-01-24T00:58:39.258Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Updated loadNotificationsConfig() to merge synthesis config fields (enabled, agent) with defaults"
+      "report": "Updated loadNotificationsConfig() to merge synthesis config fields (enabled, agent) with defaults",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "07.01.01.05",
@@ -1284,8 +1284,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:50:46.869Z",
       "updated_at": "2026-01-24T00:58:40.328Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Created isSynthesisEnabled(repoRoot) function that loads config and returns synthesis.enabled ?? false"
+      "report": "Created isSynthesisEnabled(repoRoot) function that loads config and returns synthesis.enabled ?? false",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "07.01.01.06",
@@ -1296,8 +1296,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:50:46.869Z",
       "updated_at": "2026-01-24T01:00:13.151Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Added synthesis-config.test.ts with 14 tests covering getDefaultNotificationsConfig, loadNotificationsConfig synthesis merging, and isSynthesisEnabled function"
+      "report": "Added synthesis-config.test.ts with 14 tests covering getDefaultNotificationsConfig, loadNotificationsConfig synthesis merging, and isSynthesisEnabled function",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "07.01.02.01",
@@ -1308,8 +1308,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:50:46.869Z",
       "updated_at": "2026-01-24T00:58:49.463Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Added import for isSynthesisEnabled from notifications/config.ts in multi.ts"
+      "report": "Added import for isSynthesisEnabled from notifications/config.ts in multi.ts",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "07.01.02.02",
@@ -1320,8 +1320,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:50:46.869Z",
       "updated_at": "2026-01-24T00:59:18.124Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Added isSynthesisEnabled(repoRoot) check before loading synthesis agent"
+      "report": "Added isSynthesisEnabled(repoRoot) check before loading synthesis agent",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "07.01.02.03",
@@ -1332,8 +1332,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:50:46.869Z",
       "updated_at": "2026-01-24T00:59:19.062Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Only call getDefaultSynthesisAgent() if isSynthesisEnabled() returns true, otherwise set synthesisAgent = null"
+      "report": "Only call getDefaultSynthesisAgent() if isSynthesisEnabled() returns true, otherwise set synthesisAgent = null",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "07.01.02.04",
@@ -1344,8 +1344,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:50:46.869Z",
       "updated_at": "2026-01-24T00:59:20.231Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Updated console log to show 'Synthesis: disabled (config)' when disabled, or 'Synthesis enabled: {agent}' when enabled"
+      "report": "Updated console log to show 'Synthesis: disabled (config)' when disabled, or 'Synthesis enabled: {agent}' when enabled",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "07.01.02.05",
@@ -1356,8 +1356,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:50:46.869Z",
       "updated_at": "2026-01-24T01:00:05.327Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Updated printDryRunOutput to accept synthesis config status params and display 'Synthesis: disabled (config)' or 'Synthesis: enabled ({agent})' based on config check"
+      "report": "Updated printDryRunOutput to accept synthesis config status params and display 'Synthesis: disabled (config)' or 'Synthesis: enabled ({agent})' based on config check",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "07.01.03.01",
@@ -1368,8 +1368,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:50:46.869Z",
       "updated_at": "2026-01-24T00:59:46.671Z",
-      "assigned_agent": "documentation-minimalist",
-      "report": "Updated work init to include synthesis config, updated work notifications to show synthesis status, added JSDoc, and updated documentation in READMEs."
+      "report": "Updated work init to include synthesis config, updated work notifications to show synthesis status, added JSDoc, and updated documentation in READMEs.",
+      "assigned_agent": "documentation-minimalist"
     },
     {
       "id": "07.01.03.02",
@@ -1380,8 +1380,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:50:46.869Z",
       "updated_at": "2026-01-24T00:59:46.671Z",
-      "assigned_agent": "documentation-minimalist",
-      "report": "Updated work init to include synthesis config, updated work notifications to show synthesis status, added JSDoc, and updated documentation in READMEs."
+      "report": "Updated work init to include synthesis config, updated work notifications to show synthesis status, added JSDoc, and updated documentation in READMEs.",
+      "assigned_agent": "documentation-minimalist"
     },
     {
       "id": "07.01.03.03",
@@ -1392,8 +1392,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:50:46.869Z",
       "updated_at": "2026-01-24T00:59:46.671Z",
-      "assigned_agent": "documentation-minimalist",
-      "report": "Updated work init to include synthesis config, updated work notifications to show synthesis status, added JSDoc, and updated documentation in READMEs."
+      "report": "Updated work init to include synthesis config, updated work notifications to show synthesis status, added JSDoc, and updated documentation in READMEs.",
+      "assigned_agent": "documentation-minimalist"
     },
     {
       "id": "07.01.03.04",
@@ -1404,8 +1404,8 @@
       "status": "completed",
       "created_at": "2026-01-24T00:50:46.869Z",
       "updated_at": "2026-01-24T00:59:46.671Z",
-      "assigned_agent": "documentation-minimalist",
-      "report": "Updated work init to include synthesis config, updated work notifications to show synthesis status, added JSDoc, and updated documentation in READMEs."
+      "report": "Updated work init to include synthesis config, updated work notifications to show synthesis status, added JSDoc, and updated documentation in READMEs.",
+      "assigned_agent": "documentation-minimalist"
     },
     {
       "id": "07.01.03.05",
@@ -1416,8 +1416,440 @@
       "status": "completed",
       "created_at": "2026-01-24T00:50:46.869Z",
       "updated_at": "2026-01-24T00:59:46.671Z",
+      "report": "Updated work init to include synthesis config, updated work notifications to show synthesis status, added JSDoc, and updated documentation in READMEs.",
+      "assigned_agent": "documentation-minimalist"
+    },
+    {
+      "id": "08.01.01.01",
+      "name": "Create `packages/workstreams/src/lib/synthesis/types.ts` with `SynthesisConfig` interface (enabled, agent?, output?)",
+      "stage_name": "Revision - Synthesis Config and Output Storage",
+      "batch_name": "Synthesis Config Schema",
+      "thread_name": "Synthesis Types and Schema",
+      "status": "completed",
+      "created_at": "2026-01-24T01:15:09.712Z",
+      "updated_at": "2026-01-24T01:15:59.677Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Created synthesis/types.ts with SynthesisConfig interface"
+    },
+    {
+      "id": "08.01.01.02",
+      "name": "Add `SynthesisOutputConfig` interface with `store_in_threads?: boolean` field",
+      "stage_name": "Revision - Synthesis Config and Output Storage",
+      "batch_name": "Synthesis Config Schema",
+      "thread_name": "Synthesis Types and Schema",
+      "status": "completed",
+      "created_at": "2026-01-24T01:15:09.712Z",
+      "updated_at": "2026-01-24T01:16:00.478Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added SynthesisOutputConfig interface with store_in_threads field"
+    },
+    {
+      "id": "08.01.01.03",
+      "name": "Add `ThreadSynthesis` interface with `sessionId`, `output`, and `completedAt` fields",
+      "stage_name": "Revision - Synthesis Config and Output Storage",
+      "batch_name": "Synthesis Config Schema",
+      "thread_name": "Synthesis Types and Schema",
+      "status": "completed",
+      "created_at": "2026-01-24T01:15:09.712Z",
+      "updated_at": "2026-01-24T01:16:01.414Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added ThreadSynthesis interface with sessionId, output, completedAt"
+    },
+    {
+      "id": "08.01.01.04",
+      "name": "Create `packages/workstreams/src/lib/synthesis/index.ts` barrel export for the module",
+      "stage_name": "Revision - Synthesis Config and Output Storage",
+      "batch_name": "Synthesis Config Schema",
+      "thread_name": "Synthesis Types and Schema",
+      "status": "completed",
+      "created_at": "2026-01-24T01:15:09.712Z",
+      "updated_at": "2026-01-24T01:16:12.388Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Created synthesis/index.ts with barrel exports for all types"
+    },
+    {
+      "id": "08.01.01.05",
+      "name": "Remove `SynthesisConfig` from `notifications/types.ts` (move to synthesis module)",
+      "stage_name": "Revision - Synthesis Config and Output Storage",
+      "batch_name": "Synthesis Config Schema",
+      "thread_name": "Synthesis Types and Schema",
+      "status": "completed",
+      "created_at": "2026-01-24T01:15:09.712Z",
+      "updated_at": "2026-01-24T01:16:27.036Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Removed SynthesisConfig definition from notifications/types.ts, now re-exports from synthesis module"
+    },
+    {
+      "id": "08.01.01.06",
+      "name": "Update `ThreadMetadata` in `types.ts` to include optional `synthesis?: ThreadSynthesis` field",
+      "stage_name": "Revision - Synthesis Config and Output Storage",
+      "batch_name": "Synthesis Config Schema",
+      "thread_name": "Synthesis Types and Schema",
+      "status": "completed",
+      "created_at": "2026-01-24T01:15:09.712Z",
+      "updated_at": "2026-01-24T01:16:54.491Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added synthesis?: ThreadSynthesis field to ThreadMetadata in types.ts, deprecated synthesisOutput field"
+    },
+    {
+      "id": "08.01.02.01",
+      "name": "Create `packages/workstreams/src/lib/synthesis/config.ts` with `getDefaultSynthesisConfig()` returning `{ enabled: false }`",
+      "stage_name": "Revision - Synthesis Config and Output Storage",
+      "batch_name": "Synthesis Config Schema",
+      "thread_name": "Synthesis Config Loader",
+      "status": "completed",
+      "created_at": "2026-01-24T01:15:09.712Z",
+      "updated_at": "2026-01-24T01:16:27.140Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Created config.ts with getDefaultSynthesisConfig() returning { enabled: false }"
+    },
+    {
+      "id": "08.01.02.02",
+      "name": "Add `loadSynthesisConfig(repoRoot: string): SynthesisConfig` that reads from `work/synthesis.json`",
+      "stage_name": "Revision - Synthesis Config and Output Storage",
+      "batch_name": "Synthesis Config Schema",
+      "thread_name": "Synthesis Config Loader",
+      "status": "completed",
+      "created_at": "2026-01-24T01:15:09.712Z",
+      "updated_at": "2026-01-24T01:16:28.045Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added loadSynthesisConfig() that reads from work/synthesis.json with proper merging"
+    },
+    {
+      "id": "08.01.02.03",
+      "name": "Add `isSynthesisEnabled(repoRoot: string): boolean` that returns `config.enabled`",
+      "stage_name": "Revision - Synthesis Config and Output Storage",
+      "batch_name": "Synthesis Config Schema",
+      "thread_name": "Synthesis Config Loader",
+      "status": "completed",
+      "created_at": "2026-01-24T01:15:09.712Z",
+      "updated_at": "2026-01-24T01:16:28.744Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added isSynthesisEnabled() that returns config.enabled"
+    },
+    {
+      "id": "08.01.02.04",
+      "name": "Add `getSynthesisAgentOverride(repoRoot: string): string | undefined` that returns `config.agent`",
+      "stage_name": "Revision - Synthesis Config and Output Storage",
+      "batch_name": "Synthesis Config Schema",
+      "thread_name": "Synthesis Config Loader",
+      "status": "completed",
+      "created_at": "2026-01-24T01:15:09.712Z",
+      "updated_at": "2026-01-24T01:16:29.442Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added getSynthesisAgentOverride() that returns config.agent"
+    },
+    {
+      "id": "08.01.02.05",
+      "name": "Handle missing file gracefully (return default config, synthesis disabled)",
+      "stage_name": "Revision - Synthesis Config and Output Storage",
+      "batch_name": "Synthesis Config Schema",
+      "thread_name": "Synthesis Config Loader",
+      "status": "completed",
+      "created_at": "2026-01-24T01:15:09.712Z",
+      "updated_at": "2026-01-24T01:16:30.548Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Missing file returns default config (synthesis disabled) via existsSync check"
+    },
+    {
+      "id": "08.01.02.06",
+      "name": "Handle malformed JSON (log warning, return default config)",
+      "stage_name": "Revision - Synthesis Config and Output Storage",
+      "batch_name": "Synthesis Config Schema",
+      "thread_name": "Synthesis Config Loader",
+      "status": "completed",
+      "created_at": "2026-01-24T01:15:09.712Z",
+      "updated_at": "2026-01-24T01:16:31.465Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Malformed JSON logs warning via console.warn and returns default config"
+    },
+    {
+      "id": "08.01.02.07",
+      "name": "Add unit tests for config loading, isSynthesisEnabled, and error cases",
+      "stage_name": "Revision - Synthesis Config and Output Storage",
+      "batch_name": "Synthesis Config Schema",
+      "thread_name": "Synthesis Config Loader",
+      "status": "completed",
+      "created_at": "2026-01-24T01:15:09.712Z",
+      "updated_at": "2026-01-24T01:17:24.110Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Created tests/synthesis/config.test.ts with 21 tests covering all functions and error cases"
+    },
+    {
+      "id": "08.02.01.01",
+      "name": "Add `setSynthesisOutput(repoRoot, streamId, threadId, synthesis: ThreadSynthesis)` to `threads.ts`",
+      "stage_name": "Revision - Synthesis Config and Output Storage",
+      "batch_name": "Threads.json Synthesis Output",
+      "thread_name": "Thread Synthesis Storage",
+      "status": "completed",
+      "created_at": "2026-01-24T01:15:09.712Z",
+      "updated_at": "2026-01-24T01:19:46.068Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added setSynthesisOutput async function with file locking"
+    },
+    {
+      "id": "08.02.01.02",
+      "name": "Add `getSynthesisOutput(repoRoot, streamId, threadId): ThreadSynthesis | null` to `threads.ts`",
+      "stage_name": "Revision - Synthesis Config and Output Storage",
+      "batch_name": "Threads.json Synthesis Output",
+      "thread_name": "Thread Synthesis Storage",
+      "status": "completed",
+      "created_at": "2026-01-24T01:15:09.712Z",
+      "updated_at": "2026-01-24T01:19:46.715Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added getSynthesisOutput function returning ThreadSynthesis | null"
+    },
+    {
+      "id": "08.02.01.03",
+      "name": "Ensure `setSynthesisOutput` uses proper file locking (consistent with other thread functions)",
+      "stage_name": "Revision - Synthesis Config and Output Storage",
+      "batch_name": "Threads.json Synthesis Output",
+      "thread_name": "Thread Synthesis Storage",
+      "status": "completed",
+      "created_at": "2026-01-24T01:15:09.712Z",
+      "updated_at": "2026-01-24T01:19:47.509Z",
+      "assigned_agent": "systems-engineer",
+      "report": "setSynthesisOutput uses withThreadsLock for proper concurrent access"
+    },
+    {
+      "id": "08.02.01.04",
+      "name": "Handle missing thread gracefully in both functions (log warning, return null for get)",
+      "stage_name": "Revision - Synthesis Config and Output Storage",
+      "batch_name": "Threads.json Synthesis Output",
+      "thread_name": "Thread Synthesis Storage",
+      "status": "completed",
+      "created_at": "2026-01-24T01:15:09.712Z",
+      "updated_at": "2026-01-24T01:19:48.196Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Both functions log warning and handle missing thread gracefully"
+    },
+    {
+      "id": "08.02.01.05",
+      "name": "Ensure backward compatibility: old threads.json without synthesis field still loads correctly",
+      "stage_name": "Revision - Synthesis Config and Output Storage",
+      "batch_name": "Threads.json Synthesis Output",
+      "thread_name": "Thread Synthesis Storage",
+      "status": "completed",
+      "created_at": "2026-01-24T01:15:09.712Z",
+      "updated_at": "2026-01-24T01:20:04.194Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Existing tests pass; synthesis field is optional in ThreadMetadata"
+    },
+    {
+      "id": "08.02.01.06",
+      "name": "Add unit tests for synthesis output storage and retrieval",
+      "stage_name": "Revision - Synthesis Config and Output Storage",
+      "batch_name": "Threads.json Synthesis Output",
+      "thread_name": "Thread Synthesis Storage",
+      "status": "completed",
+      "created_at": "2026-01-24T01:15:09.712Z",
+      "updated_at": "2026-01-24T01:20:59.315Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added 9 unit tests for setSynthesisOutput and getSynthesisOutput covering storage, retrieval, missing thread handling, updates, and concurrency"
+    },
+    {
+      "id": "08.03.01.01",
+      "name": "Replace import of `isSynthesisEnabled` from `notifications/config` with import from `synthesis/config`",
+      "stage_name": "Revision - Synthesis Config and Output Storage",
+      "batch_name": "Integration and Migration",
+      "thread_name": "Multi.ts Integration Update",
+      "status": "completed",
+      "created_at": "2026-01-24T01:15:09.712Z",
+      "updated_at": "2026-01-24T01:23:28.421Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Replaced import of isSynthesisEnabled from notifications/config with synthesis/config, added getSynthesisAgentOverride and setSynthesisOutput imports"
+    },
+    {
+      "id": "08.03.01.02",
+      "name": "Use `getSynthesisAgentOverride(repoRoot)` to check for agent name override in synthesis.json",
+      "stage_name": "Revision - Synthesis Config and Output Storage",
+      "batch_name": "Integration and Migration",
+      "thread_name": "Multi.ts Integration Update",
+      "status": "completed",
+      "created_at": "2026-01-24T01:15:09.712Z",
+      "updated_at": "2026-01-24T01:27:16.142Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added getSynthesisAgentOverride check to use synthesis.json agent override, falls back to getDefaultSynthesisAgent if not found"
+    },
+    {
+      "id": "08.03.01.03",
+      "name": "In `handleSessionClose()`, call `setSynthesisOutput()` after reading synthesis from temp file",
+      "stage_name": "Revision - Synthesis Config and Output Storage",
+      "batch_name": "Integration and Migration",
+      "thread_name": "Multi.ts Integration Update",
+      "status": "completed",
+      "created_at": "2026-01-24T01:15:09.712Z",
+      "updated_at": "2026-01-24T01:26:10.690Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Updated handleSessionClose() to call setSynthesisOutput() after reading synthesis from temp file"
+    },
+    {
+      "id": "08.03.01.04",
+      "name": "Pass synthesis sessionId, output text, and completedAt timestamp to `setSynthesisOutput()`",
+      "stage_name": "Revision - Synthesis Config and Output Storage",
+      "batch_name": "Integration and Migration",
+      "thread_name": "Multi.ts Integration Update",
+      "status": "completed",
+      "created_at": "2026-01-24T01:15:09.712Z",
+      "updated_at": "2026-01-24T01:26:11.651Z",
+      "assigned_agent": "systems-engineer",
+      "report": "setSynthesisOutput() now receives sessionId (generated), output text, and completedAt (ISO timestamp)"
+    },
+    {
+      "id": "08.03.01.05",
+      "name": "Update dry run output to show synthesis config source: \"Synthesis config: work/synthesis.json\"",
+      "stage_name": "Revision - Synthesis Config and Output Storage",
+      "batch_name": "Integration and Migration",
+      "thread_name": "Multi.ts Integration Update",
+      "status": "completed",
+      "created_at": "2026-01-24T01:15:09.712Z",
+      "updated_at": "2026-01-24T01:26:31.822Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added 'Synthesis config: work/synthesis.json' line to dry run output, updated disabled message"
+    },
+    {
+      "id": "08.03.01.06",
+      "name": "Update console logs to reflect new config location",
+      "stage_name": "Revision - Synthesis Config and Output Storage",
+      "batch_name": "Integration and Migration",
+      "thread_name": "Multi.ts Integration Update",
+      "status": "completed",
+      "created_at": "2026-01-24T01:15:09.712Z",
+      "updated_at": "2026-01-24T01:27:04.785Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Console logs updated: 'Synthesis: disabled (work/synthesis.json)' now references new config location"
+    },
+    {
+      "id": "08.03.02.01",
+      "name": "Update `work init` to create `synthesis.json` with default config `{ \"enabled\": false, \"output\": { \"store_in_threads\": true } }`",
+      "stage_name": "Revision - Synthesis Config and Output Storage",
+      "batch_name": "Integration and Migration",
+      "thread_name": "Init Command Update",
+      "status": "completed",
+      "created_at": "2026-01-24T01:15:09.712Z",
+      "updated_at": "2026-01-24T01:23:33.346Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added synthesis.json creation to init.ts with default config { enabled: false, output: { store_in_threads: true } }"
+    },
+    {
+      "id": "08.03.02.02",
+      "name": "Add synthesis.json to the list of files created message",
+      "stage_name": "Revision - Synthesis Config and Output Storage",
+      "batch_name": "Integration and Migration",
+      "thread_name": "Init Command Update",
+      "status": "completed",
+      "created_at": "2026-01-24T01:15:09.712Z",
+      "updated_at": "2026-01-24T01:23:41.791Z",
+      "assigned_agent": "systems-engineer",
+      "report": "synthesis.json creation message already included via console.log in init step 5"
+    },
+    {
+      "id": "08.03.02.03",
+      "name": "Update `work notifications` to remove synthesis status display (moved to synthesis.json)",
+      "stage_name": "Revision - Synthesis Config and Output Storage",
+      "batch_name": "Integration and Migration",
+      "thread_name": "Init Command Update",
+      "status": "completed",
+      "created_at": "2026-01-24T01:15:09.712Z",
+      "updated_at": "2026-01-24T01:27:10.753Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Removed synthesis status display from formatOutput() in notifications.ts, removed obsolete isSynthesisEnabled re-export from notifications.ts, deleted obsolete tests/synthesis-config.test.ts"
+    },
+    {
+      "id": "08.03.02.04",
+      "name": "Optional: Add `work synthesis` command to show current synthesis config and status",
+      "stage_name": "Revision - Synthesis Config and Output Storage",
+      "batch_name": "Integration and Migration",
+      "thread_name": "Init Command Update",
+      "status": "completed",
+      "created_at": "2026-01-24T01:15:09.712Z",
+      "updated_at": "2026-01-24T01:26:31.858Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Created work synthesis command in src/cli/synthesis.ts with --json output option, added to bin/work.ts"
+    },
+    {
+      "id": "08.03.03.01",
+      "name": "Remove `synthesis?: SynthesisConfig` field from `NotificationsConfig` interface",
+      "stage_name": "Revision - Synthesis Config and Output Storage",
+      "batch_name": "Integration and Migration",
+      "thread_name": "Documentation and Cleanup",
+      "status": "completed",
+      "created_at": "2026-01-24T01:15:09.712Z",
+      "updated_at": "2026-01-24T01:25:03.930Z",
       "assigned_agent": "documentation-minimalist",
-      "report": "Updated work init to include synthesis config, updated work notifications to show synthesis status, added JSDoc, and updated documentation in READMEs."
+      "report": "Removed synthesis config from notifications types and config. Updated init command output implicitly. Updated README with synthesis configuration, output structure, and migration notes. Verified JSDoc comments."
+    },
+    {
+      "id": "08.03.03.02",
+      "name": "Remove synthesis section from default `notifications.json` template in init command",
+      "stage_name": "Revision - Synthesis Config and Output Storage",
+      "batch_name": "Integration and Migration",
+      "thread_name": "Documentation and Cleanup",
+      "status": "completed",
+      "created_at": "2026-01-24T01:15:09.712Z",
+      "updated_at": "2026-01-24T01:25:03.930Z",
+      "assigned_agent": "documentation-minimalist",
+      "report": "Removed synthesis config from notifications types and config. Updated init command output implicitly. Updated README with synthesis configuration, output structure, and migration notes. Verified JSDoc comments."
+    },
+    {
+      "id": "08.03.03.03",
+      "name": "Update packages/workstreams/README.md to document `work/synthesis.json` configuration",
+      "stage_name": "Revision - Synthesis Config and Output Storage",
+      "batch_name": "Integration and Migration",
+      "thread_name": "Documentation and Cleanup",
+      "status": "completed",
+      "created_at": "2026-01-24T01:15:09.712Z",
+      "updated_at": "2026-01-24T01:25:03.930Z",
+      "assigned_agent": "documentation-minimalist",
+      "report": "Removed synthesis config from notifications types and config. Updated init command output implicitly. Updated README with synthesis configuration, output structure, and migration notes. Verified JSDoc comments."
+    },
+    {
+      "id": "08.03.03.04",
+      "name": "Document threads.json synthesis output structure in README",
+      "stage_name": "Revision - Synthesis Config and Output Storage",
+      "batch_name": "Integration and Migration",
+      "thread_name": "Documentation and Cleanup",
+      "status": "completed",
+      "created_at": "2026-01-24T01:15:09.712Z",
+      "updated_at": "2026-01-24T01:25:03.930Z",
+      "assigned_agent": "documentation-minimalist",
+      "report": "Removed synthesis config from notifications types and config. Updated init command output implicitly. Updated README with synthesis configuration, output structure, and migration notes. Verified JSDoc comments."
+    },
+    {
+      "id": "08.03.03.05",
+      "name": "Add JSDoc comments to all new functions and interfaces in synthesis module",
+      "stage_name": "Revision - Synthesis Config and Output Storage",
+      "batch_name": "Integration and Migration",
+      "thread_name": "Documentation and Cleanup",
+      "status": "completed",
+      "created_at": "2026-01-24T01:15:09.712Z",
+      "updated_at": "2026-01-24T01:25:03.930Z",
+      "assigned_agent": "documentation-minimalist",
+      "report": "Removed synthesis config from notifications types and config. Updated init command output implicitly. Updated README with synthesis configuration, output structure, and migration notes. Verified JSDoc comments."
+    },
+    {
+      "id": "08.03.03.06",
+      "name": "Add migration note to README: if upgrading, create synthesis.json and remove synthesis from notifications.json",
+      "stage_name": "Revision - Synthesis Config and Output Storage",
+      "batch_name": "Integration and Migration",
+      "thread_name": "Documentation and Cleanup",
+      "status": "completed",
+      "created_at": "2026-01-24T01:15:09.712Z",
+      "updated_at": "2026-01-24T01:25:03.930Z",
+      "assigned_agent": "documentation-minimalist",
+      "report": "Removed synthesis config from notifications types and config. Updated init command output implicitly. Updated README with synthesis configuration, output structure, and migration notes. Verified JSDoc comments."
+    },
+    {
+      "id": "08.03.03.07",
+      "name": "Remove synthesis-related imports from `notifications/config.ts` if any remain",
+      "stage_name": "Revision - Synthesis Config and Output Storage",
+      "batch_name": "Integration and Migration",
+      "thread_name": "Documentation and Cleanup",
+      "status": "completed",
+      "created_at": "2026-01-24T01:15:09.712Z",
+      "updated_at": "2026-01-24T01:25:03.930Z",
+      "assigned_agent": "documentation-minimalist",
+      "report": "Removed synthesis config from notifications types and config. Updated init command output implicitly. Updated README with synthesis configuration, output structure, and migration notes. Verified JSDoc comments."
     }
   ]
 }

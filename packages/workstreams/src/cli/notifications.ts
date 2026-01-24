@@ -89,17 +89,6 @@ function formatOutput(config: NotificationsConfig, path: string): void {
   console.log(`Config File:   ${path}`)
   console.log("")
 
-  console.log("Synthesis:")
-  if (config.synthesis) {
-    console.log(`- Enabled: ${config.synthesis.enabled ? "Yes" : "No"}`)
-    if (config.synthesis.agent) {
-      console.log(`- Agent:   ${config.synthesis.agent}`)
-    }
-  } else {
-    console.log(`- Enabled: No (default)`)
-  }
-  console.log("")
-
   console.log("Providers:")
   const providers = config.providers
   if (providers.sound) {

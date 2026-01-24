@@ -64,6 +64,7 @@ import { main as startMain } from "../src/cli/start.ts"
 import { main as sessionMain } from "../src/cli/session.ts"
 import { main as revisionMain } from "../src/cli/revision.ts"
 import { main as notificationsMain } from "../src/cli/notifications.ts"
+import { main as synthesisMain } from "../src/cli/synthesis.ts"
 
 // Role and help utilities
 import {
@@ -128,6 +129,7 @@ const SUBCOMMANDS = {
   github: githubMain,
   session: sessionMain,
   notifications: notificationsMain,
+  synthesis: synthesisMain,
 } as const
 
 type Subcommand = keyof typeof SUBCOMMANDS
@@ -178,6 +180,7 @@ const COMMAND_DESCRIPTIONS: Record<string, string> = {
   "multi-navigator": "Multi-session navigator mode",
   "multi-grid": "Multi-session grid layout",
   notifications: "Show notification configuration",
+  synthesis: "Show synthesis configuration",
 }
 
 function printHelp(showAllCommands: boolean = false): void {

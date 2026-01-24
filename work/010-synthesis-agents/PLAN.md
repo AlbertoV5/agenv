@@ -829,3 +829,219 @@ Update documentation and default config files.
 - Update `work notifications` command to show synthesis status
 - Add synthesis configuration section to README
 - Update JSDoc comments for new functions and interfaces
+
+### Stage 08: Revision - Synthesis Config and Output Storage
+
+#### Stage Definition
+
+Extract synthesis configuration from `notifications.json` into a dedicated `synthesis.json` file, and add synthesis output storage to `threads.json`. This provides clean separation of concerns:
+
+- `synthesis.json` → Controls **IF** and **HOW** synthesis runs (global config)
+- `agents.yaml` → Defines **WHICH** synthesis agents are available
+- `threads.json` → Stores **WHAT** synthesis produced (output per thread)
+
+**Key Changes:**
+1. Create `work/synthesis.json` with enabled toggle, agent override, output settings
+2. Add `synthesis` section to thread metadata in `threads.json`
+3. Remove `synthesis` from `notifications.json` (migration)
+4. Update multi.ts to use new config location
+
+**Config Schema:**
+```json
+// work/synthesis.json
+{
+  "enabled": true,
+  "agent": "batch-synthesizer",     // Optional: override default from agents.yaml
+  "output": {
+    "store_in_threads": true        // Store output in threads.json (default true)
+  }
+}
+```
+
+**Thread Synthesis Output:**
+```json
+// work/{stream}/threads.json
+{
+  "threads": [{
+    "threadId": "01.01.01",
+    "sessions": [...],
+    "synthesis": {
+      "sessionId": "ses_xxx",
+      "output": "Implemented config loader with validation. Added unit tests for edge cases.",
+      "completedAt": "2026-01-24T01:30:00.000Z"
+    }
+  }]
+}
+```
+
+#### Stage Constitution
+
+**Inputs:**
+- `packages/workstreams/src/lib/notifications/types.ts` - Current SynthesisConfig
+- `packages/workstreams/src/lib/notifications/config.ts` - Current isSynthesisEnabled
+- `packages/workstreams/src/lib/types.ts` - ThreadMetadata interface
+- `packages/workstreams/src/lib/threads.ts` - Thread metadata functions
+- `packages/workstreams/src/cli/multi.ts` - Synthesis integration
+
+**Structure:**
+- Batch 01: Create synthesis.json schema and loader
+- Batch 02: Add synthesis output to threads.json
+- Batch 03: Update multi.ts integration and migration
+
+**Outputs:**
+- `SynthesisConfig` interface in dedicated `synthesis/types.ts`
+- `loadSynthesisConfig()` and `isSynthesisEnabled()` in `synthesis/config.ts`
+- `ThreadSynthesis` interface for synthesis output in `types.ts`
+- Updated `threads.ts` functions for synthesis output storage
+- Migrated multi.ts to use new synthesis config
+- Default `synthesis.json` created by `work init`
+
+#### Stage Questions
+
+- [x] What happens if synthesis.json doesn't exist? Synthesis is disabled (backward compatible)
+- [x] Should we keep synthesis config in notifications.json for backward compat? No, clean break - Stage 07 not yet released
+- [x] Where does synthesis output get written? threads.json under each thread's `synthesis` field
+- [x] Should output.file_path be supported? Not in this stage - keep it simple
+
+#### Stage Batches
+
+##### Batch 01: Synthesis Config Schema
+
+Create the dedicated synthesis configuration module.
+
+###### Thread 01: Synthesis Types and Schema
+
+**Summary:**
+Create synthesis configuration types in a dedicated module.
+
+**Details:**
+- Working packages: `./packages/workstreams`
+- Create `packages/workstreams/src/lib/synthesis/types.ts`:
+  ```typescript
+  export interface SynthesisConfig {
+    /** Enable/disable synthesis agents globally */
+    enabled: boolean
+    /** Override default synthesis agent name from agents.yaml */
+    agent?: string
+    /** Output storage settings */
+    output?: SynthesisOutputConfig
+  }
+
+  export interface SynthesisOutputConfig {
+    /** Store synthesis output in threads.json (default: true) */
+    store_in_threads?: boolean
+  }
+
+  export interface ThreadSynthesis {
+    /** The synthesis agent's opencode session ID */
+    sessionId: string
+    /** The synthesis output text */
+    output: string
+    /** When synthesis completed */
+    completedAt: string
+  }
+  ```
+- Re-export from `synthesis/index.ts`
+- Remove `SynthesisConfig` from `notifications/types.ts`
+- Update `ThreadMetadata` in `types.ts` to include `synthesis?: ThreadSynthesis`
+
+###### Thread 02: Synthesis Config Loader
+
+**Summary:**
+Create config loader for synthesis.json.
+
+**Details:**
+- Working packages: `./packages/workstreams`
+- Create `packages/workstreams/src/lib/synthesis/config.ts`:
+  - `getDefaultSynthesisConfig(): SynthesisConfig` - Returns `{ enabled: false }`
+  - `loadSynthesisConfig(repoRoot: string): SynthesisConfig` - Loads from `work/synthesis.json`
+  - `isSynthesisEnabled(repoRoot: string): boolean` - Returns `config.enabled`
+  - `getSynthesisAgentOverride(repoRoot: string): string | undefined` - Returns `config.agent`
+- Handle missing file: return default config (synthesis disabled)
+- Handle malformed JSON: log warning, return default config
+- Add unit tests for config loading
+- Remove synthesis-related code from `notifications/config.ts`
+
+##### Batch 02: Threads.json Synthesis Output
+
+Add synthesis output storage to thread metadata.
+
+###### Thread 01: Thread Synthesis Storage
+
+**Summary:**
+Add functions to store and retrieve synthesis output in threads.json.
+
+**Details:**
+- Working packages: `./packages/workstreams`
+- Update `packages/workstreams/src/lib/threads.ts`:
+  - `setSynthesisOutput(repoRoot, streamId, threadId, synthesis: ThreadSynthesis): void`
+  - `getSynthesisOutput(repoRoot, streamId, threadId): ThreadSynthesis | null`
+- The `setSynthesisOutput` function should:
+  1. Load existing threads.json
+  2. Find the matching thread
+  3. Set/update the `synthesis` field
+  4. Write back with proper locking
+- Handle missing thread gracefully (log warning)
+- Add unit tests for synthesis output storage/retrieval
+- Ensure backward compatibility: old threads.json without synthesis field still works
+
+##### Batch 03: Integration and Migration
+
+Update multi.ts and create migration path.
+
+###### Thread 01: Multi.ts Integration Update
+
+**Summary:**
+Update multi.ts to use the new synthesis config module.
+
+**Details:**
+- Working packages: `./packages/workstreams`
+- In `multi.ts`:
+  - Replace `import { isSynthesisEnabled } from './notifications/config'` with synthesis module
+  - Update synthesis agent detection to use `getSynthesisAgentOverride()` if set
+  - After synthesis completes, call `setSynthesisOutput()` to store in threads.json
+- In `handleSessionClose()`:
+  - Read synthesis output from temp file (existing behavior)
+  - Call `setSynthesisOutput(repoRoot, streamId, threadId, { sessionId, output, completedAt })`
+- Update dry run output to show synthesis config source: "Synthesis config: work/synthesis.json"
+- Update console logs for new config location
+
+###### Thread 02: Init Command Update
+
+**Summary:**
+Update `work init` to create synthesis.json with defaults.
+
+**Details:**
+- Working packages: `./packages/workstreams`
+- Update `packages/workstreams/src/cli/init.ts`:
+  - Add `synthesis.json` creation with default config:
+    ```json
+    {
+      "enabled": false,
+      "output": {
+        "store_in_threads": true
+      }
+    }
+    ```
+  - Add to the list of files created during init
+- Update `work notifications` command:
+  - Remove synthesis status display (it's no longer in notifications.json)
+- Add new `work synthesis` command (optional, low priority):
+  - Show current synthesis config
+  - Show whether synthesis is enabled
+
+###### Thread 03: Documentation and Cleanup
+
+**Summary:**
+Update documentation and clean up old synthesis config from notifications.
+
+**Details:**
+- Working packages: `./packages/workstreams`
+- Remove `synthesis?: SynthesisConfig` from `NotificationsConfig` interface
+- Remove synthesis section from default `notifications.json` template
+- Update README synthesis documentation:
+  - Document `work/synthesis.json` configuration
+  - Document threads.json synthesis output structure
+  - Update examples
+- Add JSDoc comments to all new functions and interfaces
+- Add migration note: if upgrading, create `synthesis.json` and remove synthesis from `notifications.json`

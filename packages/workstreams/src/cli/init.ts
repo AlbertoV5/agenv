@@ -13,6 +13,10 @@ import {
   getDefaultNotificationsConfig,
   getNotificationsConfigPath,
 } from "../lib/notifications/config.ts"
+import {
+  getDefaultSynthesisConfig,
+  getSynthesisConfigPath,
+} from "../lib/synthesis/config.ts"
 
 const DEFAULT_AGENTS_YAML = `agents:
   - name: default
@@ -136,6 +140,30 @@ export async function main(argv: string[]): Promise<void> {
       )
     } else {
       console.log("notifications.json already exists, skipping.")
+    }
+
+    // 5. Initialize synthesis.json
+    const synthesisPath = getSynthesisConfigPath(repoRoot)
+    if (!existsSync(synthesisPath) || force) {
+      console.log(
+        `${
+          force && existsSync(synthesisPath) ? "Overwriting" : "Initializing"
+        } synthesis.json...`,
+      )
+      // Use default config with explicit output settings
+      const defaultSynthesisConfig = {
+        ...getDefaultSynthesisConfig(),
+        output: {
+          store_in_threads: true,
+        },
+      }
+      writeFileSync(
+        synthesisPath,
+        JSON.stringify(defaultSynthesisConfig, null, 2),
+        "utf-8",
+      )
+    } else {
+      console.log("synthesis.json already exists, skipping.")
     }
 
     console.log("\nInitialization complete.")

@@ -506,23 +506,22 @@ synthesis_agents:
 
 ### Enabling/Disabling
 
-Synthesis agents are enabled via `work/notifications.json`.
+Synthesis agents are enabled via `work/synthesis.json`. This file is created by `work init` with sensible defaults.
 
 ```json
 {
-  "synthesis": {
-    "enabled": true
-  }
+  "enabled": true
 }
 ```
 
-You can also specify a specific agent to use (overriding the default):
+You can also specify a specific agent to use (overriding the default) and configure output storage:
 
 ```json
 {
-  "synthesis": {
-    "enabled": true,
-    "agent": "custom-summarizer"
+  "enabled": true,
+  "agent": "custom-summarizer",
+  "output": {
+    "store_in_threads": true
   }
 }
 ```
@@ -547,11 +546,30 @@ Summaries are stored in `threads.json`:
 ```json
 {
   "threadId": "01.01.01",
-  "synthesisOutput": "Implemented the user authentication flow with JWT tokens. Added login, logout, and refresh token endpoints. All tests passing.",
+  "synthesis": {
+    "sessionId": "ses_synth123...",
+    "output": "Implemented the user authentication flow with JWT tokens. Added login, logout, and refresh token endpoints. All tests passing.",
+    "completedAt": "2024-01-20T10:05:00Z"
+  },
   "workingAgentSessionId": "ses_abc123...",
   "opencodeSessionId": "ses_xyz789..."
 }
 ```
+
+### Migration Guide
+
+If you are upgrading from an older version, please note that synthesis configuration has moved from `notifications.json` to `synthesis.json`.
+
+1. Create `work/synthesis.json`:
+   ```json
+   {
+     "enabled": false,
+     "output": {
+       "store_in_threads": true
+     }
+   }
+   ```
+2. Remove the `synthesis` section from `work/notifications.json`.
 
 ### Future: TTS Integration
 

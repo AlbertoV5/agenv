@@ -42,4 +42,9 @@ synthesis_agents:
   - name: batch-synthesizer
     description: Summarizes working agent outputs after thread completion.
     best_for: Generating concise summaries of completed work for notifications.
-    models: [anthropic/claude-haiku-4-5]
+    models:
+      [
+        google/gemini-3-flash-preview,
+        google/antigravity-gemini-3-flash,
+        anthropic/claude-haiku-4-5,
+      ]
