@@ -1,0 +1,205 @@
+{
+  "version": "1.0.0",
+  "stream_id": "011-synthesis-output-parsing",
+  "last_updated": "2026-01-24T20:06:16.332Z",
+  "tasks": [
+    {
+      "id": "01.01.01.01",
+      "name": "Create `packages/workstreams/src/lib/synthesis/output.ts` with JSONL parsing types and functions",
+      "stage_name": "Core Implementation",
+      "batch_name": "Parser and Shell Updates",
+      "thread_name": "Create JSONL Parser Module",
+      "status": "pending",
+      "created_at": "2026-01-24T20:06:16.331Z",
+      "updated_at": "2026-01-24T20:06:16.331Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "01.01.01.02",
+      "name": "Implement `parseSynthesisJsonl(content: string)` to extract text from JSONL lines with `type: \"text\"`",
+      "stage_name": "Core Implementation",
+      "batch_name": "Parser and Shell Updates",
+      "thread_name": "Create JSONL Parser Module",
+      "status": "pending",
+      "created_at": "2026-01-24T20:06:16.331Z",
+      "updated_at": "2026-01-24T20:06:16.331Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "01.01.01.03",
+      "name": "Implement `parseSynthesisOutputFile(filePath, logPath?)` to read file and parse with debug logging",
+      "stage_name": "Core Implementation",
+      "batch_name": "Parser and Shell Updates",
+      "thread_name": "Create JSONL Parser Module",
+      "status": "pending",
+      "created_at": "2026-01-24T20:06:16.331Z",
+      "updated_at": "2026-01-24T20:06:16.331Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "01.01.01.04",
+      "name": "Update `packages/workstreams/src/lib/synthesis/index.ts` to export new functions",
+      "stage_name": "Core Implementation",
+      "batch_name": "Parser and Shell Updates",
+      "thread_name": "Create JSONL Parser Module",
+      "status": "pending",
+      "created_at": "2026-01-24T20:06:16.331Z",
+      "updated_at": "2026-01-24T20:06:16.331Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "01.01.02.01",
+      "name": "Add `getSynthesisLogPath(streamId, threadId)` function to `opencode.ts`",
+      "stage_name": "Core Implementation",
+      "batch_name": "Parser and Shell Updates",
+      "thread_name": "Simplify Shell Commands",
+      "status": "pending",
+      "created_at": "2026-01-24T20:06:16.331Z",
+      "updated_at": "2026-01-24T20:06:16.331Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "01.01.02.02",
+      "name": "Remove jq extraction code from `buildPostSynthesisCommand()` (lines ~862-868)",
+      "stage_name": "Core Implementation",
+      "batch_name": "Parser and Shell Updates",
+      "thread_name": "Simplify Shell Commands",
+      "status": "pending",
+      "created_at": "2026-01-24T20:06:16.331Z",
+      "updated_at": "2026-01-24T20:06:16.331Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "01.01.02.03",
+      "name": "Remove `.txt` output file references, keep only `.json` for raw JSONL",
+      "stage_name": "Core Implementation",
+      "batch_name": "Parser and Shell Updates",
+      "thread_name": "Simplify Shell Commands",
+      "status": "pending",
+      "created_at": "2026-01-24T20:06:16.331Z",
+      "updated_at": "2026-01-24T20:06:16.331Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "01.01.02.04",
+      "name": "Add shell logging (timestamp, file size) to the synthesis log path",
+      "stage_name": "Core Implementation",
+      "batch_name": "Parser and Shell Updates",
+      "thread_name": "Simplify Shell Commands",
+      "status": "pending",
+      "created_at": "2026-01-24T20:06:16.331Z",
+      "updated_at": "2026-01-24T20:06:16.331Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "01.02.01.01",
+      "name": "Import `parseSynthesisOutputFile` from synthesis/output.ts and `getSynthesisLogPath` from opencode.ts",
+      "stage_name": "Core Implementation",
+      "batch_name": "Consumer Updates",
+      "thread_name": "Update multi.ts",
+      "status": "pending",
+      "created_at": "2026-01-24T20:06:16.331Z",
+      "updated_at": "2026-01-24T20:06:16.331Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "01.02.01.02",
+      "name": "Update `handleSessionClose()` to use `parseSynthesisOutputFile()` instead of reading `.txt` directly",
+      "stage_name": "Core Implementation",
+      "batch_name": "Consumer Updates",
+      "thread_name": "Update multi.ts",
+      "status": "pending",
+      "created_at": "2026-01-24T20:06:16.331Z",
+      "updated_at": "2026-01-24T20:06:16.331Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "01.02.01.03",
+      "name": "Add warning log when `parseResult.success` is false, referencing the log file path",
+      "stage_name": "Core Implementation",
+      "batch_name": "Consumer Updates",
+      "thread_name": "Update multi.ts",
+      "status": "pending",
+      "created_at": "2026-01-24T20:06:16.331Z",
+      "updated_at": "2026-01-24T20:06:16.331Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "01.02.02.01",
+      "name": "Import `parseSynthesisOutputFile` from synthesis/output.ts and `getSynthesisLogPath` from opencode.ts",
+      "stage_name": "Core Implementation",
+      "batch_name": "Consumer Updates",
+      "thread_name": "Update marker-polling.ts",
+      "status": "pending",
+      "created_at": "2026-01-24T20:06:16.331Z",
+      "updated_at": "2026-01-24T20:06:16.331Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "01.02.02.02",
+      "name": "Update `pollMarkerFiles()` to parse `.json` file instead of reading `.txt` file",
+      "stage_name": "Core Implementation",
+      "batch_name": "Consumer Updates",
+      "thread_name": "Update marker-polling.ts",
+      "status": "pending",
+      "created_at": "2026-01-24T20:06:16.331Z",
+      "updated_at": "2026-01-24T20:06:16.331Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "01.02.02.03",
+      "name": "Update `cleanupSynthesisFiles()` to clean up `.json` and `.log` files instead of `.txt`",
+      "stage_name": "Core Implementation",
+      "batch_name": "Consumer Updates",
+      "thread_name": "Update marker-polling.ts",
+      "status": "pending",
+      "created_at": "2026-01-24T20:06:16.331Z",
+      "updated_at": "2026-01-24T20:06:16.331Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "02.01.01.01",
+      "name": "Create `packages/workstreams/tests/synthesis-output.test.ts` test file",
+      "stage_name": "Testing and Validation",
+      "batch_name": "Tests",
+      "thread_name": "Parser Unit Tests",
+      "status": "pending",
+      "created_at": "2026-01-24T20:06:16.331Z",
+      "updated_at": "2026-01-24T20:06:16.331Z",
+      "assigned_agent": "code-reviewer"
+    },
+    {
+      "id": "02.01.01.02",
+      "name": "Test parsing valid JSONL with single and multiple text events",
+      "stage_name": "Testing and Validation",
+      "batch_name": "Tests",
+      "thread_name": "Parser Unit Tests",
+      "status": "pending",
+      "created_at": "2026-01-24T20:06:16.331Z",
+      "updated_at": "2026-01-24T20:06:16.331Z",
+      "assigned_agent": "code-reviewer"
+    },
+    {
+      "id": "02.01.01.03",
+      "name": "Test edge cases: no text events, malformed lines, empty file, file not found",
+      "stage_name": "Testing and Validation",
+      "batch_name": "Tests",
+      "thread_name": "Parser Unit Tests",
+      "status": "pending",
+      "created_at": "2026-01-24T20:06:16.331Z",
+      "updated_at": "2026-01-24T20:06:16.331Z",
+      "assigned_agent": "code-reviewer"
+    },
+    {
+      "id": "02.01.01.04",
+      "name": "Run tests with `bun test` and verify all pass",
+      "stage_name": "Testing and Validation",
+      "batch_name": "Tests",
+      "thread_name": "Parser Unit Tests",
+      "status": "pending",
+      "created_at": "2026-01-24T20:06:16.331Z",
+      "updated_at": "2026-01-24T20:06:16.331Z",
+      "assigned_agent": "code-reviewer"
+    }
+  ]
+}
