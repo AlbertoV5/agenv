@@ -1,0 +1,7 @@
+{
+  "enabled": true,
+  "agent": "batch-synthesizer",
+  "output": {
+    "store_in_threads": true
+  }
+}
