@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "stream_id": "",
-  "last_updated": "2026-01-24T20:15:21.825Z",
+  "last_updated": "2026-01-24T20:18:32.892Z",
   "threads": [
     {
       "threadId": "01.01.01",
@@ -68,6 +68,19 @@
         }
       ],
       "opencodeSessionId": "ses_40e5deff6ffewc6VYmLeNRKKeB"
+    },
+    {
+      "threadId": "02.01.01",
+      "sessions": [
+        {
+          "sessionId": "ses_mksr1kkg_94ept8",
+          "agentName": "code-reviewer",
+          "model": "google/gemini-3-pro-preview",
+          "startedAt": "2026-01-24T20:15:32.707Z",
+          "status": "completed",
+          "completedAt": "2026-01-24T20:18:32.892Z"
+        }
+      ]
     }
   ]
 }
