@@ -3,7 +3,7 @@ import { mkdtempSync, writeFileSync, rmSync, existsSync } from "fs"
 import { join } from "path"
 import { tmpdir } from "os"
 import { findNextIncompleteBatch } from "../src/cli/multi"
-import { getCompletionMarkerPath, getSessionFilePath, buildRunCommand, buildRetryRunCommand } from "../src/lib/opencode"
+import { getCompletionMarkerPath, getSessionFilePath, buildRunCommand, buildRetryRunCommand, buildPostSynthesisCommand } from "../src/lib/opencode"
 import type { Task, NormalizedModelSpec } from "../src/lib/types"
 import * as notifications from "../src/lib/notifications"
 import { mockPlayNotification } from "./helpers"
@@ -268,6 +268,145 @@ describe("multi cli", () => {
                 // Should NOT contain session file path
                 expect(cmd).not.toContain("-session.txt")
             })
+        })
+    })
+
+    describe("buildPostSynthesisCommand", () => {
+        const workingModels: NormalizedModelSpec[] = [
+            { model: "anthropic/claude-sonnet-4" }
+        ]
+        const synthesisModels: NormalizedModelSpec[] = [
+            { model: "google/gemini-1.5-pro" }
+        ]
+
+        test("runs working agent BEFORE synthesis agent (post-session flow)", () => {
+            const cmd = buildPostSynthesisCommand({
+                port: 4096,
+                workingModels,
+                synthesisModels,
+                promptPath: "/path/to/prompt.md",
+                threadTitle: "Test Thread",
+                streamId: "001-test",
+                threadId: "01.01.01",
+                synthesisPromptPath: "/path/to/synthesis.md",
+            })
+
+            // Working agent should appear BEFORE synthesis agent in command
+            const workingPhaseIndex = cmd.indexOf("Phase 1: Running working agent")
+            const synthesisPhaseIndex = cmd.indexOf("Phase 2: Running synthesis agent")
+            
+            expect(workingPhaseIndex).toBeGreaterThan(-1)
+            expect(synthesisPhaseIndex).toBeGreaterThan(-1)
+            expect(workingPhaseIndex).toBeLessThan(synthesisPhaseIndex)
+        })
+
+        test("working agent runs with TUI (opencode run without --format json)", () => {
+            const cmd = buildPostSynthesisCommand({
+                port: 4096,
+                workingModels,
+                synthesisModels,
+                promptPath: "/path/to/prompt.md",
+                threadTitle: "Test Thread",
+                streamId: "001-test",
+                threadId: "01.01.01",
+                synthesisPromptPath: "/path/to/synthesis.md",
+            })
+
+            // Working agent's opencode run command should NOT have --format json
+            // The working agent command is: cat "..." | opencode run --port ... --model ... --title ...
+            // Note: session list uses --format json, but that's for finding the session ID, not running the agent
+            
+            // Find the working agent run command (the actual opencode run that executes the prompt)
+            const workingModelMatch = cmd.match(/cat.*prompt\.md.*opencode run.*--model "anthropic\/claude-sonnet-4".*--title "\$WORK_TITLE"/)
+            expect(workingModelMatch).toBeTruthy()
+            
+            // The working agent run command should NOT have --format json
+            const workingRunCmd = workingModelMatch![0]
+            expect(workingRunCmd).not.toContain("--format json")
+        })
+
+        test("synthesis agent runs headless with --format json", () => {
+            const cmd = buildPostSynthesisCommand({
+                port: 4096,
+                workingModels,
+                synthesisModels,
+                promptPath: "/path/to/prompt.md",
+                threadTitle: "Test Thread",
+                streamId: "001-test",
+                threadId: "01.01.01",
+                synthesisPromptPath: "/path/to/synthesis.md",
+            })
+
+            // Synthesis section should have --format json (headless mode)
+            const phase2Start = cmd.indexOf("Phase 2: Running synthesis agent")
+            const phase2Section = cmd.substring(phase2Start)
+            
+            expect(phase2Section).toContain("--format json")
+        })
+
+        test("resumes WORKING agent session (not synthesis)", () => {
+            const cmd = buildPostSynthesisCommand({
+                port: 4096,
+                workingModels,
+                synthesisModels,
+                promptPath: "/path/to/prompt.md",
+                threadTitle: "Test Thread",
+                streamId: "001-test",
+                threadId: "01.01.01",
+                synthesisPromptPath: "/path/to/synthesis.md",
+            })
+
+            // Should resume with WORK_SESSION_ID (working agent), not synthesis
+            expect(cmd).toContain("Opening working session for review")
+            expect(cmd).toContain('opencode --session "$WORK_SESSION_ID"')
+        })
+
+        test("writes working session ID to session file (not synthesis session)", () => {
+            const cmd = buildPostSynthesisCommand({
+                port: 4096,
+                workingModels,
+                synthesisModels,
+                promptPath: "/path/to/prompt.md",
+                threadTitle: "Test Thread",
+                streamId: "001-test",
+                threadId: "01.01.01",
+                synthesisPromptPath: "/path/to/synthesis.md",
+            })
+
+            // Should write working session ID to session file
+            expect(cmd).toContain('echo "$WORK_SESSION_ID"')
+            expect(cmd).toContain('/tmp/workstream-01.01.01-session.txt')
+        })
+
+        test("captures synthesis output to synthesis temp file", () => {
+            const cmd = buildPostSynthesisCommand({
+                port: 4096,
+                workingModels,
+                synthesisModels,
+                promptPath: "/path/to/prompt.md",
+                threadTitle: "Test Thread",
+                streamId: "001-test",
+                threadId: "01.01.01",
+                synthesisPromptPath: "/path/to/synthesis.md",
+            })
+
+            // Should write synthesis output to synthesis file
+            expect(cmd).toContain('/tmp/workstream-001-test-01.01.01-synthesis.txt')
+        })
+
+        test("displays Post-Session Synthesis mode in header", () => {
+            const cmd = buildPostSynthesisCommand({
+                port: 4096,
+                workingModels,
+                synthesisModels,
+                promptPath: "/path/to/prompt.md",
+                threadTitle: "Test Thread",
+                streamId: "001-test",
+                threadId: "01.01.01",
+                synthesisPromptPath: "/path/to/synthesis.md",
+            })
+
+            expect(cmd).toContain("Mode: Post-Session Synthesis")
         })
     })
 })

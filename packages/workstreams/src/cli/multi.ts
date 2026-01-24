@@ -247,7 +247,7 @@ function printDryRunOutput(
   console.log(`Session: ${sessionName}`)
   console.log(`Port: ${port}`)
   if (synthesisEnabled) {
-    console.log(`Mode: Synthesis (working agents wrapped by synthesis agent)`)
+    console.log(`Mode: Post-Session Synthesis (working agent runs first with TUI, synthesis runs after)`)
   }
   console.log("")
 
@@ -392,8 +392,10 @@ async function handleSessionClose(
     }
 
     // Capture opencode session IDs and synthesis output from temp files
-    // This captures both the synthesis agent session (opencodeSessionId) and
-    // the working agent session (workingAgentSessionId) when synthesis is enabled
+    // With post-session synthesis (modern flow):
+    // - sessionFilePath contains the WORKING agent session ID (this is the primary session)
+    // - synthesisOutputPath contains the synthesis agent's output (synthesis ran headless)
+    // - workingAgentSessionPath is not used in post-session mode (kept for backwards compatibility with legacy wrapper)
     console.log(`\nCapturing opencode session IDs and synthesis output...`)
     for (const mapping of threadSessionMap) {
       const sessionFilePath = getSessionFilePath(mapping.threadId)
@@ -407,7 +409,7 @@ async function handleSessionClose(
         synthesisOutput?: string | null
       } = {}
       
-      // Capture the primary session ID (synthesis agent when enabled, or working agent directly)
+      // Capture the working agent session ID (stored as primary session in post-session mode)
       if (existsSync(sessionFilePath)) {
         try {
           const opencodeSessionId = readFileSync(sessionFilePath, "utf-8").trim()
@@ -419,7 +421,8 @@ async function handleSessionClose(
         }
       }
       
-      // Capture the working agent session ID (only present when synthesis is enabled)
+      // Check legacy working agent session path (backwards compatibility)
+      // In post-session synthesis, this file won't exist; working session is in sessionFilePath
       if (existsSync(workingAgentSessionPath)) {
         try {
           const workingAgentSessionId = readFileSync(workingAgentSessionPath, "utf-8").trim()
@@ -432,6 +435,7 @@ async function handleSessionClose(
       }
       
       // Capture synthesis output (only present when synthesis is enabled)
+      // In post-session synthesis, this file contains the headless synthesis agent's output
       if (existsSync(synthesisOutputPath)) {
         try {
           const synthesisOutput = readFileSync(synthesisOutputPath, "utf-8").trim()
@@ -445,11 +449,6 @@ async function handleSessionClose(
           console.log(`  Thread ${mapping.threadId}: failed to read synthesis output file (${(e as Error).message})`)
           sessionUpdates.synthesisOutput = null
         }
-      } else if (sessionUpdates.workingAgentSessionId) {
-        // Only warn about missing synthesis output if we have a working agent session
-        // (indicates synthesis was enabled but output file is missing)
-        console.log(`  Thread ${mapping.threadId}: synthesis output file not found`)
-        sessionUpdates.synthesisOutput = null
       }
       
       // Update thread metadata with captured session IDs and synthesis output
@@ -468,13 +467,11 @@ async function handleSessionClose(
         
         await updateThreadMetadataLocked(repoRoot, streamId, mapping.threadId, updateData)
         
-        if (sessionUpdates.opencodeSessionId && sessionUpdates.workingAgentSessionId) {
-          console.log(`  Thread ${mapping.threadId}: captured synthesis session ${sessionUpdates.opencodeSessionId}, working session ${sessionUpdates.workingAgentSessionId}${sessionUpdates.synthesisOutput ? ', synthesis output' : ''}`)
-        } else if (sessionUpdates.opencodeSessionId) {
-          console.log(`  Thread ${mapping.threadId}: captured opencode session ${sessionUpdates.opencodeSessionId}`)
-        } else if (sessionUpdates.workingAgentSessionId) {
-          console.log(`  Thread ${mapping.threadId}: captured working agent session ${sessionUpdates.workingAgentSessionId}${sessionUpdates.synthesisOutput ? ', synthesis output' : ''}`)
-        } else if (sessionUpdates.synthesisOutput) {
+        // Log what was captured (simplified for post-session synthesis)
+        const hasSynthOutput = sessionUpdates.synthesisOutput !== undefined && sessionUpdates.synthesisOutput !== null
+        if (sessionUpdates.opencodeSessionId) {
+          console.log(`  Thread ${mapping.threadId}: captured working session ${sessionUpdates.opencodeSessionId}${hasSynthOutput ? ', synthesis output' : ''}`)
+        } else if (hasSynthOutput) {
           console.log(`  Thread ${mapping.threadId}: captured synthesis output`)
         }
       } else {
@@ -757,10 +754,12 @@ Press Ctrl+b X to kill the session when done.
   const notificationTracker = cliArgs.silent ? null : new NotificationTracker({ repoRoot })
 
   // Start marker file polling for notifications
+  // Pass streamId to enable synthesis output in notifications
   const threadIds = threads.map((t) => t.threadId)
   const { promise: pollingPromise, state: pollingState } = startMarkerPolling({
     threadIds,
     notificationTracker,
+    streamId: stream.id,
   })
 
   child.on("close", async (code) => {

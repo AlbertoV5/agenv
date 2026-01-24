@@ -8,7 +8,7 @@
 import { join } from "path"
 import { existsSync } from "fs"
 import { getWorkDir } from "./repo.ts"
-import { loadAgentsConfig, getAgentModels, getSynthesisAgentModels } from "./agents-yaml.ts"
+import { loadAgentsConfig, getAgentModels, getSynthesisAgentModels, getSynthesisPromptPath } from "./agents-yaml.ts"
 import type { SynthesisAgentDefinitionYaml, AgentsConfigYaml } from "./types.ts"
 import { discoverThreadsInBatch } from "./tasks.ts"
 import {
@@ -19,7 +19,7 @@ import {
   listPaneIds,
   THREAD_START_DELAY_MS,
 } from "./tmux.ts"
-import { buildRetryRunCommand, buildSynthesisRunCommand } from "./opencode.ts"
+import { buildRetryRunCommand, buildPostSynthesisCommand } from "./opencode.ts"
 import type { NormalizedModelSpec } from "./types.ts"
 import type { ThreadInfo, ThreadSessionMap } from "./multi-types.ts"
 
@@ -147,10 +147,11 @@ export function collectThreadInfoFromTasks(
       firstTaskId: discovered.firstTaskId,
     }
 
-    // Add synthesis agent fields if synthesis is enabled
+    // Add synthesis agent fields if synthesis is enabled (for post-session synthesis)
     if (synthesisAgent && synthesisModels && synthesisModels.length > 0) {
       threadInfo.synthesisAgentName = synthesisAgent.name
       threadInfo.synthesisModels = synthesisModels
+      threadInfo.synthesisPromptPath = getSynthesisPromptPath(repoRoot, agentsConfig!, synthesisAgent.name)
     }
 
     threads.push(threadInfo)
@@ -168,7 +169,12 @@ export interface SessionSetupResult {
 }
 
 /**
- * Build the run command for a thread, using synthesis if available
+ * Build the run command for a thread, using post-session synthesis if enabled
+ * 
+ * This uses the modern post-session synthesis flow (replacing the legacy wrapper approach):
+ * 1. Working agent runs first with full TUI visibility (user can interact)
+ * 2. After completion, synthesis agent runs headless to summarize
+ * 3. Session resume opens working agent session (not synthesis)
  * 
  * @param thread - Thread info with optional synthesis fields
  * @param port - OpenCode server port
@@ -182,16 +188,17 @@ export function buildThreadRunCommand(
 ): string {
   const paneTitle = buildPaneTitle(thread)
 
-  // Check if synthesis is enabled for this thread
-  if (thread.synthesisModels && thread.synthesisModels.length > 0) {
-    return buildSynthesisRunCommand({
+  // Check if post-session synthesis is enabled for this thread
+  if (thread.synthesisModels && thread.synthesisModels.length > 0 && thread.synthesisPromptPath) {
+    return buildPostSynthesisCommand({
       port,
-      synthesisModels: thread.synthesisModels,
       workingModels: thread.models,
+      synthesisModels: thread.synthesisModels,
       promptPath: thread.promptPath,
       threadTitle: paneTitle,
       streamId,
       threadId: thread.threadId,
+      synthesisPromptPath: thread.synthesisPromptPath,
     })
   }
 
@@ -212,7 +219,9 @@ export function buildThreadRunCommand(
  * - Window 0: Grid with up to 4 visible threads
  * - Windows 1+: Hidden windows for threads 5+ (for pagination)
  * 
- * If threads have synthesisModels, synthesis mode is used (wraps working agent)
+ * If threads have synthesisModels, post-session synthesis mode is enabled:
+ * - Working agent runs first with full TUI
+ * - Synthesis runs headless after completion
  */
 export function setupTmuxSession(
   sessionName: string,

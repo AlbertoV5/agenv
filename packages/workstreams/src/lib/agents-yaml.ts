@@ -399,3 +399,29 @@ export function getSynthesisAgentModels(
     }
     return agent.models.map(normalizeModelSpec)
 }
+
+/**
+ * Get the synthesis prompt path for a synthesis agent
+ * Returns the configured path or a default path based on workdir
+ *
+ * @param repoRoot - Repository root path
+ * @param config - Parsed agents configuration
+ * @param agentName - Name of the synthesis agent
+ * @returns Absolute path to the synthesis prompt file
+ */
+export function getSynthesisPromptPath(
+    repoRoot: string,
+    config: AgentsConfigYaml,
+    agentName: string
+): string {
+    const agent = getSynthesisAgent(config, agentName)
+    if (agent?.prompt_path) {
+        // If prompt_path is relative, resolve against workdir
+        if (!agent.prompt_path.startsWith("/")) {
+            return join(getWorkDir(repoRoot), agent.prompt_path)
+        }
+        return agent.prompt_path
+    }
+    // Default synthesis prompt location
+    return join(getWorkDir(repoRoot), "prompts", "synthesis", `${agentName}.md`)
+}

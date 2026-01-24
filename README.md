@@ -213,12 +213,10 @@ Skills are installed to agent directories using `ag install skills`.
 
 ## Synthesis Agents
 
-Synthesis agents are optional wrapper agents that observe working agent sessions and generate summaries. When enabled, `work multi` wraps each thread execution with a synthesis agent that:
+Synthesis agents are optional observer agents that run after working agent sessions to generate summaries. When enabled, `work multi` executes each thread in a two-phase process:
 
-1. Runs the working agent with its assigned model
-2. Observes the complete session output
-3. Generates a concise 2-3 sentence summary
-4. Stores the summary in `threads.json` for notifications
+1. **Working Phase**: The working agent runs with full TUI visibility, allowing the user to interact with the session directly.
+2. **Synthesis Phase**: After the working agent completes, the synthesis agent runs headless (in the background) to analyze the session and generate a summary.
 
 ### Enabling Synthesis Agents
 
@@ -240,12 +238,14 @@ synthesis_agents:
 
 ### Disabling Synthesis Agents
 
-To disable synthesis agents, remove or comment out the `synthesis_agents` section. When disabled, `work multi` runs working agents directly without the synthesis wrapper.
+To disable synthesis agents, remove or comment out the `synthesis_agents` section. When disabled, `work multi` runs working agents normally without the post-session synthesis phase.
 
 ### How It Works
 
 - The first synthesis agent in the list is used automatically
-- The working agent's session ID is tracked separately (`workingAgentSessionId`) for `work fix --resume`
+- The working agent runs first, and its session is tracked as the primary session
+- Synthesis runs headless after the working agent completes
+- Users always resume into the **working agent** session for review
 - Synthesis output is stored in `threads.json` under `synthesisOutput`
 - Future TTS integration will read synthesis summaries for audio notifications
 

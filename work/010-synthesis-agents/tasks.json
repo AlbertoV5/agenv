@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "stream_id": "010-synthesis-agents",
-  "last_updated": "2026-01-24T00:06:53.865Z",
+  "last_updated": "2026-01-24T00:25:17.767Z",
   "tasks": [
     {
       "id": "01.01.01.01",
@@ -612,8 +612,8 @@
       "status": "completed",
       "created_at": "2026-01-23T23:44:43.288Z",
       "updated_at": "2026-01-23T23:45:55.708Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Added NotificationsConfig interface to notifications/types.ts with enabled, providers, and events fields"
+      "report": "Added NotificationsConfig interface to notifications/types.ts with enabled, providers, and events fields",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.01.01.02",
@@ -624,8 +624,8 @@
       "status": "completed",
       "created_at": "2026-01-23T23:44:43.288Z",
       "updated_at": "2026-01-23T23:45:56.629Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Added SoundProviderConfig, NotificationCenterConfig, TerminalNotifierConfig, TTSProviderConfig, NotificationProvidersConfig, and NotificationEventsConfig interfaces to notifications/types.ts"
+      "report": "Added SoundProviderConfig, NotificationCenterConfig, TerminalNotifierConfig, TTSProviderConfig, NotificationProvidersConfig, and NotificationEventsConfig interfaces to notifications/types.ts",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.01.01.03",
@@ -636,8 +636,8 @@
       "status": "completed",
       "created_at": "2026-01-23T23:44:43.288Z",
       "updated_at": "2026-01-23T23:46:58.712Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Created notifications/config.ts with loadNotificationsConfig(repoRoot) that loads from work/notifications.json and merges with defaults"
+      "report": "Created notifications/config.ts with loadNotificationsConfig(repoRoot) that loads from work/notifications.json and merges with defaults",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.01.01.04",
@@ -648,8 +648,8 @@
       "status": "completed",
       "created_at": "2026-01-23T23:44:43.288Z",
       "updated_at": "2026-01-23T23:46:59.582Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Added getDefaultNotificationsConfig() in notifications/config.ts returning sound + notification_center enabled by default"
+      "report": "Added getDefaultNotificationsConfig() in notifications/config.ts returning sound + notification_center enabled by default",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.01.01.05",
@@ -660,8 +660,8 @@
       "status": "completed",
       "created_at": "2026-01-23T23:44:43.288Z",
       "updated_at": "2026-01-23T23:47:00.298Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Added getNotificationsConfigPath(repoRoot) helper in notifications/config.ts returning path to work/notifications.json"
+      "report": "Added getNotificationsConfigPath(repoRoot) helper in notifications/config.ts returning path to work/notifications.json",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.02.01.01",
@@ -672,8 +672,8 @@
       "status": "completed",
       "created_at": "2026-01-23T23:44:43.288Z",
       "updated_at": "2026-01-24T00:02:27.137Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Implemented MacOSNotificationCenterProvider in providers/macos-notification-center.ts using osascript for native macOS Notification Center notifications. Features: title/message support, synthesis output in body (truncated to 200 chars), AppleScript escaping for special characters. Added exports to providers/index.ts, notifications/index.ts, and notifications.ts. Added 10 unit tests covering all functionality."
+      "report": "Implemented MacOSNotificationCenterProvider in providers/macos-notification-center.ts using osascript for native macOS Notification Center notifications. Features: title/message support, synthesis output in body (truncated to 200 chars), AppleScript escaping for special characters. Added exports to providers/index.ts, notifications/index.ts, and notifications.ts. Added 10 unit tests covering all functionality.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.02.01.02",
@@ -684,8 +684,8 @@
       "status": "completed",
       "created_at": "2026-01-23T23:44:43.288Z",
       "updated_at": "2026-01-24T00:02:27.137Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Implemented MacOSNotificationCenterProvider in providers/macos-notification-center.ts using osascript for native macOS Notification Center notifications. Features: title/message support, synthesis output in body (truncated to 200 chars), AppleScript escaping for special characters. Added exports to providers/index.ts, notifications/index.ts, and notifications.ts. Added 10 unit tests covering all functionality."
+      "report": "Implemented MacOSNotificationCenterProvider in providers/macos-notification-center.ts using osascript for native macOS Notification Center notifications. Features: title/message support, synthesis output in body (truncated to 200 chars), AppleScript escaping for special characters. Added exports to providers/index.ts, notifications/index.ts, and notifications.ts. Added 10 unit tests covering all functionality.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.02.01.03",
@@ -696,8 +696,8 @@
       "status": "completed",
       "created_at": "2026-01-23T23:44:43.288Z",
       "updated_at": "2026-01-24T00:02:27.137Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Implemented MacOSNotificationCenterProvider in providers/macos-notification-center.ts using osascript for native macOS Notification Center notifications. Features: title/message support, synthesis output in body (truncated to 200 chars), AppleScript escaping for special characters. Added exports to providers/index.ts, notifications/index.ts, and notifications.ts. Added 10 unit tests covering all functionality."
+      "report": "Implemented MacOSNotificationCenterProvider in providers/macos-notification-center.ts using osascript for native macOS Notification Center notifications. Features: title/message support, synthesis output in body (truncated to 200 chars), AppleScript escaping for special characters. Added exports to providers/index.ts, notifications/index.ts, and notifications.ts. Added 10 unit tests covering all functionality.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.02.01.04",
@@ -708,8 +708,8 @@
       "status": "completed",
       "created_at": "2026-01-23T23:44:43.288Z",
       "updated_at": "2026-01-24T00:02:27.137Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Implemented MacOSNotificationCenterProvider in providers/macos-notification-center.ts using osascript for native macOS Notification Center notifications. Features: title/message support, synthesis output in body (truncated to 200 chars), AppleScript escaping for special characters. Added exports to providers/index.ts, notifications/index.ts, and notifications.ts. Added 10 unit tests covering all functionality."
+      "report": "Implemented MacOSNotificationCenterProvider in providers/macos-notification-center.ts using osascript for native macOS Notification Center notifications. Features: title/message support, synthesis output in body (truncated to 200 chars), AppleScript escaping for special characters. Added exports to providers/index.ts, notifications/index.ts, and notifications.ts. Added 10 unit tests covering all functionality.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.02.01.05",
@@ -720,8 +720,8 @@
       "status": "completed",
       "created_at": "2026-01-23T23:44:43.288Z",
       "updated_at": "2026-01-24T00:02:27.137Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Implemented MacOSNotificationCenterProvider in providers/macos-notification-center.ts using osascript for native macOS Notification Center notifications. Features: title/message support, synthesis output in body (truncated to 200 chars), AppleScript escaping for special characters. Added exports to providers/index.ts, notifications/index.ts, and notifications.ts. Added 10 unit tests covering all functionality."
+      "report": "Implemented MacOSNotificationCenterProvider in providers/macos-notification-center.ts using osascript for native macOS Notification Center notifications. Features: title/message support, synthesis output in body (truncated to 200 chars), AppleScript escaping for special characters. Added exports to providers/index.ts, notifications/index.ts, and notifications.ts. Added 10 unit tests covering all functionality.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.02.02.01",
@@ -732,8 +732,8 @@
       "status": "completed",
       "created_at": "2026-01-23T23:44:43.288Z",
       "updated_at": "2026-01-24T00:00:46.784Z",
-      "assigned_agent": "systems-engineer",
-      "report": "TerminalNotifierProvider fully implemented at notifications/providers/terminal-notifier.ts. Includes: isAvailable() with 'which' detection, playNotification() with all terminal-notifier flags (-title, -message, -sound, -activate, -group), configurable click_action (activate_vscode/open_url/none), and helpful brew install message. All 516 tests pass, typecheck clean."
+      "report": "TerminalNotifierProvider fully implemented at notifications/providers/terminal-notifier.ts. Includes: isAvailable() with 'which' detection, playNotification() with all terminal-notifier flags (-title, -message, -sound, -activate, -group), configurable click_action (activate_vscode/open_url/none), and helpful brew install message. All 516 tests pass, typecheck clean.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.02.02.02",
@@ -744,8 +744,8 @@
       "status": "completed",
       "created_at": "2026-01-23T23:44:43.288Z",
       "updated_at": "2026-01-24T00:00:46.784Z",
-      "assigned_agent": "systems-engineer",
-      "report": "TerminalNotifierProvider fully implemented at notifications/providers/terminal-notifier.ts. Includes: isAvailable() with 'which' detection, playNotification() with all terminal-notifier flags (-title, -message, -sound, -activate, -group), configurable click_action (activate_vscode/open_url/none), and helpful brew install message. All 516 tests pass, typecheck clean."
+      "report": "TerminalNotifierProvider fully implemented at notifications/providers/terminal-notifier.ts. Includes: isAvailable() with 'which' detection, playNotification() with all terminal-notifier flags (-title, -message, -sound, -activate, -group), configurable click_action (activate_vscode/open_url/none), and helpful brew install message. All 516 tests pass, typecheck clean.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.02.02.03",
@@ -756,8 +756,8 @@
       "status": "completed",
       "created_at": "2026-01-23T23:44:43.288Z",
       "updated_at": "2026-01-24T00:00:46.784Z",
-      "assigned_agent": "systems-engineer",
-      "report": "TerminalNotifierProvider fully implemented at notifications/providers/terminal-notifier.ts. Includes: isAvailable() with 'which' detection, playNotification() with all terminal-notifier flags (-title, -message, -sound, -activate, -group), configurable click_action (activate_vscode/open_url/none), and helpful brew install message. All 516 tests pass, typecheck clean."
+      "report": "TerminalNotifierProvider fully implemented at notifications/providers/terminal-notifier.ts. Includes: isAvailable() with 'which' detection, playNotification() with all terminal-notifier flags (-title, -message, -sound, -activate, -group), configurable click_action (activate_vscode/open_url/none), and helpful brew install message. All 516 tests pass, typecheck clean.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.02.02.04",
@@ -768,8 +768,8 @@
       "status": "completed",
       "created_at": "2026-01-23T23:44:43.288Z",
       "updated_at": "2026-01-24T00:00:46.784Z",
-      "assigned_agent": "systems-engineer",
-      "report": "TerminalNotifierProvider fully implemented at notifications/providers/terminal-notifier.ts. Includes: isAvailable() with 'which' detection, playNotification() with all terminal-notifier flags (-title, -message, -sound, -activate, -group), configurable click_action (activate_vscode/open_url/none), and helpful brew install message. All 516 tests pass, typecheck clean."
+      "report": "TerminalNotifierProvider fully implemented at notifications/providers/terminal-notifier.ts. Includes: isAvailable() with 'which' detection, playNotification() with all terminal-notifier flags (-title, -message, -sound, -activate, -group), configurable click_action (activate_vscode/open_url/none), and helpful brew install message. All 516 tests pass, typecheck clean.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.02.02.05",
@@ -780,8 +780,8 @@
       "status": "completed",
       "created_at": "2026-01-23T23:44:43.288Z",
       "updated_at": "2026-01-24T00:00:46.784Z",
-      "assigned_agent": "systems-engineer",
-      "report": "TerminalNotifierProvider fully implemented at notifications/providers/terminal-notifier.ts. Includes: isAvailable() with 'which' detection, playNotification() with all terminal-notifier flags (-title, -message, -sound, -activate, -group), configurable click_action (activate_vscode/open_url/none), and helpful brew install message. All 516 tests pass, typecheck clean."
+      "report": "TerminalNotifierProvider fully implemented at notifications/providers/terminal-notifier.ts. Includes: isAvailable() with 'which' detection, playNotification() with all terminal-notifier flags (-title, -message, -sound, -activate, -group), configurable click_action (activate_vscode/open_url/none), and helpful brew install message. All 516 tests pass, typecheck clean.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.03.01.01",
@@ -792,8 +792,8 @@
       "status": "completed",
       "created_at": "2026-01-23T23:44:43.288Z",
       "updated_at": "2026-01-24T00:05:39.382Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Updated NotificationManager constructor to accept NotificationManagerOptions with optional repoRoot parameter. Added type narrowing to handle both legacy NotificationConfig and new options-style signature."
+      "report": "Updated NotificationManager constructor to accept NotificationManagerOptions with optional repoRoot parameter. Added type narrowing to handle both legacy NotificationConfig and new options-style signature.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.03.01.02",
@@ -804,8 +804,8 @@
       "status": "completed",
       "created_at": "2026-01-23T23:44:43.288Z",
       "updated_at": "2026-01-24T00:05:41.223Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Added initializeFromWorkstreamConfig() that reads providers config from work/notifications.json and only enables providers with enabled: true (sound, notification_center, terminal_notifier). External API continues to use legacy config."
+      "report": "Added initializeFromWorkstreamConfig() that reads providers config from work/notifications.json and only enables providers with enabled: true (sound, notification_center, terminal_notifier). External API continues to use legacy config.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.03.01.03",
@@ -816,8 +816,8 @@
       "status": "completed",
       "created_at": "2026-01-23T23:44:43.288Z",
       "updated_at": "2026-01-24T00:05:42.974Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Implemented fallback chain: if repoRoot provided, loads work/notifications.json via loadNotificationsConfig(); otherwise falls back to ~/.config/agenv/notifications.json via loadConfig(). Both use built-in defaults for missing fields."
+      "report": "Implemented fallback chain: if repoRoot provided, loads work/notifications.json via loadNotificationsConfig(); otherwise falls back to ~/.config/agenv/notifications.json via loadConfig(). Both use built-in defaults for missing fields.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.03.01.04",
@@ -828,8 +828,8 @@
       "status": "completed",
       "created_at": "2026-01-23T23:44:43.288Z",
       "updated_at": "2026-01-24T00:05:44.371Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Added isEventEnabled() method and updated playNotification() to check per-event config (thread_complete, batch_complete, error, synthesis_complete) from workstreamConfig.events before dispatching to providers."
+      "report": "Added isEventEnabled() method and updated playNotification() to check per-event config (thread_complete, batch_complete, error, synthesis_complete) from workstreamConfig.events before dispatching to providers.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.03.01.05",
@@ -840,8 +840,8 @@
       "status": "completed",
       "created_at": "2026-01-23T23:44:43.288Z",
       "updated_at": "2026-01-24T00:05:45.697Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Updated multi.ts to pass { repoRoot } when creating NotificationTracker. Added NotificationTrackerOptions interface to tracker.ts with repoRoot option, and tracker now creates its own NotificationManager when repoRoot provided."
+      "report": "Updated multi.ts to pass { repoRoot } when creating NotificationTracker. Added NotificationTrackerOptions interface to tracker.ts with repoRoot option, and tracker now creates its own NotificationManager when repoRoot provided.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "05.03.02.01",
@@ -852,8 +852,8 @@
       "status": "completed",
       "created_at": "2026-01-23T23:44:43.288Z",
       "updated_at": "2026-01-24T00:06:53.865Z",
-      "assigned_agent": "documentation-minimalist",
-      "report": "Implemented work notifications command, updated work init to create default config, and documented notification configuration in README."
+      "report": "Implemented work notifications command, updated work init to create default config, and documented notification configuration in README.",
+      "assigned_agent": "documentation-minimalist"
     },
     {
       "id": "05.03.02.02",
@@ -864,8 +864,8 @@
       "status": "completed",
       "created_at": "2026-01-23T23:44:43.288Z",
       "updated_at": "2026-01-24T00:06:53.865Z",
-      "assigned_agent": "documentation-minimalist",
-      "report": "Implemented work notifications command, updated work init to create default config, and documented notification configuration in README."
+      "report": "Implemented work notifications command, updated work init to create default config, and documented notification configuration in README.",
+      "assigned_agent": "documentation-minimalist"
     },
     {
       "id": "05.03.02.03",
@@ -876,8 +876,8 @@
       "status": "completed",
       "created_at": "2026-01-23T23:44:43.288Z",
       "updated_at": "2026-01-24T00:06:53.865Z",
-      "assigned_agent": "documentation-minimalist",
-      "report": "Implemented work notifications command, updated work init to create default config, and documented notification configuration in README."
+      "report": "Implemented work notifications command, updated work init to create default config, and documented notification configuration in README.",
+      "assigned_agent": "documentation-minimalist"
     },
     {
       "id": "05.03.02.04",
@@ -888,8 +888,8 @@
       "status": "completed",
       "created_at": "2026-01-23T23:44:43.288Z",
       "updated_at": "2026-01-24T00:06:53.865Z",
-      "assigned_agent": "documentation-minimalist",
-      "report": "Implemented work notifications command, updated work init to create default config, and documented notification configuration in README."
+      "report": "Implemented work notifications command, updated work init to create default config, and documented notification configuration in README.",
+      "assigned_agent": "documentation-minimalist"
     },
     {
       "id": "05.03.02.05",
@@ -900,8 +900,332 @@
       "status": "completed",
       "created_at": "2026-01-23T23:44:43.288Z",
       "updated_at": "2026-01-24T00:06:53.865Z",
+      "report": "Implemented work notifications command, updated work init to create default config, and documented notification configuration in README.",
+      "assigned_agent": "documentation-minimalist"
+    },
+    {
+      "id": "06.01.01.01",
+      "name": "Create `session-export.ts` file in `packages/workstreams/src/lib/` with `SessionExport` interface matching opencode export JSON structure (info, messages, parts)",
+      "stage_name": "Revision - Post-Session Synthesis",
+      "batch_name": "Session Export Utilities",
+      "thread_name": "Session Export and Text Extraction",
+      "status": "completed",
+      "created_at": "2026-01-24T00:08:37.674Z",
+      "updated_at": "2026-01-24T00:11:03.105Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Created session-export.ts with full SessionExport interface, MessagePart discriminated union (5 types), exportSession() for running opencode export CLI, extractTextMessages() for assistant message extraction, and 30 passing unit tests covering all edge cases."
+    },
+    {
+      "id": "06.01.01.02",
+      "name": "Add `MessagePart` type with discriminated union for text, tool, step-start, step-finish, and patch part types",
+      "stage_name": "Revision - Post-Session Synthesis",
+      "batch_name": "Session Export Utilities",
+      "thread_name": "Session Export and Text Extraction",
+      "status": "completed",
+      "created_at": "2026-01-24T00:08:37.674Z",
+      "updated_at": "2026-01-24T00:11:03.105Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Created session-export.ts with full SessionExport interface, MessagePart discriminated union (5 types), exportSession() for running opencode export CLI, extractTextMessages() for assistant message extraction, and 30 passing unit tests covering all edge cases."
+    },
+    {
+      "id": "06.01.01.03",
+      "name": "Implement `exportSession(sessionId: string): Promise<SessionExport>` function that runs `opencode export <id>` and parses the JSON output",
+      "stage_name": "Revision - Post-Session Synthesis",
+      "batch_name": "Session Export Utilities",
+      "thread_name": "Session Export and Text Extraction",
+      "status": "completed",
+      "created_at": "2026-01-24T00:08:37.674Z",
+      "updated_at": "2026-01-24T00:11:03.105Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Created session-export.ts with full SessionExport interface, MessagePart discriminated union (5 types), exportSession() for running opencode export CLI, extractTextMessages() for assistant message extraction, and 30 passing unit tests covering all edge cases."
+    },
+    {
+      "id": "06.01.01.04",
+      "name": "Implement `extractTextMessages(exportData: SessionExport): string` function that extracts only `type: \"text\"` parts from assistant messages, concatenating with newlines",
+      "stage_name": "Revision - Post-Session Synthesis",
+      "batch_name": "Session Export Utilities",
+      "thread_name": "Session Export and Text Extraction",
+      "status": "completed",
+      "created_at": "2026-01-24T00:08:37.674Z",
+      "updated_at": "2026-01-24T00:11:03.105Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Created session-export.ts with full SessionExport interface, MessagePart discriminated union (5 types), exportSession() for running opencode export CLI, extractTextMessages() for assistant message extraction, and 30 passing unit tests covering all edge cases."
+    },
+    {
+      "id": "06.01.01.05",
+      "name": "Handle edge cases in extractTextMessages: empty sessions, sessions with no text parts, malformed JSON - return empty string on failure",
+      "stage_name": "Revision - Post-Session Synthesis",
+      "batch_name": "Session Export Utilities",
+      "thread_name": "Session Export and Text Extraction",
+      "status": "completed",
+      "created_at": "2026-01-24T00:08:37.674Z",
+      "updated_at": "2026-01-24T00:11:03.105Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Created session-export.ts with full SessionExport interface, MessagePart discriminated union (5 types), exportSession() for running opencode export CLI, extractTextMessages() for assistant message extraction, and 30 passing unit tests covering all edge cases."
+    },
+    {
+      "id": "06.01.01.06",
+      "name": "Add unit tests for session export and text extraction functions",
+      "stage_name": "Revision - Post-Session Synthesis",
+      "batch_name": "Session Export Utilities",
+      "thread_name": "Session Export and Text Extraction",
+      "status": "completed",
+      "created_at": "2026-01-24T00:08:37.674Z",
+      "updated_at": "2026-01-24T00:11:03.105Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Created session-export.ts with full SessionExport interface, MessagePart discriminated union (5 types), exportSession() for running opencode export CLI, extractTextMessages() for assistant message extraction, and 30 passing unit tests covering all edge cases."
+    },
+    {
+      "id": "06.02.01.01",
+      "name": "Add `buildPostSynthesisCommand(options: PostSynthesisOptions)` function to opencode.ts that runs working agent first, then synthesis after",
+      "stage_name": "Revision - Post-Session Synthesis",
+      "batch_name": "Command and Flow Refactor",
+      "thread_name": "Post-Synthesis Command Builder",
+      "status": "completed",
+      "created_at": "2026-01-24T00:08:37.674Z",
+      "updated_at": "2026-01-24T00:13:50.679Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added buildPostSynthesisCommand() with PostSynthesisOptions interface. Implements post-session synthesis: working agent runs first with TUI, then exports session, extracts assistant text via jq, runs synthesis headless with --format json, and resumes WORKING session. Deprecated buildSynthesisRunCommand() with @deprecated JSDoc pointing to new function."
+    },
+    {
+      "id": "06.02.01.02",
+      "name": "Implement shell script flow: run working agent with TUI → find session ID → export session → extract text via jq → run synthesis headless",
+      "stage_name": "Revision - Post-Session Synthesis",
+      "batch_name": "Command and Flow Refactor",
+      "thread_name": "Post-Synthesis Command Builder",
+      "status": "completed",
+      "created_at": "2026-01-24T00:08:37.674Z",
+      "updated_at": "2026-01-24T00:13:50.679Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added buildPostSynthesisCommand() with PostSynthesisOptions interface. Implements post-session synthesis: working agent runs first with TUI, then exports session, extracts assistant text via jq, runs synthesis headless with --format json, and resumes WORKING session. Deprecated buildSynthesisRunCommand() with @deprecated JSDoc pointing to new function."
+    },
+    {
+      "id": "06.02.01.03",
+      "name": "Use `opencode run --format json` for synthesis agent to run headless (no TUI), capturing output to temp file",
+      "stage_name": "Revision - Post-Session Synthesis",
+      "batch_name": "Command and Flow Refactor",
+      "thread_name": "Post-Synthesis Command Builder",
+      "status": "completed",
+      "created_at": "2026-01-24T00:08:37.674Z",
+      "updated_at": "2026-01-24T00:13:50.679Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added buildPostSynthesisCommand() with PostSynthesisOptions interface. Implements post-session synthesis: working agent runs first with TUI, then exports session, extracts assistant text via jq, runs synthesis headless with --format json, and resumes WORKING session. Deprecated buildSynthesisRunCommand() with @deprecated JSDoc pointing to new function."
+    },
+    {
+      "id": "06.02.01.04",
+      "name": "Modify session resume at end to open WORKING agent session (not synthesis) - use $WORK_SESSION_ID for `opencode --session`",
+      "stage_name": "Revision - Post-Session Synthesis",
+      "batch_name": "Command and Flow Refactor",
+      "thread_name": "Post-Synthesis Command Builder",
+      "status": "completed",
+      "created_at": "2026-01-24T00:08:37.674Z",
+      "updated_at": "2026-01-24T00:13:50.679Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added buildPostSynthesisCommand() with PostSynthesisOptions interface. Implements post-session synthesis: working agent runs first with TUI, then exports session, extracts assistant text via jq, runs synthesis headless with --format json, and resumes WORKING session. Deprecated buildSynthesisRunCommand() with @deprecated JSDoc pointing to new function."
+    },
+    {
+      "id": "06.02.01.05",
+      "name": "Add jq command to extract text: `.messages[] | select(.info.role==\"assistant\") | .parts[] | select(.type==\"text\") | .text`",
+      "stage_name": "Revision - Post-Session Synthesis",
+      "batch_name": "Command and Flow Refactor",
+      "thread_name": "Post-Synthesis Command Builder",
+      "status": "completed",
+      "created_at": "2026-01-24T00:08:37.674Z",
+      "updated_at": "2026-01-24T00:13:50.679Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added buildPostSynthesisCommand() with PostSynthesisOptions interface. Implements post-session synthesis: working agent runs first with TUI, then exports session, extracts assistant text via jq, runs synthesis headless with --format json, and resumes WORKING session. Deprecated buildSynthesisRunCommand() with @deprecated JSDoc pointing to new function."
+    },
+    {
+      "id": "06.02.01.06",
+      "name": "Deprecate `buildSynthesisRunCommand()` with JSDoc @deprecated tag pointing to new function",
+      "stage_name": "Revision - Post-Session Synthesis",
+      "batch_name": "Command and Flow Refactor",
+      "thread_name": "Post-Synthesis Command Builder",
+      "status": "completed",
+      "created_at": "2026-01-24T00:08:37.674Z",
+      "updated_at": "2026-01-24T00:13:50.679Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added buildPostSynthesisCommand() with PostSynthesisOptions interface. Implements post-session synthesis: working agent runs first with TUI, then exports session, extracts assistant text via jq, runs synthesis headless with --format json, and resumes WORKING session. Deprecated buildSynthesisRunCommand() with @deprecated JSDoc pointing to new function."
+    },
+    {
+      "id": "06.02.02.01",
+      "name": "Update `buildThreadRunCommand()` in multi-orchestrator.ts to use `buildPostSynthesisCommand()` when synthesis is enabled",
+      "stage_name": "Revision - Post-Session Synthesis",
+      "batch_name": "Command and Flow Refactor",
+      "thread_name": "Multi.ts Flow Update",
+      "status": "completed",
+      "created_at": "2026-01-24T00:08:37.674Z",
+      "updated_at": "2026-01-24T00:15:15.105Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Updated buildThreadRunCommand() to use buildPostSynthesisCommand() instead of buildSynthesisRunCommand(). Added synthesisPromptPath to ThreadInfo, updated collectThreadInfoFromTasks to populate it, and imported getSynthesisPromptPath from agents-yaml.ts"
+    },
+    {
+      "id": "06.02.02.02",
+      "name": "Update session capture logic in handleSessionClose to focus on working agent session ID (synthesis session not stored)",
+      "stage_name": "Revision - Post-Session Synthesis",
+      "batch_name": "Command and Flow Refactor",
+      "thread_name": "Multi.ts Flow Update",
+      "status": "completed",
+      "created_at": "2026-01-24T00:08:37.674Z",
+      "updated_at": "2026-01-24T00:16:13.390Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Updated session capture logic in handleSessionClose to focus on working agent session ID. In post-session synthesis, sessionFilePath contains the working agent session (not synthesis). Updated comments to reflect the new approach while maintaining backwards compatibility for workingAgentSessionPath."
+    },
+    {
+      "id": "06.02.02.03",
+      "name": "Remove or update comments referencing \"synthesis wrapping working agent\" to reflect new post-session approach",
+      "stage_name": "Revision - Post-Session Synthesis",
+      "batch_name": "Command and Flow Refactor",
+      "thread_name": "Multi.ts Flow Update",
+      "status": "completed",
+      "created_at": "2026-01-24T00:08:37.674Z",
+      "updated_at": "2026-01-24T00:17:15.960Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Updated comments in multi.ts, fix.ts, and threads.ts to reflect post-session synthesis approach. Changed 'synthesis wrapping working agent' to 'post-session synthesis' where working agent runs first with TUI, then synthesis runs headless after completion."
+    },
+    {
+      "id": "06.02.02.04",
+      "name": "Verify notifications still fire after synthesis completes (synthesis output available in temp file)",
+      "stage_name": "Revision - Post-Session Synthesis",
+      "batch_name": "Command and Flow Refactor",
+      "thread_name": "Multi.ts Flow Update",
+      "status": "completed",
+      "created_at": "2026-01-24T00:08:37.674Z",
+      "updated_at": "2026-01-24T00:18:08.161Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Verified notification behavior: completion marker fires after working agent completes (notification tells user they can resume session), then synthesis runs headless. Synthesis output IS available in temp file when handleSessionClose runs (on detach), which is when output is captured. This is correct design - notify when interactive work is done."
+    },
+    {
+      "id": "06.02.02.05",
+      "name": "Add integration test or manual verification that working agent TUI is visible during execution",
+      "stage_name": "Revision - Post-Session Synthesis",
+      "batch_name": "Command and Flow Refactor",
+      "thread_name": "Multi.ts Flow Update",
+      "status": "completed",
+      "created_at": "2026-01-24T00:08:37.674Z",
+      "updated_at": "2026-01-24T00:19:45.272Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added 7 integration tests for buildPostSynthesisCommand verifying: 1) Working agent runs BEFORE synthesis, 2) Working agent uses TUI (no --format json), 3) Synthesis runs headless with --format json, 4) Session resume opens working agent session, 5) Working session ID stored in session file, 6) Synthesis output captured, 7) Correct mode displayed. All tests pass."
+    },
+    {
+      "id": "06.03.01.01",
+      "name": "Rewrite `~/.config/opencode/skills/synthesizing-workstreams/SKILL.md` for post-session context (not wrapper)",
+      "stage_name": "Revision - Post-Session Synthesis",
+      "batch_name": "Skill and Documentation Update",
+      "thread_name": "Update Synthesis Skill",
+      "status": "completed",
+      "created_at": "2026-01-24T00:08:37.674Z",
+      "updated_at": "2026-01-24T00:23:38.173Z",
       "assigned_agent": "documentation-minimalist",
-      "report": "Implemented work notifications command, updated work init to create default config, and documented notification configuration in README."
+      "report": "Rewrote synthesizing-workstreams skill for post-session context. Removed wrapper instructions and focused on summarizing piped input."
+    },
+    {
+      "id": "06.03.01.02",
+      "name": "Remove instructions about running working agent - it already ran, context is piped via stdin",
+      "stage_name": "Revision - Post-Session Synthesis",
+      "batch_name": "Skill and Documentation Update",
+      "thread_name": "Update Synthesis Skill",
+      "status": "completed",
+      "created_at": "2026-01-24T00:08:37.674Z",
+      "updated_at": "2026-01-24T00:23:38.173Z",
+      "assigned_agent": "documentation-minimalist",
+      "report": "Rewrote synthesizing-workstreams skill for post-session context. Removed wrapper instructions and focused on summarizing piped input."
+    },
+    {
+      "id": "06.03.01.03",
+      "name": "Add clear guidance: \"You are given the text output from a completed working agent session\"",
+      "stage_name": "Revision - Post-Session Synthesis",
+      "batch_name": "Skill and Documentation Update",
+      "thread_name": "Update Synthesis Skill",
+      "status": "completed",
+      "created_at": "2026-01-24T00:08:37.674Z",
+      "updated_at": "2026-01-24T00:23:38.173Z",
+      "assigned_agent": "documentation-minimalist",
+      "report": "Rewrote synthesizing-workstreams skill for post-session context. Removed wrapper instructions and focused on summarizing piped input."
+    },
+    {
+      "id": "06.03.01.04",
+      "name": "Keep summary format guidelines (2-3 sentences, focus on what was implemented/changed)",
+      "stage_name": "Revision - Post-Session Synthesis",
+      "batch_name": "Skill and Documentation Update",
+      "thread_name": "Update Synthesis Skill",
+      "status": "completed",
+      "created_at": "2026-01-24T00:08:37.674Z",
+      "updated_at": "2026-01-24T00:23:38.173Z",
+      "assigned_agent": "documentation-minimalist",
+      "report": "Rewrote synthesizing-workstreams skill for post-session context. Removed wrapper instructions and focused on summarizing piped input."
+    },
+    {
+      "id": "06.03.01.05",
+      "name": "Add instruction to write ONLY the summary, nothing else (no preamble, no tool calls)",
+      "stage_name": "Revision - Post-Session Synthesis",
+      "batch_name": "Skill and Documentation Update",
+      "thread_name": "Update Synthesis Skill",
+      "status": "completed",
+      "created_at": "2026-01-24T00:08:37.674Z",
+      "updated_at": "2026-01-24T00:23:38.173Z",
+      "assigned_agent": "documentation-minimalist",
+      "report": "Rewrote synthesizing-workstreams skill for post-session context. Removed wrapper instructions and focused on summarizing piped input."
+    },
+    {
+      "id": "06.03.02.01",
+      "name": "Update inline comments in opencode.ts documenting the post-synthesis approach",
+      "stage_name": "Revision - Post-Session Synthesis",
+      "batch_name": "Skill and Documentation Update",
+      "thread_name": "Documentation Update",
+      "status": "completed",
+      "created_at": "2026-01-24T00:08:37.674Z",
+      "updated_at": "2026-01-24T00:25:17.767Z",
+      "assigned_agent": "documentation-minimalist",
+      "report": "Updated documentation and inline comments to reflect the new post-session synthesis flow. Updated opencode.ts, multi.ts, multi-orchestrator.ts, and READMEs. Clarified that working agent runs first with TUI, followed by headless synthesis, and users resume into the working agent session."
+    },
+    {
+      "id": "06.03.02.02",
+      "name": "Update inline comments in multi.ts and multi-orchestrator.ts to reflect new synthesis flow",
+      "stage_name": "Revision - Post-Session Synthesis",
+      "batch_name": "Skill and Documentation Update",
+      "thread_name": "Documentation Update",
+      "status": "completed",
+      "created_at": "2026-01-24T00:08:37.674Z",
+      "updated_at": "2026-01-24T00:25:17.767Z",
+      "assigned_agent": "documentation-minimalist",
+      "report": "Updated documentation and inline comments to reflect the new post-session synthesis flow. Updated opencode.ts, multi.ts, multi-orchestrator.ts, and READMEs. Clarified that working agent runs first with TUI, followed by headless synthesis, and users resume into the working agent session."
+    },
+    {
+      "id": "06.03.02.03",
+      "name": "Update README synthesis agents section to describe: working agent runs with full TUI, synthesis runs after headless",
+      "stage_name": "Revision - Post-Session Synthesis",
+      "batch_name": "Skill and Documentation Update",
+      "thread_name": "Documentation Update",
+      "status": "completed",
+      "created_at": "2026-01-24T00:08:37.674Z",
+      "updated_at": "2026-01-24T00:25:17.767Z",
+      "assigned_agent": "documentation-minimalist",
+      "report": "Updated documentation and inline comments to reflect the new post-session synthesis flow. Updated opencode.ts, multi.ts, multi-orchestrator.ts, and READMEs. Clarified that working agent runs first with TUI, followed by headless synthesis, and users resume into the working agent session."
+    },
+    {
+      "id": "06.03.02.04",
+      "name": "Remove references to \"wrapper\" or \"nested\" execution from all documentation",
+      "stage_name": "Revision - Post-Session Synthesis",
+      "batch_name": "Skill and Documentation Update",
+      "thread_name": "Documentation Update",
+      "status": "completed",
+      "created_at": "2026-01-24T00:08:37.674Z",
+      "updated_at": "2026-01-24T00:25:17.767Z",
+      "assigned_agent": "documentation-minimalist",
+      "report": "Updated documentation and inline comments to reflect the new post-session synthesis flow. Updated opencode.ts, multi.ts, multi-orchestrator.ts, and READMEs. Clarified that working agent runs first with TUI, followed by headless synthesis, and users resume into the working agent session."
+    },
+    {
+      "id": "06.03.02.05",
+      "name": "Add note that user always resumes into working agent session for review",
+      "stage_name": "Revision - Post-Session Synthesis",
+      "batch_name": "Skill and Documentation Update",
+      "thread_name": "Documentation Update",
+      "status": "completed",
+      "created_at": "2026-01-24T00:08:37.674Z",
+      "updated_at": "2026-01-24T00:25:17.767Z",
+      "assigned_agent": "documentation-minimalist",
+      "report": "Updated documentation and inline comments to reflect the new post-session synthesis flow. Updated opencode.ts, multi.ts, multi-orchestrator.ts, and READMEs. Clarified that working agent runs first with TUI, followed by headless synthesis, and users resume into the working agent session."
     }
   ]
 }

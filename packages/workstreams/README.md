@@ -472,14 +472,19 @@ Session data is stored in `tasks.json` alongside task definitions.
 
 ## Synthesis Agents
 
-Synthesis agents are optional wrapper agents that observe working agent sessions and generate summaries. When enabled, `work multi` wraps each thread execution with a synthesis agent.
+Synthesis agents are optional observer agents that run after working agent sessions to generate summaries. When enabled, `work multi` executes each thread in a two-phase process:
+
+1. **Working Phase**: The working agent runs with full TUI visibility, allowing the user to interact with the session directly.
+2. **Synthesis Phase**: After the working agent completes, the synthesis agent runs headless (in the background) to analyze the session and generate a summary.
 
 ### How It Works
 
-1. The synthesis agent runs `opencode` to execute the working agent
-2. After the working agent completes, the synthesis agent reviews the session output
-3. A concise 2-3 sentence summary is generated
-4. The summary is stored in `threads.json` under `synthesisOutput`
+1. The working agent runs `opencode` to execute the assigned task.
+2. Upon completion, the session is exported and context (assistant messages) is extracted.
+3. The synthesis agent runs headless, receiving the context via stdin.
+4. A concise 2-3 sentence summary is generated.
+5. The summary is stored in `threads.json` under `synthesisOutput`.
+6. Users always resume into the **working agent** session for review, not the synthesis session.
 
 ### Configuration
 
@@ -504,7 +509,7 @@ synthesis_agents:
 - **Enable**: Add the `synthesis_agents` section to `agents.yaml`
 - **Disable**: Remove or comment out the `synthesis_agents` section
 
-When disabled, `work multi` runs working agents directly without the synthesis wrapper.
+When disabled, `work multi` runs working agents normally without the post-session synthesis phase.
 
 ### Session Tracking
 
@@ -512,10 +517,10 @@ When synthesis agents are enabled, two session IDs are tracked:
 
 | Field | Description |
 |-------|-------------|
-| `opencodeSessionId` | The outermost agent session (synthesis agent) |
-| `workingAgentSessionId` | The inner working agent session |
+| `opencodeSessionId` | The working agent session (primary session for review) |
+| `workingAgentSessionId` | Legacy field (same as opencodeSessionId in new flow) |
 
-The `work fix --resume` command uses `workingAgentSessionId` when available, falling back to `opencodeSessionId`.
+The `work fix --resume` command always resumes the `opencodeSessionId` (the working agent session).
 
 ### Synthesis Output
 

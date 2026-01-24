@@ -195,9 +195,12 @@ function getFixSessionName(threadId: string): string {
  * Execute resume action - opens opencode TUI with existing session
  * 
  * Session ID priority:
- * 1. workingAgentSessionId - The inner working agent session (when synthesis is enabled)
- * 2. opencodeSessionId - The outermost session (synthesis agent or working agent directly)
+ * 1. workingAgentSessionId - Legacy field for backwards compatibility 
+ * 2. opencodeSessionId - The working agent session (in post-session synthesis mode)
  * 3. lastSession.sessionId - Fallback to session record's tracking ID
+ * 
+ * Note: In post-session synthesis mode, opencodeSessionId contains the working
+ * agent session ID since synthesis runs headless (no TUI).
  */
 async function executeResume(
   repoRoot: string,
@@ -216,7 +219,7 @@ async function executeResume(
 
   // Determine which session ID to use for resume
   // Priority: workingAgentSessionId > opencodeSessionId > lastSession.sessionId
-  // This ensures we resume the working agent directly, not the synthesis wrapper
+  // With post-session synthesis, opencodeSessionId IS the working agent session
   const workingSessionId = getWorkingAgentSessionId(repoRoot, streamId, threadStatus.threadId)
   const opencodeSessionId = getOpencodeSessionId(repoRoot, streamId, threadStatus.threadId)
   const resumeSessionId = workingSessionId || opencodeSessionId || lastSession.sessionId

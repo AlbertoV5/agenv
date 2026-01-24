@@ -540,11 +540,11 @@ export function getOpencodeSessionId(
 }
 
 /**
- * Set the working agent session ID for a thread
+ * Set the working agent session ID for a thread (legacy/backwards compatibility)
  *
- * The working agent session ID is the opencode session ID of the actual
- * working agent. When synthesis is enabled, this is the inner agent that
- * performs the actual work (the synthesis agent runs as the outer session).
+ * Note: In post-session synthesis mode, the working agent session is stored
+ * as the primary opencodeSessionId since synthesis runs headless. This field
+ * is maintained for backwards compatibility with older synthesis mode.
  *
  * This session ID is used by `work fix --resume` to resume the working
  * agent's session directly.
