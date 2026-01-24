@@ -9,6 +9,10 @@ import { getOrCreateIndex, saveIndex } from "../lib/index.ts"
 import { getAgentsYamlPath } from "../lib/agents-yaml.ts"
 import { saveGitHubConfig, getGitHubConfigPath } from "../lib/github/config.ts"
 import { DEFAULT_GITHUB_CONFIG } from "../lib/github/types.ts"
+import {
+  getDefaultNotificationsConfig,
+  getNotificationsConfigPath,
+} from "../lib/notifications/config.ts"
 
 const DEFAULT_AGENTS_YAML = `agents:
   - name: default
@@ -112,6 +116,26 @@ export async function main(argv: string[]): Promise<void> {
       writeFileSync(agentsPath, DEFAULT_AGENTS_YAML, "utf-8")
     } else {
       console.log("agents.yaml already exists, skipping.")
+    }
+
+    // 4. Initialize notifications.json
+    const notificationsPath = getNotificationsConfigPath(repoRoot)
+    if (!existsSync(notificationsPath) || force) {
+      console.log(
+        `${
+          force && existsSync(notificationsPath)
+            ? "Overwriting"
+            : "Initializing"
+        } notifications.json...`,
+      )
+      const defaultConfig = getDefaultNotificationsConfig()
+      writeFileSync(
+        notificationsPath,
+        JSON.stringify(defaultConfig, null, 2),
+        "utf-8",
+      )
+    } else {
+      console.log("notifications.json already exists, skipping.")
     }
 
     console.log("\nInitialization complete.")

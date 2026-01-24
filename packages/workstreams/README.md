@@ -538,6 +538,58 @@ Synthesis output is designed to be consumed by future text-to-speech (TTS) integ
 - `playSynthesisComplete(threadId, synthesisOutput)` method for TTS providers
 - Extended `WebhookPayload` with `synthesisOutput` field
 
+## Notifications
+
+The workstream system provides configurable notifications for key events like thread completion, errors, and batch completion.
+
+### Configuration
+
+Notifications are configured in `work/notifications.json`. This file is created by `work init` with sensible defaults.
+
+```json
+{
+  "enabled": true,
+  "providers": {
+    "sound": {
+      "enabled": true,
+      "volume": 1.0
+    },
+    "notification_center": {
+      "enabled": true
+    },
+    "terminal_notifier": {
+      "enabled": false,
+      "click_action": "none"
+    }
+  },
+  "events": {
+    "thread_complete": true,
+    "batch_complete": true,
+    "error": true,
+    "synthesis_complete": true
+  }
+}
+```
+
+### Providers
+
+| Provider | Description |
+|----------|-------------|
+| `sound` | Plays system sounds for events (macOS only) |
+| `notification_center` | Uses macOS Notification Center (macOS only) |
+| `terminal_notifier` | Uses `terminal-notifier` CLI tool (if installed) |
+| `tts` | Text-to-speech for synthesis summaries |
+
+### CLI
+
+You can view the current notification configuration and provider status:
+
+```bash
+work notifications
+# Or as JSON
+work notifications --json
+```
+
 ## Roles & Permissions
 
 The workstream system implements a Role-Based Access Control (RBAC) system to differentiate between human operators and AI agents. This ensures that critical decisions (like approving plans or starting workstreams) remain under human control.

@@ -350,3 +350,375 @@ Document synthesis agents configuration and usage.
 ---
 
 *Last updated: 2026-01-23*
+
+### Stage 05: Revision - Notification Configuration
+
+#### Stage Definition
+
+Add a centralized `notifications.json` configuration file at `work/notifications.json` that allows users to configure notification providers (macOS sounds, macOS Notification Center, terminal-notifier, future TTS).
+
+#### Stage Constitution
+
+**Inputs:**
+- `packages/workstreams/src/lib/notifications.ts` - Current notification system with MacOSSoundProvider
+- Research on notification options (osascript, terminal-notifier, tmux hooks)
+
+**Structure:**
+- Create configuration schema and loader
+- Add macOS Notification Center provider (osascript)
+- Add terminal-notifier provider (optional, with feature detection)
+- Update NotificationManager to use config
+
+**Outputs:**
+- `work/notifications.json` configuration file schema
+- Multiple notification provider support
+- User-configurable notification preferences
+
+#### Stage Questions
+
+- [x] Where should config live? `work/notifications.json` (alongside agents.yaml and github.json)
+- [x] What providers to support initially? macOS sounds (existing), macOS Notification Center (osascript), terminal-notifier (optional)
+- [x] How to handle missing dependencies? Feature detection - gracefully skip if terminal-notifier not installed
+- [x] VSCode integration possible? No direct API - would require a VSCode extension (out of scope for now)
+
+#### Stage Batches
+
+##### Batch 01: Configuration Schema
+
+Define the configuration file format and loader.
+
+###### Thread 01: Config Schema and Loader
+
+**Summary:**
+Create the notifications.json schema and configuration loader.
+
+**Details:**
+- Working packages: `./packages/workstreams`
+- Create `NotificationsConfig` interface in types.ts:
+  ```typescript
+  interface NotificationsConfig {
+    enabled: boolean
+    providers: {
+      sound?: { enabled: boolean; volume?: number }
+      notification_center?: { enabled: boolean }
+      terminal_notifier?: { enabled: boolean; click_action?: "activate_vscode" | "open_url" | "none" }
+      tts?: { enabled: boolean; voice?: string }  // Future
+    }
+    events: {
+      thread_complete?: boolean
+      batch_complete?: boolean
+      error?: boolean
+      synthesis_complete?: boolean
+    }
+  }
+  ```
+- Add `loadNotificationsConfig()` function to load from `work/notifications.json`
+- Add `getDefaultNotificationsConfig()` for sensible defaults
+- Create default `notifications.json` during `work init`
+
+##### Batch 02: Notification Providers
+
+Add new notification providers.
+
+###### Thread 01: macOS Notification Center Provider
+
+**Summary:**
+Add a provider that uses osascript to show macOS Notification Center notifications.
+
+**Details:**
+- Working packages: `./packages/workstreams`
+- Create `MacOSNotificationCenterProvider` class implementing `NotificationProvider`
+- Use `osascript -e 'display notification "message" with title "title" sound name "default"'`
+- Support title, message, and optional sound
+- Include synthesis output in notification body when available
+- Always available on macOS (no external dependencies)
+
+###### Thread 02: Terminal Notifier Provider
+
+**Summary:**
+Add an optional provider for terminal-notifier with enhanced features.
+
+**Details:**
+- Working packages: `./packages/workstreams`
+- Create `TerminalNotifierProvider` class implementing `NotificationProvider`
+- Feature detection: check if `terminal-notifier` is in PATH
+- Support enhanced features:
+  - Custom app icon
+  - Click to activate VSCode (`-activate com.microsoft.VSCode`)
+  - Notification grouping (`-group workstreams`)
+- Log helpful message if terminal-notifier not installed but enabled in config
+- Command: `terminal-notifier -title "Title" -message "Message" -sound default -activate "com.microsoft.VSCode" -group "workstreams"`
+
+##### Batch 03: Integration
+
+Wire up the new providers to the NotificationManager.
+
+###### Thread 01: NotificationManager Update
+
+**Summary:**
+Update NotificationManager to load config and initialize configured providers.
+
+**Details:**
+- Working packages: `./packages/workstreams`
+- Modify `NotificationManager` constructor to accept optional `repoRoot` parameter
+- Load `notifications.json` from `work/notifications.json` if repoRoot provided
+- Fall back to `~/.config/agenv/notifications.json` for global config (existing behavior)
+- Initialize only enabled providers based on config
+- Update `playNotification()` to respect per-event configuration
+- Update multi.ts to pass repoRoot when creating NotificationManager
+
+###### Thread 02: Documentation and Defaults
+
+**Summary:**
+Document the notification configuration and create sensible defaults.
+
+**Details:**
+- Working packages: `./packages/workstreams`
+- Update `work init` to create default `notifications.json`:
+  ```json
+  {
+    "enabled": true,
+    "providers": {
+      "sound": { "enabled": true },
+      "notification_center": { "enabled": true },
+      "terminal_notifier": { "enabled": false }
+    },
+    "events": {
+      "thread_complete": true,
+      "batch_complete": true,
+      "error": true,
+      "synthesis_complete": true
+    }
+  }
+  ```
+- Add `work notifications` command to show current config and provider status
+- Update README with notification configuration section
+
+### Stage 06: Revision - Post-Session Synthesis
+
+#### Stage Definition
+
+Refactor synthesis agents to run AFTER the working agent completes, rather than wrapping it. This preserves the full TUI experience for working agents while still providing synthesis summaries.
+
+**Key Changes:**
+1. Working agent runs directly in tmux (user sees full TUI output)
+2. After working agent completes, export session and extract text messages
+3. Run synthesis agent headless (`opencode run --format json`) with extracted context
+4. Open the WORKING agent's session (not synthesis) for user review
+5. Notifications run after synthesis completes
+
+**Current Architecture (wrapper - being replaced):**
+```
+┌─────────────────────────────────┐
+│ Synthesis Agent (wrapper)       │
+│  └─ Working Agent (nested)      │  ← Output hidden in nested run
+└─────────────────────────────────┘
+```
+
+**New Architecture (post-session):**
+```
+┌─────────────────────────────────┐
+│ Working Agent                   │  ← Full TUI visible in tmux
+└─────────────────────────────────┘
+              ↓ completes
+┌─────────────────────────────────┐
+│ opencode export <session_id>    │  ← Get full transcript
+└─────────────────────────────────┘
+              ↓
+┌─────────────────────────────────┐
+│ Extract text messages           │  ← Only assistant text, not tool calls
+└─────────────────────────────────┘
+              ↓
+┌─────────────────────────────────┐
+│ Synthesis Agent (headless)      │  ← opencode run --format json
+└─────────────────────────────────┘
+              ↓
+┌─────────────────────────────────┐
+│ Notification (with synthesis)   │
+└─────────────────────────────────┘
+              ↓
+┌─────────────────────────────────┐
+│ Open working agent session      │  ← User reviews actual work
+└─────────────────────────────────┘
+```
+
+#### Stage Constitution
+
+**Inputs:**
+- `packages/workstreams/src/lib/opencode.ts` - Current synthesis wrapper implementation
+- `packages/workstreams/src/cli/multi.ts` - Current multi execution flow
+- `t.json` export sample - Shows structure of `opencode export` output
+- `~/.config/opencode/skills/synthesizing-workstreams/SKILL.md` - Synthesis skill to update
+
+**Structure:**
+- Batch 01: Session export and message extraction utilities
+- Batch 02: Refactor command builder and multi.ts flow
+- Batch 03: Update skill and documentation
+
+**Outputs:**
+- `extractTextMessages(exportJson)` function to stitch text messages
+- Refactored `buildPostSynthesisCommand()` replacing wrapper approach
+- Updated multi.ts flow: working agent → export → synthesis → open session
+- Updated synthesis skill for post-session context
+
+#### Stage Questions
+
+- [x] What messages to extract? Only assistant `text` parts (not tool calls, not user prompts)
+- [x] How to run synthesis headless? `opencode run --format json` pipes output, doesn't use TUI
+- [x] Where to run synthesis? In the same tmux pane, after working agent completes
+- [x] How to pass context to synthesis? Pipe extracted text via stdin or temp file
+
+#### Stage Batches
+
+##### Batch 01: Session Export Utilities
+
+Create utilities for exporting and parsing opencode sessions.
+
+###### Thread 01: Session Export and Text Extraction
+
+**Summary:**
+Create functions to export opencode sessions and extract text messages for synthesis context.
+
+**Details:**
+- Working packages: `./packages/workstreams`
+- Create `session-export.ts` in `packages/workstreams/src/lib/`:
+  - `exportSession(sessionId: string): Promise<SessionExport>` - Runs `opencode export <id>` and parses JSON
+  - `extractTextMessages(exportData: SessionExport): string` - Extracts only assistant text parts
+  - `SessionExport` interface matching the export JSON structure (info, messages, parts)
+  - `MessagePart` interface with type discrimination for text/tool/step-start/step-finish/patch
+- Focus on extracting `type: "text"` parts from assistant messages only
+- Concatenate text parts in order with newlines between messages
+- Handle edge cases: empty sessions, sessions with no text parts, malformed JSON
+
+**Export JSON Structure (from t.json analysis):**
+```typescript
+interface SessionExport {
+  info: { id: string; title: string; summary: { additions: number; deletions: number; files: number } }
+  messages: Array<{
+    info: { id: string; role: "user" | "assistant"; /* ... */ }
+    parts: Array<
+      | { type: "text"; text: string }
+      | { type: "tool"; tool: string; state: { input: object; output: string } }
+      | { type: "step-start" | "step-finish" | "patch"; /* ... */ }
+    >
+  }>
+}
+```
+
+##### Batch 02: Command and Flow Refactor
+
+Refactor the synthesis command builder and multi.ts execution flow.
+
+###### Thread 01: Post-Synthesis Command Builder
+
+**Summary:**
+Replace the wrapper-based synthesis command with a post-session approach.
+
+**Details:**
+- Working packages: `./packages/workstreams`
+- In `opencode.ts`:
+  - Keep `buildRetryRunCommand()` as the primary working agent command (unchanged)
+  - Add `buildPostSynthesisCommand(options)` that:
+    1. Runs working agent normally (existing buildRetryRunCommand)
+    2. After completion, exports the session: `opencode export $WORK_SESSION_ID`
+    3. Extracts text messages using a helper script or inline jq
+    4. Runs synthesis agent headless: `echo "$CONTEXT" | opencode run --format json --model X`
+    5. Captures synthesis output
+    6. Opens the WORKING agent session (not synthesis)
+  - Remove or deprecate `buildSynthesisRunCommand()` (wrapper approach)
+- The shell script flow:
+  ```bash
+  # 1. Run working agent (full TUI)
+  cat prompt.md | opencode run --model X --title "ThreadName__work_id=123"
+  WORK_EXIT=$?
+  
+  # 2. Find working session ID
+  WORK_SESSION=$(opencode session list --max-count 5 --format json | jq -r '...')
+  
+  # 3. Export session
+  opencode export "$WORK_SESSION" > /tmp/session.json
+  
+  # 4. Extract text messages (jq or bun script)
+  CONTEXT=$(cat /tmp/session.json | jq -r '.messages[] | select(.info.role=="assistant") | .parts[] | select(.type=="text") | .text')
+  
+  # 5. Run synthesis headless
+  echo "Summarize: $CONTEXT" | opencode run --format json --model Y > /tmp/synthesis.json
+  
+  # 6. Extract synthesis output
+  SYNTHESIS=$(cat /tmp/synthesis.json | jq -r '...')
+  echo "$SYNTHESIS" > /tmp/synthesis-output.txt
+  
+  # 7. Open working session for review
+  opencode --session "$WORK_SESSION"
+  ```
+
+###### Thread 02: Multi.ts Flow Update
+
+**Summary:**
+Update multi.ts to use post-session synthesis instead of wrapper.
+
+**Details:**
+- Working packages: `./packages/workstreams`
+- In `multi-orchestrator.ts`:
+  - Update `buildThreadRunCommand()` to use `buildPostSynthesisCommand()` when synthesis is enabled
+  - Pass synthesis models separately from working models
+- In `multi.ts`:
+  - Keep synthesis agent detection logic
+  - Update session capture to focus on working agent session
+  - Synthesis output capture remains the same (reads from temp file)
+- The key change: working agent runs directly with TUI, synthesis runs after as a separate headless step
+- Remove references to "synthesis wrapping working agent" in comments
+
+##### Batch 03: Skill and Documentation Update
+
+Update the synthesis skill and documentation.
+
+###### Thread 01: Update Synthesis Skill
+
+**Summary:**
+Rewrite the synthesizing-workstreams skill for post-session context.
+
+**Details:**
+- Update `~/.config/opencode/skills/synthesizing-workstreams/SKILL.md`:
+  - Remove instructions about running working agent (it already ran)
+  - Focus on: "You are given the text output from a completed working agent session"
+  - Instruct to summarize what was accomplished
+  - Keep summary format guidelines (2-3 sentences, focus on changes made)
+  - Note that context is piped via stdin
+- Example new skill content:
+  ```markdown
+  # Synthesizing Workstreams
+  
+  You are a synthesis agent reviewing a completed working agent session.
+  
+  ## Context
+  The text below contains the assistant's responses from a workstream thread.
+  The working agent has already completed its tasks.
+  
+  ## Your Task
+  Write a concise summary (2-3 sentences) of what the working agent accomplished.
+  Focus on:
+  - What was implemented or changed
+  - Key files modified
+  - Any issues encountered
+  
+  ## Output
+  Write ONLY the summary, nothing else.
+  ```
+
+###### Thread 02: Documentation Update
+
+**Summary:**
+Update documentation to reflect the new post-session synthesis flow.
+
+**Details:**
+- Working packages: `./packages/workstreams`, root README
+- Update inline code comments in:
+  - `opencode.ts` - Document post-synthesis approach
+  - `multi.ts` - Update synthesis flow comments
+  - `multi-orchestrator.ts` - Update command building docs
+- Update README synthesis agents section to describe:
+  - Working agent runs with full TUI
+  - Synthesis runs after, headless
+  - User always resumes into working agent session
+- Remove references to "wrapper" or "nested" execution

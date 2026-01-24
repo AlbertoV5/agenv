@@ -34,6 +34,7 @@ describe("work init", () => {
     expect(existsSync(workDir)).toBe(true)
     expect(existsSync(join(workDir, "index.json"))).toBe(true)
     expect(existsSync(join(workDir, "agents.yaml"))).toBe(true)
+    expect(existsSync(join(workDir, "notifications.json"))).toBe(true)
 
     const indexContent = JSON.parse(
       readFileSync(join(workDir, "index.json"), "utf-8"),
@@ -44,17 +45,33 @@ describe("work init", () => {
     const agentsContent = readFileSync(join(workDir, "agents.yaml"), "utf-8")
     expect(agentsContent).toContain("agents:")
     expect(agentsContent).toContain("name: default")
+
+    const notificationsContent = JSON.parse(
+      readFileSync(join(workDir, "notifications.json"), "utf-8"),
+    )
+    expect(notificationsContent.enabled).toBe(true)
+    expect(notificationsContent.providers.sound.enabled).toBe(true)
   })
 
   it("should not overwrite existing files without --force", async () => {
     mkdirSync(workDir, { recursive: true })
     const customContent = "custom content"
+    const customNotifications = { enabled: false }
     writeFileSync(join(workDir, "agents.yaml"), customContent)
+    writeFileSync(
+      join(workDir, "notifications.json"),
+      JSON.stringify(customNotifications),
+    )
 
     await initMain(["bun", "work", "init", "--repo-root", tempDir])
 
     const agentsContent = readFileSync(join(workDir, "agents.yaml"), "utf-8")
     expect(agentsContent).toBe(customContent)
+
+    const notificationsContent = JSON.parse(
+      readFileSync(join(workDir, "notifications.json"), "utf-8"),
+    )
+    expect(notificationsContent.enabled).toBe(false)
   })
 
   it("should overwrite existing files with --force", async () => {
@@ -67,6 +84,11 @@ describe("work init", () => {
     const agentsContent = readFileSync(join(workDir, "agents.yaml"), "utf-8")
     expect(agentsContent).not.toBe(customContent)
     expect(agentsContent).toContain("agents:")
+    
+    const notificationsContent = JSON.parse(
+      readFileSync(join(workDir, "notifications.json"), "utf-8"),
+    )
+    expect(notificationsContent.enabled).toBe(true)
   })
 })
 

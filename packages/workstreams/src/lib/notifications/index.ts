@@ -38,19 +38,37 @@ export {
   CONFIG_PATH,
   DEFAULT_SOUNDS,
   loadConfig,
+  // Workstream notifications config types
+  type SoundProviderConfig,
+  type NotificationCenterConfig,
+  type TerminalNotifierConfig,
+  type TTSProviderConfig,
+  type NotificationProvidersConfig,
+  type NotificationEventsConfig,
+  type NotificationsConfig,
 } from "./types"
+
+// Workstream notifications config loader (work/notifications.json)
+export {
+  getNotificationsConfigPath,
+  getDefaultNotificationsConfig,
+  loadNotificationsConfig,
+} from "./config"
 
 // Providers
 export { MacOSSoundProvider } from "./providers/macos-sound"
 export { ExternalApiProvider } from "./providers/external-api"
+export { TerminalNotifierProvider } from "./providers/terminal-notifier"
+export { MacOSNotificationCenterProvider } from "./providers/macos-notification-center"
 
 // Manager and convenience functions
 export {
   NotificationManager,
+  type NotificationManagerOptions,
   getNotificationManager,
   resetNotificationManager,
   playNotification,
 } from "./manager"
 
 // Tracker for deduplication
-export { NotificationTracker } from "./tracker"
+export { NotificationTracker, type NotificationTrackerOptions } from "./tracker"

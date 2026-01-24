@@ -6,7 +6,15 @@
  */
 
 import { type NotificationMetadata } from "./types"
-import { playNotification } from "./manager"
+import { NotificationManager, playNotification } from "./manager"
+
+/**
+ * Options for creating a NotificationTracker
+ */
+export interface NotificationTrackerOptions {
+  /** Repository root for loading workstream-specific config (work/notifications.json) */
+  repoRoot?: string
+}
 
 /**
  * Tracks notifications that have already been played to prevent duplicates.
@@ -21,6 +29,8 @@ import { playNotification } from "./manager"
  * - Thread completes normally
  * - User closes tmux session early
  * - Thread fails/errors
+ * 
+ * When created with repoRoot, uses workstream-specific notification config.
  */
 export class NotificationTracker {
   /** Set of threadIds that have already played thread_complete */
@@ -34,6 +44,30 @@ export class NotificationTracker {
 
   /** Whether batch_complete has already been played */
   private batchCompleteNotified: boolean = false
+
+  /** Optional custom notification manager (uses workstream config when repoRoot provided) */
+  private manager: NotificationManager | null = null
+
+  /**
+   * Create a new NotificationTracker
+   * @param options Optional configuration including repoRoot for workstream-specific notifications
+   */
+  constructor(options?: NotificationTrackerOptions) {
+    if (options?.repoRoot) {
+      this.manager = new NotificationManager({ repoRoot: options.repoRoot })
+    }
+  }
+
+  /**
+   * Play a notification using the tracker's manager or the global playNotification
+   */
+  private play(event: Parameters<typeof playNotification>[0], metadata?: Parameters<typeof playNotification>[1]): void {
+    if (this.manager) {
+      this.manager.playNotification(event, metadata)
+    } else {
+      playNotification(event, metadata)
+    }
+  }
 
   /**
    * Check if a thread has already been notified for completion
@@ -100,7 +134,7 @@ export class NotificationTracker {
       return false
     }
     this.markThreadCompleteNotified(threadId)
-    playNotification("thread_complete")
+    this.play("thread_complete")
     return true
   }
 
@@ -113,7 +147,7 @@ export class NotificationTracker {
       return false
     }
     this.markErrorNotified(threadId)
-    playNotification("error")
+    this.play("error")
     return true
   }
 
@@ -126,7 +160,7 @@ export class NotificationTracker {
       return false
     }
     this.markBatchCompleteNotified()
-    playNotification("batch_complete")
+    this.play("batch_complete")
     return true
   }
 
@@ -142,7 +176,7 @@ export class NotificationTracker {
       return false
     }
     this.markSynthesisCompleteNotified(threadId)
-    playNotification("thread_synthesis_complete", {
+    this.play("thread_synthesis_complete", {
       threadId,
       synthesisOutput,
     })

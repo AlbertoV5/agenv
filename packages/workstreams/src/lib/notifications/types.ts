@@ -10,6 +10,97 @@ import { join } from "path"
 import { homedir } from "os"
 
 // ============================================
+// WORKSTREAM NOTIFICATIONS CONFIG (work/notifications.json)
+// ============================================
+
+/**
+ * Sound provider configuration
+ * Plays system sounds for notification events
+ */
+export interface SoundProviderConfig {
+  enabled: boolean
+  /** Volume level from 0.0 to 1.0 */
+  volume?: number
+}
+
+/**
+ * macOS Notification Center provider configuration
+ * Shows native macOS notification banners
+ */
+export interface NotificationCenterConfig {
+  enabled: boolean
+}
+
+/**
+ * terminal-notifier provider configuration
+ * Uses terminal-notifier CLI for enhanced macOS notifications
+ */
+export interface TerminalNotifierConfig {
+  enabled: boolean
+  /** Action when notification is clicked */
+  click_action?: "activate_vscode" | "open_url" | "none"
+}
+
+/**
+ * Text-to-speech provider configuration (Future)
+ * Reads notifications aloud using system TTS
+ */
+export interface TTSProviderConfig {
+  enabled: boolean
+  /** Voice name for TTS (e.g., "Samantha", "Alex") */
+  voice?: string
+}
+
+/**
+ * Notification providers configuration
+ * Controls which notification providers are enabled and their settings
+ */
+export interface NotificationProvidersConfig {
+  sound?: SoundProviderConfig
+  notification_center?: NotificationCenterConfig
+  terminal_notifier?: TerminalNotifierConfig
+  tts?: TTSProviderConfig
+}
+
+/**
+ * Notification events configuration
+ * Controls which events trigger notifications
+ */
+export interface NotificationEventsConfig {
+  thread_complete?: boolean
+  batch_complete?: boolean
+  error?: boolean
+  synthesis_complete?: boolean
+}
+
+/**
+ * Workstream notifications configuration
+ * Stored in work/notifications.json within each repository
+ *
+ * @example
+ * {
+ *   "enabled": true,
+ *   "providers": {
+ *     "sound": { "enabled": true, "volume": 0.8 },
+ *     "notification_center": { "enabled": true }
+ *   },
+ *   "events": {
+ *     "thread_complete": true,
+ *     "batch_complete": true,
+ *     "error": true
+ *   }
+ * }
+ */
+export interface NotificationsConfig {
+  /** Master switch to enable/disable all notifications */
+  enabled: boolean
+  /** Provider-specific configurations */
+  providers: NotificationProvidersConfig
+  /** Event-specific enable/disable flags */
+  events: NotificationEventsConfig
+}
+
+// ============================================
 // NOTIFICATION TYPES
 // ============================================
 

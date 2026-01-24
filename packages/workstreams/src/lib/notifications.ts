@@ -30,11 +30,15 @@ export {
   // Providers
   MacOSSoundProvider,
   ExternalApiProvider,
+  TerminalNotifierProvider,
+  MacOSNotificationCenterProvider,
   // Manager and convenience functions
   NotificationManager,
+  type NotificationManagerOptions,
   getNotificationManager,
   resetNotificationManager,
   playNotification,
   // Tracker for deduplication
   NotificationTracker,
+  type NotificationTrackerOptions,
 } from "./notifications/index"

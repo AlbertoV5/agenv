@@ -753,8 +753,8 @@ Press Ctrl+b X to kill the session when done.
   // Attach to session
   const child = attachSession(sessionName)
 
-  // Create notification tracker
-  const notificationTracker = cliArgs.silent ? null : new NotificationTracker()
+  // Create notification tracker with workstream-specific config
+  const notificationTracker = cliArgs.silent ? null : new NotificationTracker({ repoRoot })
 
   // Start marker file polling for notifications
   const threadIds = threads.map((t) => t.threadId)

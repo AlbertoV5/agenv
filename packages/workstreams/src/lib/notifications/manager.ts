@@ -2,6 +2,7 @@
  * Notification Manager
  *
  * Central manager that dispatches notifications to all registered providers.
+ * Supports workstream-specific configuration via repoRoot parameter.
  */
 
 import {
@@ -9,36 +10,126 @@ import {
   type NotificationEvent,
   type NotificationMetadata,
   type NotificationConfig,
+  type NotificationsConfig,
   loadConfig,
 } from "./types"
+import { loadNotificationsConfig } from "./config"
 import { MacOSSoundProvider } from "./providers/macos-sound"
 import { ExternalApiProvider } from "./providers/external-api"
+import { MacOSNotificationCenterProvider } from "./providers/macos-notification-center"
+import { TerminalNotifierProvider } from "./providers/terminal-notifier"
+
+/**
+ * Options for creating a NotificationManager
+ */
+export interface NotificationManagerOptions {
+  /** Repository root for loading workstream-specific config (work/notifications.json) */
+  repoRoot?: string
+  /** Legacy config (used when repoRoot not provided, falls back to ~/.config/agenv/notifications.json) */
+  config?: NotificationConfig
+}
 
 /**
  * Central notification manager
  *
  * Manages multiple notification providers and dispatches events to all of them.
- * Loads configuration automatically and initializes default providers.
+ * 
+ * Config loading priority (fallback chain):
+ * 1. If repoRoot provided: work/notifications.json (workstream-specific)
+ * 2. Fallback: ~/.config/agenv/notifications.json (global config)
+ * 3. Default: built-in defaults
  */
 export class NotificationManager {
   private providers: NotificationProvider[] = []
-  private config: NotificationConfig
+  private legacyConfig: NotificationConfig
+  private workstreamConfig: NotificationsConfig | null = null
+  private repoRoot?: string
 
-  constructor(config?: NotificationConfig) {
-    this.config = config ?? loadConfig()
-    this.initializeDefaultProviders()
+  constructor(options?: NotificationConfig | NotificationManagerOptions) {
+    // Handle both legacy signature (NotificationConfig) and new signature (NotificationManagerOptions)
+    if (options && "repoRoot" in options) {
+      // New options-style constructor
+      const opts = options as NotificationManagerOptions
+      this.repoRoot = opts.repoRoot
+      this.legacyConfig = opts.config ?? loadConfig()
+      
+      if (this.repoRoot) {
+        // Load workstream-specific config
+        this.workstreamConfig = loadNotificationsConfig(this.repoRoot)
+      }
+    } else {
+      // Legacy constructor (NotificationConfig or undefined)
+      this.legacyConfig = (options as NotificationConfig | undefined) ?? loadConfig()
+    }
+    
+    this.initializeProviders()
   }
 
   /**
-   * Initialize default providers based on configuration
+   * Initialize providers based on configuration
+   * Uses workstream config if available, falls back to legacy config
    */
-  private initializeDefaultProviders(): void {
+  private initializeProviders(): void {
+    if (this.workstreamConfig) {
+      this.initializeFromWorkstreamConfig()
+    } else {
+      this.initializeFromLegacyConfig()
+    }
+  }
+
+  /**
+   * Initialize providers from workstream config (work/notifications.json)
+   * Only enables providers that are explicitly configured
+   */
+  private initializeFromWorkstreamConfig(): void {
+    const config = this.workstreamConfig!
+    const providers = config.providers
+
+    // Sound provider
+    if (providers.sound?.enabled) {
+      this.providers.push(new MacOSSoundProvider({
+        enabled: true,
+        sounds: this.legacyConfig.sounds, // Use legacy config for sound mappings
+      }))
+    }
+
+    // macOS Notification Center provider
+    if (providers.notification_center?.enabled) {
+      this.providers.push(new MacOSNotificationCenterProvider({
+        enabled: true,
+      }))
+    }
+
+    // Terminal Notifier provider
+    if (providers.terminal_notifier?.enabled) {
+      this.providers.push(new TerminalNotifierProvider({
+        enabled: true,
+        click_action: providers.terminal_notifier.click_action,
+      }))
+    }
+
+    // External API provider (from legacy config if available)
+    if (this.legacyConfig.external_api?.enabled) {
+      this.providers.push(new ExternalApiProvider(this.legacyConfig.external_api))
+    }
+
+    // TTS provider - placeholder for future implementation
+    // if (providers.tts?.enabled) {
+    //   this.providers.push(new TTSProvider(providers.tts))
+    // }
+  }
+
+  /**
+   * Initialize providers from legacy config (~/.config/agenv/notifications.json)
+   * Backwards compatible with existing behavior
+   */
+  private initializeFromLegacyConfig(): void {
     // Always add macOS sound provider (it checks availability internally)
-    this.providers.push(new MacOSSoundProvider(this.config))
+    this.providers.push(new MacOSSoundProvider(this.legacyConfig))
 
     // Add external API provider if configured
-    if (this.config.external_api) {
-      this.providers.push(new ExternalApiProvider(this.config.external_api))
+    if (this.legacyConfig.external_api) {
+      this.providers.push(new ExternalApiProvider(this.legacyConfig.external_api))
     }
   }
 
@@ -66,11 +157,25 @@ export class NotificationManager {
   /**
    * Play notification across all available providers
    * Non-blocking - each provider handles its own async behavior
+   * 
+   * Checks both master enabled flag and per-event configuration
    * @param event The notification event type
    * @param metadata Optional metadata to pass to providers (e.g., synthesis output)
    */
   playNotification(event: NotificationEvent, metadata?: NotificationMetadata): void {
-    if (this.config.enabled === false) {
+    // Check master enabled flag
+    if (this.workstreamConfig) {
+      if (this.workstreamConfig.enabled === false) {
+        return
+      }
+    } else {
+      if (this.legacyConfig.enabled === false) {
+        return
+      }
+    }
+
+    // Check per-event configuration (only when using workstream config)
+    if (this.workstreamConfig && !this.isEventEnabled(event)) {
       return
     }
 
@@ -78,6 +183,31 @@ export class NotificationManager {
       if (provider.isAvailable()) {
         provider.playNotification(event, metadata)
       }
+    }
+  }
+
+  /**
+   * Check if a specific event is enabled in workstream config
+   * Maps notification events to config event names
+   */
+  private isEventEnabled(event: NotificationEvent): boolean {
+    if (!this.workstreamConfig) {
+      return true // No workstream config means all events enabled
+    }
+
+    const events = this.workstreamConfig.events
+
+    switch (event) {
+      case "thread_complete":
+        return events.thread_complete !== false
+      case "batch_complete":
+        return events.batch_complete !== false
+      case "error":
+        return events.error !== false
+      case "thread_synthesis_complete":
+        return events.synthesis_complete !== false
+      default:
+        return true
     }
   }
 

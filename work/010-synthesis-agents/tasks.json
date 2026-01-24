@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "stream_id": "010-synthesis-agents",
-  "last_updated": "2026-01-23T23:28:56.393Z",
+  "last_updated": "2026-01-24T00:06:53.865Z",
   "tasks": [
     {
       "id": "01.01.01.01",
@@ -12,13 +12,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T22:57:41.006Z",
-      "assigned_agent": "systems-engineer",
-      "github_issue": {
-        "number": 36,
-        "url": "https://github.com/AlbertoV5/agenv/issues/36",
-        "state": "closed"
-      },
-      "report": "Added SynthesisAgentDefinitionYaml interface to types.ts with matching structure to AgentDefinitionYaml"
+      "report": "Added SynthesisAgentDefinitionYaml interface to types.ts with matching structure to AgentDefinitionYaml",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "01.01.01.02",
@@ -29,8 +24,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T22:57:13.222Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Extended AgentsConfigYaml interface with optional synthesis_agents?: SynthesisAgentDefinitionYaml[] field"
+      "report": "Extended AgentsConfigYaml interface with optional synthesis_agents?: SynthesisAgentDefinitionYaml[] field",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "01.01.01.03",
@@ -41,8 +36,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T22:57:37.579Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Added synthesisOutput?: string field to ThreadMetadata with JSDoc documentation"
+      "report": "Added synthesisOutput?: string field to ThreadMetadata with JSDoc documentation",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "01.01.01.04",
@@ -53,8 +48,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T22:57:38.551Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Added workingAgentSessionId?: string field to ThreadMetadata with JSDoc documentation"
+      "report": "Added workingAgentSessionId?: string field to ThreadMetadata with JSDoc documentation",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "01.01.01.05",
@@ -65,8 +60,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T22:57:39.795Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Added comprehensive JSDoc comments explaining opencodeSessionId (outermost agent), workingAgentSessionId (inner working agent), and currentSessionId (internal tracking)"
+      "report": "Added comprehensive JSDoc comments explaining opencodeSessionId (outermost agent), workingAgentSessionId (inner working agent), and currentSessionId (internal tracking)",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "01.02.01.01",
@@ -77,13 +72,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:01:08.229Z",
-      "assigned_agent": "systems-engineer",
-      "github_issue": {
-        "number": 37,
-        "url": "https://github.com/AlbertoV5/agenv/issues/37",
-        "state": "closed"
-      },
-      "report": "Extended parseAgentsYaml() to parse synthesis_agents array with same model validation logic. Added getSynthesisAgent(), getDefaultSynthesisAgent(), listSynthesisAgents(), and getSynthesisAgentModels() functions in agents-yaml.ts."
+      "report": "Extended parseAgentsYaml() to parse synthesis_agents array with same model validation logic. Added getSynthesisAgent(), getDefaultSynthesisAgent(), listSynthesisAgents(), and getSynthesisAgentModels() functions in agents-yaml.ts.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "01.02.01.02",
@@ -94,8 +84,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:01:06.925Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Extended parseAgentsYaml() to parse synthesis_agents array with same model validation logic. Added getSynthesisAgent(), getDefaultSynthesisAgent(), listSynthesisAgents(), and getSynthesisAgentModels() functions in agents-yaml.ts."
+      "report": "Extended parseAgentsYaml() to parse synthesis_agents array with same model validation logic. Added getSynthesisAgent(), getDefaultSynthesisAgent(), listSynthesisAgents(), and getSynthesisAgentModels() functions in agents-yaml.ts.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "01.02.01.03",
@@ -106,8 +96,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:01:06.925Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Extended parseAgentsYaml() to parse synthesis_agents array with same model validation logic. Added getSynthesisAgent(), getDefaultSynthesisAgent(), listSynthesisAgents(), and getSynthesisAgentModels() functions in agents-yaml.ts."
+      "report": "Extended parseAgentsYaml() to parse synthesis_agents array with same model validation logic. Added getSynthesisAgent(), getDefaultSynthesisAgent(), listSynthesisAgents(), and getSynthesisAgentModels() functions in agents-yaml.ts.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "01.02.01.04",
@@ -118,8 +108,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:01:06.925Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Extended parseAgentsYaml() to parse synthesis_agents array with same model validation logic. Added getSynthesisAgent(), getDefaultSynthesisAgent(), listSynthesisAgents(), and getSynthesisAgentModels() functions in agents-yaml.ts."
+      "report": "Extended parseAgentsYaml() to parse synthesis_agents array with same model validation logic. Added getSynthesisAgent(), getDefaultSynthesisAgent(), listSynthesisAgents(), and getSynthesisAgentModels() functions in agents-yaml.ts.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "01.02.02.01",
@@ -130,13 +120,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:04:09.570Z",
-      "assigned_agent": "documentation-minimalist",
-      "github_issue": {
-        "number": 38,
-        "url": "https://github.com/AlbertoV5/agenv/issues/38",
-        "state": "closed"
-      },
-      "report": "Created synthesizing-workstreams skill at ~/.agenv/skills/synthesizing-workstreams/SKILL.md with instructions for executing working agents and generating parseable summaries in SYNTHESIS_SUMMARY_START/END format. Skill loads correctly and appears in ag install skills --list with proper description."
+      "report": "Created synthesizing-workstreams skill at ~/.agenv/skills/synthesizing-workstreams/SKILL.md with instructions for executing working agents and generating parseable summaries in SYNTHESIS_SUMMARY_START/END format. Skill loads correctly and appears in ag install skills --list with proper description.",
+      "assigned_agent": "documentation-minimalist"
     },
     {
       "id": "01.02.02.02",
@@ -147,8 +132,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:04:08.259Z",
-      "assigned_agent": "documentation-minimalist",
-      "report": "Created synthesizing-workstreams skill at ~/.agenv/skills/synthesizing-workstreams/SKILL.md with instructions for executing working agents and generating parseable summaries in SYNTHESIS_SUMMARY_START/END format. Skill loads correctly and appears in ag install skills --list with proper description."
+      "report": "Created synthesizing-workstreams skill at ~/.agenv/skills/synthesizing-workstreams/SKILL.md with instructions for executing working agents and generating parseable summaries in SYNTHESIS_SUMMARY_START/END format. Skill loads correctly and appears in ag install skills --list with proper description.",
+      "assigned_agent": "documentation-minimalist"
     },
     {
       "id": "01.02.02.03",
@@ -159,8 +144,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:04:08.259Z",
-      "assigned_agent": "documentation-minimalist",
-      "report": "Created synthesizing-workstreams skill at ~/.agenv/skills/synthesizing-workstreams/SKILL.md with instructions for executing working agents and generating parseable summaries in SYNTHESIS_SUMMARY_START/END format. Skill loads correctly and appears in ag install skills --list with proper description."
+      "report": "Created synthesizing-workstreams skill at ~/.agenv/skills/synthesizing-workstreams/SKILL.md with instructions for executing working agents and generating parseable summaries in SYNTHESIS_SUMMARY_START/END format. Skill loads correctly and appears in ag install skills --list with proper description.",
+      "assigned_agent": "documentation-minimalist"
     },
     {
       "id": "01.02.02.04",
@@ -171,8 +156,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:04:08.259Z",
-      "assigned_agent": "documentation-minimalist",
-      "report": "Created synthesizing-workstreams skill at ~/.agenv/skills/synthesizing-workstreams/SKILL.md with instructions for executing working agents and generating parseable summaries in SYNTHESIS_SUMMARY_START/END format. Skill loads correctly and appears in ag install skills --list with proper description."
+      "report": "Created synthesizing-workstreams skill at ~/.agenv/skills/synthesizing-workstreams/SKILL.md with instructions for executing working agents and generating parseable summaries in SYNTHESIS_SUMMARY_START/END format. Skill loads correctly and appears in ag install skills --list with proper description.",
+      "assigned_agent": "documentation-minimalist"
     },
     {
       "id": "01.02.02.05",
@@ -183,8 +168,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:04:08.259Z",
-      "assigned_agent": "documentation-minimalist",
-      "report": "Created synthesizing-workstreams skill at ~/.agenv/skills/synthesizing-workstreams/SKILL.md with instructions for executing working agents and generating parseable summaries in SYNTHESIS_SUMMARY_START/END format. Skill loads correctly and appears in ag install skills --list with proper description."
+      "report": "Created synthesizing-workstreams skill at ~/.agenv/skills/synthesizing-workstreams/SKILL.md with instructions for executing working agents and generating parseable summaries in SYNTHESIS_SUMMARY_START/END format. Skill loads correctly and appears in ag install skills --list with proper description.",
+      "assigned_agent": "documentation-minimalist"
     },
     {
       "id": "01.02.03.01",
@@ -195,13 +180,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:01:36.158Z",
-      "assigned_agent": "default",
-      "github_issue": {
-        "number": 39,
-        "url": "https://github.com/AlbertoV5/agenv/issues/39",
-        "state": "closed"
-      },
-      "report": "Changed --max-count from 10 to 20 in buildRunCommand() at line 192 in opencode.ts"
+      "report": "Changed --max-count from 10 to 20 in buildRunCommand() at line 192 in opencode.ts",
+      "assigned_agent": "default"
     },
     {
       "id": "01.02.03.02",
@@ -212,8 +192,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:00:48.708Z",
-      "assigned_agent": "default",
-      "report": "Changed --max-count from 10 to 20 in buildRetryRunCommand() at line 325 in opencode.ts"
+      "report": "Changed --max-count from 10 to 20 in buildRetryRunCommand() at line 325 in opencode.ts",
+      "assigned_agent": "default"
     },
     {
       "id": "01.02.03.03",
@@ -224,8 +204,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:01:34.908Z",
-      "assigned_agent": "default",
-      "report": "Ran test suite with bun run test - all 514 tests pass. Verified changes don't break session listing functionality."
+      "report": "Ran test suite with bun run test - all 514 tests pass. Verified changes don't break session listing functionality.",
+      "assigned_agent": "default"
     },
     {
       "id": "02.01.01.01",
@@ -236,13 +216,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:07:04.977Z",
-      "assigned_agent": "systems-engineer",
-      "github_issue": {
-        "number": 40,
-        "url": "https://github.com/AlbertoV5/agenv/issues/40",
-        "state": "closed"
-      },
-      "report": "Added getSynthesisOutputPath() and getWorkingAgentSessionPath() helper functions in opencode.ts for tracking synthesis output and working agent sessions"
+      "report": "Added getSynthesisOutputPath() and getWorkingAgentSessionPath() helper functions in opencode.ts for tracking synthesis output and working agent sessions",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "02.01.01.02",
@@ -253,8 +228,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:06:53.842Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Created buildSynthesisRunCommand() function in opencode.ts that wraps buildRetryRunCommand() logic with synthesis agent orchestration"
+      "report": "Created buildSynthesisRunCommand() function in opencode.ts that wraps buildRetryRunCommand() logic with synthesis agent orchestration",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "02.01.01.03",
@@ -265,8 +240,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:06:57.089Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Generate unique tracking IDs: SYNTH_TRACK_ID for synthesis agent, WORK_TRACK_ID for working agent, using date +%s%N for uniqueness"
+      "report": "Generate unique tracking IDs: SYNTH_TRACK_ID for synthesis agent, WORK_TRACK_ID for working agent, using date +%s%N for uniqueness",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "02.01.01.04",
@@ -277,8 +252,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:07:00.367Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Synthesis prompt via buildSynthesisPrompt() instructs agent to: 1) execute working agent command, 2) capture session ID, 3) summarize results to output file"
+      "report": "Synthesis prompt via buildSynthesisPrompt() instructs agent to: 1) execute working agent command, 2) capture session ID, 3) summarize results to output file",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "02.01.01.05",
@@ -289,8 +264,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:07:03.662Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Error handling: falls back to working agent session if synthesis fails, always writes completion marker, initializes output files on start"
+      "report": "Error handling: falls back to working agent session if synthesis fails, always writes completion marker, initializes output files on start",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "02.01.02.01",
@@ -301,13 +276,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:07:43.667Z",
-      "assigned_agent": "systems-engineer",
-      "github_issue": {
-        "number": 41,
-        "url": "https://github.com/AlbertoV5/agenv/issues/41",
-        "state": "closed"
-      },
-      "report": "Added setWorkingAgentSessionId() function to threads.ts that stores the working agent session ID via updateThreadMetadata()"
+      "report": "Added setWorkingAgentSessionId() function to threads.ts that stores the working agent session ID via updateThreadMetadata()",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "02.01.02.02",
@@ -318,8 +288,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:05:54.062Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Added getWorkingAgentSessionId() function to threads.ts that retrieves the working agent session ID from thread metadata"
+      "report": "Added getWorkingAgentSessionId() function to threads.ts that retrieves the working agent session ID from thread metadata",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "02.01.02.03",
@@ -330,8 +300,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:06:35.392Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Updated handleSessionClose in multi.ts to capture both opencodeSessionId and workingAgentSessionId from temp files. Uses getWorkingAgentSessionPath() for the working agent session."
+      "report": "Updated handleSessionClose in multi.ts to capture both opencodeSessionId and workingAgentSessionId from temp files. Uses getWorkingAgentSessionPath() for the working agent session.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "02.01.02.04",
@@ -342,8 +312,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:07:42.485Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Updated executeResume in fix.ts to use workingAgentSessionId when available, falling back to opencodeSessionId, then lastSession.sessionId. Added session source logging for clarity."
+      "report": "Updated executeResume in fix.ts to use workingAgentSessionId when available, falling back to opencodeSessionId, then lastSession.sessionId. Added session source logging for clarity.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "02.02.01.01",
@@ -354,13 +324,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:12:46.057Z",
-      "assigned_agent": "systems-engineer",
-      "github_issue": {
-        "number": 42,
-        "url": "https://github.com/AlbertoV5/agenv/issues/42",
-        "state": "closed"
-      },
-      "report": "Added imports for getDefaultSynthesisAgent and getSynthesisAgentModels to multi.ts, and calling getDefaultSynthesisAgent to load synthesis config"
+      "report": "Added imports for getDefaultSynthesisAgent and getSynthesisAgentModels to multi.ts, and calling getDefaultSynthesisAgent to load synthesis config",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "02.02.01.02",
@@ -371,8 +336,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:12:09.947Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Created buildThreadRunCommand helper that conditionally uses buildSynthesisRunCommand when thread has synthesisModels, falls back to buildRetryRunCommand"
+      "report": "Created buildThreadRunCommand helper that conditionally uses buildSynthesisRunCommand when thread has synthesisModels, falls back to buildRetryRunCommand",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "02.02.01.03",
@@ -383,8 +348,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:09:35.075Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Added synthesisAgentName and synthesisModels optional fields to ThreadInfo interface in types.ts"
+      "report": "Added synthesisAgentName and synthesisModels optional fields to ThreadInfo interface in types.ts",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "02.02.01.04",
@@ -395,8 +360,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:12:10.889Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Updated setupTmuxSession and setupGridController to use buildThreadRunCommand which handles synthesis mode automatically"
+      "report": "Updated setupTmuxSession and setupGridController to use buildThreadRunCommand which handles synthesis mode automatically",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "02.02.01.05",
@@ -407,8 +372,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:12:44.617Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Verified handleSessionClose correctly reads working agent session from temp file and stores to threads.json via updateThreadMetadataLocked with workingAgentSessionId field"
+      "report": "Verified handleSessionClose correctly reads working agent session from temp file and stores to threads.json via updateThreadMetadataLocked with workingAgentSessionId field",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "02.02.02.01",
@@ -419,13 +384,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:11:13.251Z",
-      "assigned_agent": "systems-engineer",
-      "github_issue": {
-        "number": 43,
-        "url": "https://github.com/AlbertoV5/agenv/issues/43",
-        "state": "closed"
-      },
-      "report": "Implemented synthesis output capture in handleSessionClose(): reads from temp file using getSynthesisOutputPath(), stores in threads.json via updateThreadMetadataLocked(), logs warnings for empty/missing files, and added cleanupSynthesisFiles() in marker-polling.ts for cleanup."
+      "report": "Implemented synthesis output capture in handleSessionClose(): reads from temp file using getSynthesisOutputPath(), stores in threads.json via updateThreadMetadataLocked(), logs warnings for empty/missing files, and added cleanupSynthesisFiles() in marker-polling.ts for cleanup.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "02.02.02.02",
@@ -436,8 +396,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:11:11.960Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Implemented synthesis output capture in handleSessionClose(): reads from temp file using getSynthesisOutputPath(), stores in threads.json via updateThreadMetadataLocked(), logs warnings for empty/missing files, and added cleanupSynthesisFiles() in marker-polling.ts for cleanup."
+      "report": "Implemented synthesis output capture in handleSessionClose(): reads from temp file using getSynthesisOutputPath(), stores in threads.json via updateThreadMetadataLocked(), logs warnings for empty/missing files, and added cleanupSynthesisFiles() in marker-polling.ts for cleanup.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "02.02.02.03",
@@ -448,8 +408,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:11:11.960Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Implemented synthesis output capture in handleSessionClose(): reads from temp file using getSynthesisOutputPath(), stores in threads.json via updateThreadMetadataLocked(), logs warnings for empty/missing files, and added cleanupSynthesisFiles() in marker-polling.ts for cleanup."
+      "report": "Implemented synthesis output capture in handleSessionClose(): reads from temp file using getSynthesisOutputPath(), stores in threads.json via updateThreadMetadataLocked(), logs warnings for empty/missing files, and added cleanupSynthesisFiles() in marker-polling.ts for cleanup.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "02.02.02.04",
@@ -460,8 +420,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:11:11.960Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Implemented synthesis output capture in handleSessionClose(): reads from temp file using getSynthesisOutputPath(), stores in threads.json via updateThreadMetadataLocked(), logs warnings for empty/missing files, and added cleanupSynthesisFiles() in marker-polling.ts for cleanup."
+      "report": "Implemented synthesis output capture in handleSessionClose(): reads from temp file using getSynthesisOutputPath(), stores in threads.json via updateThreadMetadataLocked(), logs warnings for empty/missing files, and added cleanupSynthesisFiles() in marker-polling.ts for cleanup.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "03.01.01.01",
@@ -472,13 +432,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:21:53.084Z",
-      "assigned_agent": "systems-engineer",
-      "github_issue": {
-        "number": 44,
-        "url": "https://github.com/AlbertoV5/agenv/issues/44",
-        "state": "closed"
-      },
-      "report": "Implemented sound queue in MacOSSoundProvider with queue/isPlaying state, playNext() method, and afplay exit event handling. Refactored notifications.ts into modular structure (notifications/ directory) for easier parallel editing. Added tests for queue behavior."
+      "report": "Implemented sound queue in MacOSSoundProvider with queue/isPlaying state, playNext() method, and afplay exit event handling. Refactored notifications.ts into modular structure (notifications/ directory) for easier parallel editing. Added tests for queue behavior.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "03.01.01.02",
@@ -489,8 +444,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:21:51.851Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Implemented sound queue in MacOSSoundProvider with queue/isPlaying state, playNext() method, and afplay exit event handling. Refactored notifications.ts into modular structure (notifications/ directory) for easier parallel editing. Added tests for queue behavior."
+      "report": "Implemented sound queue in MacOSSoundProvider with queue/isPlaying state, playNext() method, and afplay exit event handling. Refactored notifications.ts into modular structure (notifications/ directory) for easier parallel editing. Added tests for queue behavior.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "03.01.01.03",
@@ -501,8 +456,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:21:51.851Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Implemented sound queue in MacOSSoundProvider with queue/isPlaying state, playNext() method, and afplay exit event handling. Refactored notifications.ts into modular structure (notifications/ directory) for easier parallel editing. Added tests for queue behavior."
+      "report": "Implemented sound queue in MacOSSoundProvider with queue/isPlaying state, playNext() method, and afplay exit event handling. Refactored notifications.ts into modular structure (notifications/ directory) for easier parallel editing. Added tests for queue behavior.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "03.01.01.04",
@@ -513,8 +468,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:21:51.851Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Implemented sound queue in MacOSSoundProvider with queue/isPlaying state, playNext() method, and afplay exit event handling. Refactored notifications.ts into modular structure (notifications/ directory) for easier parallel editing. Added tests for queue behavior."
+      "report": "Implemented sound queue in MacOSSoundProvider with queue/isPlaying state, playNext() method, and afplay exit event handling. Refactored notifications.ts into modular structure (notifications/ directory) for easier parallel editing. Added tests for queue behavior.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "03.01.01.05",
@@ -525,8 +480,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:21:51.851Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Implemented sound queue in MacOSSoundProvider with queue/isPlaying state, playNext() method, and afplay exit event handling. Refactored notifications.ts into modular structure (notifications/ directory) for easier parallel editing. Added tests for queue behavior."
+      "report": "Implemented sound queue in MacOSSoundProvider with queue/isPlaying state, playNext() method, and afplay exit event handling. Refactored notifications.ts into modular structure (notifications/ directory) for easier parallel editing. Added tests for queue behavior.",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "03.01.02.01",
@@ -537,13 +492,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:17:28.388Z",
-      "assigned_agent": "systems-engineer",
-      "github_issue": {
-        "number": 45,
-        "url": "https://github.com/AlbertoV5/agenv/issues/45",
-        "state": "closed"
-      },
-      "report": "Added thread_synthesis_complete to NotificationEvent type, SoundMappings interface, and DEFAULT_SOUNDS record with Purr.aiff sound"
+      "report": "Added thread_synthesis_complete to NotificationEvent type, SoundMappings interface, and DEFAULT_SOUNDS record with Purr.aiff sound",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "03.01.02.02",
@@ -554,8 +504,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:15:35.042Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Added NotificationMetadata interface and optional metadata parameter to playNotification() in NotificationProvider interface, MacOSSoundProvider, ExternalApiProvider, NotificationManager, and convenience function"
+      "report": "Added NotificationMetadata interface and optional metadata parameter to playNotification() in NotificationProvider interface, MacOSSoundProvider, ExternalApiProvider, NotificationManager, and convenience function",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "03.01.02.03",
@@ -566,8 +516,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:15:58.348Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Extended WebhookPayload interface with optional synthesisOutput and threadId fields. Updated buildPayload method to populate these fields from NotificationMetadata"
+      "report": "Extended WebhookPayload interface with optional synthesisOutput and threadId fields. Updated buildPayload method to populate these fields from NotificationMetadata",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "03.01.02.04",
@@ -578,8 +528,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:16:43.712Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Added synthesis tracking to NotificationTracker: synthesisNotifiedThreadIds set, hasSynthesisCompleteNotified/markSynthesisCompleteNotified methods, playSynthesisComplete method that passes metadata, getSynthesisNotifiedThreadCount getter, and updated reset()"
+      "report": "Added synthesis tracking to NotificationTracker: synthesisNotifiedThreadIds set, hasSynthesisCompleteNotified/markSynthesisCompleteNotified methods, playSynthesisComplete method that passes metadata, getSynthesisNotifiedThreadCount getter, and updated reset()",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "03.01.02.05",
@@ -590,8 +540,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:17:27.161Z",
-      "assigned_agent": "systems-engineer",
-      "report": "Added playSynthesisComplete(threadId, synthesisOutput) helper method to NotificationManager class. Fixed test expectation in notifications.test.ts for metadata parameter"
+      "report": "Added playSynthesisComplete(threadId, synthesisOutput) helper method to NotificationManager class. Fixed test expectation in notifications.test.ts for metadata parameter",
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "04.01.01.01",
@@ -602,13 +552,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:28:56.393Z",
-      "assigned_agent": "documentation-minimalist",
-      "github_issue": {
-        "number": 46,
-        "url": "https://github.com/AlbertoV5/agenv/issues/46",
-        "state": "closed"
-      },
-      "report": "Updated synthesis agent documentation including SKILL.md, JSDoc for new functions, and agents.yaml schema documentation."
+      "report": "Updated synthesis agent documentation including SKILL.md, JSDoc for new functions, and agents.yaml schema documentation.",
+      "assigned_agent": "documentation-minimalist"
     },
     {
       "id": "04.01.01.02",
@@ -619,8 +564,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:28:56.393Z",
-      "assigned_agent": "documentation-minimalist",
-      "report": "Updated synthesis agent documentation including SKILL.md, JSDoc for new functions, and agents.yaml schema documentation."
+      "report": "Updated synthesis agent documentation including SKILL.md, JSDoc for new functions, and agents.yaml schema documentation.",
+      "assigned_agent": "documentation-minimalist"
     },
     {
       "id": "04.01.01.03",
@@ -631,8 +576,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:28:56.393Z",
-      "assigned_agent": "documentation-minimalist",
-      "report": "Updated synthesis agent documentation including SKILL.md, JSDoc for new functions, and agents.yaml schema documentation."
+      "report": "Updated synthesis agent documentation including SKILL.md, JSDoc for new functions, and agents.yaml schema documentation.",
+      "assigned_agent": "documentation-minimalist"
     },
     {
       "id": "04.01.01.04",
@@ -643,8 +588,8 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:28:56.393Z",
-      "assigned_agent": "documentation-minimalist",
-      "report": "Updated synthesis agent documentation including SKILL.md, JSDoc for new functions, and agents.yaml schema documentation."
+      "report": "Updated synthesis agent documentation including SKILL.md, JSDoc for new functions, and agents.yaml schema documentation.",
+      "assigned_agent": "documentation-minimalist"
     },
     {
       "id": "04.01.01.05",
@@ -655,8 +600,308 @@
       "status": "completed",
       "created_at": "2026-01-23T22:51:18.350Z",
       "updated_at": "2026-01-23T23:28:56.393Z",
+      "report": "Updated synthesis agent documentation including SKILL.md, JSDoc for new functions, and agents.yaml schema documentation.",
+      "assigned_agent": "documentation-minimalist"
+    },
+    {
+      "id": "05.01.01.01",
+      "name": "Add `NotificationsConfig` interface to types.ts with providers (sound, notification_center, terminal_notifier, tts) and events (thread_complete, batch_complete, error, synthesis_complete) configuration",
+      "stage_name": "Revision - Notification Configuration",
+      "batch_name": "Configuration Schema",
+      "thread_name": "Config Schema and Loader",
+      "status": "completed",
+      "created_at": "2026-01-23T23:44:43.288Z",
+      "updated_at": "2026-01-23T23:45:55.708Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added NotificationsConfig interface to notifications/types.ts with enabled, providers, and events fields"
+    },
+    {
+      "id": "05.01.01.02",
+      "name": "Add `ProviderConfig` interfaces for each provider type (SoundProviderConfig, NotificationCenterConfig, TerminalNotifierConfig, TTSProviderConfig)",
+      "stage_name": "Revision - Notification Configuration",
+      "batch_name": "Configuration Schema",
+      "thread_name": "Config Schema and Loader",
+      "status": "completed",
+      "created_at": "2026-01-23T23:44:43.288Z",
+      "updated_at": "2026-01-23T23:45:56.629Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added SoundProviderConfig, NotificationCenterConfig, TerminalNotifierConfig, TTSProviderConfig, NotificationProvidersConfig, and NotificationEventsConfig interfaces to notifications/types.ts"
+    },
+    {
+      "id": "05.01.01.03",
+      "name": "Create `loadNotificationsConfig(repoRoot)` function in notifications/config.ts to load from `work/notifications.json`",
+      "stage_name": "Revision - Notification Configuration",
+      "batch_name": "Configuration Schema",
+      "thread_name": "Config Schema and Loader",
+      "status": "completed",
+      "created_at": "2026-01-23T23:44:43.288Z",
+      "updated_at": "2026-01-23T23:46:58.712Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Created notifications/config.ts with loadNotificationsConfig(repoRoot) that loads from work/notifications.json and merges with defaults"
+    },
+    {
+      "id": "05.01.01.04",
+      "name": "Create `getDefaultNotificationsConfig()` function returning sensible defaults (sound + notification_center enabled)",
+      "stage_name": "Revision - Notification Configuration",
+      "batch_name": "Configuration Schema",
+      "thread_name": "Config Schema and Loader",
+      "status": "completed",
+      "created_at": "2026-01-23T23:44:43.288Z",
+      "updated_at": "2026-01-23T23:46:59.582Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added getDefaultNotificationsConfig() in notifications/config.ts returning sound + notification_center enabled by default"
+    },
+    {
+      "id": "05.01.01.05",
+      "name": "Add `getNotificationsConfigPath(repoRoot)` helper function returning path to `work/notifications.json`",
+      "stage_name": "Revision - Notification Configuration",
+      "batch_name": "Configuration Schema",
+      "thread_name": "Config Schema and Loader",
+      "status": "completed",
+      "created_at": "2026-01-23T23:44:43.288Z",
+      "updated_at": "2026-01-23T23:47:00.298Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added getNotificationsConfigPath(repoRoot) helper in notifications/config.ts returning path to work/notifications.json"
+    },
+    {
+      "id": "05.02.01.01",
+      "name": "Create `MacOSNotificationCenterProvider` class implementing `NotificationProvider` interface in notifications/providers/",
+      "stage_name": "Revision - Notification Configuration",
+      "batch_name": "Notification Providers",
+      "thread_name": "macOS Notification Center Provider",
+      "status": "completed",
+      "created_at": "2026-01-23T23:44:43.288Z",
+      "updated_at": "2026-01-24T00:02:27.137Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Implemented MacOSNotificationCenterProvider in providers/macos-notification-center.ts using osascript for native macOS Notification Center notifications. Features: title/message support, synthesis output in body (truncated to 200 chars), AppleScript escaping for special characters. Added exports to providers/index.ts, notifications/index.ts, and notifications.ts. Added 10 unit tests covering all functionality."
+    },
+    {
+      "id": "05.02.01.02",
+      "name": "Implement `playNotification()` using osascript: `osascript -e 'display notification \"message\" with title \"title\" sound name \"default\"'`",
+      "stage_name": "Revision - Notification Configuration",
+      "batch_name": "Notification Providers",
+      "thread_name": "macOS Notification Center Provider",
+      "status": "completed",
+      "created_at": "2026-01-23T23:44:43.288Z",
+      "updated_at": "2026-01-24T00:02:27.137Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Implemented MacOSNotificationCenterProvider in providers/macos-notification-center.ts using osascript for native macOS Notification Center notifications. Features: title/message support, synthesis output in body (truncated to 200 chars), AppleScript escaping for special characters. Added exports to providers/index.ts, notifications/index.ts, and notifications.ts. Added 10 unit tests covering all functionality."
+    },
+    {
+      "id": "05.02.01.03",
+      "name": "Add support for including synthesis output in notification body when metadata is provided",
+      "stage_name": "Revision - Notification Configuration",
+      "batch_name": "Notification Providers",
+      "thread_name": "macOS Notification Center Provider",
+      "status": "completed",
+      "created_at": "2026-01-23T23:44:43.288Z",
+      "updated_at": "2026-01-24T00:02:27.137Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Implemented MacOSNotificationCenterProvider in providers/macos-notification-center.ts using osascript for native macOS Notification Center notifications. Features: title/message support, synthesis output in body (truncated to 200 chars), AppleScript escaping for special characters. Added exports to providers/index.ts, notifications/index.ts, and notifications.ts. Added 10 unit tests covering all functionality."
+    },
+    {
+      "id": "05.02.01.04",
+      "name": "Implement `isAvailable()` to return true only on macOS (check process.platform === \"darwin\")",
+      "stage_name": "Revision - Notification Configuration",
+      "batch_name": "Notification Providers",
+      "thread_name": "macOS Notification Center Provider",
+      "status": "completed",
+      "created_at": "2026-01-23T23:44:43.288Z",
+      "updated_at": "2026-01-24T00:02:27.137Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Implemented MacOSNotificationCenterProvider in providers/macos-notification-center.ts using osascript for native macOS Notification Center notifications. Features: title/message support, synthesis output in body (truncated to 200 chars), AppleScript escaping for special characters. Added exports to providers/index.ts, notifications/index.ts, and notifications.ts. Added 10 unit tests covering all functionality."
+    },
+    {
+      "id": "05.02.01.05",
+      "name": "Add unit tests for MacOSNotificationCenterProvider",
+      "stage_name": "Revision - Notification Configuration",
+      "batch_name": "Notification Providers",
+      "thread_name": "macOS Notification Center Provider",
+      "status": "completed",
+      "created_at": "2026-01-23T23:44:43.288Z",
+      "updated_at": "2026-01-24T00:02:27.137Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Implemented MacOSNotificationCenterProvider in providers/macos-notification-center.ts using osascript for native macOS Notification Center notifications. Features: title/message support, synthesis output in body (truncated to 200 chars), AppleScript escaping for special characters. Added exports to providers/index.ts, notifications/index.ts, and notifications.ts. Added 10 unit tests covering all functionality."
+    },
+    {
+      "id": "05.02.02.01",
+      "name": "Create `TerminalNotifierProvider` class implementing `NotificationProvider` interface in notifications/providers/",
+      "stage_name": "Revision - Notification Configuration",
+      "batch_name": "Notification Providers",
+      "thread_name": "Terminal Notifier Provider",
+      "status": "completed",
+      "created_at": "2026-01-23T23:44:43.288Z",
+      "updated_at": "2026-01-24T00:00:46.784Z",
+      "assigned_agent": "systems-engineer",
+      "report": "TerminalNotifierProvider fully implemented at notifications/providers/terminal-notifier.ts. Includes: isAvailable() with 'which' detection, playNotification() with all terminal-notifier flags (-title, -message, -sound, -activate, -group), configurable click_action (activate_vscode/open_url/none), and helpful brew install message. All 516 tests pass, typecheck clean."
+    },
+    {
+      "id": "05.02.02.02",
+      "name": "Implement `isAvailable()` with feature detection - check if `terminal-notifier` command exists in PATH using `which`",
+      "stage_name": "Revision - Notification Configuration",
+      "batch_name": "Notification Providers",
+      "thread_name": "Terminal Notifier Provider",
+      "status": "completed",
+      "created_at": "2026-01-23T23:44:43.288Z",
+      "updated_at": "2026-01-24T00:00:46.784Z",
+      "assigned_agent": "systems-engineer",
+      "report": "TerminalNotifierProvider fully implemented at notifications/providers/terminal-notifier.ts. Includes: isAvailable() with 'which' detection, playNotification() with all terminal-notifier flags (-title, -message, -sound, -activate, -group), configurable click_action (activate_vscode/open_url/none), and helpful brew install message. All 516 tests pass, typecheck clean."
+    },
+    {
+      "id": "05.02.02.03",
+      "name": "Implement `playNotification()` using terminal-notifier with flags: -title, -message, -sound, -activate \"com.microsoft.VSCode\", -group \"workstreams\"",
+      "stage_name": "Revision - Notification Configuration",
+      "batch_name": "Notification Providers",
+      "thread_name": "Terminal Notifier Provider",
+      "status": "completed",
+      "created_at": "2026-01-23T23:44:43.288Z",
+      "updated_at": "2026-01-24T00:00:46.784Z",
+      "assigned_agent": "systems-engineer",
+      "report": "TerminalNotifierProvider fully implemented at notifications/providers/terminal-notifier.ts. Includes: isAvailable() with 'which' detection, playNotification() with all terminal-notifier flags (-title, -message, -sound, -activate, -group), configurable click_action (activate_vscode/open_url/none), and helpful brew install message. All 516 tests pass, typecheck clean."
+    },
+    {
+      "id": "05.02.02.04",
+      "name": "Add config option for click action: activate_vscode, open_url, or none",
+      "stage_name": "Revision - Notification Configuration",
+      "batch_name": "Notification Providers",
+      "thread_name": "Terminal Notifier Provider",
+      "status": "completed",
+      "created_at": "2026-01-23T23:44:43.288Z",
+      "updated_at": "2026-01-24T00:00:46.784Z",
+      "assigned_agent": "systems-engineer",
+      "report": "TerminalNotifierProvider fully implemented at notifications/providers/terminal-notifier.ts. Includes: isAvailable() with 'which' detection, playNotification() with all terminal-notifier flags (-title, -message, -sound, -activate, -group), configurable click_action (activate_vscode/open_url/none), and helpful brew install message. All 516 tests pass, typecheck clean."
+    },
+    {
+      "id": "05.02.02.05",
+      "name": "Log helpful installation message if terminal-notifier not found but enabled in config",
+      "stage_name": "Revision - Notification Configuration",
+      "batch_name": "Notification Providers",
+      "thread_name": "Terminal Notifier Provider",
+      "status": "completed",
+      "created_at": "2026-01-23T23:44:43.288Z",
+      "updated_at": "2026-01-24T00:00:46.784Z",
+      "assigned_agent": "systems-engineer",
+      "report": "TerminalNotifierProvider fully implemented at notifications/providers/terminal-notifier.ts. Includes: isAvailable() with 'which' detection, playNotification() with all terminal-notifier flags (-title, -message, -sound, -activate, -group), configurable click_action (activate_vscode/open_url/none), and helpful brew install message. All 516 tests pass, typecheck clean."
+    },
+    {
+      "id": "05.03.01.01",
+      "name": "Update `NotificationManager` constructor to accept optional `repoRoot` parameter for loading workstream-specific config",
+      "stage_name": "Revision - Notification Configuration",
+      "batch_name": "Integration",
+      "thread_name": "NotificationManager Update",
+      "status": "completed",
+      "created_at": "2026-01-23T23:44:43.288Z",
+      "updated_at": "2026-01-24T00:05:39.382Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Updated NotificationManager constructor to accept NotificationManagerOptions with optional repoRoot parameter. Added type narrowing to handle both legacy NotificationConfig and new options-style signature."
+    },
+    {
+      "id": "05.03.01.02",
+      "name": "Modify provider initialization to read from `notifications.json` and only enable configured providers",
+      "stage_name": "Revision - Notification Configuration",
+      "batch_name": "Integration",
+      "thread_name": "NotificationManager Update",
+      "status": "completed",
+      "created_at": "2026-01-23T23:44:43.288Z",
+      "updated_at": "2026-01-24T00:05:41.223Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added initializeFromWorkstreamConfig() that reads providers config from work/notifications.json and only enables providers with enabled: true (sound, notification_center, terminal_notifier). External API continues to use legacy config."
+    },
+    {
+      "id": "05.03.01.03",
+      "name": "Add fallback chain: workstream config (`work/notifications.json`) -> global config (`~/.config/agenv/notifications.json`) -> defaults",
+      "stage_name": "Revision - Notification Configuration",
+      "batch_name": "Integration",
+      "thread_name": "NotificationManager Update",
+      "status": "completed",
+      "created_at": "2026-01-23T23:44:43.288Z",
+      "updated_at": "2026-01-24T00:05:42.974Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Implemented fallback chain: if repoRoot provided, loads work/notifications.json via loadNotificationsConfig(); otherwise falls back to ~/.config/agenv/notifications.json via loadConfig(). Both use built-in defaults for missing fields."
+    },
+    {
+      "id": "05.03.01.04",
+      "name": "Update `playNotification()` to check per-event configuration before dispatching to providers",
+      "stage_name": "Revision - Notification Configuration",
+      "batch_name": "Integration",
+      "thread_name": "NotificationManager Update",
+      "status": "completed",
+      "created_at": "2026-01-23T23:44:43.288Z",
+      "updated_at": "2026-01-24T00:05:44.371Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Added isEventEnabled() method and updated playNotification() to check per-event config (thread_complete, batch_complete, error, synthesis_complete) from workstreamConfig.events before dispatching to providers."
+    },
+    {
+      "id": "05.03.01.05",
+      "name": "Update multi.ts to pass repoRoot when creating NotificationManager and NotificationTracker",
+      "stage_name": "Revision - Notification Configuration",
+      "batch_name": "Integration",
+      "thread_name": "NotificationManager Update",
+      "status": "completed",
+      "created_at": "2026-01-23T23:44:43.288Z",
+      "updated_at": "2026-01-24T00:05:45.697Z",
+      "assigned_agent": "systems-engineer",
+      "report": "Updated multi.ts to pass { repoRoot } when creating NotificationTracker. Added NotificationTrackerOptions interface to tracker.ts with repoRoot option, and tracker now creates its own NotificationManager when repoRoot provided."
+    },
+    {
+      "id": "05.03.02.01",
+      "name": "Update `work init` command to create default `notifications.json` in work directory",
+      "stage_name": "Revision - Notification Configuration",
+      "batch_name": "Integration",
+      "thread_name": "Documentation and Defaults",
+      "status": "completed",
+      "created_at": "2026-01-23T23:44:43.288Z",
+      "updated_at": "2026-01-24T00:06:53.865Z",
       "assigned_agent": "documentation-minimalist",
-      "report": "Updated synthesis agent documentation including SKILL.md, JSDoc for new functions, and agents.yaml schema documentation."
+      "report": "Implemented work notifications command, updated work init to create default config, and documented notification configuration in README."
+    },
+    {
+      "id": "05.03.02.02",
+      "name": "Create `work notifications` command to display current config and provider availability status",
+      "stage_name": "Revision - Notification Configuration",
+      "batch_name": "Integration",
+      "thread_name": "Documentation and Defaults",
+      "status": "completed",
+      "created_at": "2026-01-23T23:44:43.288Z",
+      "updated_at": "2026-01-24T00:06:53.865Z",
+      "assigned_agent": "documentation-minimalist",
+      "report": "Implemented work notifications command, updated work init to create default config, and documented notification configuration in README."
+    },
+    {
+      "id": "05.03.02.03",
+      "name": "Update packages/workstreams/README.md with notification configuration section",
+      "stage_name": "Revision - Notification Configuration",
+      "batch_name": "Integration",
+      "thread_name": "Documentation and Defaults",
+      "status": "completed",
+      "created_at": "2026-01-23T23:44:43.288Z",
+      "updated_at": "2026-01-24T00:06:53.865Z",
+      "assigned_agent": "documentation-minimalist",
+      "report": "Implemented work notifications command, updated work init to create default config, and documented notification configuration in README."
+    },
+    {
+      "id": "05.03.02.04",
+      "name": "Add example notifications.json to documentation with all provider options explained",
+      "stage_name": "Revision - Notification Configuration",
+      "batch_name": "Integration",
+      "thread_name": "Documentation and Defaults",
+      "status": "completed",
+      "created_at": "2026-01-23T23:44:43.288Z",
+      "updated_at": "2026-01-24T00:06:53.865Z",
+      "assigned_agent": "documentation-minimalist",
+      "report": "Implemented work notifications command, updated work init to create default config, and documented notification configuration in README."
+    },
+    {
+      "id": "05.03.02.05",
+      "name": "Add JSDoc comments to all new notification config functions and interfaces",
+      "stage_name": "Revision - Notification Configuration",
+      "batch_name": "Integration",
+      "thread_name": "Documentation and Defaults",
+      "status": "completed",
+      "created_at": "2026-01-23T23:44:43.288Z",
+      "updated_at": "2026-01-24T00:06:53.865Z",
+      "assigned_agent": "documentation-minimalist",
+      "report": "Implemented work notifications command, updated work init to create default config, and documented notification configuration in README."
     }
   ]
 }
