@@ -65,6 +65,7 @@ import { main as sessionMain } from "../src/cli/session.ts"
 import { main as revisionMain } from "../src/cli/revision.ts"
 import { main as notificationsMain } from "../src/cli/notifications.ts"
 import { main as synthesisMain } from "../src/cli/synthesis.ts"
+import { main as planMain } from "../src/cli/plan.ts"
 
 // Role and help utilities
 import {
@@ -95,6 +96,7 @@ const SUBCOMMANDS = {
   revision: revisionMain,
   approve: approveMain,
   start: startMain,
+  plan: planMain,
   status: statusMain,
   "set-status": setStatusMain,
   update: updateTaskMain,
@@ -145,6 +147,7 @@ const COMMAND_DESCRIPTIONS: Record<string, string> = {
   fix: "(DEPRECATED) Use 'add stage' instead",
   approve: "Approve workstream plan/tasks/prompts (subcommands: plan, tasks, prompts)",
   start: "Start execution (requires all approvals, creates GitHub branch/issues)",
+  plan: "Open planning session for workstream (resume or set session ID)",
   agents: "Manage agent definitions (list, add, remove)",
   assign: "Assign agents to threads for batch execution",
   prompt: "Generate thread execution prompt for agents",

@@ -1,0 +1,143 @@
+{
+  "version": "1.0.0",
+  "stream_id": "",
+  "last_updated": "2026-01-24T20:38:35.971Z",
+  "threads": [
+    {
+      "threadId": "01.01.01",
+      "sessions": [
+        {
+          "sessionId": "ses_mksqq31o_qpiwou",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-24T20:06:36.784Z",
+          "status": "completed",
+          "completedAt": "2026-01-24T20:11:23.039Z"
+        }
+      ],
+      "opencodeSessionId": "ses_40e625c90ffejgRg7lH98Lw5kS",
+      "synthesis": {
+        "sessionId": "synthesis-01.01.01-1769285483040",
+        "output": "",
+        "completedAt": "2026-01-24T20:11:23.040Z"
+      }
+    },
+    {
+      "threadId": "01.01.02",
+      "sessions": [
+        {
+          "sessionId": "ses_mksqq31o_wwi6yt",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-24T20:06:36.784Z",
+          "status": "completed",
+          "completedAt": "2026-01-24T20:11:23.039Z"
+        }
+      ],
+      "opencodeSessionId": "ses_40e6257ecffeStn8XZHNrKtnR6",
+      "synthesis": {
+        "sessionId": "synthesis-01.01.02-1769285483042",
+        "output": "",
+        "completedAt": "2026-01-24T20:11:23.042Z"
+      }
+    },
+    {
+      "threadId": "01.02.01",
+      "sessions": [
+        {
+          "sessionId": "ses_mksqw9t0_68zzo6",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-24T20:11:25.479Z",
+          "status": "completed",
+          "completedAt": "2026-01-24T20:15:21.824Z"
+        }
+      ],
+      "opencodeSessionId": "ses_40e5df433ffekQX1Mln0msdylQ"
+    },
+    {
+      "threadId": "01.02.02",
+      "sessions": [
+        {
+          "sessionId": "ses_mksqw9t0_sqf0tb",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-24T20:11:25.479Z",
+          "status": "completed",
+          "completedAt": "2026-01-24T20:15:21.824Z"
+        }
+      ],
+      "opencodeSessionId": "ses_40e5deff6ffewc6VYmLeNRKKeB"
+    },
+    {
+      "threadId": "02.01.01",
+      "sessions": [
+        {
+          "sessionId": "ses_mksr1kkg_94ept8",
+          "agentName": "code-reviewer",
+          "model": "google/gemini-3-pro-preview",
+          "startedAt": "2026-01-24T20:15:32.707Z",
+          "status": "completed",
+          "completedAt": "2026-01-24T20:18:32.892Z"
+        }
+      ]
+    },
+    {
+      "threadId": "03.01.01",
+      "sessions": [
+        {
+          "sessionId": "ses_mksrlk4a_envvwo",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-24T20:31:05.245Z",
+          "status": "completed",
+          "completedAt": "2026-01-24T20:33:20.000Z"
+        }
+      ],
+      "opencodeSessionId": "ses_40e4bf3ffffeBEoH0EJjiUAdJk",
+      "synthesis": {
+        "sessionId": "synthesis-03.01.01-1769286800001",
+        "output": "Implemented the PlanningSession interface and added a planningSession field to StreamMetadata in types.ts. Created setStreamPlanningSession and getPlanningSessionId helper functions in index.ts for managing session state. Verified all changes with successful type checks and passing test suites.",
+        "completedAt": "2026-01-24T20:33:20.001Z"
+      }
+    },
+    {
+      "threadId": "03.02.01",
+      "sessions": [
+        {
+          "sessionId": "ses_mksrp738_cxaehb",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-24T20:33:54.982Z",
+          "status": "completed",
+          "completedAt": "2026-01-24T20:38:35.969Z"
+        }
+      ],
+      "opencodeSessionId": "ses_40e495d9affeIiNrJglfY8DeUi",
+      "synthesis": {
+        "sessionId": "synthesis-03.02.01-1769287115970",
+        "output": "Implemented the `work plan` CLI command in `packages/workstreams/src/cli/plan.ts` and registered it as a subcommand in `packages/workstreams/bin/work.ts`. The new command supports resuming planning sessions via `opencode`, manually setting session IDs, and provides comprehensive error handling and help documentation. All existing tests and type checks pass.",
+        "completedAt": "2026-01-24T20:38:35.970Z"
+      }
+    },
+    {
+      "threadId": "03.02.02",
+      "sessions": [
+        {
+          "sessionId": "ses_mksrp738_6qfxz6",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-24T20:33:54.982Z",
+          "status": "completed",
+          "completedAt": "2026-01-24T20:38:35.969Z"
+        }
+      ],
+      "opencodeSessionId": "ses_40e4958a4fferE82Dd3iFo2GQW",
+      "synthesis": {
+        "sessionId": "synthesis-03.02.02-1769287115970",
+        "output": "Updated the `work plan --help` documentation in `packages/workstreams/src/cli/plan.ts` to include a detailed manual workflow for capturing planning session IDs. The changes provide clear instructions on using `work plan --set` to store session IDs after manual planning sessions with opencode. Thread 02 is now fully completed, with Thread 01 nearing completion pending a command update.",
+        "completedAt": "2026-01-24T20:38:35.970Z"
+      }
+    }
+  ]
+}

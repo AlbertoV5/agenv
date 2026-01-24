@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-01-24T01:33:46.673Z",
-  "current_stream": "010-synthesis-agents",
+  "last_updated": "2026-01-24T21:55:12.047Z",
+  "current_stream": "011-synthesis-output-parsing",
   "streams": [
     {
       "id": "000-web-visualization",
@@ -632,6 +632,87 @@
         "completed_at": "2026-01-24T01:33:46.673Z"
       },
       "status": "completed"
+    },
+    {
+      "id": "011-synthesis-output-parsing",
+      "name": "synthesis-output-parsing",
+      "order": 11,
+      "size": "medium",
+      "session_estimated": {
+        "length": 4,
+        "unit": "session",
+        "session_minutes": [
+          30,
+          45
+        ],
+        "session_iterations": [
+          4,
+          8
+        ]
+      },
+      "created_at": "2026-01-24T20:03:28.148Z",
+      "updated_at": "2026-01-24T21:55:12.047Z",
+      "path": "work/011-synthesis-output-parsing",
+      "generated_by": {
+        "workstreams": "0.1.0"
+      },
+      "approval": {
+        "status": "approved",
+        "approved_at": "2026-01-24T20:04:51.645Z",
+        "approved_by": "user",
+        "plan_hash": "41b18d38e40e70c1e30befd7aa13328f50560716ef8ee3df6ccfee152b1ba929",
+        "tasks": {
+          "status": "approved",
+          "approved_at": "2026-01-24T20:31:01.094Z",
+          "task_count": 30
+        },
+        "stages": {
+          "1": {
+            "status": "approved",
+            "approved_at": "2026-01-24T20:15:29.729Z",
+            "approved_by": "user"
+          },
+          "2": {
+            "status": "approved",
+            "approved_at": "2026-01-24T20:20:38.656Z",
+            "approved_by": "user"
+          },
+          "3": {
+            "status": "approved",
+            "approved_at": "2026-01-24T20:39:15.151Z",
+            "approved_by": "user"
+          }
+        }
+      },
+      "github": {
+        "branch": "workstream/011-synthesis-output-parsing",
+        "completed_at": "2026-01-24T21:55:12.046Z"
+      },
+      "status": "completed"
+    },
+    {
+      "id": "012-migrate-github-issues-to-threads",
+      "name": "migrate-github-issues-to-threads",
+      "order": 12,
+      "size": "medium",
+      "session_estimated": {
+        "length": 4,
+        "unit": "session",
+        "session_minutes": [
+          30,
+          45
+        ],
+        "session_iterations": [
+          4,
+          8
+        ]
+      },
+      "created_at": "2026-01-24T21:49:31.323Z",
+      "updated_at": "2026-01-24T21:49:31.323Z",
+      "path": "work/012-migrate-github-issues-to-threads",
+      "generated_by": {
+        "workstreams": "0.1.0"
+      }
     }
   ]
 }

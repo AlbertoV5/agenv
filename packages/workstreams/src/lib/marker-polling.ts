@@ -6,8 +6,9 @@
  */
 
 import { existsSync, unlinkSync, readFileSync } from "fs"
-import { getCompletionMarkerPath, getSessionFilePath, getSynthesisOutputPath, getWorkingAgentSessionPath } from "./opencode.ts"
+import { getCompletionMarkerPath, getSessionFilePath, getSynthesisOutputPath, getWorkingAgentSessionPath, getSynthesisLogPath } from "./opencode.ts"
 import type { NotificationTracker } from "./notifications.ts"
+import { parseSynthesisOutputFile } from "./synthesis/output.ts"
 
 /**
  * Configuration for marker file polling
@@ -70,12 +71,16 @@ export function cleanupSessionFiles(threadIds: string[]): void {
 /**
  * Clean up synthesis-related temp files for all threads
  * Called when batch completes to remove:
- * - /tmp/workstream-{streamId}-{threadId}-synthesis.txt (synthesis output)
+ * - /tmp/workstream-{streamId}-{threadId}-synthesis.txt (legacy synthesis output)
+ * - /tmp/workstream-{streamId}-{threadId}-synthesis.json (JSONL synthesis output)
+ * - /tmp/workstream-{streamId}-{threadId}-synthesis.log (synthesis debug logs)
+ * - /tmp/workstream-{streamId}-{threadId}-exported-session.json (exported session)
+ * - /tmp/workstream-{streamId}-{threadId}-context.txt (extracted context)
  * - /tmp/workstream-{streamId}-{threadId}-working-session.txt (working agent session)
  */
 export function cleanupSynthesisFiles(streamId: string, threadIds: string[]): void {
   for (const threadId of threadIds) {
-    // Clean up synthesis output file
+    // Clean up legacy synthesis output file (.txt)
     const synthesisPath = getSynthesisOutputPath(streamId, threadId)
     try {
       if (existsSync(synthesisPath)) {
@@ -83,6 +88,46 @@ export function cleanupSynthesisFiles(streamId: string, threadIds: string[]): vo
       }
     } catch {
       // Ignore cleanup errors - files may already be deleted
+    }
+
+    // Clean up JSONL synthesis output file (.json)
+    const synthesisJsonPath = `/tmp/workstream-${streamId}-${threadId}-synthesis.json`
+    try {
+      if (existsSync(synthesisJsonPath)) {
+        unlinkSync(synthesisJsonPath)
+      }
+    } catch {
+      // Ignore cleanup errors
+    }
+
+    // Clean up synthesis log file
+    const synthesisLogPath = getSynthesisLogPath(streamId, threadId)
+    try {
+      if (existsSync(synthesisLogPath)) {
+        unlinkSync(synthesisLogPath)
+      }
+    } catch {
+      // Ignore cleanup errors
+    }
+
+    // Clean up exported session file
+    const exportedSessionPath = `/tmp/workstream-${streamId}-${threadId}-exported-session.json`
+    try {
+      if (existsSync(exportedSessionPath)) {
+        unlinkSync(exportedSessionPath)
+      }
+    } catch {
+      // Ignore cleanup errors
+    }
+
+    // Clean up extracted context file
+    const extractedContextPath = `/tmp/workstream-${streamId}-${threadId}-context.txt`
+    try {
+      if (existsSync(extractedContextPath)) {
+        unlinkSync(extractedContextPath)
+      }
+    } catch {
+      // Ignore cleanup errors
     }
 
     // Clean up working agent session file
@@ -135,12 +180,19 @@ export async function pollMarkerFiles(
         // Check for synthesis output (only if streamId provided)
         let synthesisOutput: string | undefined
         if (streamId) {
-          const synthesisPath = getSynthesisOutputPath(streamId, threadId)
-          if (existsSync(synthesisPath)) {
+          // Build path to .json file (instead of .txt)
+          const synthesisJsonPath = `/tmp/workstream-${streamId}-${threadId}-synthesis.json`
+          const synthesisLogPath = getSynthesisLogPath(streamId, threadId)
+          
+          if (existsSync(synthesisJsonPath)) {
             try {
-              synthesisOutput = readFileSync(synthesisPath, "utf-8").trim()
+              // Parse the JSONL output file
+              const result = parseSynthesisOutputFile(synthesisJsonPath, synthesisLogPath)
+              if (result.success && result.text) {
+                synthesisOutput = result.text.trim()
+              }
             } catch {
-              // Ignore read errors, synthesisOutput stays undefined
+              // Ignore parse errors, synthesisOutput stays undefined
             }
           }
         }

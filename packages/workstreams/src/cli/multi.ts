@@ -40,10 +40,12 @@ import {
   getSessionFilePath,
   getWorkingAgentSessionPath,
   getSynthesisOutputPath,
+  getSynthesisLogPath,
 } from "../lib/opencode.ts"
 import { NotificationTracker } from "../lib/notifications.ts"
 import { isSynthesisEnabled, getSynthesisAgentOverride } from "../lib/synthesis/config.ts"
 import { updateThreadMetadataLocked, setSynthesisOutput } from "../lib/threads.ts"
+import { parseSynthesisOutputFile } from "../lib/synthesis/output.ts"
 import { parseBatchId } from "../lib/cli-utils.ts"
 import {
   collectThreadInfoFromTasks,
@@ -448,17 +450,25 @@ async function handleSessionClose(
       }
       
       // Capture synthesis output (only present when synthesis is enabled)
-      // In post-session synthesis, this file contains the headless synthesis agent's output
+      // In post-session synthesis, this file contains the headless synthesis agent's JSONL output
       let synthesisOutputText: string | null = null
-      if (existsSync(synthesisOutputPath)) {
+      const synthesisJsonPath = `/tmp/workstream-${streamId}-${mapping.threadId}-synthesis.json`
+      if (existsSync(synthesisJsonPath)) {
         try {
-          synthesisOutputText = readFileSync(synthesisOutputPath, "utf-8").trim()
+          const logPath = getSynthesisLogPath(streamId, mapping.threadId)
+          const parseResult = parseSynthesisOutputFile(synthesisJsonPath, logPath)
+          
+          if (!parseResult.success) {
+            console.log(`  Thread ${mapping.threadId}: synthesis output parsing failed (see ${logPath})`)
+          }
+          
+          synthesisOutputText = parseResult.text.trim()
           if (!synthesisOutputText) {
-            console.log(`  Thread ${mapping.threadId}: synthesis output file is empty`)
+            console.log(`  Thread ${mapping.threadId}: synthesis output is empty`)
             synthesisOutputText = ""
           }
         } catch (e) {
-          console.log(`  Thread ${mapping.threadId}: failed to read synthesis output file (${(e as Error).message})`)
+          console.log(`  Thread ${mapping.threadId}: failed to parse synthesis output file (${(e as Error).message})`)
           synthesisOutputText = null
         }
       }

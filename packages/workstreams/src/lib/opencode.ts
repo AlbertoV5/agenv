@@ -139,6 +139,18 @@ export function getWorkingAgentSessionPath(streamId: string, threadId: string): 
 }
 
 /**
+ * Get the synthesis log path for logging synthesis process info
+ * Used to log timestamps, file sizes, and other synthesis metadata
+ * 
+ * @param streamId - Stream/workstream ID (e.g., "001-my-workstream")
+ * @param threadId - Thread ID (e.g., "01.01.02")
+ * @returns Path to the synthesis log file
+ */
+export function getSynthesisLogPath(streamId: string, threadId: string): string {
+  return `/tmp/workstream-${streamId}-${threadId}-synthesis.log`
+}
+
+/**
  * Escape a string for use in shell commands wrapped in sh -c '...'
  * Handles both the outer single-quote wrapper and inner double-quoted strings
  */
@@ -773,12 +785,12 @@ export function buildPostSynthesisCommand(options: PostSynthesisOptions): string
   const escapedTitle = escapeForShell(truncated)
 
   // File paths for tracking
-  const synthesisOutputPath = getSynthesisOutputPath(streamId, threadId)
   const completionMarkerPath = getCompletionMarkerPath(threadId)
   const sessionFilePath = getSessionFilePath(threadId)
   const exportedSessionPath = `/tmp/workstream-${streamId}-${threadId}-exported-session.json`
   const extractedContextPath = `/tmp/workstream-${streamId}-${threadId}-context.txt`
   const synthesisJsonPath = `/tmp/workstream-${streamId}-${threadId}-synthesis.json`
+  const synthesisLogPath = getSynthesisLogPath(streamId, threadId)
 
   // Build model lists for display
   const workingModelList = workingModels
@@ -858,17 +870,15 @@ echo "▶ Phase 2: Running synthesis agent (headless)..."
 echo ""
 ${synthesisModelAttempts}
 
-# Extract synthesis output from JSON (final assistant message)
-if [ -f "${synthesisJsonPath}" ] && command -v jq >/dev/null 2>&1; then
-  jq -r ".messages[-1].content // empty" "${synthesisJsonPath}" > "${synthesisOutputPath}" 2>/dev/null
-  if [ ! -s "${synthesisOutputPath}" ]; then
-    # Try alternative extraction
-    jq -r ".[].content // empty" "${synthesisJsonPath}" > "${synthesisOutputPath}" 2>/dev/null
-  fi
-fi
-
 echo ""
 echo "Synthesis complete."
+
+# Log synthesis metadata
+echo "$(date -u +"%Y-%m-%dT%H:%M:%SZ") Synthesis finished" >> "${synthesisLogPath}"
+if [ -f "${synthesisJsonPath}" ]; then
+  FILE_SIZE=$(wc -c < "${synthesisJsonPath}" 2>/dev/null || echo "0")
+  echo "Synthesis output size: $FILE_SIZE bytes" >> "${synthesisLogPath}"
+fi
 
 # Write completion marker AFTER synthesis completes
 # This ensures synthesis output is available when notification fires
