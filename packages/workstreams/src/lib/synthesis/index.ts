@@ -10,3 +10,11 @@ export type {
   SynthesisOutputConfig,
   ThreadSynthesis,
 } from "./types.js"
+
+export type {
+  JsonlTextEvent,
+  JsonlStepEvent,
+  SynthesisParseResult,
+} from "./output.js"
+
+export { parseSynthesisJsonl, parseSynthesisOutputFile } from "./output.js"

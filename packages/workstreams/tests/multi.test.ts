@@ -390,8 +390,10 @@ describe("multi cli", () => {
                 synthesisPromptPath: "/path/to/synthesis.md",
             })
 
-            // Should write synthesis output to synthesis file
-            expect(cmd).toContain('/tmp/workstream-001-test-01.01.01-synthesis.txt')
+            // Should write synthesis output to JSON file (raw JSONL)
+            expect(cmd).toContain('/tmp/workstream-001-test-01.01.01-synthesis.json')
+            // Should write synthesis metadata to log file
+            expect(cmd).toContain('/tmp/workstream-001-test-01.01.01-synthesis.log')
         })
 
         test("displays Post-Session Synthesis mode in header", () => {

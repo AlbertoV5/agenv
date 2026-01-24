@@ -1,0 +1,73 @@
+{
+  "version": "1.0.0",
+  "stream_id": "",
+  "last_updated": "2026-01-24T20:15:21.825Z",
+  "threads": [
+    {
+      "threadId": "01.01.01",
+      "sessions": [
+        {
+          "sessionId": "ses_mksqq31o_qpiwou",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-24T20:06:36.784Z",
+          "status": "completed",
+          "completedAt": "2026-01-24T20:11:23.039Z"
+        }
+      ],
+      "opencodeSessionId": "ses_40e625c90ffejgRg7lH98Lw5kS",
+      "synthesis": {
+        "sessionId": "synthesis-01.01.01-1769285483040",
+        "output": "",
+        "completedAt": "2026-01-24T20:11:23.040Z"
+      }
+    },
+    {
+      "threadId": "01.01.02",
+      "sessions": [
+        {
+          "sessionId": "ses_mksqq31o_wwi6yt",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-24T20:06:36.784Z",
+          "status": "completed",
+          "completedAt": "2026-01-24T20:11:23.039Z"
+        }
+      ],
+      "opencodeSessionId": "ses_40e6257ecffeStn8XZHNrKtnR6",
+      "synthesis": {
+        "sessionId": "synthesis-01.01.02-1769285483042",
+        "output": "",
+        "completedAt": "2026-01-24T20:11:23.042Z"
+      }
+    },
+    {
+      "threadId": "01.02.01",
+      "sessions": [
+        {
+          "sessionId": "ses_mksqw9t0_68zzo6",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-24T20:11:25.479Z",
+          "status": "completed",
+          "completedAt": "2026-01-24T20:15:21.824Z"
+        }
+      ],
+      "opencodeSessionId": "ses_40e5df433ffekQX1Mln0msdylQ"
+    },
+    {
+      "threadId": "01.02.02",
+      "sessions": [
+        {
+          "sessionId": "ses_mksqw9t0_sqf0tb",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-24T20:11:25.479Z",
+          "status": "completed",
+          "completedAt": "2026-01-24T20:15:21.824Z"
+        }
+      ],
+      "opencodeSessionId": "ses_40e5deff6ffewc6VYmLeNRKKeB"
+    }
+  ]
+}

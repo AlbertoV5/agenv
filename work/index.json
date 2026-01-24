@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-01-24T20:06:26.214Z",
+  "last_updated": "2026-01-24T20:15:29.729Z",
   "current_stream": "011-synthesis-output-parsing",
   "streams": [
     {
@@ -651,7 +651,7 @@
         ]
       },
       "created_at": "2026-01-24T20:03:28.148Z",
-      "updated_at": "2026-01-24T20:06:26.214Z",
+      "updated_at": "2026-01-24T20:15:29.729Z",
       "path": "work/011-synthesis-output-parsing",
       "generated_by": {
         "workstreams": "0.1.0"
@@ -665,6 +665,13 @@
           "status": "approved",
           "approved_at": "2026-01-24T20:06:16.358Z",
           "task_count": 18
+        },
+        "stages": {
+          "1": {
+            "status": "approved",
+            "approved_at": "2026-01-24T20:15:29.729Z",
+            "approved_by": "user"
+          }
         }
       },
       "github": {
