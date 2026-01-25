@@ -6,6 +6,7 @@ A centralized Python+Bun environment for AI agents. This monorepo provides share
 
 ```
 ~/.agenv/
+├── agent/              # Opencode agent configuration (commands, skills, tools)
 ├── packages/           # Bun/TypeScript packages
 │   ├── cli/            # Main CLI (@agenv/cli)
 │   └── planning/       # Plan management library (@agenv/planning)
@@ -115,6 +116,16 @@ ag install skills --all               # Install to all agent directories
 ag install skills --target ~/custom   # Install to custom location
 ag install skills --clean --claude    # Clean install
 ag install skills --dry-run --all     # Preview what would be installed
+```
+
+### Commands Installation
+
+```bash
+ag install commands --list            # List available commands
+ag install commands --opencode        # Install commands to ~/.config/opencode/commands
+ag install commands --target ~/custom # Install to custom location
+ag install commands --clean           # Clean install (remove existing)
+ag install commands --dry-run         # Preview what would be installed
 ```
 
 ## Packages

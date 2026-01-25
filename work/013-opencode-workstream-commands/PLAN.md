@@ -255,3 +255,45 @@ Verify the complete workflow works.
 ---
 
 *Last updated: 2026-01-25*
+
+### Stage 04: Revision - Remove Commands & Document Bang Syntax
+
+#### Stage Definition
+
+Remove the custom `w:*` opencode commands and document the simpler `!work` bash syntax for running workstream CLI commands directly in opencode.
+
+**Discovery:** OpenCode supports running bash commands directly with `!` prefix (e.g., `!work status`). This is simpler and more direct than custom slash commands, which are prompt templates sent to the agent. Custom commands add unnecessary overhead for CLI execution.
+
+#### Stage Constitution
+
+**Inputs:**
+- Existing `agent/commands/` directory (to be removed)
+- OpenCode TUI documentation on bash commands
+
+**Structure:**
+- Remove `agent/commands/` directory
+- Update documentation to explain `!work` syntax
+- Remove references to `w:*` commands
+
+**Outputs:**
+- Cleaned up `agent/` directory (no commands subdirectory)
+- Updated documentation with `!work` usage guide
+
+#### Stage Questions
+
+- [x] Should we keep any commands? **Answer: No, remove all. Will revisit when we identify commands that need agent interpretation.**
+
+#### Stage Batches
+
+##### Batch 01: Cleanup & Documentation
+
+###### Thread 01: Implementation
+
+**Summary:**
+Remove commands directory and update documentation to explain the `!work` bash syntax.
+
+**Details:**
+- Remove `agent/commands/` directory entirely
+- Update `docs/opencode-commands.md` to document `!work` syntax instead of custom commands
+- Update `README.md` to remove references to `ag install commands`
+- Remove `ag install commands` from the CLI (or keep for future use)

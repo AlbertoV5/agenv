@@ -424,7 +424,7 @@ function listPlugins(): void {
     const isDir = statSync(pluginPath).isDirectory()
     const ext = entry.split(".").pop()
 
-    if (isDir || ext === "ts" || ext === "js") {
+    if (isDir || ext === "ts" || ext === "js" || ext === "md") {
       console.log(`  ${entry}`)
     }
   }
@@ -441,7 +441,7 @@ function cleanPluginsTarget(targetDir: string, dryRun: boolean): number {
     const isDir = statSync(pluginPath).isDirectory()
     const ext = entry.split(".").pop()
 
-    if (isDir || ext === "ts" || ext === "js") {
+    if (isDir || ext === "ts" || ext === "js" || ext === "md") {
       if (dryRun) {
         console.log(`  [REMOVE] ${entry}`)
       } else {
@@ -475,7 +475,7 @@ function installPluginsTo(
     const pluginPath = join(AGENV_PLUGINS, e)
     const isDir = statSync(pluginPath).isDirectory()
     const ext = e.split(".").pop()
-    return isDir || ext === "ts" || ext === "js"
+    return isDir || ext === "ts" || ext === "js" || ext === "md"
   })
 
   if (entries.length === 0) {
@@ -647,7 +647,7 @@ function listTools(): void {
     const isDir = statSync(toolPath).isDirectory()
     const ext = entry.split(".").pop()
 
-    if (isDir || ext === "ts" || ext === "js") {
+    if (isDir || ext === "ts" || ext === "js" || ext === "md") {
       console.log(`  ${entry}`)
     }
   }
@@ -664,7 +664,7 @@ function cleanToolsTarget(targetDir: string, dryRun: boolean): number {
     const isDir = statSync(toolPath).isDirectory()
     const ext = entry.split(".").pop()
 
-    if (isDir || ext === "ts" || ext === "js") {
+    if (isDir || ext === "ts" || ext === "js" || ext === "md") {
       if (dryRun) {
         console.log(`  [REMOVE] ${entry}`)
       } else {
@@ -698,7 +698,7 @@ function installToolsTo(
     const toolPath = join(AGENV_TOOLS, e)
     const isDir = statSync(toolPath).isDirectory()
     const ext = e.split(".").pop()
-    return isDir || ext === "ts" || ext === "js"
+    return isDir || ext === "ts" || ext === "js" || ext === "md"
   })
 
   if (entries.length === 0) {
@@ -860,7 +860,7 @@ function listCommands(): void {
     const isDir = statSync(commandPath).isDirectory()
     const ext = entry.split(".").pop()
 
-    if (isDir || ext === "ts" || ext === "js") {
+    if (isDir || ext === "ts" || ext === "js" || ext === "md") {
       console.log(`  ${entry}`)
     }
   }
@@ -877,7 +877,7 @@ function cleanCommandsTarget(targetDir: string, dryRun: boolean): number {
     const isDir = statSync(commandPath).isDirectory()
     const ext = entry.split(".").pop()
 
-    if (isDir || ext === "ts" || ext === "js") {
+    if (isDir || ext === "ts" || ext === "js" || ext === "md") {
       if (dryRun) {
         console.log(`  [REMOVE] ${entry}`)
       } else {
@@ -911,7 +911,7 @@ function installCommandsTo(
     const commandPath = join(AGENV_COMMANDS, e)
     const isDir = statSync(commandPath).isDirectory()
     const ext = e.split(".").pop()
-    return isDir || ext === "ts" || ext === "js"
+    return isDir || ext === "ts" || ext === "js" || ext === "md"
   })
 
   if (entries.length === 0) {
