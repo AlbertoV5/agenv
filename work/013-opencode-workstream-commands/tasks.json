@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "stream_id": "013-opencode-workstream-commands",
-  "last_updated": "2026-01-25T01:59:03.630Z",
+  "last_updated": "2026-01-25T02:05:14.633Z",
   "tasks": [
     {
       "id": "01.01.01.01",
@@ -9,10 +9,16 @@
       "stage_name": "Agent Package Reorganization",
       "batch_name": "Directory Structure & Migration",
       "thread_name": "Create Agent Directory Structure",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-25T01:59:50.399Z",
+      "assigned_agent": "default",
+      "github_issue": {
+        "number": 54,
+        "url": "https://github.com/AlbertoV5/agenv/issues/54",
+        "state": "open"
+      },
+      "report": "Created agent/ directory with subdirectories: skills/, commands/, tools/, plugins/, hooks/"
     },
     {
       "id": "01.01.01.02",
@@ -20,10 +26,11 @@
       "stage_name": "Agent Package Reorganization",
       "batch_name": "Directory Structure & Migration",
       "thread_name": "Create Agent Directory Structure",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-25T02:00:03.775Z",
+      "assigned_agent": "default",
+      "report": "Moved 5 workstream skill directories (evaluating, implementing, planning, reviewing, synthesizing) to agent/skills/"
     },
     {
       "id": "01.01.01.03",
@@ -31,10 +38,11 @@
       "stage_name": "Agent Package Reorganization",
       "batch_name": "Directory Structure & Migration",
       "thread_name": "Create Agent Directory Structure",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-25T02:00:16.396Z",
+      "assigned_agent": "default",
+      "report": "Moved workstream.ts to agent/tools/"
     },
     {
       "id": "01.01.01.04",
@@ -42,10 +50,11 @@
       "stage_name": "Agent Package Reorganization",
       "batch_name": "Directory Structure & Migration",
       "thread_name": "Create Agent Directory Structure",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-25T02:00:27.624Z",
+      "assigned_agent": "default",
+      "report": "Moved setup-env.ts to agent/plugins/"
     },
     {
       "id": "01.01.01.05",
@@ -53,10 +62,11 @@
       "stage_name": "Agent Package Reorganization",
       "batch_name": "Directory Structure & Migration",
       "thread_name": "Create Agent Directory Structure",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-25T02:00:41.540Z",
+      "assigned_agent": "default",
+      "report": "Moved hooks.json, README.md, and setup-env.sh to agent/hooks/"
     },
     {
       "id": "01.01.01.06",
@@ -64,10 +74,11 @@
       "stage_name": "Agent Package Reorganization",
       "batch_name": "Directory Structure & Migration",
       "thread_name": "Create Agent Directory Structure",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-25T02:00:53.621Z",
+      "assigned_agent": "default",
+      "report": "Removed old empty directories: skills/, tools/, plugins/, hooks/"
     },
     {
       "id": "01.01.01.07",
@@ -75,10 +86,11 @@
       "stage_name": "Agent Package Reorganization",
       "batch_name": "Directory Structure & Migration",
       "thread_name": "Create Agent Directory Structure",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-25T02:01:07.161Z",
+      "assigned_agent": "default",
+      "report": "Verified all files successfully moved: skills (5 dirs), tools (workstream.ts), plugins (setup-env.ts), hooks (3 files), commands (empty)"
     },
     {
       "id": "01.02.01.01",
@@ -86,10 +98,16 @@
       "stage_name": "Agent Package Reorganization",
       "batch_name": "Update Install Command",
       "thread_name": "Update Install Paths",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-25T02:04:56.017Z",
+      "assigned_agent": "default",
+      "github_issue": {
+        "number": 55,
+        "url": "https://github.com/AlbertoV5/agenv/issues/55",
+        "state": "open"
+      },
+      "report": "Updated install.ts to use agent/ paths for all constants (skills, tools, plugins, hooks, commands). Added complete commands subcommand with install, list, clean, and dry-run functionality. Typecheck verified no new errors."
     },
     {
       "id": "01.02.01.02",
@@ -97,10 +115,11 @@
       "stage_name": "Agent Package Reorganization",
       "batch_name": "Update Install Command",
       "thread_name": "Update Install Paths",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-25T02:04:56.017Z",
+      "assigned_agent": "default",
+      "report": "Updated install.ts to use agent/ paths for all constants (skills, tools, plugins, hooks, commands). Added complete commands subcommand with install, list, clean, and dry-run functionality. Typecheck verified no new errors."
     },
     {
       "id": "01.02.01.03",
@@ -108,10 +127,11 @@
       "stage_name": "Agent Package Reorganization",
       "batch_name": "Update Install Command",
       "thread_name": "Update Install Paths",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-25T02:04:56.017Z",
+      "assigned_agent": "default",
+      "report": "Updated install.ts to use agent/ paths for all constants (skills, tools, plugins, hooks, commands). Added complete commands subcommand with install, list, clean, and dry-run functionality. Typecheck verified no new errors."
     },
     {
       "id": "01.02.01.04",
@@ -119,10 +139,11 @@
       "stage_name": "Agent Package Reorganization",
       "batch_name": "Update Install Command",
       "thread_name": "Update Install Paths",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-25T02:04:56.017Z",
+      "assigned_agent": "default",
+      "report": "Updated install.ts to use agent/ paths for all constants (skills, tools, plugins, hooks, commands). Added complete commands subcommand with install, list, clean, and dry-run functionality. Typecheck verified no new errors."
     },
     {
       "id": "01.02.01.05",
@@ -130,10 +151,11 @@
       "stage_name": "Agent Package Reorganization",
       "batch_name": "Update Install Command",
       "thread_name": "Update Install Paths",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-25T02:04:56.017Z",
+      "assigned_agent": "default",
+      "report": "Updated install.ts to use agent/ paths for all constants (skills, tools, plugins, hooks, commands). Added complete commands subcommand with install, list, clean, and dry-run functionality. Typecheck verified no new errors."
     },
     {
       "id": "01.02.01.06",
@@ -141,10 +163,11 @@
       "stage_name": "Agent Package Reorganization",
       "batch_name": "Update Install Command",
       "thread_name": "Update Install Paths",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-25T02:04:56.017Z",
+      "assigned_agent": "default",
+      "report": "Updated install.ts to use agent/ paths for all constants (skills, tools, plugins, hooks, commands). Added complete commands subcommand with install, list, clean, and dry-run functionality. Typecheck verified no new errors."
     },
     {
       "id": "01.02.01.07",
@@ -152,10 +175,11 @@
       "stage_name": "Agent Package Reorganization",
       "batch_name": "Update Install Command",
       "thread_name": "Update Install Paths",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-25T02:04:56.017Z",
+      "assigned_agent": "default",
+      "report": "Updated install.ts to use agent/ paths for all constants (skills, tools, plugins, hooks, commands). Added complete commands subcommand with install, list, clean, and dry-run functionality. Typecheck verified no new errors."
     },
     {
       "id": "01.02.01.08",
@@ -163,10 +187,11 @@
       "stage_name": "Agent Package Reorganization",
       "batch_name": "Update Install Command",
       "thread_name": "Update Install Paths",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-25T02:04:56.017Z",
+      "assigned_agent": "default",
+      "report": "Updated install.ts to use agent/ paths for all constants (skills, tools, plugins, hooks, commands). Added complete commands subcommand with install, list, clean, and dry-run functionality. Typecheck verified no new errors."
     },
     {
       "id": "01.02.01.09",
@@ -174,10 +199,11 @@
       "stage_name": "Agent Package Reorganization",
       "batch_name": "Update Install Command",
       "thread_name": "Update Install Paths",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-25T02:04:56.017Z",
+      "assigned_agent": "default",
+      "report": "Updated install.ts to use agent/ paths for all constants (skills, tools, plugins, hooks, commands). Added complete commands subcommand with install, list, clean, and dry-run functionality. Typecheck verified no new errors."
     },
     {
       "id": "01.02.01.10",
@@ -185,10 +211,11 @@
       "stage_name": "Agent Package Reorganization",
       "batch_name": "Update Install Command",
       "thread_name": "Update Install Paths",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-25T02:04:56.017Z",
+      "assigned_agent": "default",
+      "report": "Updated install.ts to use agent/ paths for all constants (skills, tools, plugins, hooks, commands). Added complete commands subcommand with install, list, clean, and dry-run functionality. Typecheck verified no new errors."
     },
     {
       "id": "01.02.01.11",
@@ -196,10 +223,11 @@
       "stage_name": "Agent Package Reorganization",
       "batch_name": "Update Install Command",
       "thread_name": "Update Install Paths",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-25T02:04:56.017Z",
+      "assigned_agent": "default",
+      "report": "Updated install.ts to use agent/ paths for all constants (skills, tools, plugins, hooks, commands). Added complete commands subcommand with install, list, clean, and dry-run functionality. Typecheck verified no new errors."
     },
     {
       "id": "01.02.01.12",
@@ -207,10 +235,11 @@
       "stage_name": "Agent Package Reorganization",
       "batch_name": "Update Install Command",
       "thread_name": "Update Install Paths",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-25T02:04:56.017Z",
+      "assigned_agent": "default",
+      "report": "Updated install.ts to use agent/ paths for all constants (skills, tools, plugins, hooks, commands). Added complete commands subcommand with install, list, clean, and dry-run functionality. Typecheck verified no new errors."
     },
     {
       "id": "01.02.02.01",
@@ -218,10 +247,16 @@
       "stage_name": "Agent Package Reorganization",
       "batch_name": "Update Install Command",
       "thread_name": "Update Shell Installer",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-25T02:04:26.435Z",
+      "assigned_agent": "default",
+      "github_issue": {
+        "number": 56,
+        "url": "https://github.com/AlbertoV5/agenv/issues/56",
+        "state": "open"
+      },
+      "report": "Updated header comments to document new agent/ directory structure with skills/, commands/, tools/, plugins/, hooks/ subdirectories"
     },
     {
       "id": "01.02.02.02",
@@ -229,10 +264,11 @@
       "stage_name": "Agent Package Reorganization",
       "batch_name": "Update Install Command",
       "thread_name": "Update Shell Installer",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-25T02:04:42.408Z",
+      "assigned_agent": "default",
+      "report": "No changes needed - --skills-only flag delegates to 'ag install skills --all' which already uses new agent/skills path via install.ts"
     },
     {
       "id": "01.02.02.03",
@@ -240,10 +276,11 @@
       "stage_name": "Agent Package Reorganization",
       "batch_name": "Update Install Command",
       "thread_name": "Update Shell Installer",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-25T02:04:57.988Z",
+      "assigned_agent": "default",
+      "report": "Added 'ag install commands' to Available commands section in help text"
     },
     {
       "id": "01.02.02.04",
@@ -251,10 +288,11 @@
       "stage_name": "Agent Package Reorganization",
       "batch_name": "Update Install Command",
       "thread_name": "Update Shell Installer",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-25T02:05:14.633Z",
+      "assigned_agent": "default",
+      "report": "Verified install.sh runs without errors - both normal run and --skills-only flag work correctly"
     },
     {
       "id": "02.01.01.01",
@@ -265,7 +303,12 @@
       "status": "pending",
       "created_at": "2026-01-25T01:59:03.629Z",
       "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "assigned_agent": "default",
+      "github_issue": {
+        "number": 57,
+        "url": "https://github.com/AlbertoV5/agenv/issues/57",
+        "state": "open"
+      }
     },
     {
       "id": "02.01.01.02",
@@ -331,7 +374,12 @@
       "status": "pending",
       "created_at": "2026-01-25T01:59:03.629Z",
       "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "assigned_agent": "default",
+      "github_issue": {
+        "number": 58,
+        "url": "https://github.com/AlbertoV5/agenv/issues/58",
+        "state": "open"
+      }
     },
     {
       "id": "02.01.02.02",
@@ -353,7 +401,12 @@
       "status": "pending",
       "created_at": "2026-01-25T01:59:03.629Z",
       "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "assigned_agent": "default",
+      "github_issue": {
+        "number": 59,
+        "url": "https://github.com/AlbertoV5/agenv/issues/59",
+        "state": "open"
+      }
     },
     {
       "id": "02.02.01.02",
@@ -397,7 +450,12 @@
       "status": "pending",
       "created_at": "2026-01-25T01:59:03.629Z",
       "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "assigned_agent": "default",
+      "github_issue": {
+        "number": 60,
+        "url": "https://github.com/AlbertoV5/agenv/issues/60",
+        "state": "open"
+      }
     },
     {
       "id": "02.03.01.02",
@@ -430,7 +488,12 @@
       "status": "pending",
       "created_at": "2026-01-25T01:59:03.629Z",
       "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "documentation-minimalist"
+      "assigned_agent": "documentation-minimalist",
+      "github_issue": {
+        "number": 61,
+        "url": "https://github.com/AlbertoV5/agenv/issues/61",
+        "state": "open"
+      }
     },
     {
       "id": "03.01.01.02",
@@ -474,7 +537,12 @@
       "status": "pending",
       "created_at": "2026-01-25T01:59:03.629Z",
       "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "code-reviewer"
+      "assigned_agent": "code-reviewer",
+      "github_issue": {
+        "number": 62,
+        "url": "https://github.com/AlbertoV5/agenv/issues/62",
+        "state": "open"
+      }
     },
     {
       "id": "03.01.02.02",

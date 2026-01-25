@@ -6,6 +6,7 @@
  *   hooks     - Install hooks to agent directories
  *   plugins   - Install plugins to agent directories
  *   tools     - Install tools to agent directories
+ *   commands  - Install commands to agent directories
  */
 
 import {
@@ -20,10 +21,11 @@ import {
 import { join } from "path"
 
 const AGENV_HOME = process.env.HOME + "/.agenv"
-const AGENV_SKILLS = join(AGENV_HOME, "skills")
-const AGENV_HOOKS = join(AGENV_HOME, "hooks")
-const AGENV_PLUGINS = join(AGENV_HOME, "plugins")
-const AGENV_TOOLS = join(AGENV_HOME, "tools")
+const AGENV_SKILLS = join(AGENV_HOME, "agent/skills")
+const AGENV_HOOKS = join(AGENV_HOME, "agent/hooks")
+const AGENV_PLUGINS = join(AGENV_HOME, "agent/plugins")
+const AGENV_TOOLS = join(AGENV_HOME, "agent/tools")
+const AGENV_COMMANDS = join(AGENV_HOME, "agent/commands")
 
 // Target directories for different agents
 const TARGETS: Record<string, string> = {
@@ -51,6 +53,7 @@ Subcommands:
   hooks      Install hooks to agent settings.json
   plugins    Install plugins to agent directories
   tools      Install tools to agent directories
+  commands   Install commands to agent directories
 
 Run 'ag install <subcommand> --help' for more information.
 `)
@@ -601,6 +604,11 @@ const TOOLS_TARGETS: Record<string, string> = {
   opencode: process.env.HOME + "/.config/opencode/tools",
 } as Record<string, string>
 
+// Target directories for commands
+const COMMANDS_TARGETS: Record<string, string> = {
+  opencode: process.env.HOME + "/.config/opencode/commands",
+} as Record<string, string>
+
 function printToolsHelp(): void {
   console.log(`
 ag install tools - Install tools to agent directories
@@ -810,6 +818,219 @@ function toolsCommand(args: string[]): void {
   }
 }
 
+// ============================================================================
+// Commands Installation
+// ============================================================================
+
+function printCommandsHelp(): void {
+  console.log(`
+ag install commands - Install commands to agent directories
+
+Usage:
+  ag install commands [options]
+
+Options:
+  --opencode     Install to ~/.config/opencode/commands (default)
+  --target PATH  Install to a custom directory
+  --clean        Remove ALL existing commands in target before installing
+  --list         List available commands without installing
+  --dry-run      Show what would be installed without making changes
+  --help, -h     Show this help message
+
+Examples:
+  ag install commands --opencode
+  ag install commands --clean --opencode
+  ag install commands --target ~/my-project/.opencode/commands
+  ag install commands --list
+`)
+}
+
+function listCommands(): void {
+  console.log(`Available commands in ${AGENV_COMMANDS}:`)
+  console.log("")
+
+  if (!existsSync(AGENV_COMMANDS)) {
+    console.log(`${YELLOW}No commands directory found${NC}`)
+    return
+  }
+
+  const entries = readdirSync(AGENV_COMMANDS)
+  for (const entry of entries) {
+    const commandPath = join(AGENV_COMMANDS, entry)
+    const isDir = statSync(commandPath).isDirectory()
+    const ext = entry.split(".").pop()
+
+    if (isDir || ext === "ts" || ext === "js") {
+      console.log(`  ${entry}`)
+    }
+  }
+}
+
+function cleanCommandsTarget(targetDir: string, dryRun: boolean): number {
+  if (!existsSync(targetDir)) return 0
+
+  let removedCount = 0
+  const entries = readdirSync(targetDir)
+
+  for (const entry of entries) {
+    const commandPath = join(targetDir, entry)
+    const isDir = statSync(commandPath).isDirectory()
+    const ext = entry.split(".").pop()
+
+    if (isDir || ext === "ts" || ext === "js") {
+      if (dryRun) {
+        console.log(`  [REMOVE] ${entry}`)
+      } else {
+        rmSync(commandPath, { recursive: true, force: true })
+        console.log(`  ${RED}✗${NC} ${entry} (removed)`)
+      }
+      removedCount++
+    }
+  }
+
+  if (removedCount > 0 && !dryRun) {
+    console.log(`${YELLOW}Removed ${removedCount} existing commands${NC}`)
+  }
+
+  return removedCount
+}
+
+function installCommandsTo(
+  targetDir: string,
+  dryRun: boolean,
+  clean: boolean,
+): void {
+  if (!existsSync(AGENV_COMMANDS)) {
+    console.error(
+      `${RED}Error: Source commands directory not found: ${AGENV_COMMANDS}${NC}`,
+    )
+    process.exit(1)
+  }
+
+  const entries = readdirSync(AGENV_COMMANDS).filter((e) => {
+    const commandPath = join(AGENV_COMMANDS, e)
+    const isDir = statSync(commandPath).isDirectory()
+    const ext = e.split(".").pop()
+    return isDir || ext === "ts" || ext === "js"
+  })
+
+  if (entries.length === 0) {
+    console.log(`${YELLOW}No commands found in ${AGENV_COMMANDS}${NC}`)
+    return
+  }
+
+  if (dryRun) {
+    console.log(`${YELLOW}[DRY RUN]${NC} Would install to: ${targetDir}`)
+  } else {
+    console.log(`Installing commands to: ${targetDir}`)
+    mkdirSync(targetDir, { recursive: true })
+  }
+
+  // Clean existing commands if requested
+  if (clean) {
+    if (dryRun) {
+      console.log(`${YELLOW}[DRY RUN]${NC} Would remove existing commands:`)
+    } else {
+      console.log("Removing existing commands...")
+    }
+    cleanCommandsTarget(targetDir, dryRun)
+    console.log("")
+  }
+
+  if (dryRun) {
+    console.log("Would install:")
+  } else {
+    console.log("Installing:")
+  }
+
+  for (const entry of entries) {
+    const commandPath = join(AGENV_COMMANDS, entry)
+    const targetCommand = join(targetDir, entry)
+
+    if (dryRun) {
+      if (existsSync(targetCommand) && !clean) {
+        console.log(`  [UPDATE] ${entry}`)
+      } else {
+        console.log(`  [NEW]    ${entry}`)
+      }
+    } else {
+      // Remove existing and copy fresh
+      if (existsSync(targetCommand)) {
+        rmSync(targetCommand, { recursive: true, force: true })
+      }
+      cpSync(commandPath, targetCommand, { recursive: true })
+      console.log(`  ${GREEN}✓${NC} ${entry}`)
+    }
+  }
+
+  if (!dryRun) {
+    console.log(
+      `${GREEN}Done!${NC} Installed ${entries.length} commands to ${targetDir}`,
+    )
+  }
+}
+
+function commandsCommand(args: string[]): void {
+  const targets: (string | undefined)[] = []
+  let dryRun = false
+  let listOnly = false
+  let clean = false
+
+  let i = 0
+  while (i < args.length) {
+    const arg = args[i]
+    switch (arg) {
+      case "--opencode":
+        targets.push(COMMANDS_TARGETS.opencode!)
+        break
+      case "--target":
+        i++
+        if (!args[i]) {
+          console.error(`${RED}Error: --target requires a path${NC}`)
+          process.exit(1)
+        }
+        targets.push(args[i])
+        break
+      case "--clean":
+        clean = true
+        break
+      case "--list":
+        listOnly = true
+        break
+      case "--dry-run":
+        dryRun = true
+        break
+      case "--help":
+      case "-h":
+        printCommandsHelp()
+        process.exit(0)
+      default:
+        console.error(`${RED}Error: Unknown option: ${arg}${NC}`)
+        printCommandsHelp()
+        process.exit(1)
+    }
+    i++
+  }
+
+  // Handle list mode
+  if (listOnly) {
+    listCommands()
+    return
+  }
+
+  // Default to OpenCode if no targets specified
+  if (targets.length === 0) {
+    targets.push(COMMANDS_TARGETS.opencode!)
+  }
+
+  // Install to each target
+  for (const target of targets) {
+    if (!target) continue
+    installCommandsTo(target, dryRun, clean)
+    console.log("")
+  }
+}
+
 function skillsCommand(args: string[]): void {
   const targets: (string | undefined)[] = []
   let dryRun = false
@@ -916,9 +1137,12 @@ export function main(argv: string[]): void {
     case "tools":
       toolsCommand(args.slice(1))
       break
+    case "commands":
+      commandsCommand(args.slice(1))
+      break
     default:
       console.error(`Error: Unknown subcommand "${subcommand}"`)
-      console.error("\nAvailable subcommands: skills, hooks, plugins, tools")
+      console.error("\nAvailable subcommands: skills, hooks, plugins, tools, commands")
       console.error("\nRun 'ag install --help' for usage information.")
       process.exit(1)
   }
