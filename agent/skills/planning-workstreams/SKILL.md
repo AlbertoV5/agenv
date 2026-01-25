@@ -42,36 +42,6 @@ Use this workflow when you need to add new stages to a workstream that is alread
 
 **Note:** This flow mirrors the initial planning flow (Plan → Approve → Tasks → Approve) but is scoped to the new revision stage.
 
-**Recommendation:** Normally, you should use `work fix` for correcting issues in existing threads *before* starting a revision for new work.
-
-### Example: Adding a "Polish" Stage
-
-```bash
-# 1. User realizes more work is needed
-> "Please add a polishing stage to fix UI glitches."
-
-# 2. Agent starts revision
-work revision --name "UI Polish"
-
-# 3. Agent edits PLAN.md to define the new stage structure
-# ... edits PLAN.md ...
-
-# 4. Agent requests review
-> "I've added the UI Polish stage. Please review the plan."
-
-# 5. User approves revision
-!work approve revision
-
-# 6. Agent edits TASKS.md to define specific tasks
-# ... edits TASKS.md ...
-
-# 7. Agent requests final review
-> "Tasks are ready. Please approve to start execution."
-
-# 8. User approves tasks
-!work approve tasks
-```
-
 ---
 
 ## Create a Workstream
@@ -231,12 +201,6 @@ work prompt --stage 1 --batch 1  # Manual prompt regeneration (if needed)
 # Revision
 work revision --name "stage-name" # Add new stage to active workstream
 !work approve revision           # User only - Generates TASKS.md for new stage
-
-# Interactive Fix
-!work fix                        # User only - Interactive fix menu
-!work fix --thread "01.01.01" --resume  # User only - Resume existing session
-!work fix --thread "01.01.01" --retry   # User only - Retry with same agent
-!work fix --thread "01.01.01" --agent "name" # User only - Retry with different agent
 
 # Reports
 work report --stage 1
