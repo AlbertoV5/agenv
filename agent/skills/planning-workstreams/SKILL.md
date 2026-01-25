@@ -12,10 +12,10 @@ Your scope is **planning only** — you do not implement code. Follow this workf
 1. **Create workstream** — `work create --name "feature" --stages N`
 2. **Fill out PLAN.md** — Define stages, batches, threads, and resolve questions. Include working packages in details.
 3. **Review PLAN.md** — Present `work preview` and ask user to review.
-4. **Approve Plan** — User runs `work approve plan`. This automatically generates `TASKS.md`.
+4. **Approve Plan** — User runs `!work approve plan`. This automatically generates `TASKS.md`.
 5. **Fill out TASKS.md** — Define task descriptions and assign agents to threads.
 6. **Review TASKS.md** — Ask user to review the tasks and assignments.
-7. **Approve Tasks** — User runs `work approve tasks`. This serializes tasks and generates prompts automatically.
+7. **Approve Tasks** — User runs `!work approve tasks`. This serializes tasks and generates prompts automatically.
 8. **Link Session** — Use `workstream_link_planning_session` tool to link this session to the workstream.
 9. **Handoff** — Ask user to run agents.
 
@@ -34,11 +34,11 @@ Use this workflow when you need to add new stages to a workstream that is alread
    - Unlocks `PLAN.md` for editing
 2. **Fill out PLAN.md** — Define the new stage's content (batches, threads)
 3. **Review PLAN.md** — Present `work preview` and ask user to review
-4. **Approve Revision** — User runs `work approve revision`
+4. **Approve Revision** — User runs `!work approve revision`
    - Generates tasks for the *new stage only* in `TASKS.md`
 5. **Fill out TASKS.md** — Define tasks and assign agents for the new stage
 6. **Review TASKS.md** — Ask user to review
-7. **Approve Tasks** — User runs `work approve tasks`
+7. **Approve Tasks** — User runs `!work approve tasks`
 
 **Note:** This flow mirrors the initial planning flow (Plan → Approve → Tasks → Approve) but is scoped to the new revision stage.
 
@@ -60,7 +60,7 @@ work revision --name "UI Polish"
 > "I've added the UI Polish stage. Please review the plan."
 
 # 5. User approves revision
-work approve revision
+!work approve revision
 
 # 6. Agent edits TASKS.md to define specific tasks
 # ... edits TASKS.md ...
@@ -69,7 +69,7 @@ work approve revision
 > "Tasks are ready. Please approve to start execution."
 
 # 8. User approves tasks
-work approve tasks
+!work approve tasks
 ```
 
 ---
@@ -160,9 +160,9 @@ After filling out PLAN.md:
 1. Run `work check plan` to validate structure and questions.
 2. Run `work preview` and present the output to the user.
 3. **Wait for confirmation.**
-4. Ask the user to run `work approve plan`.
+4. Ask the user to run `!work approve plan`.
 
-**You MUST NOT run `work approve *` yourself.** The user must run this command to maintain human-in-the-loop control.
+**You MUST NOT run `work approve *` yourself.** The user must run this command (with `!` prefix) to maintain human-in-the-loop control.
 
 ## Create Tasks & Assign Agents
 
@@ -188,7 +188,7 @@ Use `work agents` to see available agents.
 After editing `TASKS.md`, ask the user to review. Once confirmed, ask them to run:
 
 ```bash
-work approve tasks
+!work approve tasks
 ```
 
 This command validates and serializes the tasks and assignments.
@@ -217,8 +217,8 @@ work add-thread --stage "setup" --batch "core" --name "thread-name"
 # Validate & approve
 work preview
 work check plan
-work approve plan                # User only - Generates TASKS.md
-work approve tasks               # User only - Serializes TASKS.md
+!work approve plan               # User only - Generates TASKS.md
+!work approve tasks              # User only - Serializes TASKS.md
 
 # Tasks
 work add-task --stage 1 --batch 1 --thread 1 --name "..."  # Mid-execution additions
@@ -230,13 +230,13 @@ work prompt --stage 1 --batch 1  # Manual prompt regeneration (if needed)
 
 # Revision
 work revision --name "stage-name" # Add new stage to active workstream
-work approve revision            # User only - Generates TASKS.md for new stage
+!work approve revision           # User only - Generates TASKS.md for new stage
 
 # Interactive Fix
-work fix                         # Interactive fix menu
-work fix --thread "01.01.01" --resume  # Resume existing session
-work fix --thread "01.01.01" --retry   # Retry with same agent
-work fix --thread "01.01.01" --agent "name" # Retry with different agent
+!work fix                        # User only - Interactive fix menu
+!work fix --thread "01.01.01" --resume  # User only - Resume existing session
+!work fix --thread "01.01.01" --retry   # User only - Retry with same agent
+!work fix --thread "01.01.01" --agent "name" # User only - Retry with different agent
 
 # Reports
 work report --stage 1

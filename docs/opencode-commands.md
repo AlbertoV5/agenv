@@ -1,67 +1,87 @@
 # Opencode Commands
 
-The Opencode agent environment includes a set of slash commands (prefixed with `w:`) that map directly to the `work` CLI tool. These commands allow you to manage workstreams directly from the chat interface without switching context.
+The Opencode agent environment uses a special "bang" syntax to execute `work` CLI commands directly from the chat interface. This allows you to manage workstreams without switching context between the agent and your terminal.
 
-## Command Prefix `w:`
+## Bang Syntax: `!work`
 
-All workstream commands use the `w:` prefix. For example, to check the status, you use `/w:status` (or just `w:status` depending on your client). This distinguishes them from other agent commands.
+To run any `work` CLI command from the chat interface, prefix it with `!`:
 
-## Command Reference
+```
+!work status
+!work list --tasks
+!work update --task "01.01.01.01" --status completed
+```
 
-| Command | Description | Equivalent CLI |
-|---------|-------------|----------------|
-| `w:agents` | Manage or list agents | `work agents` |
-| `w:approve-plan` | Approve a plan | `work approve plan` |
-| `w:approve-revision` | Approve a plan revision | `work approve revision` |
-| `w:approve-tasks` | Approve specific tasks | `work approve tasks` |
-| `w:complete` | Complete a plan or thread | `work complete` |
-| `w:context` | Show current execution context | `work context` |
-| `w:current` | Show or set current workstream | `work current` |
-| `w:list` | List tasks | `work list` |
-| `w:preview` | Preview plan structure | `work preview` |
-| `w:prompt` | Generate or manage prompts | `work prompt` |
-| `w:read` | Read task details | `work read` |
-| `w:start` | Start a task | `work start` |
-| `w:status` | Show status and progress | `work status` |
-| `w:tree` | Show workstream tree structure | `work tree` |
-| `w:update` | Update task status | `work update` |
+The `!` prefix tells the agent to execute the following command as a bash command in your environment.
+
+## Agent vs User Commands
+
+There are two types of command execution:
+
+### User Commands (Bang Syntax)
+When **you** (the user) want to execute a `work` command, use the `!` prefix:
+
+```
+!work status
+!work approve plan
+!work start
+!work complete
+```
+
+### Agent Commands (Direct)
+When the **agent** executes `work` commands (as part of its task implementation), it runs them directly without the `!` prefix. This happens automatically when the agent is working on tasks.
+
+## Common Commands Reference
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `!work status` | Show workstream status and progress | `!work status` |
+| `!work list` | List tasks with optional filters | `!work list --tasks --batch "01.01"` |
+| `!work tree` | Show workstream tree structure | `!work tree --batch "01.01"` |
+| `!work approve plan` | Approve a workstream plan | `!work approve plan` |
+| `!work approve revision` | Approve a plan revision | `!work approve revision` |
+| `!work start` | Start working on a workstream | `!work start` |
+| `!work complete` | Mark a workstream as complete | `!work complete` |
+| `!work update` | Update task status | `!work update --task "01.01.01.01" --status completed` |
+| `!work current` | Show or set current workstream | `!work current` |
+| `!work context` | Show current execution context | `!work context` |
 
 ## Usage Examples
 
-### 1. Starting a New Task
+### 1. Starting a New Workstream
 
-Check the current status and start working on a task:
+Check the status and start working:
 
-```bash
-/w:status
-/w:list --pending
-/w:start --task "01.01.01.01"
+```
+!work status
+!work list --pending
+!work start
 ```
 
-### 2. Updating Progress
+### 2. Monitoring Progress
 
-Update a task as you make progress or finish it:
+View progress and task details:
 
-```bash
-/w:update --task "01.01.01.01" --status in_progress
-/w:update --task "01.01.01.01" --status completed --report "Implemented feature X"
+```
+!work tree
+!work list --tasks --batch "01.01"
+!work status
 ```
 
-### 3. Reviewing Context
+### 3. Approving Plans
 
-Get the full context of where you are in the workstream:
+When a plan is ready for approval:
 
-```bash
-/w:current
-/w:tree --batch "01.01"
-/w:read --task "01.01.01.01"
+```
+!work review plan
+!work approve plan
 ```
 
-### 4. Approvals
+### 4. Completing Work
 
-When a plan or revision needs approval:
+When you finish a workstream:
 
-```bash
-/w:approve-plan
-/w:approve-revision
+```
+!work status
+!work complete
 ```

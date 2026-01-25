@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-01-25T02:30:28.174Z",
+  "last_updated": "2026-01-25T02:40:18.387Z",
   "current_stream": "013-opencode-workstream-commands",
   "streams": [
     {
@@ -738,7 +738,7 @@
         ]
       },
       "created_at": "2026-01-25T01:50:18.210Z",
-      "updated_at": "2026-01-25T02:30:28.173Z",
+      "updated_at": "2026-01-25T02:40:18.387Z",
       "path": "work/013-opencode-workstream-commands",
       "generated_by": {
         "workstreams": "0.1.0"
@@ -767,6 +767,11 @@
           "3": {
             "status": "approved",
             "approved_at": "2026-01-25T02:30:28.173Z",
+            "approved_by": "user"
+          },
+          "4": {
+            "status": "approved",
+            "approved_at": "2026-01-25T02:40:18.387Z",
             "approved_by": "user"
           }
         }
