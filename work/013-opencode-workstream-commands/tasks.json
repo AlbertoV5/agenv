@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "stream_id": "013-opencode-workstream-commands",
-  "last_updated": "2026-01-25T02:05:14.633Z",
+  "last_updated": "2026-01-25T02:12:29.585Z",
   "tasks": [
     {
       "id": "01.01.01.01",
@@ -300,15 +300,16 @@
       "stage_name": "OpenCode Commands Implementation",
       "batch_name": "Status & Information Commands",
       "thread_name": "Core Status Commands",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
+      "updated_at": "2026-01-25T02:06:37.527Z",
       "assigned_agent": "default",
       "github_issue": {
         "number": 57,
         "url": "https://github.com/AlbertoV5/agenv/issues/57",
         "state": "open"
-      }
+      },
+      "report": "Created w:status.md command file that runs work status with arguments"
     },
     {
       "id": "02.01.01.02",
@@ -316,10 +317,11 @@
       "stage_name": "OpenCode Commands Implementation",
       "batch_name": "Status & Information Commands",
       "thread_name": "Core Status Commands",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-25T02:06:44.493Z",
+      "assigned_agent": "default",
+      "report": "Created w:current.md command file that runs work current with arguments"
     },
     {
       "id": "02.01.01.03",
@@ -327,10 +329,11 @@
       "stage_name": "OpenCode Commands Implementation",
       "batch_name": "Status & Information Commands",
       "thread_name": "Core Status Commands",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-25T02:06:50.521Z",
+      "assigned_agent": "default",
+      "report": "Created w:context.md command file that runs work context"
     },
     {
       "id": "02.01.01.04",
@@ -338,10 +341,11 @@
       "stage_name": "OpenCode Commands Implementation",
       "batch_name": "Status & Information Commands",
       "thread_name": "Core Status Commands",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-25T02:06:57.582Z",
+      "assigned_agent": "default",
+      "report": "Created w:list.md command file that runs work list with arguments"
     },
     {
       "id": "02.01.01.05",
@@ -349,10 +353,11 @@
       "stage_name": "OpenCode Commands Implementation",
       "batch_name": "Status & Information Commands",
       "thread_name": "Core Status Commands",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-25T02:07:04.444Z",
+      "assigned_agent": "default",
+      "report": "Created w:tree.md command file that runs work tree"
     },
     {
       "id": "02.01.01.06",
@@ -360,10 +365,11 @@
       "stage_name": "OpenCode Commands Implementation",
       "batch_name": "Status & Information Commands",
       "thread_name": "Core Status Commands",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-25T02:07:12.112Z",
+      "assigned_agent": "default",
+      "report": "Created w:preview.md command file that runs work preview"
     },
     {
       "id": "02.01.02.01",
@@ -371,15 +377,16 @@
       "stage_name": "OpenCode Commands Implementation",
       "batch_name": "Status & Information Commands",
       "thread_name": "Agent & Prompt Commands",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
+      "updated_at": "2026-01-25T02:07:55.681Z",
       "assigned_agent": "default",
       "github_issue": {
         "number": 58,
         "url": "https://github.com/AlbertoV5/agenv/issues/58",
         "state": "open"
-      }
+      },
+      "report": "Created agent/commands/w:agents.md command file that runs 'work agents'"
     },
     {
       "id": "02.01.02.02",
@@ -387,10 +394,11 @@
       "stage_name": "OpenCode Commands Implementation",
       "batch_name": "Status & Information Commands",
       "thread_name": "Agent & Prompt Commands",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-25T02:08:04.225Z",
+      "assigned_agent": "default",
+      "report": "Created agent/commands/w:prompt.md command file that runs 'work prompt --thread $1'"
     },
     {
       "id": "02.02.01.01",
@@ -398,15 +406,16 @@
       "stage_name": "OpenCode Commands Implementation",
       "batch_name": "Approval & Lifecycle Commands",
       "thread_name": "Approval Commands",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
+      "updated_at": "2026-01-25T02:09:41.903Z",
       "assigned_agent": "default",
       "github_issue": {
         "number": 59,
         "url": "https://github.com/AlbertoV5/agenv/issues/59",
         "state": "open"
-      }
+      },
+      "report": "Created agent/commands/w:approve-plan.md file that runs 'work approve plan $ARGUMENTS'"
     },
     {
       "id": "02.02.01.02",
@@ -414,10 +423,11 @@
       "stage_name": "OpenCode Commands Implementation",
       "batch_name": "Approval & Lifecycle Commands",
       "thread_name": "Approval Commands",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-25T02:09:54.077Z",
+      "assigned_agent": "default",
+      "report": "Created agent/commands/w:approve-tasks.md file that runs 'work approve tasks'"
     },
     {
       "id": "02.02.01.03",
@@ -425,10 +435,11 @@
       "stage_name": "OpenCode Commands Implementation",
       "batch_name": "Approval & Lifecycle Commands",
       "thread_name": "Approval Commands",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-25T02:10:07.878Z",
+      "assigned_agent": "default",
+      "report": "Created agent/commands/w:approve-revision.md file that runs 'work approve revision'"
     },
     {
       "id": "02.02.01.04",
@@ -436,10 +447,11 @@
       "stage_name": "OpenCode Commands Implementation",
       "batch_name": "Approval & Lifecycle Commands",
       "thread_name": "Approval Commands",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-25T02:10:27.442Z",
+      "assigned_agent": "default",
+      "report": "Created agent/commands/w:start.md file that runs 'work start'"
     },
     {
       "id": "02.03.01.01",
@@ -447,15 +459,16 @@
       "stage_name": "OpenCode Commands Implementation",
       "batch_name": "Task Management Commands",
       "thread_name": "Task Commands",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
+      "updated_at": "2026-01-25T02:12:29.585Z",
       "assigned_agent": "default",
       "github_issue": {
         "number": 60,
         "url": "https://github.com/AlbertoV5/agenv/issues/60",
-        "state": "open"
-      }
+        "state": "closed"
+      },
+      "report": "Created w:update.md command file that runs work update with arguments"
     },
     {
       "id": "02.03.01.02",
@@ -463,10 +476,11 @@
       "stage_name": "OpenCode Commands Implementation",
       "batch_name": "Task Management Commands",
       "thread_name": "Task Commands",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-25T02:12:17.769Z",
+      "assigned_agent": "default",
+      "report": "Created w:read.md command file that runs work read with --task argument"
     },
     {
       "id": "02.03.01.03",
@@ -474,10 +488,11 @@
       "stage_name": "OpenCode Commands Implementation",
       "batch_name": "Task Management Commands",
       "thread_name": "Task Commands",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-25T01:59:03.629Z",
-      "updated_at": "2026-01-25T01:59:03.629Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-25T02:12:28.507Z",
+      "assigned_agent": "default",
+      "report": "Created w:complete.md command file that runs work complete"
     },
     {
       "id": "03.01.01.01",
