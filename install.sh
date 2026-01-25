@@ -5,7 +5,14 @@
 # 1. Adds ~/.agenv/bin to PATH
 # 2. Creates symlinks for all package CLI tools
 # 3. Updates shell configuration (.zshrc, .bashrc)
-# 4. Optionally installs skills to agent directories
+# 4. Optionally installs agent resources from agent/ directory
+#
+# Agent resources are organized under agent/:
+#   agent/skills/   - Workstream skills for AI agents
+#   agent/commands/ - Opencode custom slash commands
+#   agent/tools/    - MCP tools for AI agents
+#   agent/plugins/  - Agent plugins
+#   agent/hooks/    - Git and agent hooks
 #
 # Usage:
 #   ~/.agenv/install.sh [options]
@@ -142,10 +149,11 @@ echo ""
 echo "AgEnv installed successfully!"
 echo ""
 echo "Available commands:"
-echo "  ag                  - Main CLI entry point"
-echo "  ag work             - Workstream management"
-echo "  ag install skills   - Install skills to agent directories"
-echo "  work                - Standalone workstream CLI"
+echo "  ag                   - Main CLI entry point"
+echo "  ag work              - Workstream management"
+echo "  ag install skills    - Install skills to agent directories"
+echo "  ag install commands  - Install slash commands to opencode"
+echo "  work                 - Standalone workstream CLI"
 
 # Install skills if requested
 if [ "$INSTALL_SKILLS" = "true" ]; then

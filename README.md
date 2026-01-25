@@ -6,6 +6,7 @@ A centralized Python+Bun environment for AI agents. This monorepo provides share
 
 ```
 ~/.agenv/
+├── agent/              # Opencode agent configuration (commands, skills, tools)
 ├── packages/           # Bun/TypeScript packages
 │   ├── cli/            # Main CLI (@agenv/cli)
 │   └── planning/       # Plan management library (@agenv/planning)

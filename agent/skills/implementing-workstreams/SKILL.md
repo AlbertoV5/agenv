@@ -75,26 +75,26 @@ In case of requiring a functionality that may currently be worked on in a parall
 The system tracks your session ID, allowing you to resume work if interrupted or fix issues in completed threads.
 
 ### Interactive Fix
-Run `work fix` to see a list of incomplete or failed threads and choose an action.
+Run `!work fix` to see a list of incomplete or failed threads and choose an action.
 
 ### Common Fix Scenarios
 
 **1. Resuming an Interrupted Session**
 If your session crashed or was interrupted, you can resume exactly where you left off:
 ```bash
-work fix --thread "01.01.01" --resume
+!work fix --thread "01.01.01" --resume
 ```
 
 **2. Retrying a Failed Thread**
 If a thread failed or the result is unsatisfactory, you can retry with the same agent (starts a fresh session):
 ```bash
-work fix --thread "01.01.01" --retry
+!work fix --thread "01.01.01" --retry
 ```
 
 **3. Trying a Different Agent**
 If the current agent is struggling, try a different one:
 ```bash
-work fix --thread "01.01.01" --agent "senior-dev"
+!work fix --thread "01.01.01" --agent "senior-dev"
 ```
 
 ## Additional Resources
