@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-01-24T22:16:38.099Z",
-  "current_stream": "012-migrate-github-issues-to-threads",
+  "last_updated": "2026-01-25T01:59:07.672Z",
+  "current_stream": "013-opencode-workstream-commands",
   "streams": [
     {
       "id": "000-web-visualization",
@@ -718,6 +718,44 @@
         "approved_at": "2026-01-24T21:56:24.874Z",
         "approved_by": "user",
         "plan_hash": "34b8d04c44a9ee964c82fec65db08964a718fae4fcf7bc5bdc91bf9c92788000"
+      }
+    },
+    {
+      "id": "013-opencode-workstream-commands",
+      "name": "opencode-workstream-commands",
+      "order": 13,
+      "size": "medium",
+      "session_estimated": {
+        "length": 4,
+        "unit": "session",
+        "session_minutes": [
+          30,
+          45
+        ],
+        "session_iterations": [
+          4,
+          8
+        ]
+      },
+      "created_at": "2026-01-25T01:50:18.210Z",
+      "updated_at": "2026-01-25T01:59:07.672Z",
+      "path": "work/013-opencode-workstream-commands",
+      "generated_by": {
+        "workstreams": "0.1.0"
+      },
+      "approval": {
+        "status": "approved",
+        "approved_at": "2026-01-25T01:57:23.009Z",
+        "approved_by": "user",
+        "plan_hash": "8664ec9199437fee44fa9aa4f26a8ed7c57b1a78cb4c4dfbe4fcb533793a5883",
+        "tasks": {
+          "status": "approved",
+          "approved_at": "2026-01-25T01:59:03.678Z",
+          "task_count": 48
+        }
+      },
+      "github": {
+        "branch": "workstream/013-opencode-workstream-commands"
       }
     }
   ]
