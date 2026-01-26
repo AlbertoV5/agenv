@@ -7,101 +7,130 @@ description: How to document workstream results and next steps.
 
 This skill guides you through evaluating the progress of a workstream and documenting the results in `REPORT.md`.
 
-## 1. Understand Status
+## Workflow Overview
 
-Before evaluating, understand the current state of the workstream.
+1. `work status` - Check completion status
+2. `work review commits` - Review all changes
+3. Fill `REPORT.md` - Document findings
+4. Add docs - Create extra documentation in `docs/` if needed
+5. `work report validate` - Validate the report
 
-```bash
-work status              # Shows plan status and progress
-work tree                # Tree view of plan tasks status
-```
+## 1. Check Status
 
-## 2. Review Implementation
-
-Compare the initial plan with the actual implementation.
-
-```bash
-work review plan         # Prints the entire PLAN.md
-work review commits      # Show commits (use --stage N for specific stage)
-```
-
-**Actions:**
-- **Verify Scope**: Did the changes match the plan?
-- **Check Quality**: Are there tests? Types? Documentation?
-- **Identify Issues**: Any bugs, hacks, or incomplete features?
-
-## 3. Generate Report Template
-
-The evaluation is documented in `REPORT.md`. Generate the template:
+First, understand the current state of the workstream.
 
 ```bash
-work report init
+work status             # Shows plan status and progress
+work tree               # Tree view of plan tasks status
 ```
 
-*If the command is not available, create `REPORT.md` manually using the structure below.*
+## 2. Review Changes
 
-## 4. Fill Report Sections
+Review the code changes to understand what was implemented vs what was planned.
 
-Edit `REPORT.md` to provide a comprehensive evaluation.
+```bash
+work review commits      # Show all commits in the workstream
+work review plan         # Reference the original plan
+```
 
-### Summary
-**Goal**: High-level overview for stakeholders.
-- **Content**: What was the main achievement? Was it successful?
-- **Example**: "Refactored the API layer to use Hono. Improved error handling and added validation middleware. All tests passing."
+**What to look for:**
+- **Scope Accuracy**: Did the changes match the plan?
+- **Code Quality**: Are there tests, types, and comments?
+- **Completeness**: Are any features missing or incomplete?
 
-### Accomplishments
-**Goal**: Detailed breakdown by stage.
-- **Per Stage**:
-  - **Description**: Brief summary of the stage's work.
-  - **Key Changes**: List of specific technical changes (new components, schema updates, etc.).
+## 3. Fill REPORT.md
 
-**Example**:
-```md
-### Stage 01: API Setup
-Implemented the base Hono server structure.
+The evaluation is documented in `REPORT.md`. If it doesn't exist, run `work report init`.
+
+### Required Sections
+
+#### Summary
+A high-level overview for stakeholders. Focus on the "what" and "why".
+
+#### Accomplishments
+Break down work by stage.
+- **Stage ID**: e.g., "Stage 01"
+- **Description**: Brief summary.
+- **Key Changes**: Bullet points of technical details.
+
+#### File References
+A table mapping key files to changes.
+
+#### Issues & Blockers
+Honest assessment of any problems, technical debt, or bugs.
+
+#### Next Steps
+Actionable items for the next iteration.
+
+### Example REPORT.md Content
+
+```markdown
+# Workstream Report
+
+## Summary
+Successfully implemented the new Authentication API using Hono. The system now supports JWT-based login and registration, replacing the legacy express handlers. All planned endpoints are functional and tested.
+
+## Accomplishments
+
+### Stage 01: Core Setup
+Initialized the Hono server and configured middleware.
 #### Key Changes
-- Added `src/server.ts` entry point
-- configured `zod` for validation
-```
+- Installed `hono` and `@hono/node-server`
+- Created `src/app.ts` entry point
+- Configured Global Error Handler
 
-### File References
-**Goal**: Map changes to files for easy review.
-- **Table**: List important files and what changed in them.
+### Stage 02: Auth Endpoints
+Implemented login and register routes.
+#### Key Changes
+- Added `POST /api/auth/login`
+- Added `POST /api/auth/register`
+- Implemented Zod validation schemas in `src/validators/auth.ts`
 
-**Example**:
+## File References
 | File | Changes |
 |------|---------|
-| `src/routes/auth.ts` | Added login/register endpoints |
-| `prisma/schema.prisma` | Added User model |
+| `src/app.ts` | Server setup and middleware configuration |
+| `src/routes/auth.ts` | New authentication route handlers |
+| `packages/core/src/types.ts` | Added `AuthPayload` interface |
 
-### Issues & Blockers
-**Goal**: Honest assessment of problems.
-- **Content**: Bugs found, technical debt introduced, or external blockers.
-- **Example**: "The auth middleware currently mocks the token verification. Needs integration with Auth0."
+## Issues & Blockers
+- **Integration**: The user profile service is mocked; needs integration in the next workstream.
+- **Testing**: E2E tests are flaky on CI due to timeout issues.
 
-### Next Steps
-**Goal**: Guide the next iteration.
-- **Content**: What should happen next? (e.g., "Implement real auth", "Add integration tests").
+## Next Steps
+- Integrate with User Profile Service
+- Fix flaky E2E tests
+- Add rate limiting middleware
+```
 
-## 5. Documentation (`docs/`)
+## 4. Additional Documentation
 
-For complex changes that require more than a summary:
+For complex changes that require deep dives (architecture, migration guides, decision records), create separate files in the `docs/` directory.
 
-- **Create files in `docs/`**: e.g., `docs/api-architecture.md`, `docs/migration-guide.md`.
-- **Link them in REPORT.md**: "See `docs/api-architecture.md` for details."
-- **Use for**: Diagrams (Mermaid), deep dives, decision records (ADRs).
+- **Naming**: `docs/topic-name.md`
+- **Linking**: Reference these docs in your `REPORT.md` summary or accomplishments.
 
-## 6. Validate Report
+## 5. Validate Report
 
-Ensure your report is complete before finishing:
+Ensure your report follows the correct format and contains all required sections.
 
 ```bash
 work report validate
 ```
 
-## 7. Complete Evaluation
+If validation fails, fix the issues reported by the tool and try again.
 
-Once `REPORT.md` is complete and validated, the evaluation is done. Present the report summary to the user and ask if they have any questions or want changes.
+## Troubleshooting
 
-The `REPORT.md` file now serves as the permanent record of what was accomplished and what comes next.
+### Common Issues
 
+**`work report validate` fails with "Missing section"**
+- **Cause**: You might have deleted a header or typoed a section title.
+- **Fix**: Ensure `## Summary`, `## Accomplishments`, etc., are exactly as shown in the example.
+
+**`work review commits` shows too many unrelated commits**
+- **Cause**: The workstream might have been long-running or branched incorrectly.
+- **Fix**: Use `git log --oneline --graph` to manually inspect the history, or check specific files with `git diff origin/main...HEAD -- path/to/file`.
+
+**Unsure what to put in "Next Steps"**
+- **Tip**: Look at the original plan for any descope items, or check `TODO` comments left in the code.

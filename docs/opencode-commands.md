@@ -39,10 +39,13 @@ When the **agent** executes `work` commands (as part of its task implementation)
 | `!work list` | List tasks with optional filters | `!work list --tasks --batch "01.01"` |
 | `!work tree` | Show workstream tree structure | `!work tree --batch "01.01"` |
 | `!work approve plan` | Approve a workstream plan | `!work approve plan` |
+| `!work approve tasks` | Approve tasks and generate tasks.json | `!work approve tasks` |
 | `!work approve revision` | Approve a plan revision | `!work approve revision` |
 | `!work start` | Start working on a workstream | `!work start` |
 | `!work complete` | Mark a workstream as complete | `!work complete` |
 | `!work update` | Update task status | `!work update --task "01.01.01.01" --status completed` |
+| `!work report init` | Initialize REPORT.md template | `!work report init` |
+| `!work report validate` | Validate REPORT.md content | `!work report validate` |
 | `!work current` | Show or set current workstream | `!work current` |
 | `!work context` | Show current execution context | `!work context` |
 

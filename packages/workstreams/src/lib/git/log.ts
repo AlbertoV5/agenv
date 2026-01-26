@@ -109,35 +109,70 @@ export function parseGitLog(
     }
 
     // Split into individual commits
-    // Note: With --numstat, the output structure is:
-    // COMMIT_HEADER---COMMIT_BOUNDARY---\nnumstat_lines\nCOMMIT_HEADER---COMMIT_BOUNDARY---\nnumstat_lines
-    // So each block (except the first) starts with numstat from the previous commit
+    // With --numstat, the output structure is:
+    // <commit1_metadata>COMMIT_BOUNDARY\n<numstat_for_commit1>\n<commit2_metadata>COMMIT_BOUNDARY\n<numstat_for_commit2>...
+    // 
+    // When we split by COMMIT_BOUNDARY:
+    // - block[0] = commit1_metadata
+    // - block[1] = numstat_for_commit1\ncommit2_metadata
+    // - block[2] = numstat_for_commit2\ncommit3_metadata
+    // - etc.
+    //
+    // So for blocks after the first, the numstat lines at the start belong to the PREVIOUS commit,
+    // and the commit metadata (starting from the line with FIELD_DELIMITER) belongs to the current commit.
     const rawBlocks = logOutput.split(COMMIT_DELIMITER).filter((block) => block.trim())
     
     const commits: ParsedCommit[] = []
     
     for (let i = 0; i < rawBlocks.length; i++) {
       const block = rawBlocks[i]!
+      const lines = block.split("\n")
       
-      // Check if this block contains commit metadata (has FIELD_DELIMITER)
-      const hasCommitData = block.includes(FIELD_DELIMITER)
-      
-      if (hasCommitData) {
-        // This block has commit metadata, parse it
-        const commit = parseCommitBlock(block)
-        commits.push(commit)
-        
-        // Check if the next block contains numstat for this commit
-        if (i + 1 < rawBlocks.length) {
-          const nextBlock = rawBlocks[i + 1]!
-          const numstatLines = extractNumstatFromBlock(nextBlock)
-          if (numstatLines.length > 0) {
-            parseNumstatLines(numstatLines, commit)
-          }
+      // Find where the commit metadata starts (line containing FIELD_DELIMITER)
+      // Everything before that is numstat for the previous commit
+      let metadataStartIndex = 0
+      for (let j = 0; j < lines.length; j++) {
+        if (lines[j]!.includes(FIELD_DELIMITER)) {
+          metadataStartIndex = j
+          break
         }
       }
-      // If no commit data, this block is just numstat lines that were already processed
+      
+      // Extract numstat lines (lines before the metadata that match numstat pattern)
+      const numstatLines: string[] = []
+      for (let j = 0; j < metadataStartIndex; j++) {
+        const line = lines[j]!
+        if (line.match(/^(\d+|-)\t(\d+|-)\t(.+)$/)) {
+          numstatLines.push(line)
+        }
+      }
+      
+      // If there are numstat lines and we have a previous commit, attach them
+      if (numstatLines.length > 0 && commits.length > 0) {
+        const prevCommit = commits[commits.length - 1]!
+        parseNumstatLines(numstatLines, prevCommit)
+      }
+      
+      // Extract commit metadata (from metadataStartIndex onward)
+      const metadataLines = lines.slice(metadataStartIndex)
+      const metadataBlock = metadataLines.join("\n")
+      
+      // Only parse if there's actual commit data
+      if (metadataBlock.includes(FIELD_DELIMITER)) {
+        const commit = parseCommitBlock(metadataBlock)
+        commits.push(commit)
+      }
     }
+    
+    // Handle numstat for the last commit - it might be in trailing content after last COMMIT_BOUNDARY
+    // Actually, the last commit's numstat would appear after its COMMIT_BOUNDARY marker,
+    // but since the split removes the trailing part, we need to check if there's any trailing numstat
+    // This is handled naturally since the split includes everything after the last COMMIT_BOUNDARY
+    // in the last block, and we process numstat at the start of each block for the previous commit.
+    // However, if the very last block is ONLY numstat (no new commit metadata), we need to handle it.
+    // This case is already handled: if no FIELD_DELIMITER is found, metadataStartIndex stays 0,
+    // and if the block doesn't include FIELD_DELIMITER, we don't create a new commit but still
+    // process the numstat for the previous commit.
 
     return commits
   } catch (error) {

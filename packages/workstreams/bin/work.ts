@@ -37,7 +37,6 @@ import { main as deleteMain } from "../src/cli/delete.ts"
 import { main as filesMain } from "../src/cli/files.ts"
 import { main as currentMain } from "../src/cli/current.ts"
 import { main as setStatusMain } from "../src/cli/set-status.ts"
-import { main as metricsMain } from "../src/cli/metrics.ts"
 import { main as reportMain } from "../src/cli/report.ts"
 import { main as changelogMain } from "../src/cli/changelog.ts"
 import { main as exportMain } from "../src/cli/export.ts"
@@ -114,7 +113,6 @@ const SUBCOMMANDS = {
   preview: previewMain,
   delete: deleteMain,
   files: filesMain,
-  metrics: metricsMain,
   report: reportMain,
   changelog: changelogMain,
   export: exportMain,
@@ -171,8 +169,7 @@ const COMMAND_DESCRIPTIONS: Record<string, string> = {
   validate: "Validate plan structure and content",
   check: "Find unchecked items in plan",
   preview: "Show PLAN.md structure",
-  metrics: "Evaluate workstream metrics and task analysis",
-  report: "Generate progress report",
+  report: "Generate progress report (includes metrics)",
   changelog: "Generate changelog from completed tasks",
   export: "Export workstream data (md, csv, json)",
   serve: "Launch web visualization server",
@@ -232,7 +229,7 @@ Examples:
   work update --task "01.01.01.01" --status completed
   work add-task --stage 01 --Batch 01 --thread 01 --name "Task description"
   work files --save
-  work metrics --blockers
+  work report metrics --blockers
   work report --output report.md
   work export --format csv
 
