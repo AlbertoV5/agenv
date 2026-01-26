@@ -20,7 +20,11 @@ import {
 import {
   loadGitHubConfig,
   createStageApprovalCommit,
+  loadWorkstreamGitHub,
+  saveWorkstreamGitHub,
+  updateStageIssueState,
 } from "../../lib/github/index.ts"
+import { closeThreadIssue } from "../../lib/github/issues.ts"
 import { generateTasksMdFromPlan } from "../../lib/tasks-md.ts"
 import { parseStreamDocument } from "../../lib/stream-parser.ts"
 import { getWorkDir } from "../../lib/repo.ts"
@@ -297,6 +301,67 @@ export async function handlePlanApproval(
         )
       }
 
+      // Check if stage has GitHub issue and close it if --close-issue flag is set
+      let issueCloseResult:
+        | {
+            closed: boolean
+            issueNumber?: number
+            issueUrl?: string
+            error?: string
+          }
+        | undefined
+      
+      if (cliArgs.closeIssue) {
+        const workstreamGitHub = await loadWorkstreamGitHub(repoRoot, updatedStream.id)
+        
+        if (workstreamGitHub) {
+          const stageId = stageNum.toString().padStart(2, "0")
+          const stageIssue = workstreamGitHub.stages[stageId]
+          
+          if (stageIssue && stageIssue.state === "open") {
+            try {
+              // Close the issue on GitHub
+              await closeThreadIssue(repoRoot, updatedStream.id, stageIssue.issue_number)
+              
+              // Update the local github.json with closed_at timestamp
+              updateStageIssueState(
+                workstreamGitHub,
+                stageId,
+                "closed",
+                new Date().toISOString()
+              )
+              await saveWorkstreamGitHub(repoRoot, updatedStream.id, workstreamGitHub)
+              
+              issueCloseResult = {
+                closed: true,
+                issueNumber: stageIssue.issue_number,
+                issueUrl: stageIssue.issue_url,
+              }
+            } catch (error) {
+              issueCloseResult = {
+                closed: false,
+                error: (error as Error).message,
+              }
+            }
+          } else if (stageIssue && stageIssue.state === "closed") {
+            issueCloseResult = {
+              closed: false,
+              error: "Issue already closed",
+            }
+          } else {
+            issueCloseResult = {
+              closed: false,
+              error: "No GitHub issue found for this stage",
+            }
+          }
+        } else {
+          issueCloseResult = {
+            closed: false,
+            error: "No GitHub tracking file found for this workstream",
+          }
+        }
+      }
+
       if (cliArgs.json) {
         console.log(
           JSON.stringify(
@@ -314,6 +379,14 @@ export async function handlePlanApproval(
                     error: commitResult.error,
                   }
                 : undefined,
+              issue: issueCloseResult
+                ? {
+                    closed: issueCloseResult.closed,
+                    issueNumber: issueCloseResult.issueNumber,
+                    issueUrl: issueCloseResult.issueUrl,
+                    error: issueCloseResult.error,
+                  }
+                : undefined,
             },
             null,
             2
@@ -329,6 +402,14 @@ export async function handlePlanApproval(
           console.log(`  No changes to commit`)
         } else if (commitResult?.error) {
           console.log(`  Commit skipped: ${commitResult.error}`)
+        }
+        
+        if (issueCloseResult) {
+          if (issueCloseResult.closed) {
+            console.log(`  Issue closed: #${issueCloseResult.issueNumber} (${issueCloseResult.issueUrl})`)
+          } else if (issueCloseResult.error) {
+            console.log(`  Issue not closed: ${issueCloseResult.error}`)
+          }
         }
       }
     } catch (e) {

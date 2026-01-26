@@ -40,6 +40,7 @@ Options:
   --revoke         Revoke existing approval
   --reason         Reason for revoking approval
   --force, -f      Approve even with validation warnings
+  --close-issue    Close GitHub issue for stage on approval (stage approval only)
   --json, -j       Output as JSON
   --help, -h       Show this help message
 
@@ -159,6 +160,10 @@ function parseCliArgs(argv: string[]): ApproveCliArgs | null {
           return null
         }
         i++
+        break
+
+      case "--close-issue":
+        parsed.closeIssue = true
         break
 
       case "--help":

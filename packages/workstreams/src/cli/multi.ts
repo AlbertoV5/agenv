@@ -309,9 +309,6 @@ function printDryRunOutput(
       console.log(`  Synthesis Models: ${thread.synthesisModels.map((m) => m.model).join(" → ")}`)
     }
     console.log(`  Prompt: ${thread.promptPath}`)
-    if (thread.githubIssue) {
-      console.log(`  Issue: ${thread.githubIssue.url}`)
-    }
   }
 }
 

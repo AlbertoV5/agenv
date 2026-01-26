@@ -374,11 +374,6 @@ export interface Task {
   breadcrumb?: string // Last action/status for recovery
   report?: string // Completion summary (for COMPLETION.md aggregation)
   assigned_agent?: string // Agent assigned to this task
-  github_issue?: {
-    number: number
-    url: string
-    state: "open" | "closed"
-  }
   /**
    * @deprecated Session data is now stored in threads.json.
    * Use ThreadsStore functions (getThreadMetadata, etc.) to access session data.
@@ -591,11 +586,6 @@ export interface AgentsConfig {
 export interface ThreadMetadata {
   threadId: string // Format: "SS.BB.TT" (e.g., "01.01.02")
   sessions: SessionRecord[] // Session history for this thread
-  githubIssue?: {
-    number: number
-    url: string
-    state: "open" | "closed"
-  }
   /**
    * Internal session tracking ID for the thread.
    * Used for internal state management and resume functionality.
@@ -732,11 +722,6 @@ export interface ThreadInfo {
   promptPath: string
   models: NormalizedModelSpec[] // List of models to try in order (working agent models)
   agentName: string
-  githubIssue?: {
-    number: number
-    url: string
-    state: "open" | "closed"
-  }
   // Session tracking (populated before spawn)
   sessionId?: string
   firstTaskId?: string // First task in thread (for session tracking)

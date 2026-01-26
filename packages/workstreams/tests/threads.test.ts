@@ -119,17 +119,12 @@ describe("threads", () => {
         sessions: [],
       })
 
-      // Update with GitHub issue
+      // Update with currentSessionId
       const updated = updateThreadMetadata(repoRoot, streamId, "01.01.01", {
-        githubIssue: {
-          number: 123,
-          url: "https://github.com/test/repo/issues/123",
-          state: "open",
-        },
+        currentSessionId: "session-123",
       })
 
-      expect(updated.githubIssue).toBeDefined()
-      expect(updated.githubIssue!.number).toBe(123)
+      expect(updated.currentSessionId).toBe("session-123")
     })
 
     test("deleteThreadMetadata removes thread", () => {
@@ -393,15 +388,11 @@ describe("threads", () => {
     test("updateThreadMetadataLocked safely updates thread", async () => {
       const thread = await updateThreadMetadataLocked(repoRoot, streamId, "01.01.01", {
         sessions: [],
-        githubIssue: {
-          number: 42,
-          url: "https://github.com/test/repo/issues/42",
-          state: "open",
-        },
+        currentSessionId: "session-42",
       })
 
       expect(thread.threadId).toBe("01.01.01")
-      expect(thread.githubIssue!.number).toBe(42)
+      expect(thread.currentSessionId).toBe("session-42")
     })
 
     test("modifyThreads performs atomic read-modify-write", async () => {
@@ -424,37 +415,24 @@ describe("threads", () => {
     })
   })
 
-  describe("GitHub issue management", () => {
-    test("setThreadGitHubIssue adds issue to thread", () => {
+  describe("GitHub issue management (deprecated)", () => {
+    test("setThreadGitHubIssue is a no-op (deprecated)", () => {
       updateThreadMetadata(repoRoot, streamId, "01.01.01", { sessions: [] })
 
-      const thread = setThreadGitHubIssue(repoRoot, streamId, "01.01.01", {
+      // setThreadGitHubIssue is now a no-op, returns null
+      const result = setThreadGitHubIssue(repoRoot, streamId, "01.01.01", {
         number: 123,
         url: "https://github.com/test/repo/issues/123",
         state: "open",
       })
 
-      expect(thread.githubIssue).toBeDefined()
-      expect(thread.githubIssue!.number).toBe(123)
+      expect(result).toBeNull()
     })
 
-    test("getThreadGitHubIssue retrieves issue", () => {
-      setThreadGitHubIssue(repoRoot, streamId, "01.01.01", {
-        number: 456,
-        url: "https://github.com/test/repo/issues/456",
-        state: "closed",
-      })
-
-      const issue = getThreadGitHubIssue(repoRoot, streamId, "01.01.01")
-
-      expect(issue).not.toBeNull()
-      expect(issue!.number).toBe(456)
-      expect(issue!.state).toBe("closed")
-    })
-
-    test("getThreadGitHubIssue returns null for thread without issue", () => {
+    test("getThreadGitHubIssue returns null (deprecated)", () => {
       updateThreadMetadata(repoRoot, streamId, "01.01.01", { sessions: [] })
 
+      // getThreadGitHubIssue always returns null now
       const issue = getThreadGitHubIssue(repoRoot, streamId, "01.01.01")
       expect(issue).toBeNull()
     })
@@ -488,11 +466,6 @@ describe("threads", () => {
               },
             ],
             currentSessionId: undefined,
-            github_issue: {
-              number: 100,
-              url: "https://github.com/test/repo/issues/100",
-              state: "open",
-            },
           },
           {
             id: "01.01.01.02",
@@ -536,7 +509,7 @@ describe("threads", () => {
 
       expect(result.threadsCreated).toBe(2) // 01.01.01 and 01.01.02
       expect(result.sessionsMigrated).toBe(2) // ses_abc123 and ses_def456
-      expect(result.githubIssuesMigrated).toBe(1) // Issue from first thread
+      // Note: githubIssuesMigrated was removed - issues now stored in github.json
       expect(result.errors).toHaveLength(0)
     })
 
@@ -550,12 +523,10 @@ describe("threads", () => {
 
       expect(thread1).not.toBeNull()
       expect(thread1!.sessions).toHaveLength(2) // Sessions from both tasks in thread
-      expect(thread1!.githubIssue).toBeDefined()
-      expect(thread1!.githubIssue!.number).toBe(100)
+      // Note: githubIssue removed - issues now stored in github.json
 
       expect(thread2).not.toBeNull()
       expect(thread2!.sessions).toHaveLength(0) // Empty sessions array
-      expect(thread2!.githubIssue).toBeUndefined()
     })
 
     test("migrateFromTasksJson preserves currentSessionId", () => {
@@ -653,11 +624,7 @@ describe("threads", () => {
                 status: "running",
               },
             ],
-            githubIssue: {
-              number: 100,
-              url: "https://github.com/test/repo/issues/100",
-              state: "open",
-            },
+            // Note: githubIssue removed - issues now stored in github.json
           },
         ],
       })
@@ -759,11 +726,6 @@ describe("threads", () => {
       // Create thread with various fields
       updateThreadMetadata(repoRoot, streamId, "01.01.01", {
         sessions: [],
-        githubIssue: {
-          number: 42,
-          url: "https://github.com/test/repo/issues/42",
-          state: "open",
-        },
         opencodeSessionId: "ses_opencode_123",
       })
 
@@ -776,7 +738,6 @@ describe("threads", () => {
 
       // Verify other fields are preserved
       const thread = getThreadMetadata(repoRoot, streamId, "01.01.01")
-      expect(thread!.githubIssue!.number).toBe(42)
       expect(thread!.opencodeSessionId).toBe("ses_opencode_123")
       expect(thread!.synthesis!.sessionId).toBe("ses_synth")
     })
@@ -824,11 +785,7 @@ describe("threads", () => {
                 status: "completed" as const,
               },
             ],
-            githubIssue: {
-              number: 100,
-              url: "https://github.com/test/repo/issues/100",
-              state: "open" as const,
-            },
+            // Note: githubIssue removed - issues now stored in github.json
           },
         ],
       }
@@ -838,7 +795,6 @@ describe("threads", () => {
       const thread = getThreadMetadata(repoRoot, streamId, "01.01.01")
       expect(thread).not.toBeNull()
       expect(thread!.sessions).toHaveLength(1)
-      expect(thread!.githubIssue!.number).toBe(100)
 
       // getSynthesisOutput should return null for threads without synthesis
       const synthesis = getSynthesisOutput(repoRoot, streamId, "01.01.01")

@@ -15,6 +15,7 @@ export interface ApproveCliArgs {
   force: boolean
   json: boolean
   stage?: number
+  closeIssue?: boolean
 }
 
 /**
