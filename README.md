@@ -59,7 +59,7 @@ work list --tasks                     # List tasks with status
 work read --task "01.01.01.01"        # Read task details
 work update --task "01.01.01.01" --status completed
 work status                           # Show workstream progress
-work complete                         # Mark workstream as complete
+work complete                         # Mark workstream as complete (requires REPORT.md)
 work serve                            # Launch web visualization
 
 # Metrics and analysis

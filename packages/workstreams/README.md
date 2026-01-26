@@ -655,7 +655,7 @@ export WORKSTREAM_ROLE=USER
 The following commands require `USER` role:
 - `work approve` - Review and approve plans/tasks
 - `work start` - Begin execution (requires approval)
-- `work complete` - Finalize workstream and create PR
+- `work complete` - Finalize workstream and create PR (requires valid REPORT.md)
 
 All other commands (update, list, tree, etc.) are available to both roles.
 

@@ -7,7 +7,9 @@
  */
 
 import { execSync } from "node:child_process"
-import { getRepoRoot } from "../lib/repo.ts"
+import { existsSync } from "node:fs"
+import { join } from "node:path"
+import { getRepoRoot, getWorkDir } from "../lib/repo.ts"
 import { loadIndex, getResolvedStream, saveIndex } from "../lib/index.ts"
 import { completeStream } from "../lib/complete.ts"
 import { consolidateStream } from "../lib/consolidate.ts"
@@ -23,6 +25,7 @@ import { createGitHubClient } from "../lib/github/client.ts"
 import { getGitHubAuth } from "../lib/github/auth.ts"
 import type { StreamMetadata } from "../lib/types.ts"
 import { canExecuteCommand, getRoleDenialMessage } from "../lib/roles.ts"
+import { validateReport } from "../lib/report-template.ts"
 
 interface CompleteStreamCliArgs {
   repoRoot?: string
@@ -32,6 +35,7 @@ interface CompleteStreamCliArgs {
   target?: string
   draft: boolean
   json: boolean
+  force: boolean
 }
 
 function printHelp(): void {
@@ -41,7 +45,7 @@ work complete - Mark a workstream as complete
 Requires: USER role
 
 Usage:
-  work complete [--stream <id>] [--no-commit] [--no-pr] [--target <branch>] [--draft]
+  work complete [--stream <id>] [--no-commit] [--no-pr] [--target <branch>] [--draft] [--force]
 
 Options:
   --stream, -s      Workstream ID or name (uses current if not specified)
@@ -52,8 +56,18 @@ Options:
   --no-pr           Skip creating a pull request
   --target, -t      Target branch for PR (default from config or "main")
   --draft           Create PR as draft
+  --force, -f       Bypass REPORT.md validation (not recommended)
   --json            Output result as JSON
   --help, -h        Show this help message
+
+REPORT.md Requirement:
+  A valid REPORT.md file is required before completing a workstream.
+  The report must have:
+    - Summary section with content
+    - At least one stage accomplishment
+  
+  If missing or invalid, run 'work report init' to create the template.
+  Use --force to bypass validation (completion will succeed with warning).
 
 Git Operations (when --commit is enabled):
   1. Stages all changes with 'git add -A'
@@ -84,6 +98,9 @@ Examples:
 
   # Mark specific workstream complete
   work complete --stream "001-my-stream"
+
+  # Bypass REPORT.md validation (not recommended)
+  work complete --force
 `)
 }
 
@@ -94,6 +111,7 @@ function parseCliArgs(argv: string[]): CompleteStreamCliArgs | null {
     pr: true,
     draft: false,
     json: false,
+    force: false,
   }
 
   for (let i = 0; i < args.length; i++) {
@@ -155,6 +173,11 @@ function parseCliArgs(argv: string[]): CompleteStreamCliArgs | null {
 
       case "--json":
         parsed.json = true
+        break
+
+      case "--force":
+      case "-f":
+        parsed.force = true
         break
 
       case "--help":
@@ -602,6 +625,34 @@ async function validateCompletion(
     }
   }
 
+  // 5. Check for REPORT.md existence and validation (unless --force is used)
+  if (!cliArgs.force) {
+    const workDir = getWorkDir(repoRoot)
+    const reportPath = join(workDir, stream.id, "REPORT.md")
+    
+    if (!existsSync(reportPath)) {
+      errors.push(
+        "REPORT.md is missing. Run 'work report init' to create it, or use --force to bypass.",
+      )
+    } else {
+      // Validate the report content
+      const reportValidation = validateReport(repoRoot, stream.id)
+      
+      if (!reportValidation.valid) {
+        errors.push("REPORT.md validation failed:")
+        for (const error of reportValidation.errors) {
+          errors.push(`  - ${error}`)
+        }
+        errors.push("Fix the issues above or use --force to bypass.")
+      }
+      
+      // Add warnings from report validation
+      for (const warning of reportValidation.warnings) {
+        warnings.push(`REPORT.md: ${warning}`)
+      }
+    }
+  }
+
   // Get task summary for warnings
   const taskSummary = getTaskSummary(repoRoot, stream.id)
   if (taskSummary.inProgress > 0) {
@@ -656,6 +707,25 @@ export async function main(argv: string[] = process.argv): Promise<void> {
   // Validate workstream is ready for completion
   const validation = await validateCompletion(repoRoot, stream, cliArgs)
   const taskSummary = getTaskSummary(repoRoot, stream.id)
+
+  // Show warning if --force was used to bypass REPORT.md validation
+  if (cliArgs.force) {
+    const workDir = getWorkDir(repoRoot)
+    const reportPath = join(workDir, stream.id, "REPORT.md")
+    
+    if (!existsSync(reportPath)) {
+      validation.warnings.push(
+        "WARNING: REPORT.md is missing (bypassed with --force)",
+      )
+    } else {
+      const reportValidation = validateReport(repoRoot, stream.id)
+      if (!reportValidation.valid) {
+        validation.warnings.push(
+          "WARNING: REPORT.md validation failed (bypassed with --force)",
+        )
+      }
+    }
+  }
 
   // Output errors and exit if any
   if (validation.errors.length > 0) {

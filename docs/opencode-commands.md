@@ -42,7 +42,7 @@ When the **agent** executes `work` commands (as part of its task implementation)
 | `!work approve tasks` | Approve tasks and generate tasks.json | `!work approve tasks` |
 | `!work approve revision` | Approve a plan revision | `!work approve revision` |
 | `!work start` | Start working on a workstream | `!work start` |
-| `!work complete` | Mark a workstream as complete | `!work complete` |
+| `!work complete` | Mark a workstream as complete (requires valid REPORT.md) | `!work complete` |
 | `!work update` | Update task status | `!work update --task "01.01.01.01" --status completed` |
 | `!work report init` | Initialize REPORT.md template | `!work report init` |
 | `!work report validate` | Validate REPORT.md content | `!work report validate` |
@@ -82,9 +82,11 @@ When a plan is ready for approval:
 
 ### 4. Completing Work
 
-When you finish a workstream:
+When you finish a workstream, ensure REPORT.md exists and is valid:
 
 ```
+!work report init        # Initialize REPORT.md if needed
+!work report validate    # Validate required sections
 !work status
-!work complete
+!work complete           # Requires valid REPORT.md
 ```
