@@ -3,7 +3,19 @@ agents:
     description: General-purpose implementation agent.
     best_for: Standard development tasks.
     models:
-      [anthropic/claude-sonnet-4-5, openrouter/anthropic/claude-sonnet-4.5]
+      [
+        anthropic/claude-sonnet-4-5,
+        { model: antigravity-claude-sonnet-4-5-thinking, variant: high },
+      ]
+
+  - name: systems-engineer
+    description: Good for complex multi-faceted work.
+    best_for: Architecture, complex systems, solving engineering problems.
+    models:
+      [
+        anthropic/claude-opus-4-5,
+        { model: antigravity-claude-opus-4-5-thinking, variant: high },
+      ]
 
   - name: frontend-speedster
     description: Very efficient and effective frontend coder.
@@ -14,11 +26,6 @@ agents:
         { model: google/antigravity-gemini-3-flash, variant: high },
         google/gemini-3-flash-preview,
       ]
-
-  - name: systems-engineer
-    description: Good for complex multi-faceted work.
-    best_for: Architecture, complex systems, solving engineering problems.
-    models: [anthropic/claude-opus-4-5, openrouter/anthropic/claude-opus-4.5]
 
   - name: code-reviewer
     description: Specialized on code analysis.
