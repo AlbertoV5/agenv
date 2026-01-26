@@ -29,7 +29,7 @@ The notification system is configured via a JSON file located at:
 
 | Event | Description | Default Trigger |
 |-------|-------------|-----------------|
-| `thread_complete` | A single thread (unit of work) finished | `work run`, `work multi` |
+| `thread_complete` | A single thread (unit of work) finished | `work multi` |
 | `batch_complete` | All threads in a batch finished | `work multi` |
 | `error` | An unrecoverable error occurred | Command failure |
 | `on_all_complete` | Entire workstream completed | `work complete` |
