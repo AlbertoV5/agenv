@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-01-25T03:05:42.833Z",
-  "current_stream": "013-opencode-workstream-commands",
+  "last_updated": "2026-01-26T21:26:40.404Z",
+  "current_stream": "014-workstream-review-standardization",
   "streams": [
     {
       "id": "000-web-visualization",
@@ -785,6 +785,44 @@
         "createdAt": "2026-01-25T02:19:12.909Z"
       },
       "status": "completed"
+    },
+    {
+      "id": "014-workstream-review-standardization",
+      "name": "workstream-review-standardization",
+      "order": 14,
+      "size": "medium",
+      "session_estimated": {
+        "length": 4,
+        "unit": "session",
+        "session_minutes": [
+          30,
+          45
+        ],
+        "session_iterations": [
+          4,
+          8
+        ]
+      },
+      "created_at": "2026-01-26T21:20:59.882Z",
+      "updated_at": "2026-01-26T21:26:40.404Z",
+      "path": "work/014-workstream-review-standardization",
+      "generated_by": {
+        "workstreams": "0.1.0"
+      },
+      "approval": {
+        "status": "approved",
+        "approved_at": "2026-01-26T21:23:00.693Z",
+        "approved_by": "user",
+        "plan_hash": "96ef3e8cc8a8835e5f9e18c32fb009fd7fedcb6408e7071e946ce56d7b86de08",
+        "tasks": {
+          "status": "approved",
+          "approved_at": "2026-01-26T21:26:27.052Z",
+          "task_count": 75
+        }
+      },
+      "github": {
+        "branch": "workstream/014-workstream-review-standardization"
+      }
     }
   ]
 }
