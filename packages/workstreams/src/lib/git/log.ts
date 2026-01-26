@@ -12,10 +12,22 @@ import { execSync } from "node:child_process"
  */
 export interface WorkstreamTrailers {
   streamId?: string  // Stream-Id trailer
+  streamName?: string // Stream-Name trailer
   stage?: number     // Stage trailer
+  stageName?: string // Stage-Name trailer
   batch?: string     // Batch trailer (e.g., "01.01")
   thread?: string    // Thread trailer (e.g., "01.01.01")
   task?: string      // Task trailer (e.g., "01.01.01.01")
+}
+
+/**
+ * File change statistics for a commit
+ */
+export interface FileStats {
+  added: number
+  modified: number
+  deleted: number
+  renamed: number
 }
 
 /**
@@ -30,6 +42,7 @@ export interface ParsedCommit {
   subject: string    // First line of commit message
   body: string       // Rest of commit message
   files: string[]    // Changed files
+  fileStats: FileStats // File change statistics
   trailers: WorkstreamTrailers
 }
 
@@ -80,9 +93,9 @@ export function parseGitLog(
   }
 
   try {
-    // Get commit metadata
+    // Get commit metadata with file statistics
     const logOutput = execSync(
-      `git log ${range} --format="${format}${COMMIT_DELIMITER}" --name-only`,
+      `git log ${range} --format="${format}${COMMIT_DELIMITER}" --numstat`,
       {
         cwd: repoRoot,
         encoding: "utf-8",
@@ -96,11 +109,37 @@ export function parseGitLog(
     }
 
     // Split into individual commits
-    const commitBlocks = logOutput
-      .split(COMMIT_DELIMITER)
-      .filter((block) => block.trim())
+    // Note: With --numstat, the output structure is:
+    // COMMIT_HEADER---COMMIT_BOUNDARY---\nnumstat_lines\nCOMMIT_HEADER---COMMIT_BOUNDARY---\nnumstat_lines
+    // So each block (except the first) starts with numstat from the previous commit
+    const rawBlocks = logOutput.split(COMMIT_DELIMITER).filter((block) => block.trim())
+    
+    const commits: ParsedCommit[] = []
+    
+    for (let i = 0; i < rawBlocks.length; i++) {
+      const block = rawBlocks[i]!
+      
+      // Check if this block contains commit metadata (has FIELD_DELIMITER)
+      const hasCommitData = block.includes(FIELD_DELIMITER)
+      
+      if (hasCommitData) {
+        // This block has commit metadata, parse it
+        const commit = parseCommitBlock(block)
+        commits.push(commit)
+        
+        // Check if the next block contains numstat for this commit
+        if (i + 1 < rawBlocks.length) {
+          const nextBlock = rawBlocks[i + 1]!
+          const numstatLines = extractNumstatFromBlock(nextBlock)
+          if (numstatLines.length > 0) {
+            parseNumstatLines(numstatLines, commit)
+          }
+        }
+      }
+      // If no commit data, this block is just numstat lines that were already processed
+    }
 
-    return commitBlocks.map((block) => parseCommitBlock(block))
+    return commits
   } catch (error) {
     const errorMessage = (error as Error).message || String(error)
     // Handle case where branch doesn't exist or no commits
@@ -115,7 +154,59 @@ export function parseGitLog(
 }
 
 /**
+ * Extract numstat lines from a block
+ * Returns array of numstat lines in format: "<added>\t<deleted>\t<filename>"
+ */
+function extractNumstatFromBlock(block: string): string[] {
+  const lines = block.split("\n")
+  const numstatLines: string[] = []
+  
+  for (const line of lines) {
+    if (!line) continue
+    // Numstat lines match pattern: digits/dash, tab, digits/dash, tab, filename
+    if (line.match(/^(\d+|-)\t(\d+|-)\t(.+)$/)) {
+      numstatLines.push(line)
+    }
+  }
+  
+  return numstatLines
+}
+
+/**
+ * Parse numstat lines and update commit's file stats
+ */
+function parseNumstatLines(numstatLines: string[], commit: ParsedCommit): void {
+  for (const line of numstatLines) {
+    const numstatMatch = line.match(/^(\d+|-)\t(\d+|-)\t(.+)$/)
+    if (numstatMatch) {
+      const [, addedStr, deletedStr, filename] = numstatMatch
+      const added = addedStr === "-" ? 0 : parseInt(addedStr!, 10)
+      const deleted = deletedStr === "-" ? 0 : parseInt(deletedStr!, 10)
+      
+      // Track the file
+      commit.files.push(filename!)
+      
+      // Categorize the change
+      if (filename!.includes(" => ")) {
+        // Renamed file (git shows as "old => new")
+        commit.fileStats.renamed++
+      } else if (added > 0 && deleted === 0) {
+        // New file
+        commit.fileStats.added++
+      } else if (added === 0 && deleted > 0) {
+        // Deleted file
+        commit.fileStats.deleted++
+      } else if (added > 0 || deleted > 0) {
+        // Modified file
+        commit.fileStats.modified++
+      }
+    }
+  }
+}
+
+/**
  * Parse a single commit block from git log output
+ * Note: numstat is handled separately by parseNumstatLines()
  */
 function parseCommitBlock(block: string): ParsedCommit {
   const lines = block.trim().split("\n")
@@ -126,15 +217,32 @@ function parseCommitBlock(block: string): ParsedCommit {
 
   const [sha, shortSha, author, authorEmail, date, subject, ...bodyParts] = parts
 
-  // Body may contain FIELD_DELIMITER if commit message has special chars
-  const body = bodyParts.join(FIELD_DELIMITER).trim()
+  // Body may span multiple lines:
+  // - First part is in bodyParts (from the FIELD-delimited line)
+  // - Remaining parts are in subsequent lines (before numstat)
+  const bodyLines: string[] = []
+  
+  // Add the body content from the first line
+  if (bodyParts.length > 0) {
+    bodyLines.push(bodyParts.join(FIELD_DELIMITER))
+  }
+  
+  // Add subsequent lines that are part of the body (not numstat)
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i]
+    // Stop if we hit numstat (format: digits/dash, tab, digits/dash, tab)
+    if (line && line.match(/^(\d+|-)\t(\d+|-)\t/)) {
+      break
+    }
+    // Add this line to the body
+    bodyLines.push(line || "")
+  }
+  
+  const body = bodyLines.join("\n").trim()
 
-  // Remaining lines are file names (from --name-only)
-  // Skip empty lines between metadata and file list
-  const files = lines
-    .slice(1)
-    .filter((line) => line.trim())
-    .filter((line) => !line.includes(FIELD_DELIMITER)) // Skip any metadata remnants
+  // Initialize empty file stats (will be populated by parseNumstatLines)
+  const files: string[] = []
+  const fileStats: FileStats = { added: 0, modified: 0, deleted: 0, renamed: 0 }
 
   // Extract trailers from the body
   const trailers = extractWorkstreamTrailers(body)
@@ -148,6 +256,7 @@ function parseCommitBlock(block: string): ParsedCommit {
     subject: subject || "",
     body,
     files,
+    fileStats,
     trailers,
   }
 }
@@ -160,7 +269,9 @@ function parseCommitBlock(block: string): ParsedCommit {
  *
  * Supported trailers:
  *   - Stream-Id: {streamId}
+ *   - Stream-Name: {streamName}
  *   - Stage: {stageNumber}
+ *   - Stage-Name: {stageName}
  *   - Batch: {batchId}
  *   - Thread: {threadId}
  *   - Task: {taskId}
@@ -189,10 +300,24 @@ export function extractWorkstreamTrailers(commitMessage: string): WorkstreamTrai
       continue
     }
 
+    // Stream-Name trailer
+    const streamNameMatch = trimmed.match(/^Stream-Name:\s*(.+)$/i)
+    if (streamNameMatch) {
+      trailers.streamName = streamNameMatch[1]!.trim()
+      continue
+    }
+
     // Stage trailer
     const stageMatch = trimmed.match(/^Stage:\s*(\d+)$/i)
     if (stageMatch) {
       trailers.stage = parseInt(stageMatch[1]!, 10)
+      continue
+    }
+
+    // Stage-Name trailer
+    const stageNameMatch = trimmed.match(/^Stage-Name:\s*(.+)$/i)
+    if (stageNameMatch) {
+      trailers.stageName = stageNameMatch[1]!.trim()
       continue
     }
 
@@ -250,15 +375,21 @@ export function groupCommitsByStage(
     (commit) => commit.trailers.streamId === streamId
   )
 
-  // Group by stage number
-  const stageMap = new Map<number, ParsedCommit[]>()
+  // Group by stage number and collect stage names
+  const stageMap = new Map<number, { commits: ParsedCommit[], stageName?: string }>()
 
   for (const commit of workstreamCommits) {
     const stageNum = commit.trailers.stage
 
     if (stageNum !== undefined) {
-      const existing = stageMap.get(stageNum) || []
-      existing.push(commit)
+      const existing = stageMap.get(stageNum) || { commits: [], stageName: undefined }
+      existing.commits.push(commit)
+      
+      // Use the first Stage-Name we find for this stage
+      if (!existing.stageName && commit.trailers.stageName) {
+        existing.stageName = commit.trailers.stageName
+      }
+      
       stageMap.set(stageNum, existing)
     }
   }
@@ -266,10 +397,11 @@ export function groupCommitsByStage(
   // Convert to array and sort by stage number
   const result: CommitsByStage[] = []
 
-  for (const [stageNumber, stageCommits] of stageMap.entries()) {
+  for (const [stageNumber, stageData] of stageMap.entries()) {
     result.push({
       stageNumber,
-      commits: stageCommits,
+      stageName: stageData.stageName,
+      commits: stageData.commits,
     })
   }
 

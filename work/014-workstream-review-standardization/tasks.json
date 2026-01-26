@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "stream_id": "014-workstream-review-standardization",
-  "last_updated": "2026-01-26T21:40:15.392Z",
+  "last_updated": "2026-01-26T21:54:22.362Z",
   "tasks": [
     {
       "id": "01.01.01.01",
@@ -12,13 +12,8 @@
       "status": "completed",
       "created_at": "2026-01-26T21:26:26.874Z",
       "updated_at": "2026-01-26T21:29:28.403Z",
-      "assigned_agent": "default",
-      "github_issue": {
-        "number": 64,
-        "url": "https://github.com/AlbertoV5/agenv/issues/64",
-        "state": "closed"
-      },
-      "report": "Added ReportTemplate interface and related types to types.ts with sections for summary, accomplishments by stage, fileReferences, issues, and nextSteps"
+      "report": "Added ReportTemplate interface and related types to types.ts with sections for summary, accomplishments by stage, fileReferences, issues, and nextSteps",
+      "assigned_agent": "default"
     },
     {
       "id": "01.01.01.02",
@@ -29,8 +24,8 @@
       "status": "completed",
       "created_at": "2026-01-26T21:26:26.874Z",
       "updated_at": "2026-01-26T21:29:22.884Z",
-      "assigned_agent": "default",
-      "report": "Created report-template.ts with generateReportTemplate() function that generates REPORT.md skeleton from workstream metadata and stage information from PLAN.md"
+      "report": "Created report-template.ts with generateReportTemplate() function that generates REPORT.md skeleton from workstream metadata and stage information from PLAN.md",
+      "assigned_agent": "default"
     },
     {
       "id": "01.01.01.03",
@@ -41,8 +36,8 @@
       "status": "completed",
       "created_at": "2026-01-26T21:26:26.874Z",
       "updated_at": "2026-01-26T21:29:24.543Z",
-      "assigned_agent": "default",
-      "report": "Added parseReport() function to report-template.ts that parses existing REPORT.md files and extracts all sections (summary, accomplishments by stage, file references, issues, next steps)"
+      "report": "Added parseReport() function to report-template.ts that parses existing REPORT.md files and extracts all sections (summary, accomplishments by stage, file references, issues, next steps)",
+      "assigned_agent": "default"
     },
     {
       "id": "01.01.01.04",
@@ -53,8 +48,8 @@
       "status": "completed",
       "created_at": "2026-01-26T21:26:26.874Z",
       "updated_at": "2026-01-26T21:29:25.788Z",
-      "assigned_agent": "default",
-      "report": "Added validateReport() function to report-template.ts that validates REPORT.md content, checking required sections have content and returning errors/warnings"
+      "report": "Added validateReport() function to report-template.ts that validates REPORT.md content, checking required sections have content and returning errors/warnings",
+      "assigned_agent": "default"
     },
     {
       "id": "01.01.01.05",
@@ -65,8 +60,8 @@
       "status": "completed",
       "created_at": "2026-01-26T21:26:26.874Z",
       "updated_at": "2026-01-26T21:29:26.828Z",
-      "assigned_agent": "default",
-      "report": "Ran 'bun run typecheck' in workstreams package - no type errors found"
+      "report": "Ran 'bun run typecheck' in workstreams package - no type errors found",
+      "assigned_agent": "default"
     },
     {
       "id": "01.01.02.01",
@@ -77,13 +72,8 @@
       "status": "completed",
       "created_at": "2026-01-26T21:26:26.874Z",
       "updated_at": "2026-01-26T21:30:58.214Z",
-      "assigned_agent": "default",
-      "github_issue": {
-        "number": 65,
-        "url": "https://github.com/AlbertoV5/agenv/issues/65",
-        "state": "closed"
-      },
-      "report": "Updated generate.ts to create docs/ directory and docs/README.md template during work create. Updated create.ts help text to mention docs/ directory."
+      "report": "Updated generate.ts to create docs/ directory and docs/README.md template during work create. Updated create.ts help text to mention docs/ directory.",
+      "assigned_agent": "default"
     },
     {
       "id": "01.01.02.02",
@@ -94,8 +84,8 @@
       "status": "completed",
       "created_at": "2026-01-26T21:26:26.874Z",
       "updated_at": "2026-01-26T21:30:56.752Z",
-      "assigned_agent": "default",
-      "report": "docs/README.md template already exists in generate.ts (lines 129-156, 210). Template explains directory purpose: 'Additional documentation that doesn't fit REPORT.md structure' with usage guidelines and organization tips."
+      "report": "docs/README.md template already exists in generate.ts (lines 129-156, 210). Template explains directory purpose: 'Additional documentation that doesn't fit REPORT.md structure' with usage guidelines and organization tips.",
+      "assigned_agent": "default"
     },
     {
       "id": "01.01.02.03",
@@ -106,8 +96,8 @@
       "status": "completed",
       "created_at": "2026-01-26T21:26:26.874Z",
       "updated_at": "2026-01-26T21:28:31.539Z",
-      "assigned_agent": "default",
-      "report": "StreamMetadata type does not need updates. The docs/ path is predictable ({streamPath}/docs) and can be derived when needed, similar to PLAN.md and tasks.json locations."
+      "report": "StreamMetadata type does not need updates. The docs/ path is predictable ({streamPath}/docs) and can be derived when needed, similar to PLAN.md and tasks.json locations.",
+      "assigned_agent": "default"
     },
     {
       "id": "01.01.02.04",
@@ -118,8 +108,8 @@
       "status": "completed",
       "created_at": "2026-01-26T21:26:26.874Z",
       "updated_at": "2026-01-26T21:28:42.648Z",
-      "assigned_agent": "default",
-      "report": "Ran bun run typecheck - no new type errors from docs/ directory changes. Pre-existing errors in agent/tools and scripts are unrelated."
+      "report": "Ran bun run typecheck - no new type errors from docs/ directory changes. Pre-existing errors in agent/tools and scripts are unrelated.",
+      "assigned_agent": "default"
     },
     {
       "id": "01.02.01.01",
@@ -130,13 +120,8 @@
       "status": "completed",
       "created_at": "2026-01-26T21:26:26.874Z",
       "updated_at": "2026-01-26T21:36:18.241Z",
-      "assigned_agent": "default",
-      "github_issue": {
-        "number": 66,
-        "url": "https://github.com/AlbertoV5/agenv/issues/66",
-        "state": "closed"
-      },
-      "report": "Added 'work report init' subcommand to generate REPORT.md template. Modified report.ts to handle init subcommand with validation and error handling."
+      "report": "Added 'work report init' subcommand to generate REPORT.md template. Modified report.ts to handle init subcommand with validation and error handling.",
+      "assigned_agent": "default"
     },
     {
       "id": "01.02.01.02",
@@ -147,8 +132,8 @@
       "status": "completed",
       "created_at": "2026-01-26T21:26:26.874Z",
       "updated_at": "2026-01-26T21:33:24.235Z",
-      "assigned_agent": "default",
-      "report": "Added 'work report validate' subcommand that checks REPORT.md for required sections. Provides errors for missing required content and warnings for optional sections."
+      "report": "Added 'work report validate' subcommand that checks REPORT.md for required sections. Provides errors for missing required content and warnings for optional sections.",
+      "assigned_agent": "default"
     },
     {
       "id": "01.02.01.03",
@@ -159,8 +144,8 @@
       "status": "completed",
       "created_at": "2026-01-26T21:26:26.874Z",
       "updated_at": "2026-01-26T21:34:30.409Z",
-      "assigned_agent": "default",
-      "report": "Updated generate.ts to create REPORT.md template during workstream creation. Added generateReportMdTemplate() function and updated create.ts CLI output."
+      "report": "Updated generate.ts to create REPORT.md template during workstream creation. Added generateReportMdTemplate() function and updated create.ts CLI output.",
+      "assigned_agent": "default"
     },
     {
       "id": "01.02.01.04",
@@ -171,8 +156,8 @@
       "status": "completed",
       "created_at": "2026-01-26T21:26:26.874Z",
       "updated_at": "2026-01-26T21:34:31.741Z",
-      "assigned_agent": "default",
-      "report": "Updated printHelp() in report.ts to document 'init' and 'validate' subcommands with usage examples."
+      "report": "Updated printHelp() in report.ts to document 'init' and 'validate' subcommands with usage examples.",
+      "assigned_agent": "default"
     },
     {
       "id": "01.02.01.05",
@@ -183,8 +168,8 @@
       "status": "completed",
       "created_at": "2026-01-26T21:26:26.874Z",
       "updated_at": "2026-01-26T21:36:16.669Z",
-      "assigned_agent": "default",
-      "report": "Ran 'bun run typecheck' successfully with no errors. Tested 'work report init', 'work report validate', and 'work create' commands. All 604 tests pass."
+      "report": "Ran 'bun run typecheck' successfully with no errors. Tested 'work report init', 'work report validate', and 'work create' commands. All 604 tests pass.",
+      "assigned_agent": "default"
     },
     {
       "id": "01.02.02.01",
@@ -195,13 +180,8 @@
       "status": "completed",
       "created_at": "2026-01-26T21:26:26.874Z",
       "updated_at": "2026-01-26T21:40:15.392Z",
-      "assigned_agent": "documentation-minimalist",
-      "github_issue": {
-        "number": 67,
-        "url": "https://github.com/AlbertoV5/agenv/issues/67",
-        "state": "closed"
-      },
-      "report": "Clarified evaluation task completion step in SKILL.md"
+      "report": "Clarified evaluation task completion step in SKILL.md",
+      "assigned_agent": "documentation-minimalist"
     },
     {
       "id": "01.02.02.02",
@@ -212,8 +192,8 @@
       "status": "completed",
       "created_at": "2026-01-26T21:26:26.874Z",
       "updated_at": "2026-01-26T21:40:15.392Z",
-      "assigned_agent": "documentation-minimalist",
-      "report": "Clarified evaluation task completion step in SKILL.md"
+      "report": "Clarified evaluation task completion step in SKILL.md",
+      "assigned_agent": "documentation-minimalist"
     },
     {
       "id": "01.02.02.03",
@@ -224,8 +204,8 @@
       "status": "completed",
       "created_at": "2026-01-26T21:26:26.874Z",
       "updated_at": "2026-01-26T21:40:15.392Z",
-      "assigned_agent": "documentation-minimalist",
-      "report": "Clarified evaluation task completion step in SKILL.md"
+      "report": "Clarified evaluation task completion step in SKILL.md",
+      "assigned_agent": "documentation-minimalist"
     },
     {
       "id": "01.02.02.04",
@@ -236,8 +216,8 @@
       "status": "completed",
       "created_at": "2026-01-26T21:26:26.874Z",
       "updated_at": "2026-01-26T21:40:15.392Z",
-      "assigned_agent": "documentation-minimalist",
-      "report": "Clarified evaluation task completion step in SKILL.md"
+      "report": "Clarified evaluation task completion step in SKILL.md",
+      "assigned_agent": "documentation-minimalist"
     },
     {
       "id": "02.01.01.01",
@@ -245,15 +225,11 @@
       "stage_name": "Git Commit Improvements",
       "batch_name": "Enhanced Commit Format",
       "thread_name": "Commit Message Trailers",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-26T21:26:26.874Z",
-      "updated_at": "2026-01-26T21:26:26.874Z",
+      "updated_at": "2026-01-26T21:46:24.118Z",
       "assigned_agent": "default",
-      "github_issue": {
-        "number": 68,
-        "url": "https://github.com/AlbertoV5/agenv/issues/68",
-        "state": "open"
-      }
+      "report": "Updated formatStageCommitMessage() signature to accept streamName and stageName, added Stream-Name and Stage-Name trailers to commit message format"
     },
     {
       "id": "02.01.01.02",
@@ -261,10 +237,11 @@
       "stage_name": "Git Commit Improvements",
       "batch_name": "Enhanced Commit Format",
       "thread_name": "Commit Message Trailers",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-26T21:26:26.874Z",
-      "updated_at": "2026-01-26T21:26:26.874Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-26T21:46:25.131Z",
+      "assigned_agent": "default",
+      "report": "Stage-Name trailer added as part of formatStageCommitMessage() update"
     },
     {
       "id": "02.01.01.03",
@@ -272,10 +249,11 @@
       "stage_name": "Git Commit Improvements",
       "batch_name": "Enhanced Commit Format",
       "thread_name": "Commit Message Trailers",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-26T21:26:26.874Z",
-      "updated_at": "2026-01-26T21:26:26.874Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-26T21:46:25.770Z",
+      "assigned_agent": "default",
+      "report": "Function signature updated to accept streamName and stageName parameters"
     },
     {
       "id": "02.01.01.04",
@@ -283,10 +261,11 @@
       "stage_name": "Git Commit Improvements",
       "batch_name": "Enhanced Commit Format",
       "thread_name": "Commit Message Trailers",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-26T21:26:26.874Z",
-      "updated_at": "2026-01-26T21:26:26.874Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-26T21:46:48.676Z",
+      "assigned_agent": "default",
+      "report": "Updated createStageApprovalCommit() to pass stream.name parameter to formatStageCommitMessage(). No other callers found in codebase"
     },
     {
       "id": "02.01.01.05",
@@ -294,10 +273,11 @@
       "stage_name": "Git Commit Improvements",
       "batch_name": "Enhanced Commit Format",
       "thread_name": "Commit Message Trailers",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-26T21:26:26.874Z",
-      "updated_at": "2026-01-26T21:26:26.874Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-26T21:47:07.883Z",
+      "assigned_agent": "default",
+      "report": "Ran typecheck successfully with no errors. Verified commit message format includes Stream-Name and Stage-Name trailers as specified"
     },
     {
       "id": "02.01.02.01",
@@ -305,15 +285,11 @@
       "stage_name": "Git Commit Improvements",
       "batch_name": "Enhanced Commit Format",
       "thread_name": "Trailer Parsing Updates",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-26T21:26:26.874Z",
-      "updated_at": "2026-01-26T21:26:26.874Z",
+      "updated_at": "2026-01-26T21:47:20.772Z",
       "assigned_agent": "default",
-      "github_issue": {
-        "number": 69,
-        "url": "https://github.com/AlbertoV5/agenv/issues/69",
-        "state": "open"
-      }
+      "report": "Updated trailer parsing to support Stream-Name and Stage-Name trailers in log.ts. Fixed date parsing fallback in review.ts formatCommit() with try-catch. All type checks pass."
     },
     {
       "id": "02.01.02.02",
@@ -321,10 +297,11 @@
       "stage_name": "Git Commit Improvements",
       "batch_name": "Enhanced Commit Format",
       "thread_name": "Trailer Parsing Updates",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-26T21:26:26.874Z",
-      "updated_at": "2026-01-26T21:26:26.874Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-26T21:47:20.772Z",
+      "assigned_agent": "default",
+      "report": "Updated trailer parsing to support Stream-Name and Stage-Name trailers in log.ts. Fixed date parsing fallback in review.ts formatCommit() with try-catch. All type checks pass."
     },
     {
       "id": "02.01.02.03",
@@ -332,10 +309,11 @@
       "stage_name": "Git Commit Improvements",
       "batch_name": "Enhanced Commit Format",
       "thread_name": "Trailer Parsing Updates",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-26T21:26:26.874Z",
-      "updated_at": "2026-01-26T21:26:26.874Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-26T21:47:20.772Z",
+      "assigned_agent": "default",
+      "report": "Updated trailer parsing to support Stream-Name and Stage-Name trailers in log.ts. Fixed date parsing fallback in review.ts formatCommit() with try-catch. All type checks pass."
     },
     {
       "id": "02.01.02.04",
@@ -343,10 +321,11 @@
       "stage_name": "Git Commit Improvements",
       "batch_name": "Enhanced Commit Format",
       "thread_name": "Trailer Parsing Updates",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-26T21:26:26.874Z",
-      "updated_at": "2026-01-26T21:26:26.874Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-26T21:47:20.772Z",
+      "assigned_agent": "default",
+      "report": "Updated trailer parsing to support Stream-Name and Stage-Name trailers in log.ts. Fixed date parsing fallback in review.ts formatCommit() with try-catch. All type checks pass."
     },
     {
       "id": "02.02.01.01",
@@ -354,15 +333,11 @@
       "stage_name": "Git Commit Improvements",
       "batch_name": "Review Command Improvements",
       "thread_name": "Enhanced Commit Display",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-26T21:26:26.874Z",
-      "updated_at": "2026-01-26T21:26:26.874Z",
+      "updated_at": "2026-01-26T21:54:22.361Z",
       "assigned_agent": "default",
-      "github_issue": {
-        "number": 70,
-        "url": "https://github.com/AlbertoV5/agenv/issues/70",
-        "state": "open"
-      }
+      "report": "Enhanced commit display with stage names from trailers, file change summaries (+added ~modified -deleted →renamed), and directory-grouped file listing. Fixed git log parsing to properly extract multi-line commit bodies and numstat file statistics"
     },
     {
       "id": "02.02.01.02",
@@ -370,10 +345,11 @@
       "stage_name": "Git Commit Improvements",
       "batch_name": "Review Command Improvements",
       "thread_name": "Enhanced Commit Display",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-26T21:26:26.874Z",
-      "updated_at": "2026-01-26T21:26:26.874Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-26T21:54:22.361Z",
+      "assigned_agent": "default",
+      "report": "Enhanced commit display with stage names from trailers, file change summaries (+added ~modified -deleted →renamed), and directory-grouped file listing. Fixed git log parsing to properly extract multi-line commit bodies and numstat file statistics"
     },
     {
       "id": "02.02.01.03",
@@ -381,10 +357,11 @@
       "stage_name": "Git Commit Improvements",
       "batch_name": "Review Command Improvements",
       "thread_name": "Enhanced Commit Display",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-26T21:26:26.874Z",
-      "updated_at": "2026-01-26T21:26:26.874Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-26T21:54:22.361Z",
+      "assigned_agent": "default",
+      "report": "Enhanced commit display with stage names from trailers, file change summaries (+added ~modified -deleted →renamed), and directory-grouped file listing. Fixed git log parsing to properly extract multi-line commit bodies and numstat file statistics"
     },
     {
       "id": "02.02.01.04",
@@ -392,10 +369,11 @@
       "stage_name": "Git Commit Improvements",
       "batch_name": "Review Command Improvements",
       "thread_name": "Enhanced Commit Display",
-      "status": "pending",
+      "status": "completed",
       "created_at": "2026-01-26T21:26:26.874Z",
-      "updated_at": "2026-01-26T21:26:26.874Z",
-      "assigned_agent": "default"
+      "updated_at": "2026-01-26T21:54:22.361Z",
+      "assigned_agent": "default",
+      "report": "Enhanced commit display with stage names from trailers, file change summaries (+added ~modified -deleted →renamed), and directory-grouped file listing. Fixed git log parsing to properly extract multi-line commit bodies and numstat file statistics"
     },
     {
       "id": "03.01.01.01",
@@ -406,12 +384,7 @@
       "status": "pending",
       "created_at": "2026-01-26T21:26:26.874Z",
       "updated_at": "2026-01-26T21:26:26.874Z",
-      "assigned_agent": "systems-engineer",
-      "github_issue": {
-        "number": 71,
-        "url": "https://github.com/AlbertoV5/agenv/issues/71",
-        "state": "open"
-      }
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "03.01.01.02",
@@ -477,12 +450,7 @@
       "status": "pending",
       "created_at": "2026-01-26T21:26:26.874Z",
       "updated_at": "2026-01-26T21:26:26.874Z",
-      "assigned_agent": "systems-engineer",
-      "github_issue": {
-        "number": 72,
-        "url": "https://github.com/AlbertoV5/agenv/issues/72",
-        "state": "open"
-      }
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "03.01.02.02",
@@ -537,12 +505,7 @@
       "status": "pending",
       "created_at": "2026-01-26T21:26:26.874Z",
       "updated_at": "2026-01-26T21:26:26.874Z",
-      "assigned_agent": "systems-engineer",
-      "github_issue": {
-        "number": 73,
-        "url": "https://github.com/AlbertoV5/agenv/issues/73",
-        "state": "open"
-      }
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "03.02.01.02",
@@ -608,12 +571,7 @@
       "status": "pending",
       "created_at": "2026-01-26T21:26:26.874Z",
       "updated_at": "2026-01-26T21:26:26.874Z",
-      "assigned_agent": "systems-engineer",
-      "github_issue": {
-        "number": 74,
-        "url": "https://github.com/AlbertoV5/agenv/issues/74",
-        "state": "open"
-      }
+      "assigned_agent": "systems-engineer"
     },
     {
       "id": "03.02.02.02",
@@ -679,12 +637,7 @@
       "status": "pending",
       "created_at": "2026-01-26T21:26:26.874Z",
       "updated_at": "2026-01-26T21:26:26.874Z",
-      "assigned_agent": "default",
-      "github_issue": {
-        "number": 75,
-        "url": "https://github.com/AlbertoV5/agenv/issues/75",
-        "state": "open"
-      }
+      "assigned_agent": "default"
     },
     {
       "id": "03.02.03.02",
@@ -728,12 +681,7 @@
       "status": "pending",
       "created_at": "2026-01-26T21:26:26.874Z",
       "updated_at": "2026-01-26T21:26:26.874Z",
-      "assigned_agent": "documentation-minimalist",
-      "github_issue": {
-        "number": 76,
-        "url": "https://github.com/AlbertoV5/agenv/issues/76",
-        "state": "open"
-      }
+      "assigned_agent": "documentation-minimalist"
     },
     {
       "id": "04.01.01.02",
@@ -777,12 +725,7 @@
       "status": "pending",
       "created_at": "2026-01-26T21:26:26.874Z",
       "updated_at": "2026-01-26T21:26:26.874Z",
-      "assigned_agent": "documentation-minimalist",
-      "github_issue": {
-        "number": 77,
-        "url": "https://github.com/AlbertoV5/agenv/issues/77",
-        "state": "open"
-      }
+      "assigned_agent": "documentation-minimalist"
     },
     {
       "id": "04.01.02.02",
@@ -826,12 +769,7 @@
       "status": "pending",
       "created_at": "2026-01-26T21:26:26.874Z",
       "updated_at": "2026-01-26T21:26:26.874Z",
-      "assigned_agent": "code-reviewer",
-      "github_issue": {
-        "number": 78,
-        "url": "https://github.com/AlbertoV5/agenv/issues/78",
-        "state": "open"
-      }
+      "assigned_agent": "code-reviewer"
     },
     {
       "id": "04.02.01.02",
@@ -886,12 +824,7 @@
       "status": "pending",
       "created_at": "2026-01-26T21:26:26.874Z",
       "updated_at": "2026-01-26T21:26:26.874Z",
-      "assigned_agent": "documentation-minimalist",
-      "github_issue": {
-        "number": 79,
-        "url": "https://github.com/AlbertoV5/agenv/issues/79",
-        "state": "open"
-      }
+      "assigned_agent": "documentation-minimalist"
     },
     {
       "id": "04.02.02.02",
@@ -925,6 +858,83 @@
       "created_at": "2026-01-26T21:26:26.874Z",
       "updated_at": "2026-01-26T21:26:26.874Z",
       "assigned_agent": "documentation-minimalist"
+    },
+    {
+      "id": "05.01.01.01",
+      "name": "In `packages/workstreams/src/cli/complete.ts`, add check for REPORT.md existence before completing workstream",
+      "stage_name": "Revision - Report Validation on Complete",
+      "batch_name": "Complete Command Validation",
+      "thread_name": "Add Report Check to Complete",
+      "status": "pending",
+      "created_at": "2026-01-26T21:45:05.534Z",
+      "updated_at": "2026-01-26T21:45:05.534Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "05.01.01.02",
+      "name": "Import and use `validateReport()` from report-template.ts to check REPORT.md has required sections filled",
+      "stage_name": "Revision - Report Validation on Complete",
+      "batch_name": "Complete Command Validation",
+      "thread_name": "Add Report Check to Complete",
+      "status": "pending",
+      "created_at": "2026-01-26T21:45:05.534Z",
+      "updated_at": "2026-01-26T21:45:05.534Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "05.01.01.03",
+      "name": "If REPORT.md is missing, show error message with instructions to run `work report init`",
+      "stage_name": "Revision - Report Validation on Complete",
+      "batch_name": "Complete Command Validation",
+      "thread_name": "Add Report Check to Complete",
+      "status": "pending",
+      "created_at": "2026-01-26T21:45:05.534Z",
+      "updated_at": "2026-01-26T21:45:05.534Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "05.01.01.04",
+      "name": "If REPORT.md validation fails, show specific errors about which sections need content",
+      "stage_name": "Revision - Report Validation on Complete",
+      "batch_name": "Complete Command Validation",
+      "thread_name": "Add Report Check to Complete",
+      "status": "pending",
+      "created_at": "2026-01-26T21:45:05.534Z",
+      "updated_at": "2026-01-26T21:45:05.534Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "05.01.01.05",
+      "name": "Add `--force` flag to bypass REPORT.md validation (with warning that report is incomplete)",
+      "stage_name": "Revision - Report Validation on Complete",
+      "batch_name": "Complete Command Validation",
+      "thread_name": "Add Report Check to Complete",
+      "status": "pending",
+      "created_at": "2026-01-26T21:45:05.534Z",
+      "updated_at": "2026-01-26T21:45:05.534Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "05.01.01.06",
+      "name": "Update help text in complete.ts to document REPORT.md requirement and --force flag",
+      "stage_name": "Revision - Report Validation on Complete",
+      "batch_name": "Complete Command Validation",
+      "thread_name": "Add Report Check to Complete",
+      "status": "pending",
+      "created_at": "2026-01-26T21:45:05.534Z",
+      "updated_at": "2026-01-26T21:45:05.534Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "05.01.01.07",
+      "name": "Run `bun run typecheck` and test `work complete` with and without valid REPORT.md",
+      "stage_name": "Revision - Report Validation on Complete",
+      "batch_name": "Complete Command Validation",
+      "thread_name": "Add Report Check to Complete",
+      "status": "pending",
+      "created_at": "2026-01-26T21:45:05.534Z",
+      "updated_at": "2026-01-26T21:45:05.534Z",
+      "assigned_agent": "default"
     }
   ]
 }

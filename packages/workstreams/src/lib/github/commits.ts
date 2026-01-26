@@ -24,15 +24,19 @@ export interface StageCommitResult {
  * Format: "Stage {stageNum} approved: {stageName}"
  * With trailers:
  *   Stream-Id: {streamId}
+ *   Stream-Name: {streamName}
  *   Stage: {stageNum}
+ *   Stage-Name: {stageName}
  *
  * @param streamId The workstream ID
+ * @param streamName The workstream name
  * @param stageNum The stage number being approved
  * @param stageName The name of the stage
  * @returns Formatted commit message with trailers
  */
 export function formatStageCommitMessage(
   streamId: string,
+  streamName: string,
   stageNum: number,
   stageName: string
 ): { title: string; body: string } {
@@ -41,7 +45,9 @@ export function formatStageCommitMessage(
     `Approved stage ${stageNum} of workstream ${streamId}.`,
     "",
     `Stream-Id: ${streamId}`,
+    `Stream-Name: ${streamName}`,
     `Stage: ${stageNum}`,
+    `Stage-Name: ${stageName}`,
   ].join("\n")
 
   return { title, body }
@@ -107,7 +113,7 @@ export function createStageApprovalCommit(
     }
 
     // Format the commit message
-    const { title, body } = formatStageCommitMessage(stream.id, stageNum, stageName)
+    const { title, body } = formatStageCommitMessage(stream.id, stream.name, stageNum, stageName)
 
     // Create the commit
     // Escape double quotes in body for shell
