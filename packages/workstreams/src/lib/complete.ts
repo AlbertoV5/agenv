@@ -10,7 +10,6 @@ import { setNestedField, getNestedField, parseValue } from "./utils.ts"
 import { getWorkDir } from "./repo.ts"
 import { getTasks } from "./tasks.ts"
 import { evaluateStream } from "./metrics.ts"
-import { getFilesRecursively } from "./files.ts"
 
 export interface CompleteStreamArgs {
   repoRoot: string
@@ -63,8 +62,8 @@ export function completeStream(args: CompleteStreamArgs): CompleteStreamResult {
 }
 
 /**
- * Generate a COMPLETION.md summary for a workstream
- * Aggregates task reports by stage/batch/thread hierarchy
+ * Generate a METRICS.md summary for a workstream
+ * Contains stream ID, completion timestamp, and task metrics
  */
 export function generateCompletionMd(args: {
   repoRoot: string
@@ -80,79 +79,9 @@ export function generateCompletionMd(args: {
   const streamDir = join(workDir, stream.id)
   const tasks = getTasks(args.repoRoot, stream.id)
   const metrics = evaluateStream(args.repoRoot, stream.id)
-  const filesDir = join(streamDir, "files")
-  const files = getFilesRecursively(filesDir, filesDir)
-
-  // Group tasks by stage, batch, thread
-  const grouped = groupTasksByHierarchy(tasks)
-
-  const lines: string[] = []
-  lines.push(`# Completion: ${stream.name}`)
-  lines.push("")
-  lines.push(`**Stream ID:** \`${stream.id}\``)
-  lines.push(`**Completed At:** ${new Date().toISOString()}`)
-  lines.push("")
-
-  lines.push("## Accomplishments")
-  lines.push("")
-
-  if (grouped.size === 0) {
-    lines.push("_No tasks found._")
-  } else {
-    // Iterate through stages
-    const sortedStages = Array.from(grouped.keys()).sort()
-    for (const stageName of sortedStages) {
-      const stageMap = grouped.get(stageName)!
-      lines.push(`### ${stageName}`)
-      lines.push("")
-
-      // Iterate through batches
-      const sortedBatches = Array.from(stageMap.keys()).sort()
-      for (const batchName of sortedBatches) {
-        const batchMap = stageMap.get(batchName)!
-        lines.push(`#### ${batchName}`)
-        lines.push("")
-
-        // Iterate through threads
-        const sortedThreads = Array.from(batchMap.keys()).sort()
-        for (const threadName of sortedThreads) {
-          const threadTasks = batchMap.get(threadName)!
-          lines.push(`**Thread: ${threadName}**`)
-
-          // Sort tasks by ID
-          threadTasks.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }))
-
-          for (const task of threadTasks) {
-            const icon = getStatusIcon(task.status)
-            lines.push(`- ${icon} ${task.name}`)
-            if (task.report) {
-              lines.push(`  > ${task.report}`)
-            }
-          }
-          lines.push("")
-        }
-      }
-    }
-  }
-
-  lines.push("## Key Insights")
-  lines.push("- (Add insights and learnings here)")
-  lines.push("")
-
-  lines.push("## File References")
-  if (files.length > 0) {
-    lines.push("| File | Size |")
-    lines.push("|------|------|")
-    files.sort((a, b) => a.path.localeCompare(b.path))
-    for (const file of files) {
-      lines.push(`| [files/${file.path}](files/${file.path}) | ${formatSize(file.size)} |`)
-    }
-  } else {
-    lines.push("_No files found in the output directory._")
-  }
-  lines.push("")
 
   // Count unique stages, batches, threads
+  const grouped = groupTasksByHierarchy(tasks)
   let stageCount = 0
   let batchCount = 0
   let threadCount = 0
@@ -164,22 +93,35 @@ export function generateCompletionMd(args: {
     }
   }
 
-  lines.push("## Metrics")
-  lines.push(`- **Tasks:** ${metrics.statusCounts.completed}/${metrics.totalTasks} completed`)
-  lines.push(`- **Stages:** ${stageCount}`)
-  lines.push(`- **Batches:** ${batchCount}`)
-  lines.push(`- **Threads:** ${threadCount}`)
-  lines.push(`- **Completion Rate:** ${metrics.completionRate.toFixed(1)}%`)
-  lines.push(`- **Status Breakdown:**`)
-  lines.push(`  - Completed: ${metrics.statusCounts.completed}`)
-  lines.push(`  - In Progress: ${metrics.statusCounts.in_progress}`)
-  lines.push(`  - Pending: ${metrics.statusCounts.pending}`)
-  lines.push(`  - Blocked: ${metrics.statusCounts.blocked}`)
-  lines.push(`  - Cancelled: ${metrics.statusCounts.cancelled}`)
+  const lines: string[] = []
+  lines.push(`# Metrics: ${stream.name}`)
+  lines.push("")
+  lines.push(`**Stream ID:** \`${stream.id}\``)
+  lines.push(`**Completed At:** ${new Date().toISOString()}`)
+  lines.push("")
+  lines.push("## Summary")
+  lines.push("")
+  lines.push(`| Metric | Value |`)
+  lines.push(`|--------|-------|`)
+  lines.push(`| Tasks | ${metrics.statusCounts.completed}/${metrics.totalTasks} |`)
+  lines.push(`| Completion Rate | ${metrics.completionRate.toFixed(1)}% |`)
+  lines.push(`| Stages | ${stageCount} |`)
+  lines.push(`| Batches | ${batchCount} |`)
+  lines.push(`| Threads | ${threadCount} |`)
+  lines.push("")
+  lines.push("## Status Breakdown")
+  lines.push("")
+  lines.push(`| Status | Count |`)
+  lines.push(`|--------|-------|`)
+  lines.push(`| Completed | ${metrics.statusCounts.completed} |`)
+  lines.push(`| In Progress | ${metrics.statusCounts.in_progress} |`)
+  lines.push(`| Pending | ${metrics.statusCounts.pending} |`)
+  lines.push(`| Blocked | ${metrics.statusCounts.blocked} |`)
+  lines.push(`| Cancelled | ${metrics.statusCounts.cancelled} |`)
   lines.push("")
 
   const content = lines.join("\n")
-  const outputPath = join(streamDir, "COMPLETION.md")
+  const outputPath = join(streamDir, "METRICS.md")
   writeFileSync(outputPath, content)
 
   return outputPath
@@ -217,28 +159,7 @@ function groupTasksByHierarchy(
   return grouped
 }
 
-function getStatusIcon(status: string): string {
-  switch (status) {
-    case "completed":
-      return "✓"
-    case "in_progress":
-      return "◐"
-    case "pending":
-      return "○"
-    case "blocked":
-      return "✗"
-    case "cancelled":
-      return "−"
-    default:
-      return "?"
-  }
-}
 
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes}B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)}MB`
-}
 
 export interface UpdateIndexFieldArgs {
   repoRoot: string

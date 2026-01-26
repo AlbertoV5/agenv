@@ -772,7 +772,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
 
     console.log(`Marked workstream "${result.streamId}" as complete`)
     console.log(`   Completed at: ${result.completedAt}`)
-    console.log(`   Report:       ${result.completionPath}`)
+    console.log(`   Metrics:      ${result.completionPath}`)
 
     // Handle git operations if --commit is enabled
     if (cliArgs.commit) {
