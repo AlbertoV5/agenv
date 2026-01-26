@@ -507,6 +507,51 @@ export interface ChangelogEntry {
 export type ExportFormat = "md" | "csv" | "json"
 
 // ============================================
+// REPORT TEMPLATE TYPES
+// ============================================
+
+/**
+ * File reference in a report - describes changes made to a file
+ */
+export interface ReportFileReference {
+  path: string
+  changes: string
+}
+
+/**
+ * Accomplishment for a stage - groups key changes
+ */
+export interface ReportStageAccomplishment {
+  stageNumber: number
+  stageName: string
+  description: string
+  keyChanges: string[]
+}
+
+/**
+ * Parsed sections from a REPORT.md file
+ */
+export interface ReportTemplate {
+  streamId: string
+  streamName: string
+  reportedDate: string
+  summary: string
+  accomplishments: ReportStageAccomplishment[]
+  fileReferences: ReportFileReference[]
+  issues: string
+  nextSteps: string
+}
+
+/**
+ * Validation result for a REPORT.md file
+ */
+export interface ReportValidation {
+  valid: boolean
+  errors: string[]
+  warnings: string[]
+}
+
+// ============================================
 // AGENTS CONFIGURATION TYPES
 // ============================================
 

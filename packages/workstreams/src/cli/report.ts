@@ -5,17 +5,23 @@
  * Supports both full workstream reports and stage-specific reports.
  */
 
-import { writeFileSync } from "fs"
-import { getRepoRoot } from "../lib/repo.ts"
-import { loadIndex, resolveStreamId, findStream } from "../lib/index.ts"
+import { writeFileSync, existsSync } from "fs"
+import { join } from "path"
+import { getRepoRoot, getWorkDir } from "../lib/repo.ts"
+import { loadIndex, resolveStreamId, findStream, atomicWriteFile } from "../lib/index.ts"
 import { generateReport, formatReportMarkdown } from "../lib/document.ts"
 import {
   generateStageReport,
   formatStageReportMarkdown,
   saveStageReport,
 } from "../lib/reports.ts"
+import {
+  generateReportTemplate,
+  validateReport,
+} from "../lib/report-template.ts"
 
 interface ReportCliArgs {
+  subcommand?: "init" | "validate"
   repoRoot?: string
   streamId?: string
   stage?: string
@@ -27,10 +33,15 @@ interface ReportCliArgs {
 
 function printHelp(): void {
   console.log(`
-work report - Generate progress report
+work report - Generate and validate workstream reports
 
 Usage:
-  work report [options]
+  work report [subcommand] [options]
+
+Subcommands:
+  init             Generate REPORT.md template for an existing workstream
+  validate         Validate REPORT.md has required sections filled
+  (none)           Generate progress report (default behavior)
 
 Options:
   --repo-root, -r  Repository root (auto-detected if omitted)
@@ -43,6 +54,18 @@ Options:
   --help, -h       Show this help message
 
 Examples:
+  # Generate REPORT.md template for current workstream
+  work report init
+
+  # Generate REPORT.md template for specific workstream
+  work report init --stream "001-my-stream"
+
+  # Validate REPORT.md for current workstream
+  work report validate
+
+  # Validate REPORT.md for specific workstream
+  work report validate --stream "001-my-stream"
+
   # Current workstream report
   work report
 
@@ -73,6 +96,16 @@ function parseCliArgs(argv: string[]): ReportCliArgs | null {
     all: false,
     json: false,
     save: false,
+  }
+
+  // Check for subcommand as first argument
+  if (args.length > 0 && !args[0]?.startsWith("-")) {
+    const subcommand = args[0]
+    if (subcommand === "init" || subcommand === "validate") {
+      parsed.subcommand = subcommand
+      // Remove subcommand from args for remaining parsing
+      args.shift()
+    }
   }
 
   for (let i = 0; i < args.length; i++) {
@@ -144,6 +177,97 @@ function parseCliArgs(argv: string[]): ReportCliArgs | null {
   return parsed
 }
 
+/**
+ * Handle 'work report init' subcommand
+ * Generates REPORT.md template for an existing workstream
+ */
+function handleInit(repoRoot: string, streamId: string): void {
+  const index = loadIndex(repoRoot)
+  const stream = findStream(index, streamId)
+  if (!stream) {
+    console.error(`Error: Workstream "${streamId}" not found`)
+    process.exit(1)
+  }
+
+  const workDir = getWorkDir(repoRoot)
+  const reportPath = join(workDir, stream.id, "REPORT.md")
+
+  // Check if REPORT.md already exists
+  if (existsSync(reportPath)) {
+    console.error(`Error: REPORT.md already exists at ${reportPath}`)
+    console.error("Use --force to overwrite (not implemented yet)")
+    process.exit(1)
+  }
+
+  try {
+    const template = generateReportTemplate(repoRoot, streamId)
+    atomicWriteFile(reportPath, template)
+    console.log(`Created REPORT.md template: ${reportPath}`)
+    console.log("")
+    console.log("Next steps:")
+    console.log("  1. Fill in the Summary section with a high-level overview")
+    console.log("  2. Document accomplishments for each stage")
+    console.log("  3. Add file references with changes made")
+    console.log("  4. Run: work report validate")
+  } catch (error) {
+    console.error(`Error: ${error instanceof Error ? error.message : String(error)}`)
+    process.exit(1)
+  }
+}
+
+/**
+ * Handle 'work report validate' subcommand
+ * Validates REPORT.md has required sections filled
+ */
+function handleValidate(repoRoot: string, streamId: string): void {
+  const index = loadIndex(repoRoot)
+  const stream = findStream(index, streamId)
+  if (!stream) {
+    console.error(`Error: Workstream "${streamId}" not found`)
+    process.exit(1)
+  }
+
+  const workDir = getWorkDir(repoRoot)
+  const reportPath = join(workDir, stream.id, "REPORT.md")
+
+  // Check if REPORT.md exists
+  if (!existsSync(reportPath)) {
+    console.error(`Error: REPORT.md not found at ${reportPath}`)
+    console.error("Run 'work report init' to create a template")
+    process.exit(1)
+  }
+
+  try {
+    const validation = validateReport(repoRoot, streamId)
+
+    if (validation.valid) {
+      console.log("✓ REPORT.md validation passed")
+      if (validation.warnings.length > 0) {
+        console.log("\nWarnings:")
+        for (const warning of validation.warnings) {
+          console.log(`  ⚠ ${warning}`)
+        }
+      }
+    } else {
+      console.log("✗ REPORT.md validation failed")
+      console.log("\nErrors:")
+      for (const error of validation.errors) {
+        console.log(`  ✗ ${error}`)
+      }
+      if (validation.warnings.length > 0) {
+        console.log("\nWarnings:")
+        for (const warning of validation.warnings) {
+          console.log(`  ⚠ ${warning}`)
+        }
+      }
+      process.exit(1)
+    }
+  } catch (error) {
+    console.error(`Error: ${error instanceof Error ? error.message : String(error)}`)
+    process.exit(1)
+  }
+}
+
 export function main(argv: string[] = process.argv): void {
   const cliArgs = parseCliArgs(argv)
   if (!cliArgs) {
@@ -175,6 +299,29 @@ export function main(argv: string[] = process.argv): void {
 
   // Resolve stream ID first (needed for stage reports too)
   const resolvedStreamId = resolveStreamId(index, cliArgs.streamId)
+
+  // Handle subcommands: init and validate
+  if (cliArgs.subcommand === "init") {
+    if (!resolvedStreamId) {
+      console.error(
+        "Error: No workstream specified. Use --stream or set current with 'work current --set'",
+      )
+      process.exit(1)
+    }
+    handleInit(repoRoot, resolvedStreamId)
+    return
+  }
+
+  if (cliArgs.subcommand === "validate") {
+    if (!resolvedStreamId) {
+      console.error(
+        "Error: No workstream specified. Use --stream or set current with 'work current --set'",
+      )
+      process.exit(1)
+    }
+    handleValidate(repoRoot, resolvedStreamId)
+    return
+  }
 
   // Handle --stage flag: generate stage-specific report
   if (cliArgs.stage) {

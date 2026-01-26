@@ -1,0 +1,87 @@
+{
+  "version": "1.0.0",
+  "stream_id": "",
+  "last_updated": "2026-01-26T21:31:45.194Z",
+  "threads": [
+    {
+      "threadId": "01.01.01",
+      "sessions": [
+        {
+          "sessionId": "ses_mkvohepp_uv8r0k",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-26T21:27:11.296Z",
+          "status": "completed",
+          "completedAt": "2026-01-26T21:30:17.580Z"
+        },
+        {
+          "sessionId": "ses_mkvolhpa_fcoydj",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-26T21:30:21.793Z",
+          "status": "completed",
+          "completedAt": "2026-01-26T21:31:33.870Z"
+        }
+      ],
+      "opencodeSessionId": "ses_403c8f856ffeQryfVtzH4u3CrY",
+      "synthesis": {
+        "sessionId": "synthesis-01.01.01-1769463093870",
+        "output": "Implemented the `ReportTemplate` interface in `types.ts` and created the `report-template.ts` module providing functions for template generation, parsing, and validation. The system dynamically generates `REPORT.md` structures from `PLAN.md` and uses the marked lexer for robust extraction of accomplishments and file references. All tasks were successfully completed and verified through type checking.",
+        "completedAt": "2026-01-26T21:31:33.870Z"
+      }
+    },
+    {
+      "threadId": "01.01.02",
+      "sessions": [
+        {
+          "sessionId": "ses_mkvohepp_47rfrv",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-26T21:27:11.296Z",
+          "status": "completed",
+          "completedAt": "2026-01-26T21:30:17.580Z"
+        },
+        {
+          "sessionId": "ses_mkvolhpa_dcyk7h",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-26T21:30:21.793Z",
+          "status": "completed",
+          "completedAt": "2026-01-26T21:31:33.870Z"
+        }
+      ],
+      "opencodeSessionId": "ses_403c8f40bffeuFY1XiKY13QIuI",
+      "synthesis": {
+        "sessionId": "synthesis-01.01.02-1769463093871",
+        "output": "Verified the implementation of the `docs/` directory structure in the workstream system, confirming that `docs/` creation and the `README.md` template were already present in `generate.ts`. Ran type checks to ensure system stability and marked all related tasks as completed, closing GitHub issue #65.",
+        "completedAt": "2026-01-26T21:31:33.871Z"
+      }
+    },
+    {
+      "threadId": "01.02.01",
+      "sessions": [
+        {
+          "sessionId": "ses_mkvona1y_72qq82",
+          "agentName": "default",
+          "model": "anthropic/claude-sonnet-4-5",
+          "startedAt": "2026-01-26T21:31:45.194Z",
+          "status": "running"
+        }
+      ],
+      "currentSessionId": "ses_mkvona1y_72qq82"
+    },
+    {
+      "threadId": "01.02.02",
+      "sessions": [
+        {
+          "sessionId": "ses_mkvona1y_5ycsm2",
+          "agentName": "documentation-minimalist",
+          "model": "google/gemini-3-pro-preview",
+          "startedAt": "2026-01-26T21:31:45.194Z",
+          "status": "running"
+        }
+      ],
+      "currentSessionId": "ses_mkvona1y_5ycsm2"
+    }
+  ]
+}

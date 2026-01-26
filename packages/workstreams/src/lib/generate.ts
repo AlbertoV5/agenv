@@ -4,9 +4,9 @@
  * Creates workstream directories with PLAN.md and tasks.json files.
  */
 
-import { existsSync, mkdirSync } from "fs"
+import { existsSync, mkdirSync, readFileSync } from "fs"
 import { join } from "path"
-import type { StreamMetadata, GeneratedBy, TasksFile } from "./types.ts"
+import type { StreamMetadata, GeneratedBy, TasksFile, ConsolidateError } from "./types.ts"
 import { VERSION as WORKSTREAMS_VERSION } from "../version.ts"
 import { getWorkDir } from "./repo.ts"
 import {
@@ -17,6 +17,7 @@ import {
   atomicWriteFile,
 } from "./index.ts"
 import { toTitleCase, getDateString } from "./utils.ts"
+import { parseStreamDocument } from "./stream-parser.ts"
 
 /**
  * Generate the version string for templates
@@ -126,6 +127,114 @@ function generateTasksJson(streamId: string): TasksFile {
 }
 
 /**
+ * Generate docs/README.md content
+ */
+function generateDocsReadme(): string {
+  return `# Additional Documentation
+
+This directory is for supplementary documentation that doesn't fit within the structured REPORT.md format.
+
+## Purpose
+
+Use this directory for:
+- Design documents and architecture diagrams
+- Research notes and investigation results
+- External API documentation
+- Meeting notes and decisions
+- Any other documentation that supports the workstream
+
+## Organization
+
+Feel free to organize this directory as needed:
+- Create subdirectories for different types of documentation
+- Use markdown files for text documentation
+- Include diagrams, images, or other assets as needed
+
+## Note
+
+This directory is optional. If your workstream doesn't require additional documentation beyond REPORT.md, you can leave this directory empty or remove it.
+`
+}
+
+/**
+ * Generate REPORT.md template content directly from PLAN.md
+ * This is used during stream creation before the stream is indexed
+ * Falls back to simple template if PLAN.md can't be parsed (e.g., still a template)
+ */
+function generateReportMdTemplate(
+  streamId: string,
+  streamName: string,
+  planContent: string,
+  numStages: number,
+): string {
+  const errors: ConsolidateError[] = []
+  const planDoc = parseStreamDocument(planContent, errors)
+
+  const lines: string[] = []
+
+  // Header
+  lines.push(`# Report: ${toTitleCase(streamName)}`)
+  lines.push("")
+  lines.push(`> **Stream ID:** ${streamId} | **Reported:** ${getDateString()}`)
+  lines.push("")
+
+  // Summary section
+  lines.push("## Summary")
+  lines.push("<!-- High-level summary of what was achieved -->")
+  lines.push("")
+
+  // Accomplishments section
+  lines.push("## Accomplishments")
+  lines.push("")
+
+  // Add a subsection for each stage
+  // If PLAN.md parsed successfully, use actual stage names
+  // Otherwise, use placeholder names
+  if (planDoc && errors.length === 0 && planDoc.stages.length > 0) {
+    for (const stage of planDoc.stages) {
+      const stagePrefix = stage.id.toString().padStart(2, "0")
+      lines.push(`### Stage ${stagePrefix}: ${stage.name}`)
+      lines.push("<!-- What was accomplished in this stage -->")
+      lines.push("")
+      lines.push("#### Key Changes")
+      lines.push("- {description}")
+      lines.push("")
+    }
+  } else {
+    // Fallback: generate template stages based on numStages
+    for (let i = 1; i <= numStages; i++) {
+      const stagePrefix = i.toString().padStart(2, "0")
+      lines.push(`### Stage ${stagePrefix}: <!-- Stage Name -->`)
+      lines.push("<!-- What was accomplished in this stage -->")
+      lines.push("")
+      lines.push("#### Key Changes")
+      lines.push("- {description}")
+      lines.push("")
+    }
+  }
+
+  // File References section
+  lines.push("## File References")
+  lines.push("")
+  lines.push("| File | Changes |")
+  lines.push("|------|---------|")
+  lines.push("| `path/to/file.ts` | Description of changes |")
+  lines.push("")
+
+  // Issues & Blockers section
+  lines.push("## Issues & Blockers")
+  lines.push("<!-- Any issues encountered, bugs found, or blockers hit -->")
+  lines.push("")
+
+  // Next Steps section
+  lines.push("## Next Steps")
+  lines.push("<!-- Recommended follow-up work -->")
+  lines.push("")
+
+  return lines.join("\n")
+}
+
+/**
  * Main workstream generation function
  *
  * Creates a new workstream with:
@@ -160,17 +269,31 @@ export function generateStream(args: GenerateStreamArgs): GenerateStreamResult {
   // Create stream directory
   mkdirSync(streamDir, { recursive: true })
 
+  // Create docs directory
+  const docsDir = join(streamDir, "docs")
+  mkdirSync(docsDir, { recursive: true })
+
   // Generate PLAN.md
-  atomicWriteFile(
-    join(streamDir, "PLAN.md"),
-    generatePlanMd(streamId, args.name, args.stages ?? 1),
-  )
+  const planContent = generatePlanMd(streamId, args.name, args.stages ?? 1)
+  atomicWriteFile(join(streamDir, "PLAN.md"), planContent)
 
   // Generate empty tasks.json
   atomicWriteFile(
     join(streamDir, "tasks.json"),
     JSON.stringify(generateTasksJson(streamId), null, 2),
   )
+
+  // Generate REPORT.md template
+  const reportContent = generateReportMdTemplate(
+    streamId,
+    args.name,
+    planContent,
+    args.stages ?? 1,
+  )
+  atomicWriteFile(join(streamDir, "REPORT.md"), reportContent)
+
+  // Generate docs/README.md
+  atomicWriteFile(join(docsDir, "README.md"), generateDocsReadme())
 
   // Create stream metadata (without size)
   const now = new Date().toISOString()

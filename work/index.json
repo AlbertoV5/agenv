@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-01-26T21:26:40.404Z",
+  "last_updated": "2026-01-26T21:43:59.345Z",
   "current_stream": "014-workstream-review-standardization",
   "streams": [
     {
@@ -804,7 +804,7 @@
         ]
       },
       "created_at": "2026-01-26T21:20:59.882Z",
-      "updated_at": "2026-01-26T21:26:40.404Z",
+      "updated_at": "2026-01-26T21:43:59.345Z",
       "path": "work/014-workstream-review-standardization",
       "generated_by": {
         "workstreams": "0.1.0"
@@ -815,13 +815,44 @@
         "approved_by": "user",
         "plan_hash": "96ef3e8cc8a8835e5f9e18c32fb009fd7fedcb6408e7071e946ce56d7b86de08",
         "tasks": {
-          "status": "approved",
-          "approved_at": "2026-01-26T21:26:27.052Z",
-          "task_count": 75
+          "status": "revoked",
+          "revoked_at": "2026-01-26T21:43:32.427Z",
+          "revoked_reason": "revision: Report Validation on Complete"
+        },
+        "stages": {
+          "1": {
+            "status": "approved",
+            "approved_at": "2026-01-26T21:43:59.345Z",
+            "approved_by": "user"
+          }
         }
       },
       "github": {
         "branch": "workstream/014-workstream-review-standardization"
+      }
+    },
+    {
+      "id": "015-test-report-generation",
+      "name": "test-report-generation",
+      "order": 15,
+      "size": "medium",
+      "session_estimated": {
+        "length": 4,
+        "unit": "session",
+        "session_minutes": [
+          30,
+          45
+        ],
+        "session_iterations": [
+          4,
+          8
+        ]
+      },
+      "created_at": "2026-01-26T21:35:33.758Z",
+      "updated_at": "2026-01-26T21:35:33.758Z",
+      "path": "work/015-test-report-generation",
+      "generated_by": {
+        "workstreams": "0.1.0"
       }
     }
   ]

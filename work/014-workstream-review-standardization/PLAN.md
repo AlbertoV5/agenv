@@ -427,3 +427,44 @@ Update all documentation to reflect changes.
 ---
 
 *Last updated: 2026-01-26*
+
+### Stage 05: Revision - Report Validation on Complete
+
+#### Stage Definition
+
+Make `work complete` validate that REPORT.md exists and has required sections filled before allowing workstream completion.
+
+#### Stage Constitution
+
+**Inputs:**
+- Existing `work complete` command in `packages/workstreams/src/cli/complete.ts`
+- Report validation functions from Stage 01
+
+**Structure:**
+- Add REPORT.md check to complete command
+- Provide --force flag to skip validation if needed
+
+**Outputs:**
+- Updated complete command that enforces REPORT.md
+- Clear error messages when report is missing/incomplete
+
+#### Stage Questions
+
+- [x] Should we allow --force to skip? Yes, for edge cases
+
+#### Stage Batches
+
+##### Batch 01: Complete Command Validation
+
+###### Thread 01: Add Report Check to Complete
+
+**Summary:**
+Update `work complete` to require a valid REPORT.md before marking workstream as complete.
+
+**Details:**
+- Working packages: `packages/workstreams/src/cli`
+- In `complete.ts`, add check for REPORT.md existence
+- Use `validateReport()` from report-template.ts to check content
+- If missing/invalid, show error with instructions to run `work report init`
+- Add `--force` flag to bypass validation (with warning)
+- Update help text to document the requirement
