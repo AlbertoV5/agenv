@@ -374,11 +374,6 @@ export interface Task {
   breadcrumb?: string // Last action/status for recovery
   report?: string // Completion summary (for COMPLETION.md aggregation)
   assigned_agent?: string // Agent assigned to this task
-  github_issue?: {
-    number: number
-    url: string
-    state: "open" | "closed"
-  }
   /**
    * @deprecated Session data is now stored in threads.json.
    * Use ThreadsStore functions (getThreadMetadata, etc.) to access session data.
@@ -507,6 +502,51 @@ export interface ChangelogEntry {
 export type ExportFormat = "md" | "csv" | "json"
 
 // ============================================
+// REPORT TEMPLATE TYPES
+// ============================================
+
+/**
+ * File reference in a report - describes changes made to a file
+ */
+export interface ReportFileReference {
+  path: string
+  changes: string
+}
+
+/**
+ * Accomplishment for a stage - groups key changes
+ */
+export interface ReportStageAccomplishment {
+  stageNumber: number
+  stageName: string
+  description: string
+  keyChanges: string[]
+}
+
+/**
+ * Parsed sections from a REPORT.md file
+ */
+export interface ReportTemplate {
+  streamId: string
+  streamName: string
+  reportedDate: string
+  summary: string
+  accomplishments: ReportStageAccomplishment[]
+  fileReferences: ReportFileReference[]
+  issues: string
+  nextSteps: string
+}
+
+/**
+ * Validation result for a REPORT.md file
+ */
+export interface ReportValidation {
+  valid: boolean
+  errors: string[]
+  warnings: string[]
+}
+
+// ============================================
 // AGENTS CONFIGURATION TYPES
 // ============================================
 
@@ -546,11 +586,6 @@ export interface AgentsConfig {
 export interface ThreadMetadata {
   threadId: string // Format: "SS.BB.TT" (e.g., "01.01.02")
   sessions: SessionRecord[] // Session history for this thread
-  githubIssue?: {
-    number: number
-    url: string
-    state: "open" | "closed"
-  }
   /**
    * Internal session tracking ID for the thread.
    * Used for internal state management and resume functionality.
@@ -687,11 +722,6 @@ export interface ThreadInfo {
   promptPath: string
   models: NormalizedModelSpec[] // List of models to try in order (working agent models)
   agentName: string
-  githubIssue?: {
-    number: number
-    url: string
-    state: "open" | "closed"
-  }
   // Session tracking (populated before spawn)
   sessionId?: string
   firstTaskId?: string // First task in thread (for session tracking)

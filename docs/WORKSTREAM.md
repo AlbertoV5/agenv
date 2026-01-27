@@ -254,7 +254,9 @@ When issues are discovered:
 After all stages complete:
 
 ```bash
-work complete    # Generates COMPLETION.md
+work report init       # Initialize REPORT.md if needed
+work report validate   # Validate required sections
+work complete          # Generates COMPLETION.md (requires valid REPORT.md)
 ```
 
 COMPLETION.md includes:

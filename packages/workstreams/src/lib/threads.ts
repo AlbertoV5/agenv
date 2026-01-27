@@ -114,7 +114,6 @@ export function updateThreadMetadata(
     const newThread: ThreadMetadata = {
       threadId,
       sessions: data.sessions || [],
-      ...(data.githubIssue && { githubIssue: data.githubIssue }),
       ...(data.currentSessionId && { currentSessionId: data.currentSessionId }),
       ...(data.opencodeSessionId && { opencodeSessionId: data.opencodeSessionId }),
     }
@@ -126,7 +125,6 @@ export function updateThreadMetadata(
   // Update existing thread
   const thread = threadsFile.threads[threadIndex]!
   if (data.sessions !== undefined) thread.sessions = data.sessions
-  if (data.githubIssue !== undefined) thread.githubIssue = data.githubIssue
   if (data.currentSessionId !== undefined) thread.currentSessionId = data.currentSessionId
   if (data.opencodeSessionId !== undefined) thread.opencodeSessionId = data.opencodeSessionId
 
@@ -464,27 +462,32 @@ export async function completeMultipleThreadSessionsLocked(
 // ============================================
 
 /**
- * Set GitHub issue for a thread
+ * @deprecated GitHub issue storage has been removed from threads.json.
+ * Issues are now stored in github.json per-stage.
+ * This function is a no-op kept for backward compatibility.
  */
 export function setThreadGitHubIssue(
-  repoRoot: string,
-  streamId: string,
-  threadId: string,
-  issue: NonNullable<ThreadMetadata["githubIssue"]>,
-): ThreadMetadata {
-  return updateThreadMetadata(repoRoot, streamId, threadId, { githubIssue: issue })
+  _repoRoot: string,
+  _streamId: string,
+  _threadId: string,
+  _issue: { number: number; url: string; state: "open" | "closed" },
+): ThreadMetadata | null {
+  // No-op: GitHub issues are now stored in github.json per-stage
+  return null
 }
 
 /**
- * Get GitHub issue for a thread
+ * @deprecated GitHub issue storage has been removed from threads.json.
+ * Issues are now stored in github.json per-stage.
+ * This function returns null for backward compatibility.
  */
 export function getThreadGitHubIssue(
-  repoRoot: string,
-  streamId: string,
-  threadId: string,
-): ThreadMetadata["githubIssue"] | null {
-  const thread = getThreadMetadata(repoRoot, streamId, threadId)
-  return thread?.githubIssue || null
+  _repoRoot: string,
+  _streamId: string,
+  _threadId: string,
+): null {
+  // No-op: GitHub issues are now stored in github.json per-stage
+  return null
 }
 
 // ============================================
@@ -678,7 +681,6 @@ function extractThreadIdFromTaskId(taskId: string): string | null {
 export interface MigrationResult {
   threadsCreated: number
   sessionsMigrated: number
-  githubIssuesMigrated: number
   errors: string[]
 }
 
@@ -704,7 +706,6 @@ export function migrateFromTasksJson(
   const result: MigrationResult = {
     threadsCreated: 0,
     sessionsMigrated: 0,
-    githubIssuesMigrated: 0,
     errors: [],
   }
 
@@ -769,12 +770,8 @@ export function migrateFromTasksJson(
       }
     }
 
-    // Get GitHub issue from first task in thread (they should all have the same)
-    const taskWithIssue = tasks.find((t) => t.github_issue)
-    if (taskWithIssue?.github_issue && !thread.githubIssue) {
-      thread.githubIssue = taskWithIssue.github_issue
-      result.githubIssuesMigrated++
-    }
+    // GitHub issues are now stored in github.json per-stage, not in threads.json
+    // Migration of github_issue is no longer performed
   }
 
   // Update threads array
@@ -832,10 +829,8 @@ export function validateMigration(
       }
     }
 
-    // Check GitHub issue
-    if (task.github_issue && !thread.githubIssue) {
-      issues.push(`GitHub issue from task ${task.id} not migrated to thread ${threadId}`)
-    }
+    // GitHub issues are now stored in github.json per-stage, not in threads.json
+    // Migration validation for github_issue is no longer performed
   }
 
   return issues

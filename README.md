@@ -7,15 +7,12 @@ A centralized Python+Bun environment for AI agents. This monorepo provides share
 ```
 ~/.agenv/
 ├── agent/              # Opencode agent configuration (commands, skills, tools)
+│   ├── skills/         # Shared agent skills
+│   └── ...
 ├── packages/           # Bun/TypeScript packages
 │   ├── cli/            # Main CLI (@agenv/cli)
-│   └── planning/       # Plan management library (@agenv/planning)
-├── skills/             # Shared agent skills
-│   ├── creating-plans/
-│   ├── implementing-plans/
-│   ├── evaluating-plans/
-│   ├── documenting-plans/
-│   └── reviewing-plans/
+│   └── workstreams/    # Workstream management library
+├── docs/               # Documentation
 ├── libraries/          # Python libraries (uv workspace)
 └── services/           # Long-running services
 ```
@@ -36,47 +33,47 @@ A centralized Python+Bun environment for AI agents. This monorepo provides share
 source ~/.zshrc  # or ~/.bashrc
 ```
 
-This adds `~/.agenv/bin` to your PATH and creates the `plan` command.
+This adds `~/.agenv/bin` to your PATH and creates the `work` command.
 
 ## CLI
 
-AgEnv provides the `plan` command for plan management:
+AgEnv provides the `work` command for workstream management:
 
 ```bash
 # Show help
-plan --help
+work --help
 
-# Create a new plan
-plan create --name my-feature
+# Create a new workstream
+work create --name my-feature
 
-# Set current plan (avoids --plan on every command)
-plan current --set "001-my-feature"
-plan current                          # Show current plan
-plan current --clear                  # Clear current plan
+# Set current workstream (avoids --stream on every command)
+work current --set "001-my-feature"
+work current                          # Show current workstream
+work current --clear                  # Clear current workstream
 
-# Once current plan is set, all commands use it by default:
-plan preview                          # Show PLAN.md structure
-plan consolidate                      # Validate PLAN.md structure
-plan add-task --stage 01 --Batch 01 --thread 01 --name "Task description"
-plan list --tasks                     # List tasks with status
-plan read --task "01.01.01.01"        # Read task details
-plan update --task "01.01.01.01" --status completed
-plan status                           # Show plan progress
-plan complete                         # Mark plan as complete
-plan view --open                      # Generate HTML visualization
+# Once current workstream is set, all commands use it by default:
+work preview                          # Show PLAN.md structure
+work validate                         # Validate PLAN.md structure
+work add-task --stage 01 --Batch 01 --thread 01 --name "Task description"
+work list --tasks                     # List tasks with status
+work read --task "01.01.01.01"        # Read task details
+work update --task "01.01.01.01" --status completed
+work status                           # Show workstream progress
+work complete                         # Mark workstream as complete (requires REPORT.md)
+work serve                            # Launch web visualization
 
 # Metrics and analysis
-plan metrics                          # Show plan metrics
-plan metrics --blockers               # Show blocked tasks
-plan metrics --filter "api"           # Filter tasks by pattern
+work metrics                          # Show workstream metrics
+work metrics --blockers               # Show blocked tasks
+work metrics --filter "api"           # Filter tasks by pattern
 
 # Reports and exports
-plan report                           # Generate progress report
-plan changelog --since-days 7         # Changelog from completed tasks
-plan export --format csv              # Export to CSV
+work report                           # Generate progress report
+work changelog --since-days 7         # Changelog from completed tasks
+work export --format csv              # Export to CSV
 
-# Or specify a plan explicitly:
-plan status --plan "001-my-feature"
+# Or specify a workstream explicitly:
+work status --stream "001-my-feature"
 ```
 
 ### Task Statuses
@@ -89,7 +86,7 @@ plan status --plan "001-my-feature"
 | `blocked` | Cannot proceed (add note) |
 | `cancelled` | Dropped (add reason) |
 
-### Plan Statuses
+### Workstream Statuses
 
 | Status | Meaning | Set by |
 |--------|---------|--------|
@@ -99,11 +96,11 @@ plan status --plan "001-my-feature"
 | `on_hold` | Paused, won't work on for now | Manual |
 
 ```bash
-# Put plan on hold
-plan set-status on_hold
+# Put workstream on hold
+work set-status on_hold
 
 # Clear manual status (use computed)
-plan set-status --clear
+work set-status --clear
 ```
 
 ### Skills Installation
@@ -122,11 +119,11 @@ ag install skills --dry-run --all     # Preview what would be installed
 
 ### @agenv/cli
 
-The main CLI package that provides the `plan` command for plan management (delegates to @agenv/planning).
+The main CLI package that provides the `work` command for workstream management (delegates to @agenv/workstreams).
 
-### @agenv/planning
+### @agenv/workstreams
 
-Plan management library for AI agents - create, track, and complete implementation plans.
+Workstream management library for AI agents - create, track, and complete implementation plans.
 
 **Plan Structure:**
 
@@ -142,28 +139,27 @@ Each plan consists of:
 ```typescript
 import {
   getRepoRoot,
-  generatePlan,
-  getPlanProgress,
+  generateStream,
+  getStreamProgress,
   updateTask,
-  completePlan,
-  deletePlan,
+  completeStream,
+  deleteStream,
   modifyIndex,
-  generateVisualization,
   addTasks,
   getTasks,
-  consolidatePlan
-} from "@agenv/planning"
+  consolidateStream
+} from "@agenv/workstreams"
 
 // Auto-detect repo root
 const repoRoot = getRepoRoot()
 
-// Create a plan (generates PLAN.md template and empty tasks.json)
-const result = generatePlan({
+// Create a workstream (generates PLAN.md template and empty tasks.json)
+const result = generateStream({
   name: "my-feature",
   repoRoot
 })
 
-// Add tasks to a plan
+// Add tasks to a workstream
 addTasks(repoRoot, "001-my-feature", [
   {
     id: "01.01.01.01",
@@ -180,35 +176,29 @@ addTasks(repoRoot, "001-my-feature", [
 // Get tasks
 const tasks = getTasks(repoRoot, "001-my-feature")
 
-// Delete a plan (with file locking for concurrent safety)
-await deletePlan(repoRoot, "001-my-feature", { deleteFiles: true })
+// Delete a workstream (with file locking for concurrent safety)
+await deleteStream(repoRoot, "001-my-feature", { deleteFiles: true })
 
 // Atomic read-modify-write with locking
 await modifyIndex(repoRoot, (index) => {
   // Modify index safely
-  return index.plans.length
-})
-
-// Generate HTML visualization
-const { html, planCount } = generateVisualization({
-  repoRoot,
-  title: "My Plans"
+  return index.streams.length
 })
 ```
 
-Generated plans include version tracking in both the markdown templates and `index.json` metadata, making it easy to identify which tool versions created each plan.
+Generated workstreams include version tracking in both the markdown templates and `index.json` metadata, making it easy to identify which tool versions created each workstream.
 
 ## Skills
 
-Skills are agent-specific instructions stored in `~/.agenv/skills/`. Each skill has a `SKILL.md` file and optionally a `scripts/` directory.
+Skills are agent-specific instructions stored in `~/.agenv/agent/skills/`. Each skill has a `SKILL.md` file.
 
 | Skill | Description |
 |-------|-------------|
-| `creating-plans` | How to create implementation plans for tasks |
-| `implementing-plans` | How to follow and update plans during implementation |
-| `evaluating-plans` | How to analyze plan metrics and identify blockers |
-| `documenting-plans` | How to generate reports, changelogs, and exports |
-| `reviewing-plans` | How to review and manage plan structure |
+| `planning-workstreams` | How to create workstream plans |
+| `implementing-workstreams` | How to execute tasks and update progress |
+| `evaluating-workstreams` | How to evaluate results and generate reports |
+| `reviewing-workstreams` | How to review plans and tasks |
+| `synthesizing-workstreams` | How to synthesize session results |
 
 Skills are installed to agent directories using `ag install skills`.
 
@@ -258,7 +248,7 @@ To disable synthesis agents, set `enabled: false` in `work/notifications.json` o
 
 Agent skills can use agenv packages by:
 
-1. **CLI tools**: Use the `plan` command (available after `install.sh`)
-2. **Library imports**: Use `import { ... } from "@agenv/planning"` (requires path mapping)
+1. **CLI tools**: Use the `work` command (available after `install.sh`)
+2. **Library imports**: Use `import { ... } from "@agenv/workstreams"` (requires path mapping)
 
 This centralizes dependencies and logic while keeping skill directories simple.

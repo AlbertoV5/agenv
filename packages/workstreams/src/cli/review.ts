@@ -234,23 +234,78 @@ function formatCommitOutput(
 }
 
 /**
+ * Group files by directory for better readability
+ */
+function groupFilesByDirectory(files: string[]): Map<string, string[]> {
+    const groups = new Map<string, string[]>()
+    
+    for (const file of files) {
+        // Extract directory (everything before the last /)
+        const lastSlash = file.lastIndexOf("/")
+        const dir = lastSlash >= 0 ? file.substring(0, lastSlash) : "."
+        const basename = lastSlash >= 0 ? file.substring(lastSlash + 1) : file
+        
+        const existing = groups.get(dir) || []
+        existing.push(basename)
+        groups.set(dir, existing)
+    }
+    
+    return groups
+}
+
+/**
  * Format a single commit for display
  */
 function formatCommit(commit: ParsedCommit, showFiles: boolean): string {
     // Handle date formatting with fallback for invalid dates
     let dateStr = "unknown"
     if (commit.date) {
-        const parsed = new Date(commit.date)
-        if (!isNaN(parsed.getTime())) {
-            dateStr = parsed.toISOString().split("T")[0] ?? "unknown" // YYYY-MM-DD
+        try {
+            const parsed = new Date(commit.date)
+            if (!isNaN(parsed.getTime())) {
+                const isoDate = parsed.toISOString().split("T")[0]
+                dateStr = isoDate ?? "unknown" // YYYY-MM-DD
+            }
+        } catch {
+            // If date parsing throws an error, keep "unknown"
+            dateStr = "unknown"
         }
     }
-    let line = `- ${commit.shortSha} [${dateStr}] ${commit.subject}`
+    
+    // Build file change summary
+    const stats = commit.fileStats
+    const statsParts: string[] = []
+    if (stats.added > 0) statsParts.push(`+${stats.added}`)
+    if (stats.modified > 0) statsParts.push(`~${stats.modified}`)
+    if (stats.deleted > 0) statsParts.push(`-${stats.deleted}`)
+    if (stats.renamed > 0) statsParts.push(`→${stats.renamed}`)
+    
+    const statsStr = statsParts.length > 0 ? ` (${statsParts.join(" ")})` : ""
+    
+    let line = `- ${commit.shortSha} [${dateStr}] ${commit.subject}${statsStr}`
 
     if (showFiles && commit.files.length > 0) {
-        // Show files with basic stats
-        const fileList = commit.files.join(", ")
-        line += `\n  Files: ${fileList}`
+        // Group files by directory for better readability
+        const grouped = groupFilesByDirectory(commit.files)
+        
+        // Sort directories for consistent output
+        const sortedDirs = Array.from(grouped.keys()).sort()
+        
+        // If only one directory or very few files, keep it simple
+        if (sortedDirs.length === 1 && commit.files.length <= 3) {
+            line += `\n  Files: ${commit.files.join(", ")}`
+        } else {
+            // Show grouped by directory
+            line += "\n  Files:"
+            for (const dir of sortedDirs) {
+                const files = grouped.get(dir)!
+                if (dir === ".") {
+                    line += `\n    ${files.join(", ")}`
+                } else {
+                    line += `\n    ${dir}/: ${files.join(", ")}`
+                }
+            }
+        }
     }
 
     return line

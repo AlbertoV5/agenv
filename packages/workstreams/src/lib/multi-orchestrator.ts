@@ -58,12 +58,9 @@ export function getPromptFilePathFromMetadata(
 }
 
 /**
- * Build the pane title for a thread, including issue number if available
+ * Build the pane title for a thread
  */
 export function buildPaneTitle(threadInfo: ThreadInfo): string {
-  if (threadInfo.githubIssue) {
-    return `${threadInfo.threadName} (#${threadInfo.githubIssue.number})`
-  }
   return threadInfo.threadName
 }
 
@@ -143,7 +140,6 @@ export function collectThreadInfoFromTasks(
       promptPath,
       models,
       agentName,
-      githubIssue: discovered.githubIssue,
       firstTaskId: discovered.firstTaskId,
     }
 

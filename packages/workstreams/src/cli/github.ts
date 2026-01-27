@@ -16,9 +16,25 @@ import {
 } from "../lib/github/config.ts"
 import { getGitHubAuth, validateAuth, ensureGitHubAuth } from "../lib/github/auth.ts"
 import { createWorkstreamBranch, formatBranchName } from "../lib/github/branches.ts"
-import { createThreadIssue, storeThreadIssueMeta, type CreateThreadIssueInput } from "../lib/github/issues.ts"
+import {
+  createStageIssue,
+  findExistingStageIssue,
+  reopenStageIssue,
+  type CreateStageIssueInput,
+  type StageBatch,
+  type StageThread,
+  type StageTask,
+} from "../lib/github/issues.ts"
 import { ensureWorkstreamLabels } from "../lib/github/labels.ts"
-import { syncIssueStates, type SyncIssueStatesResult } from "../lib/github/sync.ts"
+import { syncStageIssues, type SyncStageIssuesResult } from "../lib/github/sync.ts"
+import {
+  loadWorkstreamGitHub,
+  initWorkstreamGitHub,
+  saveWorkstreamGitHub,
+  getStageIssue,
+  setStageIssue,
+  type StageIssue,
+} from "../lib/github/workstream-github.ts"
 import type { Task } from "../lib/types.ts"
 
 type Subcommand = "enable" | "disable" | "status" | "create-branch" | "create-issues" | "sync"
@@ -109,33 +125,31 @@ Examples:
 
 function printCreateIssuesHelp(): void {
   console.log(`
-work github create-issues - Create GitHub issues for threads
+work github create-issues - Create GitHub issues for stages
 
 Usage:
   work github create-issues [options]
 
 Options:
   --stream, -s   Workstream ID or name (uses current if omitted)
-  --batch, -b    Create issues for threads in batch (e.g., "01.01")
-  --stage, -st   Create issues for all threads in stage (e.g., 1)
+  --stage, -st   Create issue for a specific stage (e.g., 1)
   --json, -j     Output as JSON
   --help, -h     Show this help message
 
 Description:
-  Creates GitHub issues for workstream threads. Each thread gets one issue
-  that tracks all tasks within that thread.
+  Creates GitHub issues for workstream stages. Each stage gets one issue
+  that tracks all batches, threads, and tasks within that stage.
 
-  When no filter is specified, creates issues for all threads that don't
-  already have an issue (pending threads).
+  Issue title format: [{stream-id}] Stage {N}: {Stage Name}
+
+  When no stage filter is specified, creates issues for all stages that
+  don't already have an issue.
 
 Examples:
-  # Create issues for a specific batch
-  work github create-issues --batch "01.01"
-
-  # Create issues for all threads in stage 1
+  # Create issue for stage 1
   work github create-issues --stage 1
 
-  # Create issues for all pending threads
+  # Create issues for all stages without issues
   work github create-issues
 
   # Create issues for specific workstream
@@ -169,7 +183,7 @@ Examples:
 
 function printSyncHelp(): void {
   console.log(`
-work github sync - Sync issue states with local task status
+work github sync - Sync stage issue states with local task status
 
 Usage:
   work github sync [options]
@@ -180,11 +194,11 @@ Options:
   --help, -h     Show this help message
 
 Description:
-  Synchronizes GitHub issue states with local task status. For completed
-  threads with open issues, this command closes the issues and updates
-  the github_issue.state in tasks.json.
+  Synchronizes GitHub stage issue states with local task status. For stages
+  where all tasks are completed/cancelled, this command closes the stage
+  issue and updates the state in github.json.
 
-  Reports: "Closed N issues, M unchanged"
+  Reports: "Closed N stage issues, M unchanged"
 
 Examples:
   # Sync all issue states for current workstream
@@ -199,183 +213,329 @@ Examples:
 }
 
 // ============================================
-// THREAD INFO TYPES AND HELPERS
+// STAGE INFO TYPES AND HELPERS
 // ============================================
 
-interface ThreadInfo {
+interface StageInfo {
+  stageNumber: number
   stageId: string
   stageName: string
+  batches: Map<string, BatchInfo>
+}
+
+interface BatchInfo {
   batchId: string
   batchName: string
+  threads: Map<string, ThreadInfo>
+}
+
+interface ThreadInfo {
   threadId: string
   threadName: string
-  threadKey: string // stageId.batchId.threadId
   tasks: Task[]
 }
 
 /**
- * Group tasks by thread, returning thread info with all related tasks
+ * Group tasks by stage, batch, and thread
+ * Returns a Map of stages with nested batches and threads
  */
-function groupTasksByThread(tasks: Task[]): Map<string, ThreadInfo> {
-  const threads = new Map<string, ThreadInfo>()
+function groupTasksByStage(tasks: Task[]): Map<number, StageInfo> {
+  const stages = new Map<number, StageInfo>()
 
   for (const task of tasks) {
     const { stage, batch, thread } = parseTaskId(task.id)
     const stageId = stage.toString().padStart(2, "0")
     const batchId = batch.toString().padStart(2, "0")
     const threadId = thread.toString().padStart(2, "0")
-    const threadKey = `${stageId}.${batchId}.${threadId}`
 
-    if (!threads.has(threadKey)) {
-      threads.set(threadKey, {
+    // Get or create stage
+    if (!stages.has(stage)) {
+      stages.set(stage, {
+        stageNumber: stage,
         stageId,
         stageName: task.stage_name,
-        batchId,
+        batches: new Map(),
+      })
+    }
+    const stageInfo = stages.get(stage)!
+
+    // Get or create batch
+    const batchKey = `${stageId}.${batchId}`
+    if (!stageInfo.batches.has(batchKey)) {
+      stageInfo.batches.set(batchKey, {
+        batchId: batchKey,
         batchName: task.batch_name,
-        threadId,
+        threads: new Map(),
+      })
+    }
+    const batchInfo = stageInfo.batches.get(batchKey)!
+
+    // Get or create thread
+    const threadKey = `${stageId}.${batchId}.${threadId}`
+    if (!batchInfo.threads.has(threadKey)) {
+      batchInfo.threads.set(threadKey, {
+        threadId: threadKey,
         threadName: task.thread_name,
-        threadKey,
         tasks: [],
       })
     }
-
-    threads.get(threadKey)!.tasks.push(task)
+    batchInfo.threads.get(threadKey)!.tasks.push(task)
   }
 
-  return threads
+  return stages
 }
 
 /**
- * Filter threads by batch ID (e.g., "01.01")
+ * Convert StageInfo to CreateStageIssueInput format
  */
-function filterThreadsByBatch(threads: Map<string, ThreadInfo>, batchFilter: string): Map<string, ThreadInfo> {
-  const filtered = new Map<string, ThreadInfo>()
-  
-  for (const [key, info] of threads) {
-    const batchKey = `${info.stageId}.${info.batchId}`
-    if (batchKey === batchFilter) {
-      filtered.set(key, info)
+function stageInfoToInput(
+  stageInfo: StageInfo,
+  streamId: string,
+  streamName: string
+): CreateStageIssueInput {
+  const batches: StageBatch[] = []
+
+  // Sort batches by ID
+  const sortedBatches = Array.from(stageInfo.batches.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+
+  for (const [, batchInfo] of sortedBatches) {
+    const threads: StageThread[] = []
+
+    // Sort threads by ID
+    const sortedThreads = Array.from(batchInfo.threads.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+
+    for (const [, threadInfo] of sortedThreads) {
+      // Sort tasks by ID
+      const sortedTasks = threadInfo.tasks.sort((a, b) =>
+        a.id.localeCompare(b.id, undefined, { numeric: true })
+      )
+
+      const tasks: StageTask[] = sortedTasks.map((t) => ({
+        taskId: t.id,
+        taskName: t.name,
+        status: t.status,
+      }))
+
+      threads.push({
+        threadId: threadInfo.threadId,
+        threadName: threadInfo.threadName,
+        tasks,
+      })
+    }
+
+    batches.push({
+      batchId: batchInfo.batchId,
+      batchName: batchInfo.batchName,
+      threads,
+    })
+  }
+
+  return {
+    streamId,
+    streamName,
+    stageNumber: stageInfo.stageNumber,
+    stageName: stageInfo.stageName,
+    batches,
+  }
+}
+
+/**
+ * Check if all tasks in a stage are completed or cancelled
+ */
+function isStageComplete(stageInfo: StageInfo): boolean {
+  for (const batch of stageInfo.batches.values()) {
+    for (const thread of batch.threads.values()) {
+      for (const task of thread.tasks) {
+        if (task.status !== "completed" && task.status !== "cancelled") {
+          return false
+        }
+      }
     }
   }
+  return true
+}
 
-  return filtered
+interface CreateStageIssuesResult {
+  created: { stageNumber: number; stageName: string; issueUrl: string; issueNumber: number }[]
+  skipped: { stageNumber: number; stageName: string; reason: string }[]
+  reopened: { stageNumber: number; stageName: string; issueUrl: string; issueNumber: number }[]
+  failed: { stageNumber: number; stageName: string; error: string }[]
 }
 
 /**
- * Filter threads by stage number
+ * Create issues for the given stages.
+ * Stores issue metadata in github.json using setStageIssue().
  */
-function filterThreadsByStage(threads: Map<string, ThreadInfo>, stageNum: number): Map<string, ThreadInfo> {
-  const filtered = new Map<string, ThreadInfo>()
-  const stageId = stageNum.toString().padStart(2, "0")
-  
-  for (const [key, info] of threads) {
-    if (info.stageId === stageId) {
-      filtered.set(key, info)
-    }
-  }
-
-  return filtered
-}
-
-/**
- * Filter threads that don't already have issues (pending threads)
- */
-function filterPendingThreads(threads: Map<string, ThreadInfo>): Map<string, ThreadInfo> {
-  const filtered = new Map<string, ThreadInfo>()
-  
-  for (const [key, info] of threads) {
-    // A thread is "pending" if none of its tasks have a GitHub issue
-    const hasIssue = info.tasks.some(t => t.github_issue?.number)
-    if (!hasIssue) {
-      filtered.set(key, info)
-    }
-  }
-
-  return filtered
-}
-
-interface CreateIssuesResult {
-  created: { threadKey: string; threadName: string; issueUrl: string; issueNumber: number }[]
-  skipped: { threadKey: string; threadName: string; reason: string }[]
-  failed: { threadKey: string; threadName: string; error: string }[]
-}
-
-/**
- * Create issues for the given threads
- */
-async function createIssuesForThreads(
+async function createIssuesForStages(
   repoRoot: string,
   streamId: string,
   streamName: string,
-  threads: Map<string, ThreadInfo>
-): Promise<CreateIssuesResult> {
-  const result: CreateIssuesResult = {
+  stages: Map<number, StageInfo>,
+  stageFilter?: number
+): Promise<CreateStageIssuesResult> {
+  const result: CreateStageIssuesResult = {
     created: [],
     skipped: [],
+    reopened: [],
     failed: [],
   }
 
   // Ensure labels exist first
   await ensureWorkstreamLabels(repoRoot, streamId)
 
-  for (const [threadKey, info] of threads) {
-    // Skip if already has an issue
-    const existingIssue = info.tasks.find(t => t.github_issue?.number)
-    if (existingIssue) {
-      result.skipped.push({
-        threadKey,
-        threadName: info.threadName,
-        reason: `Already has issue #${existingIssue.github_issue!.number}`,
-      })
-      continue
-    }
+  // Load or initialize github.json
+  let githubData = await loadWorkstreamGitHub(repoRoot, streamId)
+  if (!githubData) {
+    githubData = await initWorkstreamGitHub(repoRoot, streamId)
+  }
 
-    // Create the issue
+  // Filter stages if requested
+  let stagesToProcess: Map<number, StageInfo>
+  if (stageFilter !== undefined) {
+    const stageInfo = stages.get(stageFilter)
+    stagesToProcess = stageInfo ? new Map([[stageFilter, stageInfo]]) : new Map()
+  } else {
+    stagesToProcess = stages
+  }
+
+  // Sort stages by number
+  const sortedStages = Array.from(stagesToProcess.entries())
+    .sort(([a], [b]) => a - b)
+
+  for (const [stageNumber, stageInfo] of sortedStages) {
+    const stageId = stageNumber.toString().padStart(2, "0")
+
     try {
-      // Build issue body from first task's name or thread name
-      const firstTask = info.tasks[0]
-      const summary = firstTask?.name || info.threadName
-      const taskList = info.tasks.map(t => `- [ ] ${t.id}: ${t.name}`).join("\n")
-      const details = `## Tasks\n\n${taskList}`
+      // Check if issue already exists in github.json
+      const existingLocal = getStageIssue(githubData, stageId)
 
-      const input: CreateThreadIssueInput = {
-        summary,
-        details,
+      // Check if stage is complete
+      const isComplete = isStageComplete(stageInfo)
+
+      // Check GitHub for existing issue
+      const existingRemote = await findExistingStageIssue(
+        repoRoot,
         streamId,
-        streamName,
-        stageId: info.stageId,
-        stageName: info.stageName,
-        batchId: info.batchId,
-        batchName: info.batchName,
-        threadId: info.threadId,
-        threadName: info.threadName,
+        stageNumber,
+        stageInfo.stageName
+      )
+
+      if (existingLocal) {
+        // Already tracked locally
+        if (existingLocal.state === "closed" && !isComplete) {
+          // Reopen the issue if stage is no longer complete
+          try {
+            await reopenStageIssue(repoRoot, existingLocal.issue_number)
+            existingLocal.state = "open"
+            delete existingLocal.closed_at
+            await saveWorkstreamGitHub(repoRoot, streamId, githubData)
+
+            result.reopened.push({
+              stageNumber,
+              stageName: stageInfo.stageName,
+              issueUrl: existingLocal.issue_url,
+              issueNumber: existingLocal.issue_number,
+            })
+          } catch (error) {
+            result.failed.push({
+              stageNumber,
+              stageName: stageInfo.stageName,
+              error: `Failed to reopen issue: ${error instanceof Error ? error.message : String(error)}`,
+            })
+          }
+        } else {
+          result.skipped.push({
+            stageNumber,
+            stageName: stageInfo.stageName,
+            reason: `Issue #${existingLocal.issue_number} already exists (${existingLocal.state})`,
+          })
+        }
+        continue
       }
 
-      const meta = await createThreadIssue(repoRoot, input)
-      
-      if (meta && meta.issue_number && meta.issue_url) {
-        // Store the issue metadata on the first task of the thread
-        if (firstTask) {
-          storeThreadIssueMeta(repoRoot, streamId, firstTask.id, meta)
+      if (existingRemote) {
+        // Found on GitHub but not tracked locally - add to github.json
+        const stageIssue: StageIssue = {
+          issue_number: existingRemote.issueNumber,
+          issue_url: existingRemote.issueUrl,
+          state: existingRemote.state,
+          created_at: new Date().toISOString(),
         }
+        if (existingRemote.state === "closed") {
+          stageIssue.closed_at = new Date().toISOString()
+        }
+        setStageIssue(githubData, stageId, stageIssue)
+        await saveWorkstreamGitHub(repoRoot, streamId, githubData)
+
+        if (existingRemote.state === "closed" && !isComplete) {
+          // Reopen the issue
+          try {
+            await reopenStageIssue(repoRoot, existingRemote.issueNumber)
+            stageIssue.state = "open"
+            delete stageIssue.closed_at
+            await saveWorkstreamGitHub(repoRoot, streamId, githubData)
+
+            result.reopened.push({
+              stageNumber,
+              stageName: stageInfo.stageName,
+              issueUrl: existingRemote.issueUrl,
+              issueNumber: existingRemote.issueNumber,
+            })
+          } catch (error) {
+            result.failed.push({
+              stageNumber,
+              stageName: stageInfo.stageName,
+              error: `Failed to reopen issue: ${error instanceof Error ? error.message : String(error)}`,
+            })
+          }
+        } else {
+          result.skipped.push({
+            stageNumber,
+            stageName: stageInfo.stageName,
+            reason: `Existing issue #${existingRemote.issueNumber} found on GitHub (${existingRemote.state})`,
+          })
+        }
+        continue
+      }
+
+      // No existing issue - check if stage is already complete
+      if (isComplete) {
+        result.skipped.push({
+          stageNumber,
+          stageName: stageInfo.stageName,
+          reason: "Stage already complete, no issue needed",
+        })
+        continue
+      }
+
+      // Create new issue
+      const input = stageInfoToInput(stageInfo, streamId, streamName)
+      const stageIssue = await createStageIssue(repoRoot, input)
+
+      if (stageIssue) {
+        // Store in github.json
+        setStageIssue(githubData, stageId, stageIssue)
+        await saveWorkstreamGitHub(repoRoot, streamId, githubData)
 
         result.created.push({
-          threadKey,
-          threadName: info.threadName,
-          issueUrl: meta.issue_url,
-          issueNumber: meta.issue_number,
+          stageNumber,
+          stageName: stageInfo.stageName,
+          issueUrl: stageIssue.issue_url,
+          issueNumber: stageIssue.issue_number,
         })
       } else {
         result.skipped.push({
-          threadKey,
-          threadName: info.threadName,
+          stageNumber,
+          stageName: stageInfo.stageName,
           reason: "GitHub integration not enabled or configured",
         })
       }
     } catch (error) {
       result.failed.push({
-        threadKey,
-        threadName: info.threadName,
+        stageNumber,
+        stageName: stageInfo.stageName,
         error: error instanceof Error ? error.message : String(error),
       })
     }
@@ -531,7 +691,6 @@ async function createBranchCommand(argv: string[]): Promise<void> {
 interface CreateIssuesArgs {
   repoRoot?: string
   streamId?: string
-  batch?: string
   stage?: number
   json: boolean
 }
@@ -562,16 +721,6 @@ function parseCreateIssuesArgs(argv: string[]): CreateIssuesArgs | null {
           return null
         }
         parsed.streamId = next
-        i++
-        break
-
-      case "--batch":
-      case "-b":
-        if (!next) {
-          console.error("Error: --batch requires a value")
-          return null
-        }
-        parsed.batch = next
         i++
         break
 
@@ -661,37 +810,23 @@ async function createIssuesCommand(argv: string[]): Promise<void> {
     process.exit(1)
   }
 
-  // Group tasks by thread
-  let threads = groupTasksByThread(tasksFile.tasks)
+  // Group tasks by stage
+  const stages = groupTasksByStage(tasksFile.tasks)
 
-  // Apply filters based on args
-  if (cliArgs.batch) {
-    threads = filterThreadsByBatch(threads, cliArgs.batch)
-    if (threads.size === 0) {
-      console.error(`Error: No threads found for batch "${cliArgs.batch}"`)
-      process.exit(1)
-    }
-  } else if (cliArgs.stage !== undefined) {
-    threads = filterThreadsByStage(threads, cliArgs.stage)
-    if (threads.size === 0) {
-      console.error(`Error: No threads found for stage ${cliArgs.stage}`)
-      process.exit(1)
-    }
-  } else {
-    // No filter specified - create issues for all pending threads
-    threads = filterPendingThreads(threads)
-    if (threads.size === 0) {
-      if (cliArgs.json) {
-        console.log(JSON.stringify({ message: "All threads already have issues" }, null, 2))
-      } else {
-        console.log("All threads already have issues")
-      }
-      return
-    }
+  // Validate stage filter if provided
+  if (cliArgs.stage !== undefined && !stages.has(cliArgs.stage)) {
+    console.error(`Error: No tasks found for stage ${cliArgs.stage}`)
+    process.exit(1)
   }
 
-  // Create issues
-  const result = await createIssuesForThreads(repoRoot, stream.id, stream.name, threads)
+  // Create issues for stages (filtered if --stage provided)
+  const result = await createIssuesForStages(
+    repoRoot,
+    stream.id,
+    stream.name,
+    stages,
+    cliArgs.stage
+  )
 
   // Output results
   if (cliArgs.json) {
@@ -702,29 +837,37 @@ async function createIssuesCommand(argv: string[]): Promise<void> {
     }, null, 2))
   } else {
     if (result.created.length > 0) {
-      console.log(`Created ${result.created.length} issue(s):`)
+      console.log(`Created ${result.created.length} stage issue(s):`)
       for (const item of result.created) {
-        console.log(`  [${item.threadKey}] ${item.threadName}`)
+        console.log(`  Stage ${item.stageNumber.toString().padStart(2, "0")}: ${item.stageName}`)
+        console.log(`    ${item.issueUrl}`)
+      }
+    }
+
+    if (result.reopened.length > 0) {
+      console.log(`\nReopened ${result.reopened.length} stage issue(s):`)
+      for (const item of result.reopened) {
+        console.log(`  Stage ${item.stageNumber.toString().padStart(2, "0")}: ${item.stageName}`)
         console.log(`    ${item.issueUrl}`)
       }
     }
 
     if (result.skipped.length > 0) {
-      console.log(`\nSkipped ${result.skipped.length} thread(s):`)
+      console.log(`\nSkipped ${result.skipped.length} stage(s):`)
       for (const item of result.skipped) {
-        console.log(`  [${item.threadKey}] ${item.threadName}: ${item.reason}`)
+        console.log(`  Stage ${item.stageNumber.toString().padStart(2, "0")}: ${item.stageName} - ${item.reason}`)
       }
     }
 
     if (result.failed.length > 0) {
-      console.log(`\nFailed ${result.failed.length} thread(s):`)
+      console.log(`\nFailed ${result.failed.length} stage(s):`)
       for (const item of result.failed) {
-        console.log(`  [${item.threadKey}] ${item.threadName}: ${item.error}`)
+        console.log(`  Stage ${item.stageNumber.toString().padStart(2, "0")}: ${item.stageName} - ${item.error}`)
       }
     }
 
-    if (result.created.length === 0 && result.skipped.length === 0 && result.failed.length === 0) {
-      console.log("No threads to process")
+    if (result.created.length === 0 && result.reopened.length === 0 && result.skipped.length === 0 && result.failed.length === 0) {
+      console.log("No stages to process")
     }
   }
 }
@@ -1001,15 +1144,15 @@ async function syncCommand(argv: string[]): Promise<void> {
 
   const stream = getStream(index, resolvedStreamId)
 
-  // Sync issue states
+  // Sync issue states (stage-level)
   if (!cliArgs.json) {
-    console.log(`Syncing issue states for workstream: ${stream.id}`)
+    console.log(`Syncing stage issue states for workstream: ${stream.id}`)
     console.log("")
   }
 
-  let result: SyncIssueStatesResult
+  let result: SyncStageIssuesResult
   try {
-    result = await syncIssueStates(repoRoot, stream.id)
+    result = await syncStageIssues(repoRoot, stream.id)
   } catch (error) {
     console.error(`Error: ${(error as Error).message}`)
     process.exit(1)
@@ -1025,9 +1168,9 @@ async function syncCommand(argv: string[]): Promise<void> {
   } else {
     // Report closed issues
     if (result.closed.length > 0) {
-      console.log(`Closed ${result.closed.length} issue(s):`)
+      console.log(`Closed ${result.closed.length} stage issue(s):`)
       for (const item of result.closed) {
-        console.log(`  [${item.threadKey}] ${item.threadName}`)
+        console.log(`  Stage ${item.stageNumber}: ${item.stageName}`)
         console.log(`    #${item.issueNumber}: ${item.issueUrl}`)
       }
       console.log("")
@@ -1035,9 +1178,9 @@ async function syncCommand(argv: string[]): Promise<void> {
 
     // Report unchanged issues
     if (result.unchanged.length > 0) {
-      console.log(`Unchanged ${result.unchanged.length} issue(s):`)
+      console.log(`Unchanged ${result.unchanged.length} stage issue(s):`)
       for (const item of result.unchanged) {
-        console.log(`  [${item.threadKey}] ${item.threadName}: ${item.reason}`)
+        console.log(`  Stage ${item.stageNumber}: ${item.stageName} - ${item.reason}`)
       }
       console.log("")
     }
@@ -1046,7 +1189,7 @@ async function syncCommand(argv: string[]): Promise<void> {
     if (result.errors.length > 0) {
       console.log(`Errors ${result.errors.length}:`)
       for (const item of result.errors) {
-        console.log(`  [${item.threadKey}] ${item.threadName}: ${item.error}`)
+        console.log(`  Stage ${item.stageNumber}: ${item.stageName} - ${item.error}`)
       }
       console.log("")
     }
@@ -1057,9 +1200,9 @@ async function syncCommand(argv: string[]): Promise<void> {
     const errorCount = result.errors.length
 
     if (closedCount === 0 && unchangedCount === 0 && errorCount === 0) {
-      console.log("No issues to sync (no threads have associated GitHub issues)")
+      console.log("No stage issues to sync (no stages have associated GitHub issues)")
     } else {
-      console.log(`Summary: Closed ${closedCount} issues, ${unchangedCount} unchanged`)
+      console.log(`Summary: Closed ${closedCount} stage issues, ${unchangedCount} unchanged`)
       if (errorCount > 0) {
         console.log(`  ${errorCount} error(s) occurred`)
       }

@@ -95,12 +95,11 @@ describe("closeThreadIssue", () => {
   });
 });
 
-describe("storeThreadIssueMeta", () => {
-  it("stores issue meta in tasks file", () => {
+describe("storeThreadIssueMeta (deprecated)", () => {
+  it("is a no-op (issue metadata now stored in github.json per-stage)", () => {
+    // storeThreadIssueMeta is now a no-op - issue metadata moved to github.json per-stage
     storeThreadIssueMeta("/root", "stream1", "task1", { issue_number: 99, issue_url: "url" });
-    expect(mockWriteTasksFile).toHaveBeenCalled();
-    const call = mockWriteTasksFile.mock.calls[0] as unknown[];
-    const file = call[2] as { tasks: Array<{ github_issue?: { number: number; url: string; state: string } }> };
-    expect(file.tasks[0]?.github_issue).toEqual({ number: 99, url: "url", state: "open" });
+    // Should NOT write to tasks file anymore
+    expect(mockWriteTasksFile).not.toHaveBeenCalled();
   });
 });

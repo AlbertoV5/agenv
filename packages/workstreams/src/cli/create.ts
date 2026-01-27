@@ -39,14 +39,17 @@ Examples:
 Workstream Structure:
   Creates a new workstream directory with:
   - PLAN.md     Structured markdown for workstream definition
+  - REPORT.md   Template for documenting accomplishments
   - tasks.json  Empty task tracker (populate with "work add-task")
   - files/      Directory for task outputs
+  - docs/       Optional directory for additional documentation
 
 Workflow:
   1. Create workstream: work create --name my-feature --stages 3
   2. Edit PLAN.md:      Fill in stage names, threads, and details
   3. Validate:        work validate plan
   4. Track progress:    work list --stream "001-my-feature" --tasks
+  5. Document results:  Fill in REPORT.md and run "work report validate"
 `)
 }
 
@@ -165,6 +168,11 @@ export function main(argv: string[] = process.argv): void {
     console.log("  1. Edit PLAN.md to define stages, threads, and tasks")
     console.log(`  2. Run: work validate plan`)
     console.log(`  3. View: work list --stream "${result.streamId}" --tasks`)
+    console.log("")
+    console.log("Created files:")
+    console.log("  - PLAN.md     (edit to define workstream structure)")
+    console.log("  - REPORT.md   (fill out upon completion)")
+    console.log("  - tasks.json  (auto-populated by validation)")
   } catch (e) {
     console.error(`Error: ${(e as Error).message}`)
     process.exit(1)

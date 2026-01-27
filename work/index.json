@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-01-25T03:05:42.833Z",
-  "current_stream": "013-opencode-workstream-commands",
+  "last_updated": "2026-01-27T00:16:59.720Z",
+  "current_stream": "014-workstream-review-standardization",
   "streams": [
     {
       "id": "000-web-visualization",
@@ -785,6 +785,97 @@
         "createdAt": "2026-01-25T02:19:12.909Z"
       },
       "status": "completed"
+    },
+    {
+      "id": "014-workstream-review-standardization",
+      "name": "workstream-review-standardization",
+      "order": 14,
+      "size": "medium",
+      "session_estimated": {
+        "length": 4,
+        "unit": "session",
+        "session_minutes": [
+          30,
+          45
+        ],
+        "session_iterations": [
+          4,
+          8
+        ]
+      },
+      "created_at": "2026-01-26T21:20:59.882Z",
+      "updated_at": "2026-01-27T00:16:59.720Z",
+      "path": "work/014-workstream-review-standardization",
+      "generated_by": {
+        "workstreams": "0.1.0"
+      },
+      "approval": {
+        "status": "approved",
+        "approved_at": "2026-01-26T21:23:00.693Z",
+        "approved_by": "user",
+        "plan_hash": "96ef3e8cc8a8835e5f9e18c32fb009fd7fedcb6408e7071e946ce56d7b86de08",
+        "tasks": {
+          "status": "approved",
+          "approved_at": "2026-01-26T21:45:05.746Z",
+          "task_count": 82
+        },
+        "stages": {
+          "1": {
+            "status": "approved",
+            "approved_at": "2026-01-26T21:43:59.345Z",
+            "approved_by": "user"
+          },
+          "2": {
+            "status": "approved",
+            "approved_at": "2026-01-26T22:00:25.152Z",
+            "approved_by": "user"
+          },
+          "3": {
+            "status": "approved",
+            "approved_at": "2026-01-26T22:20:57.771Z",
+            "approved_by": "user"
+          },
+          "4": {
+            "status": "approved",
+            "approved_at": "2026-01-26T22:43:48.357Z",
+            "approved_by": "user"
+          },
+          "5": {
+            "status": "approved",
+            "approved_at": "2026-01-26T22:58:45.590Z",
+            "approved_by": "user"
+          }
+        }
+      },
+      "github": {
+        "branch": "workstream/014-workstream-review-standardization",
+        "completed_at": "2026-01-27T00:16:59.719Z"
+      },
+      "status": "completed"
+    },
+    {
+      "id": "015-test-report-generation",
+      "name": "test-report-generation",
+      "order": 15,
+      "size": "medium",
+      "session_estimated": {
+        "length": 4,
+        "unit": "session",
+        "session_minutes": [
+          30,
+          45
+        ],
+        "session_iterations": [
+          4,
+          8
+        ]
+      },
+      "created_at": "2026-01-26T21:35:33.758Z",
+      "updated_at": "2026-01-26T21:35:33.758Z",
+      "path": "work/015-test-report-generation",
+      "generated_by": {
+        "workstreams": "0.1.0"
+      }
     }
   ]
 }

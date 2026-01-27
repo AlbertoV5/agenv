@@ -949,7 +949,6 @@ export interface DiscoveredThread {
   batchNum: number // Batch number
   firstTaskId: string // ID of first task in thread (for session tracking)
   assignedAgent?: string // Agent assignment from first task
-  githubIssue?: Task["github_issue"] // GitHub issue from first task (if any)
   taskCount: number // Number of tasks in this thread
 }
 
@@ -1016,7 +1015,6 @@ export function discoverThreadsInBatch(
       batchNum: parsed.batch,
       firstTaskId: firstTask.id,
       assignedAgent: firstTask.assigned_agent,
-      githubIssue: firstTask.github_issue,
       taskCount: tasks.length,
     })
   }
@@ -1062,26 +1060,17 @@ export function getBatchMetadata(
 
 
 /**
- * Set GitHub metadata for a task
+ * @deprecated GitHub metadata is now stored in github.json per-stage, not in tasks.json.
+ * This function is a no-op kept for backward compatibility.
  */
 export function setTaskGitHubMeta(
-  repoRoot: string,
-  streamId: string,
-  taskId: string,
-  meta: NonNullable<Task["github_issue"]>,
+  _repoRoot: string,
+  _streamId: string,
+  _taskId: string,
+  _meta: { number: number; url: string; state: "open" | "closed" },
 ): Task | null {
-  const tasksFile = readTasksFile(repoRoot, streamId)
-  if (!tasksFile) return null
-
-  const taskIndex = tasksFile.tasks.findIndex((t) => t.id === taskId)
-  if (taskIndex === -1) return null
-
-  const task = tasksFile.tasks[taskIndex]!
-  task.github_issue = meta
-  task.updated_at = new Date().toISOString()
-
-  writeTasksFile(repoRoot, streamId, tasksFile)
-  return task
+  // No-op: GitHub metadata is now stored in github.json per-stage
+  return null
 }
 
 /**

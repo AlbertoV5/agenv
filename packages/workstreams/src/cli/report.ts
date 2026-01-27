@@ -5,17 +5,35 @@
  * Supports both full workstream reports and stage-specific reports.
  */
 
-import { writeFileSync } from "fs"
-import { getRepoRoot } from "../lib/repo.ts"
-import { loadIndex, resolveStreamId, findStream } from "../lib/index.ts"
+import { writeFileSync, existsSync } from "fs"
+import { join } from "path"
+import { getRepoRoot, getWorkDir } from "../lib/repo.ts"
+import { loadIndex, resolveStreamId, findStream, atomicWriteFile } from "../lib/index.ts"
 import { generateReport, formatReportMarkdown } from "../lib/document.ts"
 import {
   generateStageReport,
   formatStageReportMarkdown,
   saveStageReport,
 } from "../lib/reports.ts"
+import {
+  generateReportTemplate,
+  validateReport,
+} from "../lib/report-template.ts"
+import {
+  evaluateStream,
+  evaluateAllStreams,
+  filterTasks,
+  filterTasksByStatus,
+  analyzeBlockers,
+  formatMetricsOutput,
+  formatBlockerAnalysis,
+  aggregateMetrics,
+} from "../lib/metrics.ts"
+import { getTasks } from "../lib/tasks.ts"
+import type { TaskStatus } from "../lib/types.ts"
 
 interface ReportCliArgs {
+  subcommand?: "init" | "validate" | "metrics"
   repoRoot?: string
   streamId?: string
   stage?: string
@@ -23,14 +41,26 @@ interface ReportCliArgs {
   output?: string
   json: boolean
   save: boolean
+  // Metrics specific args
+  filter?: string
+  regex: boolean
+  filterStatus?: string
+  blockers: boolean
+  compact: boolean
 }
 
 function printHelp(): void {
   console.log(`
-work report - Generate progress report
+work report - Generate and validate workstream reports
 
 Usage:
-  work report [options]
+  work report [subcommand] [options]
+
+Subcommands:
+  init             Generate REPORT.md template for an existing workstream
+  validate         Validate REPORT.md has required sections filled
+  metrics          Evaluate workstream progress and metrics
+  (none)           Generate progress report (default behavior)
 
 Options:
   --repo-root, -r  Repository root (auto-detected if omitted)
@@ -42,28 +72,33 @@ Options:
   --json, -j       Output as JSON
   --help, -h       Show this help message
 
+Metrics Options (for 'work report metrics'):
+  --filter <pattern>   Filter tasks by name pattern
+  --regex              Treat filter as regex pattern
+  --filter-status <s>  Filter by status (comma-separated: pending,blocked)
+  --blockers           Show blocked task analysis
+  --compact            Single-line summary per workstream
+
 Examples:
+  # Generate REPORT.md template for current workstream
+  work report init
+
+  # Validate REPORT.md for current workstream
+  work report validate
+
   # Current workstream report
   work report
 
   # Stage-specific report
   work report --stage 1
-  work report --stage "Foundation"
 
-  # Save stage report to work/{stream}/reports/
-  work report --stage 1 --save
-
-  # Specific workstream
-  work report --stream "001-my-stream"
-
-  # Write to file
-  work report --output report.md
+  # Metrics and Status
+  work report metrics
+  work report metrics --blockers
+  work report metrics --filter "test"
 
   # All workstreams
   work report --all
-
-  # JSON output
-  work report --json
 `)
 }
 
@@ -73,6 +108,19 @@ function parseCliArgs(argv: string[]): ReportCliArgs | null {
     all: false,
     json: false,
     save: false,
+    regex: false,
+    blockers: false,
+    compact: false,
+  }
+
+  // Check for subcommand as first argument
+  if (args.length > 0 && !args[0]?.startsWith("-")) {
+    const subcommand = args[0]
+    if (subcommand === "init" || subcommand === "validate" || subcommand === "metrics") {
+      parsed.subcommand = subcommand
+      // Remove subcommand from args for remaining parsing
+      args.shift()
+    }
   }
 
   for (let i = 0; i < args.length; i++) {
@@ -133,6 +181,36 @@ function parseCliArgs(argv: string[]): ReportCliArgs | null {
       case "-j":
         parsed.json = true
         break
+      
+      case "--filter":
+        if (!next) {
+          console.error("Error: --filter requires a value")
+          return null
+        }
+        parsed.filter = next
+        i++
+        break
+
+      case "--regex":
+        parsed.regex = true
+        break
+
+      case "--filter-status":
+        if (!next) {
+          console.error("Error: --filter-status requires a value")
+          return null
+        }
+        parsed.filterStatus = next
+        i++
+        break
+
+      case "--blockers":
+        parsed.blockers = true
+        break
+
+      case "--compact":
+        parsed.compact = true
+        break
 
       case "--help":
       case "-h":
@@ -142,6 +220,235 @@ function parseCliArgs(argv: string[]): ReportCliArgs | null {
   }
 
   return parsed
+}
+
+/**
+ * Handle 'work report init' subcommand
+ * Generates REPORT.md template for an existing workstream
+ */
+function handleInit(repoRoot: string, streamId: string): void {
+  const index = loadIndex(repoRoot)
+  const stream = findStream(index, streamId)
+  if (!stream) {
+    console.error(`Error: Workstream "${streamId}" not found`)
+    process.exit(1)
+  }
+
+  const workDir = getWorkDir(repoRoot)
+  const reportPath = join(workDir, stream.id, "REPORT.md")
+
+  // Check if REPORT.md already exists
+  if (existsSync(reportPath)) {
+    console.error(`Error: REPORT.md already exists at ${reportPath}`)
+    console.error("Use --force to overwrite (not implemented yet)")
+    process.exit(1)
+  }
+
+  try {
+    const template = generateReportTemplate(repoRoot, streamId)
+    atomicWriteFile(reportPath, template)
+    console.log(`Created REPORT.md template: ${reportPath}`)
+    console.log("")
+    console.log("Next steps:")
+    console.log("  1. Fill in the Summary section with a high-level overview")
+    console.log("  2. Document accomplishments for each stage")
+    console.log("  3. Add file references with changes made")
+    console.log("  4. Run: work report validate")
+  } catch (error) {
+    console.error(`Error: ${error instanceof Error ? error.message : String(error)}`)
+    process.exit(1)
+  }
+}
+
+/**
+ * Handle 'work report validate' subcommand
+ * Validates REPORT.md has required sections filled
+ */
+function handleValidate(repoRoot: string, streamId: string): void {
+  const index = loadIndex(repoRoot)
+  const stream = findStream(index, streamId)
+  if (!stream) {
+    console.error(`Error: Workstream "${streamId}" not found`)
+    process.exit(1)
+  }
+
+  const workDir = getWorkDir(repoRoot)
+  const reportPath = join(workDir, stream.id, "REPORT.md")
+
+  // Check if REPORT.md exists
+  if (!existsSync(reportPath)) {
+    console.error(`Error: REPORT.md not found at ${reportPath}`)
+    console.error("Run 'work report init' to create a template")
+    process.exit(1)
+  }
+
+  try {
+    const validation = validateReport(repoRoot, streamId)
+
+    if (validation.valid) {
+      console.log("✓ REPORT.md validation passed")
+      if (validation.warnings.length > 0) {
+        console.log("\nWarnings:")
+        for (const warning of validation.warnings) {
+          console.log(`  ⚠ ${warning}`)
+        }
+      }
+    } else {
+      console.log("✗ REPORT.md validation failed")
+      console.log("\nErrors:")
+      for (const error of validation.errors) {
+        console.log(`  ✗ ${error}`)
+      }
+      if (validation.warnings.length > 0) {
+        console.log("\nWarnings:")
+        for (const warning of validation.warnings) {
+          console.log(`  ⚠ ${warning}`)
+        }
+      }
+      process.exit(1)
+    }
+  } catch (error) {
+    console.error(`Error: ${error instanceof Error ? error.message : String(error)}`)
+    process.exit(1)
+  }
+}
+
+function getStatusIcon(status: TaskStatus): string {
+  switch (status) {
+    case "completed":
+      return "[x]"
+    case "in_progress":
+      return "[~]"
+    case "blocked":
+      return "[!]"
+    case "cancelled":
+      return "[-]"
+    default:
+      return "[ ]"
+  }
+}
+
+/**
+ * Handle 'work report metrics' subcommand
+ */
+function handleMetrics(repoRoot: string, cliArgs: ReportCliArgs): void {
+  const index = loadIndex(repoRoot)
+
+  // Handle --all flag
+  if (cliArgs.all) {
+    const allMetrics = evaluateAllStreams(repoRoot)
+
+    if (cliArgs.json) {
+      const aggregate = aggregateMetrics(allMetrics)
+      console.log(JSON.stringify({ streams: allMetrics, aggregate }, null, 2))
+      return
+    }
+
+    if (cliArgs.compact) {
+      for (const metrics of allMetrics) {
+        console.log(formatMetricsOutput(metrics, { compact: true }))
+      }
+      console.log("")
+      const aggregate = aggregateMetrics(allMetrics)
+      console.log(formatMetricsOutput(aggregate, { compact: true }))
+      return
+    }
+
+    for (const metrics of allMetrics) {
+      console.log(formatMetricsOutput(metrics))
+      console.log("")
+    }
+
+    console.log("─".repeat(40))
+    const aggregate = aggregateMetrics(allMetrics)
+    console.log(formatMetricsOutput(aggregate))
+    return
+  }
+
+  // Single workstream metrics
+  const resolvedStreamId = resolveStreamId(index, cliArgs.streamId)
+
+  if (!resolvedStreamId) {
+    console.error(
+      "Error: No workstream specified. Use --stream or set current with 'work current --set'"
+    )
+    process.exit(1)
+  }
+
+  const stream = findStream(index, resolvedStreamId)
+  if (!stream) {
+    console.error(`Error: Workstream "${resolvedStreamId}" not found`)
+    process.exit(1)
+  }
+
+  // Handle --blockers flag
+  if (cliArgs.blockers) {
+    const analysis = analyzeBlockers(repoRoot, stream.id)
+
+    if (cliArgs.json) {
+      console.log(JSON.stringify(analysis, null, 2))
+      return
+    }
+
+    console.log(formatBlockerAnalysis(analysis))
+    return
+  }
+
+  // Handle filters
+  if (cliArgs.filter || cliArgs.filterStatus) {
+    let tasks = getTasks(repoRoot, stream.id)
+
+    // Apply status filter first
+    if (cliArgs.filterStatus) {
+      const statuses = cliArgs.filterStatus.split(",") as TaskStatus[]
+      tasks = filterTasksByStatus(tasks, statuses)
+    }
+
+    // Apply name filter
+    if (cliArgs.filter) {
+      const result = filterTasks(tasks, cliArgs.filter, cliArgs.regex)
+      tasks = result.matchingTasks
+
+      if (cliArgs.json) {
+        console.log(JSON.stringify(result, null, 2))
+        return
+      }
+
+      console.log(
+        `Found ${result.matchCount} of ${result.totalTasks} tasks matching "${cliArgs.filter}":`
+      )
+      console.log("")
+      for (const task of tasks) {
+        const statusIcon = getStatusIcon(task.status)
+        console.log(`  ${statusIcon} [${task.id}] ${task.name}`)
+      }
+      return
+    }
+
+    // Status filter only
+    if (cliArgs.json) {
+      console.log(JSON.stringify({ tasks, count: tasks.length }, null, 2))
+      return
+    }
+
+    console.log(`Found ${tasks.length} tasks with status: ${cliArgs.filterStatus}`)
+    console.log("")
+    for (const task of tasks) {
+      const statusIcon = getStatusIcon(task.status)
+      console.log(`  ${statusIcon} [${task.id}] ${task.name}`)
+    }
+    return
+  }
+
+  // Default: show metrics
+  const metrics = evaluateStream(repoRoot, stream.id)
+
+  if (cliArgs.json) {
+    console.log(JSON.stringify(metrics, null, 2))
+    return
+  }
+
+  console.log(formatMetricsOutput(metrics, { compact: cliArgs.compact }))
 }
 
 export function main(argv: string[] = process.argv): void {
@@ -175,6 +482,34 @@ export function main(argv: string[] = process.argv): void {
 
   // Resolve stream ID first (needed for stage reports too)
   const resolvedStreamId = resolveStreamId(index, cliArgs.streamId)
+
+  // Handle subcommands: init, validate, metrics
+  if (cliArgs.subcommand === "init") {
+    if (!resolvedStreamId) {
+      console.error(
+        "Error: No workstream specified. Use --stream or set current with 'work current --set'",
+      )
+      process.exit(1)
+    }
+    handleInit(repoRoot, resolvedStreamId)
+    return
+  }
+
+  if (cliArgs.subcommand === "validate") {
+    if (!resolvedStreamId) {
+      console.error(
+        "Error: No workstream specified. Use --stream or set current with 'work current --set'",
+      )
+      process.exit(1)
+    }
+    handleValidate(repoRoot, resolvedStreamId)
+    return
+  }
+
+  if (cliArgs.subcommand === "metrics") {
+    handleMetrics(repoRoot, cliArgs)
+    return
+  }
 
   // Handle --stage flag: generate stage-specific report
   if (cliArgs.stage) {

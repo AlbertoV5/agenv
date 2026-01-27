@@ -2,17 +2,35 @@
  * GitHub Sync Operations
  *
  * Functions for synchronizing workstream data with GitHub issues.
+ * 
+ * ## Stage-Level Sync (Current)
+ * - `syncStageIssues()` - Sync stage issues with task status (uses github.json)
+ * - `isStageComplete()` - Check if all tasks in a stage are completed
+ * 
+ * ## Thread-Level Sync (Deprecated)
+ * Thread-level sync functions have been deprecated. Issue metadata storage has
+ * moved from tasks.json/threads.json to github.json per-stage.
+ * @see packages/workstreams/src/lib/github/workstream-github.ts
  */
 
 import { loadGitHubConfig, isGitHubEnabled } from "./config";
 import { ensureWorkstreamLabels } from "./labels";
-import { createThreadIssue, storeThreadIssueMeta, closeThreadIssue, reopenThreadIssue, updateThreadIssueBody, findExistingThreadIssue, type CreateThreadIssueInput } from "./issues";
+import { createThreadIssue, closeThreadIssue, reopenThreadIssue, updateThreadIssueBody, findExistingThreadIssue, type CreateThreadIssueInput } from "./issues";
 import { loadIndex, getStream } from "../index";
-import { readTasksFile, writeTasksFile, parseTaskId } from "../tasks";
+import { readTasksFile, parseTaskId } from "../tasks";
 import { getGitHubAuth } from "./auth";
 import { createGitHubClient } from "./client";
 import type { Task } from "../types";
+import {
+  loadWorkstreamGitHub,
+  saveWorkstreamGitHub,
+  updateStageIssueState,
+  type StageIssue,
+} from "./workstream-github";
 
+/**
+ * @deprecated Thread-level issue creation is no longer used. Use stage-level issues instead.
+ */
 export interface CreateIssuesResult {
   created: {
     threadId: string;
@@ -35,6 +53,8 @@ export interface CreateIssuesResult {
 /**
  * Groups tasks by thread and returns unique threads.
  * Returns the first task of each thread as the representative task.
+ * 
+ * @deprecated Thread-level grouping is no longer used. Use stage-level operations instead.
  */
 function getUniqueThreads(tasks: Task[]): Map<string, { tasks: Task[]; firstTask: Task }> {
   const threads = new Map<string, { tasks: Task[]; firstTask: Task }>();
@@ -55,6 +75,9 @@ function getUniqueThreads(tasks: Task[]): Map<string, { tasks: Task[]; firstTask
 
 /**
  * Creates GitHub issues for all threads in a workstream.
+ *
+ * @deprecated Thread-level issues are no longer used. Use stage-level issues instead.
+ * @see createStageIssue in packages/workstreams/src/lib/github/issues.ts
  *
  * @param repoRoot The repository root directory
  * @param streamId The workstream ID
@@ -117,18 +140,7 @@ export async function createIssuesForWorkstream(
       (t) => t.status === "completed" || t.status === "cancelled"
     );
 
-    // Check if any task in this thread already has local issue metadata
-    const existingLocalIssue = tasks.find((t) => t.github_issue?.number);
-    if (existingLocalIssue) {
-      result.skipped.push({
-        threadId: threadKey,
-        threadName: firstTask.thread_name,
-        reason: `Already has issue #${existingLocalIssue.github_issue!.number}`,
-      });
-      continue;
-    }
-
-    // No local metadata - check GitHub for existing issues
+    // Check GitHub for existing issues (no longer checking local task metadata)
     const existingRemoteIssue = await findExistingThreadIssue(
       repoRoot,
       stageId,
@@ -139,13 +151,6 @@ export async function createIssuesForWorkstream(
     );
 
     if (existingRemoteIssue) {
-      // Found an existing issue on GitHub - store the metadata locally
-      const meta = {
-        issue_number: existingRemoteIssue.issueNumber,
-        issue_url: existingRemoteIssue.issueUrl,
-      };
-      storeThreadIssueMeta(repoRoot, streamId, firstTask.id, meta);
-
       if (existingRemoteIssue.state === "closed") {
         if (isComplete) {
           // Thread is still complete - keep issue closed
@@ -216,9 +221,7 @@ export async function createIssuesForWorkstream(
     try {
       const meta = await createThreadIssue(repoRoot, input);
       if (meta && meta.issue_number && meta.issue_url) {
-        // Store the issue metadata on the first task of the thread
-        storeThreadIssueMeta(repoRoot, streamId, firstTask.id, meta);
-
+        // Issue created successfully (metadata now stored in github.json per-stage)
         result.created.push({
           threadId: threadKey,
           threadName: firstTask.thread_name,
@@ -246,6 +249,8 @@ export async function createIssuesForWorkstream(
 
 /**
  * Check if all tasks in a thread are completed
+ *
+ * @deprecated Thread-level completion checks are no longer used. Use isStageComplete() instead.
  *
  * @param repoRoot - Repository root path
  * @param streamId - Workstream ID
@@ -281,197 +286,33 @@ export function isThreadComplete(
 }
 
 /**
- * Find a task in the thread that has a github_issue
- * Returns the first task with a github_issue, since all tasks in a thread
- * share the same issue (issue is per thread, not per task)
- */
-function findThreadIssueTask(
-  tasks: Task[],
-  threadPrefix: string
-): Task | undefined {
-  return tasks.find(
-    (t) => t.id.startsWith(threadPrefix) && t.github_issue?.number
-  );
-}
-
-/**
- * Check if a thread is complete and close its GitHub issue if so
- *
- * This function is called after a task status changes to "completed".
- * It checks if all tasks in the same thread are now completed,
- * and if so, updates the issue body with task reports and closes the issue.
- *
- * @param repoRoot - Repository root path
- * @param streamId - Workstream ID
- * @param taskId - The task ID that was just completed
- * @returns Object with closed status and issue number if closed
+ * @deprecated Issue metadata is no longer stored in tasks.json.
+ * This function is a no-op kept for backward compatibility.
+ * Use github.json per-stage for issue tracking.
  */
 export async function checkAndCloseThreadIssue(
-  repoRoot: string,
-  streamId: string,
-  taskId: string
+  _repoRoot: string,
+  _streamId: string,
+  _taskId: string
 ): Promise<{ closed: boolean; issueNumber?: number }> {
-  // Check if GitHub is enabled
-  const enabled = await isGitHubEnabled(repoRoot);
-  if (!enabled) {
-    return { closed: false };
-  }
-
-  // Parse the task ID to get thread info
-  const { stage, batch, thread } = parseTaskId(taskId);
-  const stageId = stage.toString().padStart(2, "0");
-  const batchId = batch.toString().padStart(2, "0");
-  const threadId = thread.toString().padStart(2, "0");
-
-  // Check if thread is complete
-  if (!isThreadComplete(repoRoot, streamId, stageId, batchId, threadId)) {
-    return { closed: false };
-  }
-
-  // Find a task with the github_issue
-  const tasksFile = readTasksFile(repoRoot, streamId);
-  if (!tasksFile) {
-    return { closed: false };
-  }
-
-  const threadPrefix = `${stageId}.${batchId}.${threadId}.`;
-  const issueTask = findThreadIssueTask(tasksFile.tasks, threadPrefix);
-
-  if (!issueTask?.github_issue?.number) {
-    return { closed: false };
-  }
-
-  // Issue is already closed
-  if (issueTask.github_issue.state === "closed") {
-    return { closed: false };
-  }
-
-  const issueNumber = issueTask.github_issue.number;
-
-  // Get thread tasks for the issue body update
-  const threadTasks = tasksFile.tasks.filter((t) =>
-    t.id.startsWith(threadPrefix)
-  );
-
-  // Load stream info for the issue input
-  const index = loadIndex(repoRoot);
-  const stream = getStream(index, streamId);
-
-  // Build input for updateThreadIssueBody
-  const input: CreateThreadIssueInput = {
-    summary: `Thread ${threadId} in batch ${stageId}.${batchId}`,
-    details: "", // Not used for completed body
-    streamId: stream.id,
-    streamName: stream.name,
-    stageId,
-    stageName: issueTask.stage_name,
-    batchId,
-    batchName: issueTask.batch_name,
-    threadId,
-    threadName: issueTask.thread_name,
-  };
-
-  // Update the issue body before closing
-  try {
-    await updateThreadIssueBody(repoRoot, streamId, issueNumber, input, threadTasks);
-  } catch (error) {
-    // Don't fail the close operation if body update fails
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error(`Failed to update GitHub issue #${issueNumber} body: ${errorMessage}`);
-  }
-
-  // Close the issue on GitHub
-  try {
-    await closeThreadIssue(repoRoot, streamId, issueNumber);
-  } catch (error) {
-    // Don't fail if GitHub API fails, just log and return
-    console.error(`Failed to close GitHub issue #${issueNumber}:`, error);
-    return { closed: false };
-  }
-
-  // Update all tasks in the thread to mark issue as closed
-  for (const task of threadTasks) {
-    if (task.github_issue) {
-      task.github_issue.state = "closed";
-      task.updated_at = new Date().toISOString();
-    }
-  }
-  writeTasksFile(repoRoot, streamId, tasksFile);
-
-  return { closed: true, issueNumber };
+  // No-op: Issue metadata is no longer stored in tasks.json
+  // Close operations should now use github.json per-stage
+  return { closed: false };
 }
 
 /**
- * Check if a thread's issue should be reopened when a task changes from completed
- *
- * This function is called after a task status changes FROM "completed" TO
- * "in_progress" or "blocked". It checks if the thread's issue was previously
- * closed (because all tasks were complete), and if so, reopens it.
- *
- * @param repoRoot - Repository root path
- * @param streamId - Workstream ID
- * @param taskId - The task ID that was just changed from completed
- * @returns Object with reopened status and issue number if reopened
+ * @deprecated Issue metadata is no longer stored in tasks.json.
+ * This function is a no-op kept for backward compatibility.
+ * Use github.json per-stage for issue tracking.
  */
 export async function checkAndReopenThreadIssue(
-  repoRoot: string,
-  streamId: string,
-  taskId: string
+  _repoRoot: string,
+  _streamId: string,
+  _taskId: string
 ): Promise<{ reopened: boolean; issueNumber?: number }> {
-  // Check if GitHub is enabled
-  const enabled = await isGitHubEnabled(repoRoot);
-  if (!enabled) {
-    return { reopened: false };
-  }
-
-  // Parse the task ID to get thread info
-  const { stage, batch, thread } = parseTaskId(taskId);
-  const stageId = stage.toString().padStart(2, "0");
-  const batchId = batch.toString().padStart(2, "0");
-  const threadId = thread.toString().padStart(2, "0");
-
-  // Find a task with the github_issue
-  const tasksFile = readTasksFile(repoRoot, streamId);
-  if (!tasksFile) {
-    return { reopened: false };
-  }
-
-  const threadPrefix = `${stageId}.${batchId}.${threadId}.`;
-  const issueTask = findThreadIssueTask(tasksFile.tasks, threadPrefix);
-
-  if (!issueTask?.github_issue?.number) {
-    return { reopened: false };
-  }
-
-  // Issue is already open, no need to reopen
-  if (issueTask.github_issue.state === "open") {
-    return { reopened: false };
-  }
-
-  const issueNumber = issueTask.github_issue.number;
-
-  // Reopen the issue on GitHub
-  try {
-    await reopenThreadIssue(repoRoot, streamId, issueNumber);
-  } catch (error) {
-    // Don't fail if GitHub API fails, just log and return
-    console.error(`Failed to reopen GitHub issue #${issueNumber}:`, error);
-    return { reopened: false };
-  }
-
-  // Update all tasks in the thread to mark issue as open
-  const threadTasks = tasksFile.tasks.filter((t) =>
-    t.id.startsWith(threadPrefix)
-  );
-  for (const task of threadTasks) {
-    if (task.github_issue) {
-      task.github_issue.state = "open";
-      task.updated_at = new Date().toISOString();
-    }
-  }
-  writeTasksFile(repoRoot, streamId, tasksFile);
-
-  return { reopened: true, issueNumber };
+  // No-op: Issue metadata is no longer stored in tasks.json
+  // Reopen operations should now use github.json per-stage
+  return { reopened: false };
 }
 
 // ============================================
@@ -479,7 +320,7 @@ export async function checkAndReopenThreadIssue(
 // ============================================
 
 /**
- * Result of syncing issue states
+ * Result of syncing issue states (thread-level - deprecated)
  */
 export interface SyncIssueStatesResult {
   closed: { threadKey: string; threadName: string; issueNumber: number; issueUrl: string }[];
@@ -488,76 +329,106 @@ export interface SyncIssueStatesResult {
 }
 
 /**
- * Thread info for sync operations
+ * @deprecated Issue metadata is no longer stored in tasks.json.
+ * This function returns empty results for backward compatibility.
+ * Use syncStageIssues() for stage-level sync with github.json.
  */
-interface ThreadSyncInfo {
-  threadKey: string;
-  threadName: string;
-  tasks: Task[];
-  issueNumber?: number;
-  issueUrl?: string;
-  issueState?: "open" | "closed";
+export async function syncIssueStates(
+  _repoRoot: string,
+  _streamId: string
+): Promise<SyncIssueStatesResult> {
+  // No-op: Issue metadata is no longer stored in tasks.json
+  // Sync operations should now use syncStageIssues() with github.json per-stage
+  return {
+    closed: [],
+    unchanged: [],
+    errors: [],
+  };
+}
+
+// ============================================
+// STAGE-LEVEL SYNC FUNCTIONS
+// ============================================
+
+/**
+ * Result of syncing stage issue states
+ */
+export interface SyncStageIssuesResult {
+  closed: { stageNumber: string; stageName: string; issueNumber: number; issueUrl: string }[];
+  unchanged: { stageNumber: string; stageName: string; issueNumber: number; reason: string }[];
+  errors: { stageNumber: string; stageName: string; issueNumber: number; error: string }[];
 }
 
 /**
- * Group tasks by thread and extract sync info
+ * Check if all tasks in a stage are completed (or cancelled)
+ *
+ * @param repoRoot - Repository root path
+ * @param streamId - Workstream ID
+ * @param stageNumber - Stage number (e.g., 1, 2)
+ * @returns true if all tasks in the stage are completed or cancelled
  */
-function getThreadSyncInfo(tasks: Task[]): Map<string, ThreadSyncInfo> {
-  const threads = new Map<string, ThreadSyncInfo>();
+export function isStageComplete(
+  repoRoot: string,
+  streamId: string,
+  stageNumber: number
+): boolean {
+  const tasksFile = readTasksFile(repoRoot, streamId);
+  if (!tasksFile) return false;
 
-  for (const task of tasks) {
-    const { stage, batch, thread } = parseTaskId(task.id);
-    const threadKey = `${stage.toString().padStart(2, "0")}.${batch.toString().padStart(2, "0")}.${thread.toString().padStart(2, "0")}`;
+  const stagePrefix = `${stageNumber.toString().padStart(2, "0")}.`;
 
-    if (!threads.has(threadKey)) {
-      threads.set(threadKey, {
-        threadKey,
-        threadName: task.thread_name,
-        tasks: [],
-      });
-    }
+  // Get all tasks in this stage
+  const stageTasks = tasksFile.tasks.filter((t) =>
+    t.id.startsWith(stagePrefix)
+  );
 
-    const info = threads.get(threadKey)!;
-    info.tasks.push(task);
+  // If no tasks in stage, consider it not complete
+  if (stageTasks.length === 0) return false;
 
-    // Capture issue info from the first task that has it
-    if (task.github_issue && !info.issueNumber) {
-      info.issueNumber = task.github_issue.number;
-      info.issueUrl = task.github_issue.url;
-      info.issueState = task.github_issue.state;
-    }
-  }
-
-  return threads;
-}
-
-/**
- * Check if all tasks in a thread are complete using task array
- */
-function isThreadCompleteFromTasks(tasks: Task[]): boolean {
-  if (tasks.length === 0) return false;
-  return tasks.every(
-    (task) => task.status === "completed" || task.status === "cancelled"
+  // Check if all tasks are completed (or cancelled)
+  return stageTasks.every(
+    (t) => t.status === "completed" || t.status === "cancelled"
   );
 }
 
 /**
- * Sync all issue states for a workstream
+ * Get metadata for a stage from tasks.json
  *
- * - Finds all threads with associated GitHub issues
- * - For completed threads with open issues, updates issue body and closes the issues
- * - Updates github_issue.state in tasks.json
- * - Reports: "Closed N issues, M unchanged"
+ * @param repoRoot - Repository root path
+ * @param streamId - Workstream ID
+ * @param stageNumber - Stage number (e.g., 1, 2)
+ * @returns Stage name from first task, or null if no tasks found
+ */
+function getStageName(
+  repoRoot: string,
+  streamId: string,
+  stageNumber: number
+): string | null {
+  const tasksFile = readTasksFile(repoRoot, streamId);
+  if (!tasksFile) return null;
+
+  const stagePrefix = `${stageNumber.toString().padStart(2, "0")}.`;
+  const firstTask = tasksFile.tasks.find((t) => t.id.startsWith(stagePrefix));
+
+  return firstTask?.stage_name || null;
+}
+
+/**
+ * Synchronize stage-level GitHub issues with local task status.
+ * 
+ * For each stage with an open issue in github.json:
+ * - If all tasks in the stage are completed/cancelled, close the issue
+ * - Update the state field in github.json
  *
  * @param repoRoot - Repository root path
  * @param streamId - Workstream ID
  * @returns Result with closed, unchanged, and error counts
  */
-export async function syncIssueStates(
+export async function syncStageIssues(
   repoRoot: string,
   streamId: string
-): Promise<SyncIssueStatesResult> {
-  const result: SyncIssueStatesResult = {
+): Promise<SyncStageIssuesResult> {
+  const result: SyncStageIssuesResult = {
     closed: [],
     unchanged: [],
     errors: [],
@@ -569,129 +440,87 @@ export async function syncIssueStates(
     return result;
   }
 
-  // Load config and auth
   const config = await loadGitHubConfig(repoRoot);
   if (!config.owner || !config.repo) {
     return result;
   }
 
-  const token = getGitHubAuth();
-  if (!token) {
-    throw new Error("GitHub authentication failed. Please check your token.");
-  }
-
-  // Load tasks
-  const tasksFile = readTasksFile(repoRoot, streamId);
-  if (!tasksFile || tasksFile.tasks.length === 0) {
+  // Load github.json for this workstream
+  let githubData = await loadWorkstreamGitHub(repoRoot, streamId);
+  if (!githubData) {
+    // No github.json exists - nothing to sync
     return result;
   }
 
-  // Load stream info for building issue input
-  const index = loadIndex(repoRoot);
-  const stream = getStream(index, streamId);
+  // Get GitHub client
+  const token = getGitHubAuth();
+  if (!token) {
+    // No auth - can't sync
+    return result;
+  }
 
-  // Group tasks by thread
-  const threads = getThreadSyncInfo(tasksFile.tasks);
-
-  // Create GitHub client
   const client = createGitHubClient(token, config.owner, config.repo);
 
-  // Track if we need to update tasks.json
-  let tasksUpdated = false;
+  // Track if we need to save github.json
+  let needsSave = false;
 
-  // Process each thread with an associated issue
-  for (const [threadKey, info] of threads) {
-    // Skip threads without issues
-    if (!info.issueNumber) {
+  // Process each stage in github.json
+  for (const [stageNumber, stageIssue] of Object.entries(githubData.stages) as [string, StageIssue][]) {
+    const stageName = getStageName(repoRoot, streamId, parseInt(stageNumber, 10)) || `Stage ${stageNumber}`;
+
+    // Skip if issue is already closed
+    if (stageIssue.state === "closed") {
+      result.unchanged.push({
+        stageNumber,
+        stageName,
+        issueNumber: stageIssue.issue_number,
+        reason: "Issue already closed",
+      });
       continue;
     }
 
-    // Check if thread is complete
-    const complete = isThreadCompleteFromTasks(info.tasks);
+    // Check if stage is complete
+    const stageNum = parseInt(stageNumber, 10);
+    const isComplete = isStageComplete(repoRoot, streamId, stageNum);
 
-    // If thread is complete and issue is open, update body and close it
-    if (complete && info.issueState === "open") {
-      try {
-        // Get the first task for metadata (info.tasks is guaranteed non-empty if complete)
-        const firstTask = info.tasks[0]!;
-
-        // Parse thread key to extract IDs (format: "01.02.03")
-        const parts = threadKey.split(".");
-        const stageId = parts[0] || "";
-        const batchId = parts[1] || "";
-        const threadId = parts[2] || "";
-
-        // Build input for updateThreadIssueBody
-        const input: CreateThreadIssueInput = {
-          summary: `Thread ${threadId} in batch ${stageId}.${batchId}`,
-          details: "", // Not used for completed body
-          streamId: stream.id,
-          streamName: stream.name,
-          stageId,
-          stageName: firstTask.stage_name,
-          batchId,
-          batchName: firstTask.batch_name,
-          threadId,
-          threadName: info.threadName,
-        };
-
-        // Update issue body before closing
-        try {
-          await updateThreadIssueBody(repoRoot, streamId, info.issueNumber, input, info.tasks);
-        } catch (updateError) {
-          // Don't fail the close operation if body update fails
-          const errorMessage = updateError instanceof Error ? updateError.message : String(updateError);
-          console.error(`Failed to update GitHub issue #${info.issueNumber} body: ${errorMessage}`);
-        }
-
-        // Close the issue
-        await client.closeIssue(info.issueNumber);
-
-        // Update the github_issue.state in tasks.json for all tasks in this thread
-        for (const task of info.tasks) {
-          if (task.github_issue) {
-            task.github_issue.state = "closed";
-            tasksUpdated = true;
-          }
-        }
-
-        result.closed.push({
-          threadKey,
-          threadName: info.threadName,
-          issueNumber: info.issueNumber,
-          issueUrl: info.issueUrl || `https://github.com/${config.owner}/${config.repo}/issues/${info.issueNumber}`,
-        });
-      } catch (error) {
-        result.errors.push({
-          threadKey,
-          threadName: info.threadName,
-          issueNumber: info.issueNumber,
-          error: error instanceof Error ? error.message : String(error),
-        });
-      }
-    } else {
-      // Issue doesn't need to be closed
-      let reason: string;
-      if (!complete) {
-        reason = "Thread not complete";
-      } else if (info.issueState === "closed") {
-        reason = "Issue already closed";
-      } else {
-        reason = "No action needed";
-      }
-
+    if (!isComplete) {
       result.unchanged.push({
-        threadKey,
-        threadName: info.threadName,
-        issueNumber: info.issueNumber,
-        reason,
+        stageNumber,
+        stageName,
+        issueNumber: stageIssue.issue_number,
+        reason: "Stage has incomplete tasks",
+      });
+      continue;
+    }
+
+    // Stage is complete - close the issue
+    try {
+      await client.closeIssue(stageIssue.issue_number);
+
+      // Update github.json state
+      const closedAt = new Date().toISOString();
+      updateStageIssueState(githubData, stageNumber, "closed", closedAt);
+      needsSave = true;
+
+      result.closed.push({
+        stageNumber,
+        stageName,
+        issueNumber: stageIssue.issue_number,
+        issueUrl: stageIssue.issue_url,
+      });
+    } catch (error) {
+      result.errors.push({
+        stageNumber,
+        stageName,
+        issueNumber: stageIssue.issue_number,
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
 
-  // Save updated tasks.json if any issues were closed
-  if (tasksUpdated) {
-    writeTasksFile(repoRoot, streamId, tasksFile);
+  // Save github.json if any changes were made
+  if (needsSave) {
+    await saveWorkstreamGitHub(repoRoot, streamId, githubData);
   }
 
   return result;
