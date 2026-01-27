@@ -4,12 +4,216 @@
 
 import { join } from "path"
 import { writeFileSync } from "fs"
-import type { StreamMetadata, Task } from "./types.ts"
+import type { StreamMetadata, Task, TaskStatus } from "./types.ts"
 import { loadIndex, saveIndex, findStream } from "./index.ts"
 import { setNestedField, getNestedField, parseValue } from "./utils.ts"
 import { getWorkDir } from "./repo.ts"
 import { getTasks } from "./tasks.ts"
 import { evaluateStream } from "./metrics.ts"
+
+// ============================================
+// TIMING HELPER FUNCTIONS
+// ============================================
+
+/**
+ * Calculate the duration of a task in milliseconds
+ * Returns null if timestamps are missing or invalid
+ */
+function calculateTaskDuration(task: Task): number | null {
+  if (!task.created_at || !task.updated_at) {
+    return null
+  }
+  const created = new Date(task.created_at).getTime()
+  const updated = new Date(task.updated_at).getTime()
+  if (isNaN(created) || isNaN(updated)) {
+    return null
+  }
+  return Math.max(0, updated - created)
+}
+
+/**
+ * Format milliseconds as human-readable duration
+ * Examples: "1h 23m 45s", "45m 30s", "12s", "<1s"
+ */
+function formatDuration(ms: number): string {
+  if (ms < 1000) {
+    return "<1s"
+  }
+
+  const seconds = Math.floor(ms / 1000)
+  const minutes = Math.floor(seconds / 60)
+  const hours = Math.floor(minutes / 60)
+
+  const remainingMinutes = minutes % 60
+  const remainingSeconds = seconds % 60
+
+  const parts: string[] = []
+  if (hours > 0) {
+    parts.push(`${hours}h`)
+  }
+  if (remainingMinutes > 0 || hours > 0) {
+    parts.push(`${remainingMinutes}m`)
+  }
+  if (remainingSeconds > 0 || parts.length === 0) {
+    parts.push(`${remainingSeconds}s`)
+  }
+
+  return parts.join(" ")
+}
+
+/**
+ * Stage timing metrics
+ */
+interface StageMetrics {
+  stageName: string
+  taskCount: number
+  avgTimeMs: number
+  totalTimeMs: number
+}
+
+/**
+ * Calculate timing metrics grouped by stage
+ * Only includes completed tasks in calculations
+ */
+function calculateStageMetrics(tasks: Task[]): StageMetrics[] {
+  const stageMap = new Map<string, { durations: number[] }>()
+
+  for (const task of tasks) {
+    if (task.status !== "completed") continue
+    const duration = calculateTaskDuration(task)
+    if (duration === null) continue
+
+    const stageName = task.stage_name || "Unknown Stage"
+    if (!stageMap.has(stageName)) {
+      stageMap.set(stageName, { durations: [] })
+    }
+    stageMap.get(stageName)!.durations.push(duration)
+  }
+
+  const results: StageMetrics[] = []
+  for (const [stageName, data] of stageMap) {
+    const totalTimeMs = data.durations.reduce((a, b) => a + b, 0)
+    const avgTimeMs =
+      data.durations.length > 0 ? totalTimeMs / data.durations.length : 0
+    results.push({
+      stageName,
+      taskCount: data.durations.length,
+      avgTimeMs,
+      totalTimeMs,
+    })
+  }
+
+  // Sort by stage name for consistent ordering
+  return results.sort((a, b) => a.stageName.localeCompare(b.stageName))
+}
+
+/**
+ * Agent timing metrics
+ */
+interface AgentMetrics {
+  agentName: string
+  taskCount: number
+  avgTimeMs: number
+}
+
+/**
+ * Calculate timing metrics grouped by assigned agent
+ * Only includes completed tasks in calculations
+ */
+function calculateAgentMetrics(tasks: Task[]): AgentMetrics[] {
+  const agentMap = new Map<string, { durations: number[] }>()
+
+  for (const task of tasks) {
+    if (task.status !== "completed") continue
+    const duration = calculateTaskDuration(task)
+    if (duration === null) continue
+
+    const agentName = task.assigned_agent || "default"
+    if (!agentMap.has(agentName)) {
+      agentMap.set(agentName, { durations: [] })
+    }
+    agentMap.get(agentName)!.durations.push(duration)
+  }
+
+  const results: AgentMetrics[] = []
+  for (const [agentName, data] of agentMap) {
+    const totalTimeMs = data.durations.reduce((a, b) => a + b, 0)
+    const avgTimeMs =
+      data.durations.length > 0 ? totalTimeMs / data.durations.length : 0
+    results.push({
+      agentName,
+      taskCount: data.durations.length,
+      avgTimeMs,
+    })
+  }
+
+  // Sort by task count descending, then by agent name
+  return results.sort(
+    (a, b) => b.taskCount - a.taskCount || a.agentName.localeCompare(b.agentName)
+  )
+}
+
+/**
+ * Overall timing metrics
+ */
+interface OverallTimingMetrics {
+  totalDurationMs: number | null
+  fastestTaskMs: number | null
+  slowestTaskMs: number | null
+}
+
+/**
+ * Calculate overall timing metrics from all tasks
+ */
+function calculateOverallTimingMetrics(tasks: Task[]): OverallTimingMetrics {
+  const completedTasks = tasks.filter((t) => t.status === "completed")
+
+  // Get all valid timestamps for total duration
+  const createdTimestamps: number[] = []
+  const updatedTimestamps: number[] = []
+  const durations: number[] = []
+
+  for (const task of completedTasks) {
+    if (task.created_at) {
+      const created = new Date(task.created_at).getTime()
+      if (!isNaN(created)) {
+        createdTimestamps.push(created)
+      }
+    }
+    if (task.updated_at) {
+      const updated = new Date(task.updated_at).getTime()
+      if (!isNaN(updated)) {
+        updatedTimestamps.push(updated)
+      }
+    }
+    const duration = calculateTaskDuration(task)
+    if (duration !== null) {
+      durations.push(duration)
+    }
+  }
+
+  // Total duration: first created_at to last updated_at
+  let totalDurationMs: number | null = null
+  if (createdTimestamps.length > 0 && updatedTimestamps.length > 0) {
+    const firstCreated = Math.min(...createdTimestamps)
+    const lastUpdated = Math.max(...updatedTimestamps)
+    totalDurationMs = lastUpdated - firstCreated
+  }
+
+  // Fastest and slowest tasks
+  let fastestTaskMs: number | null = null
+  let slowestTaskMs: number | null = null
+  if (durations.length > 0) {
+    fastestTaskMs = Math.min(...durations)
+    slowestTaskMs = Math.max(...durations)
+  }
+
+  return {
+    totalDurationMs,
+    fastestTaskMs,
+    slowestTaskMs,
+  }
+}
 
 export interface CompleteStreamArgs {
   repoRoot: string
@@ -93,6 +297,11 @@ export function generateCompletionMd(args: {
     }
   }
 
+  // Calculate timing metrics
+  const overallTiming = calculateOverallTimingMetrics(tasks)
+  const stageMetrics = calculateStageMetrics(tasks)
+  const agentMetrics = calculateAgentMetrics(tasks)
+
   const lines: string[] = []
   lines.push(`# Metrics: ${stream.name}`)
   lines.push("")
@@ -108,6 +317,15 @@ export function generateCompletionMd(args: {
   lines.push(`| Stages | ${stageCount} |`)
   lines.push(`| Batches | ${batchCount} |`)
   lines.push(`| Threads | ${threadCount} |`)
+  lines.push(
+    `| Total Duration | ${overallTiming.totalDurationMs !== null ? formatDuration(overallTiming.totalDurationMs) : "-"} |`
+  )
+  lines.push(
+    `| Fastest Task | ${overallTiming.fastestTaskMs !== null ? formatDuration(overallTiming.fastestTaskMs) : "-"} |`
+  )
+  lines.push(
+    `| Slowest Task | ${overallTiming.slowestTaskMs !== null ? formatDuration(overallTiming.slowestTaskMs) : "-"} |`
+  )
   lines.push("")
   lines.push("## Status Breakdown")
   lines.push("")
@@ -118,6 +336,38 @@ export function generateCompletionMd(args: {
   lines.push(`| Pending | ${metrics.statusCounts.pending} |`)
   lines.push(`| Blocked | ${metrics.statusCounts.blocked} |`)
   lines.push(`| Cancelled | ${metrics.statusCounts.cancelled} |`)
+  lines.push("")
+
+  // Stage Performance section
+  lines.push("## Stage Performance")
+  lines.push("")
+  if (stageMetrics.length > 0) {
+    lines.push(`| Stage | Tasks | Avg Time | Total Time |`)
+    lines.push(`|-------|-------|----------|------------|`)
+    for (const stage of stageMetrics) {
+      lines.push(
+        `| ${stage.stageName} | ${stage.taskCount} | ${formatDuration(stage.avgTimeMs)} | ${formatDuration(stage.totalTimeMs)} |`
+      )
+    }
+  } else {
+    lines.push("No completed tasks with timing data.")
+  }
+  lines.push("")
+
+  // Agent Performance section
+  lines.push("## Agent Performance")
+  lines.push("")
+  if (agentMetrics.length > 0) {
+    lines.push(`| Agent | Tasks | Avg Time |`)
+    lines.push(`|-------|-------|----------|`)
+    for (const agent of agentMetrics) {
+      lines.push(
+        `| ${agent.agentName} | ${agent.taskCount} | ${formatDuration(agent.avgTimeMs)} |`
+      )
+    }
+  } else {
+    lines.push("No completed tasks with timing data.")
+  }
   lines.push("")
 
   const content = lines.join("\n")
