@@ -8,7 +8,20 @@
 import { execSync, spawn, type ChildProcess } from "child_process"
 
 /** Delay between starting threads to avoid bun install race conditions */
-export const THREAD_START_DELAY_MS = 1000
+export const THREAD_START_DELAY_MS = 3000
+
+/**
+ * Sleep with countdown logging to console
+ * Shows "Waiting Ns..." countdown for visibility
+ */
+export function sleepWithCountdown(ms: number, label: string = "Waiting"): void {
+    const seconds = Math.ceil(ms / 1000)
+    for (let i = seconds; i > 0; i--) {
+        process.stdout.write(`\r  ${label} ${i}s...`)
+        Bun.sleepSync(1000)
+    }
+    process.stdout.write(`\r  ${label} done.   \n`)
+}
 
 /**
  * Check if a tmux session exists
@@ -333,7 +346,7 @@ export function createGridLayout(
         if (splitResult.exitCode !== 0) {
             throw new Error(`Failed to create 2-pane layout: ${splitResult.stderr.toString()}`)
         }
-        Bun.sleepSync(THREAD_START_DELAY_MS)
+        sleepWithCountdown(THREAD_START_DELAY_MS, "Stagger")
         return listPaneIds(sessionWindow)
     }
 
@@ -345,7 +358,7 @@ export function createGridLayout(
         "-h",
         commands[1]!
     ])
-    Bun.sleepSync(THREAD_START_DELAY_MS)
+    sleepWithCountdown(THREAD_START_DELAY_MS, "Stagger")
 
     // Capture the right pane ID before it shifts
     // After horizontal split: pane 0 = left, pane 1 = right
@@ -360,7 +373,7 @@ export function createGridLayout(
         "-v",
         commands[2]!
     ])
-    Bun.sleepSync(THREAD_START_DELAY_MS)
+    sleepWithCountdown(THREAD_START_DELAY_MS, "Stagger")
 
     // Step 3: Split right pane vertically (creates bottom-right) if we have 4 commands
     // Use the saved pane ID to target the correct pane (not index-based)
@@ -371,7 +384,7 @@ export function createGridLayout(
             "-v",
             commands[3]!
         ])
-        Bun.sleepSync(THREAD_START_DELAY_MS)
+        sleepWithCountdown(THREAD_START_DELAY_MS, "Stagger")
     }
 
     return listPaneIds(sessionWindow)

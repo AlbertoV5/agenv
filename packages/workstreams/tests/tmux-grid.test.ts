@@ -122,7 +122,7 @@ describe("tmux grid layout", () => {
             const rightPane = positions.filter(p => p.left > 0)
             expect(leftPane).toHaveLength(1)
             expect(rightPane).toHaveLength(1)
-        })
+        }, 10000)
 
         test("3 panes: TL, BL, and full-height right", () => {
             const sessionName = getTestSessionName()
@@ -146,7 +146,7 @@ describe("tmux grid layout", () => {
             const rightPanes = positions.filter(p => p.left > 0)
             expect(rightPanes).toHaveLength(1)
             expect(rightPanes[0]?.top).toBe(0) // Starts at top
-        })
+        }, 10000)
 
         test("4 panes: correct 2x2 grid layout", () => {
             const sessionName = getTestSessionName()
@@ -169,7 +169,7 @@ describe("tmux grid layout", () => {
                 BL: 1,
                 BR: 1,
             })
-        })
+        }, 15000)
 
         test("4 panes: grid layout NOT 1+3 stacked", () => {
             const sessionName = getTestSessionName()
@@ -190,7 +190,7 @@ describe("tmux grid layout", () => {
             // Should be 2 on each side, NOT 3+1
             expect(leftPanes.length).toBe(2)
             expect(rightPanes.length).toBe(2)
-        })
+        }, 15000)
 
         test("throws error for empty commands array", () => {
             const sessionName = getTestSessionName()
@@ -218,6 +218,6 @@ describe("tmux grid layout", () => {
                 expect(id).toStartWith("%")
                 expect(currentPanes).toContain(id)
             })
-        })
+        }, 15000)
     })
 })

@@ -96,7 +96,7 @@ describe("tmux lib", () => {
             const currentPanes = listPaneIds(target)
             expect(currentPanes).toHaveLength(4)
             panes.forEach(p => expect(currentPanes).toContain(p))
-        })
+        }, 15000) // Extended timeout for 3s stagger delays between threads
 
         test("getSessionPaneStatuses returns correct status", () => {
             const sessionName = getTestSessionName()
@@ -175,7 +175,7 @@ describe("tmux lib", () => {
            addWindow(sessionName, "win2", "sleep 10")
            const panes2 = createGridLayout(`${sessionName}:win2`, ["sleep 10", "sleep 10"])
            expect(panes2).toHaveLength(2)
-       })
+       }, 10000) // Extended timeout for 3s stagger delay
        
        test("joinPane moves pane between windows", () => {
            const sessionName = getTestSessionName()

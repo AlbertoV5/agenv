@@ -2,7 +2,7 @@
  * CLI: Start Workstream
  *
  * Start a workstream after all approvals are complete.
- * Creates the GitHub branch and issues for all threads.
+ * Creates the GitHub branch and issues for all stages.
  */
 
 import { getRepoRoot } from "../lib/repo.ts"
@@ -15,7 +15,7 @@ import {
 } from "../lib/approval.ts"
 import { isGitHubEnabled, loadGitHubConfig } from "../lib/github/config.ts"
 import { createWorkstreamBranch } from "../lib/github/branches.ts"
-import { createIssuesForWorkstream } from "../lib/github/sync.ts"
+import { createStageIssuesForWorkstream } from "./github.ts"
 import { ensureGitHubAuth } from "../lib/github/auth.ts"
 import { canExecuteCommand, getRoleDenialMessage } from "../lib/roles.ts"
 
@@ -43,10 +43,10 @@ Options:
 Description:
   Start a workstream after plan and tasks approvals are complete.
   
-  This command:
-  1. Creates the workstream branch on GitHub (workstream/{streamId})
-  2. Checks out the branch locally
-  3. Creates GitHub issues for all threads in the workstream
+   This command:
+   1. Creates the workstream branch on GitHub (workstream/{streamId})
+   2. Checks out the branch locally
+   3. Creates GitHub issues for all stages in the workstream
 
 Prerequisites:
   - Run 'work approve plan' to approve the PLAN.md
@@ -247,20 +247,21 @@ export async function main(argv: string[] = process.argv): Promise<void> {
         process.exit(1)
     }
 
-    // Step 2: Create issues for all threads
+    // Step 2: Create issues for all stages
     let issuesResult
     try {
         if (!cliArgs.json) {
             console.log("")
-            console.log("Creating issues for all threads...")
+            console.log("Creating issues for stages...")
         }
-        issuesResult = await createIssuesForWorkstream(repoRoot, stream.id)
+        issuesResult = await createStageIssuesForWorkstream(repoRoot, stream.id, stream.name)
 
         if (!cliArgs.json) {
             if (issuesResult.created.length > 0) {
-                console.log(`  ✅ Created ${issuesResult.created.length} issue(s)`)
+                console.log(`  ✅ Created ${issuesResult.created.length} stage issue(s)`)
                 for (const item of issuesResult.created) {
-                    console.log(`     ${item.threadName}: ${item.issueUrl}`)
+                    console.log(`     Stage ${item.stageNumber.toString().padStart(2, "0")}: ${item.stageName}`)
+                    console.log(`       ${item.issueUrl}`)
                 }
             }
 
@@ -268,10 +269,10 @@ export async function main(argv: string[] = process.argv): Promise<void> {
                 console.log(`  ⏭️  Skipped ${issuesResult.skipped.length} (already exist)`)
             }
 
-            if (issuesResult.errors.length > 0) {
-                console.log(`  ⚠️  Errors: ${issuesResult.errors.length}`)
-                for (const item of issuesResult.errors) {
-                    console.log(`     ${item.threadName}: ${item.error}`)
+            if (issuesResult.failed.length > 0) {
+                console.log(`  ⚠️  Errors: ${issuesResult.failed.length}`)
+                for (const item of issuesResult.failed) {
+                    console.log(`     Stage ${item.stageNumber}: ${item.error}`)
                 }
             }
         }
@@ -304,7 +305,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
             issues: {
                 created: issuesResult.created.length,
                 skipped: issuesResult.skipped.length,
-                errors: issuesResult.errors.length,
+                failed: issuesResult.failed.length,
                 details: issuesResult.created,
             },
         }, null, 2))

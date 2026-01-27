@@ -283,17 +283,8 @@ export function generateStream(args: GenerateStreamArgs): GenerateStreamResult {
     JSON.stringify(generateTasksJson(streamId), null, 2),
   )
 
-  // Generate REPORT.md template
-  const reportContent = generateReportMdTemplate(
-    streamId,
-    args.name,
-    planContent,
-    args.stages ?? 1,
-  )
-  atomicWriteFile(join(streamDir, "REPORT.md"), reportContent)
-
-  // Generate docs/README.md
-  atomicWriteFile(join(docsDir, "README.md"), generateDocsReadme())
+  // Note: REPORT.md is created via 'work report init' when needed
+  // Note: docs/ directory is created empty for optional documentation
 
   // Create stream metadata (without size)
   const now = new Date().toISOString()

@@ -210,20 +210,25 @@ function detectThreadSection(
 /**
  * Parse stage questions from checklist items
  * Supports both [ ] (unresolved) and [x] (resolved) formats
+ * 
+ * Note: Input items may contain nested content (like "- **Decision:** ...")
+ * which should be stripped to get just the question text.
  */
 function parseQuestions(items: string[]): StageQuestion[] {
   return items.map((item) => {
-    // Check if it's a checkbox item
-    const checkMatch = item.match(/^\[([x ])\]\s*(.*)$/i)
+    // Check if it's a checkbox item - match only the first line
+    // Use multiline mode (m flag) so $ matches end of line, not just end of string
+    const checkMatch = item.match(/^\[([x ])\]\s*(.*)$/im)
     if (checkMatch) {
       return {
         question: checkMatch[2]!.trim(),
         resolved: checkMatch[1]!.toLowerCase() === "x",
       }
     }
-    // Plain text item
+    // Plain text item - extract just the first line as the question
+    const firstLine = item.split('\n')[0]!.trim()
     return {
-      question: item,
+      question: firstLine,
       resolved: false,
     }
   })

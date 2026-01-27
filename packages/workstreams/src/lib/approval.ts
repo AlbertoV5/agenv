@@ -123,8 +123,9 @@ export function approveStream(
     throw new Error(`PLAN.md not found for workstream "${stream.id}"`)
   }
 
-  // Set approval metadata
+  // Set approval metadata, preserving existing stages and tasks approvals
   stream.approval = {
+    ...stream.approval,
     status: "approved",
     approved_at: new Date().toISOString(),
     approved_by: approvedBy,

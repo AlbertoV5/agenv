@@ -33,33 +33,6 @@ export function formatLabel(prefix: string, value: string): string {
 }
 
 /**
- * Generates the list of labels for a thread.
- * @param config The GitHub configuration
- * @param streamName The name of the workstream
- * @param stageId The ID of the stage (e.g., "01")
- * @param stageName The name of the stage
- * @param batchId The ID of the batch (e.g., "01.01")
- * @param batchName The name of the batch
- * @returns An array of formatted labels
- */
-export function getThreadLabels(
-  config: GitHubConfig,
-  streamName: string,
-  stageId: string,
-  stageName: string,
-  batchId: string,
-  batchName: string
-): string[] {
-  const { label_config } = config;
-  
-  const streamLabel = formatLabel(label_config.workstream.prefix, streamName);
-  const stageLabel = formatLabel(label_config.stage.prefix, `${stageId}-${stageName}`);
-  const batchLabel = formatLabel(label_config.batch.prefix, `${batchId}-${batchName}`);
-  
-  return [streamLabel, stageLabel, batchLabel];
-}
-
-/**
  * Creates all labels needed for a workstream (workstream, stages, batches).
  * @param repoRoot The root directory of the repository
  * @param streamId The ID of the workstream

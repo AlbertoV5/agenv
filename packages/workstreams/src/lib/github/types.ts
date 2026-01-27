@@ -16,7 +16,7 @@ export interface GitHubConfig {
   owner: string
   repo: string
   branch_prefix: string // Prefix for feature branches (e.g., "workstream/")
-  auto_create_issues: boolean // Auto-create issues for threads on approval
+  auto_create_issues: boolean // Auto-create issues for stages on approval
   auto_commit_on_approval: boolean // Auto-commit staged changes on stage approval
   default_pr_target?: string // Default target branch for PRs (e.g., "main")
   label_config: {
@@ -30,14 +30,6 @@ export interface GitHubConfig {
 // ============================================
 // METADATA TYPES
 // ============================================
-
-export interface ThreadGitHubMeta {
-  issue_number?: number
-  issue_url?: string
-  branch_name?: string
-  pr_number?: number
-  pr_url?: string
-}
 
 export interface WorkstreamGitHubMeta {
   issue_number?: number

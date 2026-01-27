@@ -18,6 +18,7 @@ import {
   createGridLayout,
   listPaneIds,
   THREAD_START_DELAY_MS,
+  sleepWithCountdown,
 } from "./tmux.ts"
 import { buildRetryRunCommand, buildPostSynthesisCommand } from "./opencode.ts"
 import type { NormalizedModelSpec } from "./types.ts"
@@ -230,18 +231,18 @@ export function setupTmuxSession(
   const firstThread = threads[0]!
   const firstCmd = buildThreadRunCommand(firstThread, port, streamId)
 
+  // Log thread with synthesis mode indicator
+  const synthIndicator = firstThread.synthesisModels ? " [synthesis]" : ""
+  console.log(`  Grid: Thread 1 - ${firstThread.threadName}${synthIndicator}`)
+
   // Create session with first thread in Window 0
   createSession(sessionName, "Grid", firstCmd)
-  Bun.sleepSync(THREAD_START_DELAY_MS)
+  sleepWithCountdown(THREAD_START_DELAY_MS, "Stagger")
 
   // Keep windows open after exit for debugging
   setGlobalOption(sessionName, "remain-on-exit", "on")
   // Enable mouse support for scrolling
   setGlobalOption(sessionName, "mouse", "on")
-
-  // Log thread with synthesis mode indicator
-  const synthIndicator = firstThread.synthesisModels ? " [synthesis]" : ""
-  console.log(`  Grid: Thread 1 - ${firstThread.threadName}${synthIndicator}`)
 
   // Build commands for threads 2-4 (remaining visible grid panes)
   const gridCommands = [firstCmd]
@@ -281,9 +282,9 @@ export function setupTmuxSession(
       const thread = threads[i]!
       const cmd = buildThreadRunCommand(thread, port, streamId)
       const windowName = `T${i + 1}`
-      addWindow(sessionName, windowName, cmd)
       console.log(`  Hidden: ${windowName} - ${thread.threadName}`)
-      Bun.sleepSync(THREAD_START_DELAY_MS)
+      addWindow(sessionName, windowName, cmd)
+      sleepWithCountdown(THREAD_START_DELAY_MS, "Stagger")
 
       // Capture pane ID for hidden window thread
       const windowPaneIds = listPaneIds(`${sessionName}:${windowName}`)

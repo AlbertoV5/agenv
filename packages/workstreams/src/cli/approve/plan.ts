@@ -24,7 +24,7 @@ import {
   saveWorkstreamGitHub,
   updateStageIssueState,
 } from "../../lib/github/index.ts"
-import { closeThreadIssue } from "../../lib/github/issues.ts"
+import { closeStageIssue } from "../../lib/github/issues.ts"
 import { generateTasksMdFromPlan } from "../../lib/tasks-md.ts"
 import { parseStreamDocument } from "../../lib/stream-parser.ts"
 import { getWorkDir } from "../../lib/repo.ts"
@@ -321,7 +321,7 @@ export async function handlePlanApproval(
           if (stageIssue && stageIssue.state === "open") {
             try {
               // Close the issue on GitHub
-              await closeThreadIssue(repoRoot, updatedStream.id, stageIssue.issue_number)
+              await closeStageIssue(repoRoot, stageIssue.issue_number)
               
               // Update the local github.json with closed_at timestamp
               updateStageIssueState(

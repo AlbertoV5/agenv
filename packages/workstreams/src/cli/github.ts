@@ -53,7 +53,7 @@ Subcommands:
   disable       Disable GitHub integration
   status        Show config and auth status
   create-branch Create workstream branch on GitHub
-  create-issues Create issues for threads
+  create-issues Create issues for stages
   sync          Sync issue states with local task status
 
 Run 'work github <subcommand> --help' for more information on a subcommand.
@@ -1268,4 +1268,45 @@ export function main(argv: string[] = process.argv): void {
 // Run if called directly
 if (import.meta.main) {
   main()
+}
+
+// ============================================
+// EXPORTED FUNCTIONS FOR USE BY OTHER MODULES
+// ============================================
+
+/**
+ * Result type for createStageIssuesForWorkstream
+ */
+export interface CreateStageIssuesForWorkstreamResult {
+  created: { stageNumber: number; stageName: string; issueUrl: string; issueNumber: number }[]
+  skipped: { stageNumber: number; stageName: string; reason: string }[]
+  reopened: { stageNumber: number; stageName: string; issueUrl: string; issueNumber: number }[]
+  failed: { stageNumber: number; stageName: string; error: string }[]
+}
+
+/**
+ * Create stage-level GitHub issues for a workstream.
+ * This is a convenience wrapper for use by other modules (e.g., start.ts).
+ * 
+ * @param repoRoot Repository root path
+ * @param streamId Workstream ID
+ * @param streamName Workstream name
+ * @returns Result with created, skipped, reopened, and failed arrays
+ */
+export async function createStageIssuesForWorkstream(
+  repoRoot: string,
+  streamId: string,
+  streamName: string
+): Promise<CreateStageIssuesForWorkstreamResult> {
+  // Load tasks
+  const tasksFile = readTasksFile(repoRoot, streamId)
+  if (!tasksFile || tasksFile.tasks.length === 0) {
+    return { created: [], skipped: [], reopened: [], failed: [] }
+  }
+
+  // Group tasks by stage
+  const stages = groupTasksByStage(tasksFile.tasks)
+
+  // Create issues for all stages
+  return createIssuesForStages(repoRoot, streamId, streamName, stages)
 }
