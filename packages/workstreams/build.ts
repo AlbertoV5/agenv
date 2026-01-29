@@ -31,6 +31,11 @@ async function transpileFile(srcPath: string, outPath: string) {
   // Read the TypeScript source
   const code = await readFile(srcPath, "utf-8")
   
+  // Check for shebang and preserve it
+  const shebangMatch = code.match(/^#!.*\n/)
+  const shebang = shebangMatch ? "#!/usr/bin/env node\n" : ""  // Use node for portability
+  const codeWithoutShebang = shebangMatch ? code.slice(shebangMatch[0].length) : code
+  
   // For bin files, replace import.meta.main with true (always execute)
   const isBinFile = srcPath.startsWith("bin/")
   
@@ -40,8 +45,8 @@ async function transpileFile(srcPath: string, outPath: string) {
     target: "bun", // Use bun target to avoid CommonJS conversions
   })
   
-  // Transpile TypeScript to JavaScript
-  let jsCode = transpiler.transformSync(code)
+  // Transpile TypeScript to JavaScript (without shebang)
+  let jsCode = transpiler.transformSync(codeWithoutShebang)
   
   // Handle import.meta.main for bin vs library files
   if (isBinFile) {
@@ -95,8 +100,8 @@ async function transpileFile(srcPath: string, outPath: string) {
     mappings: ""
   }))
   
-  // Add source map comment to JS file
-  await writeFile(outPath, jsCode + `\n//# sourceMappingURL=${outPath.split('/').pop()}.map\n`)
+  // Add shebang (if present) and source map comment to JS file
+  await writeFile(outPath, shebang + jsCode + `\n//# sourceMappingURL=${outPath.split('/').pop()}.map\n`)
 }
 
 try {
