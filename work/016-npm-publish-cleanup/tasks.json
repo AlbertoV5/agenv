@@ -1,0 +1,249 @@
+{
+  "version": "1.0.0",
+  "stream_id": "016-npm-publish-cleanup",
+  "last_updated": "2026-01-29T16:22:48.022Z",
+  "tasks": [
+    {
+      "id": "01.01.01.01",
+      "name": "Create tsconfig.build.json with ES2022 target, ESNext module, declaration output to dist/",
+      "stage_name": "Build System & Cleanup",
+      "batch_name": "Build & Cleanup",
+      "thread_name": "TypeScript Build Setup",
+      "status": "pending",
+      "created_at": "2026-01-29T16:22:48.021Z",
+      "updated_at": "2026-01-29T16:22:48.021Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "01.01.01.02",
+      "name": "Add \"build\" script to package.json that runs tsc with tsconfig.build.json",
+      "stage_name": "Build System & Cleanup",
+      "batch_name": "Build & Cleanup",
+      "thread_name": "TypeScript Build Setup",
+      "status": "pending",
+      "created_at": "2026-01-29T16:22:48.021Z",
+      "updated_at": "2026-01-29T16:22:48.021Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "01.01.01.03",
+      "name": "Add dist/ to .gitignore",
+      "stage_name": "Build System & Cleanup",
+      "batch_name": "Build & Cleanup",
+      "thread_name": "TypeScript Build Setup",
+      "status": "pending",
+      "created_at": "2026-01-29T16:22:48.021Z",
+      "updated_at": "2026-01-29T16:22:48.021Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "01.01.01.04",
+      "name": "Verify build compiles without errors",
+      "stage_name": "Build System & Cleanup",
+      "batch_name": "Build & Cleanup",
+      "thread_name": "TypeScript Build Setup",
+      "status": "pending",
+      "created_at": "2026-01-29T16:22:48.021Z",
+      "updated_at": "2026-01-29T16:22:48.021Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "01.01.02.01",
+      "name": "Delete src/cli/serve.ts file",
+      "stage_name": "Build System & Cleanup",
+      "batch_name": "Build & Cleanup",
+      "thread_name": "Remove Serve Command",
+      "status": "pending",
+      "created_at": "2026-01-29T16:22:48.021Z",
+      "updated_at": "2026-01-29T16:22:48.021Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "01.01.02.02",
+      "name": "Remove serve import and registration from bin/work.ts",
+      "stage_name": "Build System & Cleanup",
+      "batch_name": "Build & Cleanup",
+      "thread_name": "Remove Serve Command",
+      "status": "pending",
+      "created_at": "2026-01-29T16:22:48.021Z",
+      "updated_at": "2026-01-29T16:22:48.021Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "01.01.02.03",
+      "name": "Remove serve from COMMAND_DESCRIPTIONS in bin/work.ts",
+      "stage_name": "Build System & Cleanup",
+      "batch_name": "Build & Cleanup",
+      "thread_name": "Remove Serve Command",
+      "status": "pending",
+      "created_at": "2026-01-29T16:22:48.021Z",
+      "updated_at": "2026-01-29T16:22:48.021Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "01.01.02.04",
+      "name": "Remove hono and any JSX/React dependencies from package.json",
+      "stage_name": "Build System & Cleanup",
+      "batch_name": "Build & Cleanup",
+      "thread_name": "Remove Serve Command",
+      "status": "pending",
+      "created_at": "2026-01-29T16:22:48.021Z",
+      "updated_at": "2026-01-29T16:22:48.021Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "01.01.03.01",
+      "name": "Add \"main\": \"./dist/index.js\" field",
+      "stage_name": "Build System & Cleanup",
+      "batch_name": "Build & Cleanup",
+      "thread_name": "Package.json for NPM",
+      "status": "pending",
+      "created_at": "2026-01-29T16:22:48.021Z",
+      "updated_at": "2026-01-29T16:22:48.021Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "01.01.03.02",
+      "name": "Add \"types\": \"./dist/index.d.ts\" field",
+      "stage_name": "Build System & Cleanup",
+      "batch_name": "Build & Cleanup",
+      "thread_name": "Package.json for NPM",
+      "status": "pending",
+      "created_at": "2026-01-29T16:22:48.021Z",
+      "updated_at": "2026-01-29T16:22:48.021Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "01.01.03.03",
+      "name": "Update \"exports\" to point to dist/ compiled files",
+      "stage_name": "Build System & Cleanup",
+      "batch_name": "Build & Cleanup",
+      "thread_name": "Package.json for NPM",
+      "status": "pending",
+      "created_at": "2026-01-29T16:22:48.021Z",
+      "updated_at": "2026-01-29T16:22:48.021Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "01.01.03.04",
+      "name": "Update \"bin\" to point to dist/bin/work.js",
+      "stage_name": "Build System & Cleanup",
+      "batch_name": "Build & Cleanup",
+      "thread_name": "Package.json for NPM",
+      "status": "pending",
+      "created_at": "2026-01-29T16:22:48.021Z",
+      "updated_at": "2026-01-29T16:22:48.021Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "01.01.03.05",
+      "name": "Add \"prepublishOnly\": \"bun run build\" script",
+      "stage_name": "Build System & Cleanup",
+      "batch_name": "Build & Cleanup",
+      "thread_name": "Package.json for NPM",
+      "status": "pending",
+      "created_at": "2026-01-29T16:22:48.021Z",
+      "updated_at": "2026-01-29T16:22:48.021Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "01.01.03.06",
+      "name": "Update \"files\" array to include dist/ and exclude src/",
+      "stage_name": "Build System & Cleanup",
+      "batch_name": "Build & Cleanup",
+      "thread_name": "Package.json for NPM",
+      "status": "pending",
+      "created_at": "2026-01-29T16:22:48.021Z",
+      "updated_at": "2026-01-29T16:22:48.021Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "01.01.03.07",
+      "name": "Add repository, license, keywords, and engines fields",
+      "stage_name": "Build System & Cleanup",
+      "batch_name": "Build & Cleanup",
+      "thread_name": "Package.json for NPM",
+      "status": "pending",
+      "created_at": "2026-01-29T16:22:48.021Z",
+      "updated_at": "2026-01-29T16:22:48.021Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "02.01.01.01",
+      "name": "Run bun run build and verify dist/ output is created",
+      "stage_name": "Testing & Documentation",
+      "batch_name": "Verification & Docs",
+      "thread_name": "Build Verification",
+      "status": "pending",
+      "created_at": "2026-01-29T16:22:48.021Z",
+      "updated_at": "2026-01-29T16:22:48.021Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "02.01.01.02",
+      "name": "Test bun link for local global installation",
+      "stage_name": "Testing & Documentation",
+      "batch_name": "Verification & Docs",
+      "thread_name": "Build Verification",
+      "status": "pending",
+      "created_at": "2026-01-29T16:22:48.021Z",
+      "updated_at": "2026-01-29T16:22:48.021Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "02.01.01.03",
+      "name": "Verify work --help works from any directory after global install",
+      "stage_name": "Testing & Documentation",
+      "batch_name": "Verification & Docs",
+      "thread_name": "Build Verification",
+      "status": "pending",
+      "created_at": "2026-01-29T16:22:48.021Z",
+      "updated_at": "2026-01-29T16:22:48.021Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "02.01.01.04",
+      "name": "Test core commands (create, status, list) work with compiled code",
+      "stage_name": "Testing & Documentation",
+      "batch_name": "Verification & Docs",
+      "thread_name": "Build Verification",
+      "status": "pending",
+      "created_at": "2026-01-29T16:22:48.021Z",
+      "updated_at": "2026-01-29T16:22:48.021Z",
+      "assigned_agent": "default"
+    },
+    {
+      "id": "02.01.02.01",
+      "name": "Update packages/workstreams/README.md with npm/bun global install instructions",
+      "stage_name": "Testing & Documentation",
+      "batch_name": "Verification & Docs",
+      "thread_name": "Documentation Update",
+      "status": "pending",
+      "created_at": "2026-01-29T16:22:48.021Z",
+      "updated_at": "2026-01-29T16:22:48.021Z",
+      "assigned_agent": "documentation-minimalist"
+    },
+    {
+      "id": "02.01.02.02",
+      "name": "Add section explaining the work command becomes available globally",
+      "stage_name": "Testing & Documentation",
+      "batch_name": "Verification & Docs",
+      "thread_name": "Documentation Update",
+      "status": "pending",
+      "created_at": "2026-01-29T16:22:48.021Z",
+      "updated_at": "2026-01-29T16:22:48.021Z",
+      "assigned_agent": "documentation-minimalist"
+    },
+    {
+      "id": "02.01.02.03",
+      "name": "Update root README.md to mention npm installation as an option",
+      "stage_name": "Testing & Documentation",
+      "batch_name": "Verification & Docs",
+      "thread_name": "Documentation Update",
+      "status": "pending",
+      "created_at": "2026-01-29T16:22:48.021Z",
+      "updated_at": "2026-01-29T16:22:48.021Z",
+      "assigned_agent": "documentation-minimalist"
+    }
+  ]
+}
