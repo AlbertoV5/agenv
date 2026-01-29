@@ -14,9 +14,9 @@ describe("install.sh", () => {
   beforeEach(async () => {
     tempDir = await mkdtemp(join(tmpdir(), "agenv-install-test-"))
     mockHome = tempDir
-    mockAgenvHome = join(mockHome, ".agenv")
+    mockAgenvHome = join(mockHome, "agenv")
 
-    // Create mock .agenv structure
+    // Create mock agenv structure
     await mkdir(join(mockAgenvHome, "bin"), { recursive: true })
     await mkdir(join(mockAgenvHome, "packages", "cli", "bin"), { recursive: true })
     await mkdir(join(mockAgenvHome, "packages", "workstreams", "bin"), { recursive: true })
@@ -139,7 +139,7 @@ describe("install.sh", () => {
       expect(exitCode).toBe(0)
 
       const zshrc = await readFile(join(mockHome, ".zshrc"), "utf-8")
-      expect(zshrc).toContain(".agenv/bin")
+      expect(zshrc).toContain("agenv/bin")
       expect(zshrc).toContain("export PATH")
     })
 
@@ -149,7 +149,7 @@ describe("install.sh", () => {
       expect(exitCode).toBe(0)
 
       const bashrc = await readFile(join(mockHome, ".bashrc"), "utf-8")
-      expect(bashrc).toContain(".agenv/bin")
+      expect(bashrc).toContain("agenv/bin")
       expect(bashrc).toContain("export PATH")
     })
 
@@ -157,7 +157,7 @@ describe("install.sh", () => {
       // Pre-configure PATH in .zshrc
       await writeFile(
         join(mockHome, ".zshrc"),
-        '# existing zshrc\nexport PATH="$HOME/.agenv/bin:$PATH"\n',
+        '# existing zshrc\nexport PATH="$HOME/agenv/bin:$PATH"\n',
       )
 
       const { exitCode, stdout } = await runInstallScript()
@@ -167,7 +167,7 @@ describe("install.sh", () => {
 
       const zshrc = await readFile(join(mockHome, ".zshrc"), "utf-8")
       // Should only appear once
-      const matches = zshrc.match(/\.agenv\/bin/g)
+      const matches = zshrc.match(/agenv\/bin/g)
       expect(matches?.length).toBe(1)
     })
   })
@@ -211,7 +211,7 @@ describe("shell config detect_shell_config function", () => {
   ])("SHELL=%s should use %s", async (shell, expectedConfig) => {
     const tempDir = await mkdtemp(join(tmpdir(), "shell-detect-test-"))
     const mockHome = tempDir
-    const mockAgenvHome = join(mockHome, ".agenv")
+    const mockAgenvHome = join(mockHome, "agenv")
 
     try {
       // Setup mock environment
@@ -253,7 +253,7 @@ describe("shell config detect_shell_config function", () => {
       // Check which config file was modified
       const configPath = join(mockHome, expectedConfig)
       const content = await readFile(configPath, "utf-8")
-      expect(content).toContain(".agenv/bin")
+      expect(content).toContain("agenv/bin")
     } finally {
       await rm(tempDir, { recursive: true, force: true })
     }

@@ -62,7 +62,7 @@ export const SetupEnv = async ({ $, project, directory }: { $: any; project: any
   }
 
   // Add agenv bin to PATH
-  const agenvBin = `${process.env.HOME}/.agenv/bin`
+  const agenvBin = `${process.env.HOME}/agenv/bin`
   if (!process.env.PATH?.includes(agenvBin)) {
     process.env.PATH = `${agenvBin}:${process.env.PATH}`
   }

@@ -6,7 +6,7 @@ This guide explains how to install and configure AgEnv using the provided instal
 
 The `install.sh` script sets up AgEnv on your system by:
 
-1. Creating CLI command symlinks in `~/.agenv/bin`
+1. Creating CLI command symlinks in `~/agenv/bin`
 2. Adding the bin directory to your shell's PATH
 3. Configuring Claude agent environment for CLI access
 4. Installing bun dependencies
@@ -21,11 +21,11 @@ The `install.sh` script sets up AgEnv on your system by:
 
 ## Installation Location
 
-AgEnv installs to `~/.agenv` with the following structure:
+AgEnv installs to `~/agenv` with the following structure:
 
-- `~/.agenv/bin/` - CLI command symlinks
-- `~/.agenv/packages/` - Package source code
-- `~/.agenv/env-setup.sh` - Environment configuration for Claude agents
+- `~/agenv/bin/` - CLI command symlinks
+- `~/agenv/packages/` - Package source code
+- `~/agenv/env-setup.sh` - Environment configuration for Claude agents
 
 ## Usage
 
@@ -34,12 +34,12 @@ AgEnv installs to `~/.agenv` with the following structure:
 Run the installation script from the AgEnv directory:
 
 ```bash
-~/.agenv/install.sh
+~/agenv/install.sh
 ```
 
 This will:
 - Create symlinks for `ag` and `work` commands
-- Add `~/.agenv/bin` to your PATH
+- Add `~/agenv/bin` to your PATH
 - Set up `CLAUDE_ENV_FILE` environment variable
 - Install bun dependencies
 
@@ -57,13 +57,13 @@ Or simply restart your terminal.
 To install skills to the default Claude agent directory (`~/.claude/skills`):
 
 ```bash
-~/.agenv/install.sh --with-skills
+~/agenv/install.sh --with-skills
 ```
 
 To install skills to all supported agent directories:
 
 ```bash
-~/.agenv/install.sh --skills-all
+~/agenv/install.sh --skills-all
 ```
 
 ### Skills Only Installation
@@ -71,7 +71,7 @@ To install skills to all supported agent directories:
 To only install skills without setting up the CLI:
 
 ```bash
-~/.agenv/install.sh --skills-only
+~/agenv/install.sh --skills-only
 ```
 
 This is useful for updating skills after the initial installation.
@@ -103,12 +103,12 @@ The script automatically detects and updates your shell configuration:
 
 Two entries are added to your shell configuration:
 
-1. PATH export: `export PATH="$HOME/.agenv/bin:$PATH"`
-2. Claude environment: `export CLAUDE_ENV_FILE="$HOME/.agenv/env-setup.sh"`
+1. PATH export: `export PATH="$HOME/agenv/bin:$PATH"`
+2. Claude environment: `export CLAUDE_ENV_FILE="$HOME/agenv/env-setup.sh"`
 
 ## Claude Agent Integration
 
-The script creates `~/.agenv/env-setup.sh` which is sourced before each Bash command when using Claude Code or similar AI agents. This ensures that the `work` and `ag` commands are available in agent sessions.
+The script creates `~/agenv/env-setup.sh` which is sourced before each Bash command when using Claude Code or similar AI agents. This ensures that the `work` and `ag` commands are available in agent sessions.
 
 ## Troubleshooting
 
@@ -118,7 +118,7 @@ If `ag` or `work` commands are not found after installation:
 
 1. Verify the PATH was added:
    ```bash
-   echo $PATH | grep .agenv
+   echo $PATH | grep agenv
    ```
 
 2. Reload your shell configuration:
@@ -128,7 +128,7 @@ If `ag` or `work` commands are not found after installation:
 
 3. Check that symlinks exist:
    ```bash
-   ls -la ~/.agenv/bin/
+   ls -la ~/agenv/bin/
    ```
 
 ### Permission Denied Errors
@@ -136,8 +136,8 @@ If `ag` or `work` commands are not found after installation:
 If you encounter permission errors:
 
 ```bash
-chmod +x ~/.agenv/install.sh
-chmod +x ~/.agenv/packages/*/bin/*.ts
+chmod +x ~/agenv/install.sh
+chmod +x ~/agenv/packages/*/bin/*.ts
 ```
 
 ### Bun Not Installed
@@ -161,7 +161,7 @@ If you previously had a `plan` command from the deprecated planning package, the
 To reinstall or update AgEnv, simply run the installation script again:
 
 ```bash
-~/.agenv/install.sh
+~/agenv/install.sh
 ```
 
 The script is idempotent and will:
@@ -175,23 +175,23 @@ If you need to perform manual installation steps:
 
 1. Create bin directory:
    ```bash
-   mkdir -p ~/.agenv/bin
+   mkdir -p ~/agenv/bin
    ```
 
 2. Create symlinks:
    ```bash
-   ln -sf ~/.agenv/packages/cli/bin/ag.ts ~/.agenv/bin/ag
-   ln -sf ~/.agenv/packages/workstreams/bin/work.ts ~/.agenv/bin/work
+   ln -sf ~/agenv/packages/cli/bin/ag.ts ~/agenv/bin/ag
+   ln -sf ~/agenv/packages/workstreams/bin/work.ts ~/agenv/bin/work
    ```
 
 3. Add to PATH in your shell config:
    ```bash
-   echo 'export PATH="$HOME/.agenv/bin:$PATH"' >> ~/.zshrc
+   echo 'export PATH="$HOME/agenv/bin:$PATH"' >> ~/.zshrc
    ```
 
 4. Install dependencies:
    ```bash
-   cd ~/.agenv && bun install
+   cd ~/agenv && bun install
    ```
 
 ## Next Steps

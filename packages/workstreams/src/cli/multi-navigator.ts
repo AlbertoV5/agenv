@@ -356,7 +356,7 @@ export async function main(argv: string[] = process.argv) {
     const { loadIndex, getResolvedStream } = await import("../lib/index.ts")
     const idx = loadIndex(repoRoot)
     const stream = getResolvedStream(idx, streamId)
-    const planPath = join(repoRoot, ".agenv", "work", stream.id, "PLAN.md")
+    const planPath = join(repoRoot, "agenv", "work", stream.id, "PLAN.md")
     // Note: path might vary based on getWorkDir.
     // Let's use standard helpers if possible.
 

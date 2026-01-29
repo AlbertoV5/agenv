@@ -3,4 +3,4 @@
 # Used by Claude Code hooks
 
 # Add agenv bin to PATH
-echo "export PATH=\"\$HOME/.agenv/bin:\$PATH\""
+echo "export PATH=\"\$HOME/agenv/bin:\$PATH\""

@@ -5,7 +5,7 @@ A centralized Python+Bun environment for AI agents. This monorepo provides share
 ## Structure
 
 ```
-~/.agenv/
+~/agenv/
 ├── agent/              # Opencode agent configuration (commands, skills, tools)
 │   ├── skills/         # Shared agent skills
 │   └── ...
@@ -21,19 +21,19 @@ A centralized Python+Bun environment for AI agents. This monorepo provides share
 
 ```bash
 # Install CLI tools and add to PATH
-~/.agenv/install.sh
+~/agenv/install.sh
 
 # Install CLI + skills to ~/.claude/skills
-~/.agenv/install.sh --with-skills
+~/agenv/install.sh --with-skills
 
 # Install skills to all agent directories (Claude, Gemini)
-~/.agenv/install.sh --skills-all
+~/agenv/install.sh --skills-all
 
 # Reload shell or run:
 source ~/.zshrc  # or ~/.bashrc
 ```
 
-This adds `~/.agenv/bin` to your PATH and creates the `work` command.
+This adds `~/agenv/bin` to your PATH and creates the `work` command.
 
 ## CLI
 
@@ -190,7 +190,7 @@ Generated workstreams include version tracking in both the markdown templates an
 
 ## Skills
 
-Skills are agent-specific instructions stored in `~/.agenv/agent/skills/`. Each skill has a `SKILL.md` file.
+Skills are agent-specific instructions stored in `~/agenv/agent/skills/`. Each skill has a `SKILL.md` file.
 
 | Skill | Description |
 |-------|-------------|

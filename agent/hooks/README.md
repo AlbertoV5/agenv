@@ -1,6 +1,6 @@
 # AgEnv Hooks
 
-Hooks for Claude Code that add `~/.agenv/bin` to PATH.
+Hooks for Claude Code that add `~/agenv/bin` to PATH.
 
 ## Claude Code
 

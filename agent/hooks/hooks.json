@@ -6,7 +6,7 @@
                 "hooks": [
                     {
                         "type": "command",
-                        "command": "bash $HOME/.agenv/hooks/setup-env.sh >> \"$CLAUDE_ENV_FILE\""
+                        "command": "bash $HOME/agenv/hooks/setup-env.sh >> \"$CLAUDE_ENV_FILE\""
                     }
                 ]
             }

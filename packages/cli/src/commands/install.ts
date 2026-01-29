@@ -20,7 +20,7 @@ import {
 } from "fs"
 import { join } from "path"
 
-const AGENV_HOME = process.env.HOME + "/.agenv"
+const AGENV_HOME = process.env.HOME + "/agenv"
 const AGENV_SKILLS = join(AGENV_HOME, "agent/skills")
 const AGENV_HOOKS = join(AGENV_HOME, "agent/hooks")
 const AGENV_PLUGINS = join(AGENV_HOME, "agent/plugins")
@@ -30,6 +30,7 @@ const AGENV_COMMANDS = join(AGENV_HOME, "agent/commands")
 // Target directories for different agents
 const TARGETS: Record<string, string> = {
   claude: process.env.HOME + "/.claude/skills",
+  codex: process.env.HOME + "/.codex/skills",
   gemini: process.env.HOME + "/.gemini/skills",
   antigravity: process.env.HOME + "/.gemini/antigravity/skills",
   opencode: process.env.HOME + "/.config/opencode/skills",
@@ -68,6 +69,7 @@ Usage:
 
 Options:
   --claude       Install to ~/.claude/skills (default if no option given)
+  --codex        Install to ~/.codex/skills
   --gemini       Install to ~/.gemini/skills
   --all          Install to all supported agent directories
   --target PATH  Install to a custom directory
@@ -1044,6 +1046,9 @@ function skillsCommand(args: string[]): void {
       case "--claude":
         targets.push(TARGETS.claude)
         break
+      case "--codex":
+        targets.push(TARGETS.codex)
+        break
       case "--gemini":
         targets.push(TARGETS.gemini)
         break
@@ -1056,6 +1061,7 @@ function skillsCommand(args: string[]): void {
       case "--all":
         targets.push(
           TARGETS.claude,
+          TARGETS.codex,
           TARGETS.gemini,
           TARGETS.antigravity,
           TARGETS.opencode,

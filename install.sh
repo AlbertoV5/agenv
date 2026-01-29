@@ -2,7 +2,7 @@
 # AgEnv Installation Script
 #
 # This script:
-# 1. Adds ~/.agenv/bin to PATH
+# 1. Adds ~/agenv/bin to PATH
 # 2. Creates symlinks for all package CLI tools
 # 3. Updates shell configuration (.zshrc, .bashrc)
 # 4. Optionally installs agent resources from agent/ directory
@@ -15,7 +15,7 @@
 #   agent/hooks/    - Git and agent hooks
 #
 # Usage:
-#   ~/.agenv/install.sh [options]
+#   ~/agenv/install.sh [options]
 #
 # Options:
 #   --with-skills     Also install skills to ~/.claude/skills
@@ -24,7 +24,7 @@
 
 set -e
 
-AGENV_HOME="${HOME}/.agenv"
+AGENV_HOME="${HOME}/agenv"
 AGENV_BIN="${AGENV_HOME}/bin"
 
 # Parse arguments
@@ -101,10 +101,10 @@ detect_shell_config() {
 }
 
 SHELL_CONFIG=$(detect_shell_config)
-EXPORT_LINE='export PATH="$HOME/.agenv/bin:$PATH"'
+EXPORT_LINE='export PATH="$HOME/agenv/bin:$PATH"'
 
 # Check if PATH is already configured
-if grep -q '\.agenv/bin' "$SHELL_CONFIG" 2>/dev/null; then
+if grep -q 'agenv/bin' "$SHELL_CONFIG" 2>/dev/null; then
     echo "PATH already configured in $SHELL_CONFIG"
 else
     echo "" >> "$SHELL_CONFIG"
@@ -126,7 +126,7 @@ if [ ! -f "$CLAUDE_ENV_FILE" ]; then
 # This file is sourced before each Bash command when CLAUDE_ENV_FILE points to it
 
 # Add agenv bin to PATH for work CLI
-export PATH="$HOME/.agenv/bin:$PATH"
+export PATH="$HOME/agenv/bin:$PATH"
 EOF
     chmod +x "$CLAUDE_ENV_FILE"
 fi
