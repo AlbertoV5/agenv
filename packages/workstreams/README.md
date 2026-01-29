@@ -4,9 +4,41 @@ Workstream management library for AI agents. Create, track, and complete impleme
 
 ## Installation
 
+### As a Library
+
 ```bash
 bun add @agenv/workstreams
 ```
+
+### Global Installation (CLI)
+
+Install globally to use the `work` command from any directory:
+
+**Using npm:**
+```bash
+npm install -g @agenv/workstreams
+```
+
+**Using bun:**
+```bash
+bun install -g @agenv/workstreams
+```
+
+After global installation, the `work` command becomes available system-wide. Verify installation:
+
+```bash
+work --help
+```
+
+### Global Command Availability
+
+When installed globally, the `work` CLI command is automatically added to your system PATH. This means you can:
+
+- Run `work` from any directory without needing to prefix it with `npx` or `bunx`
+- Manage workstreams in any git repository on your system
+- Use all CLI features (`work create`, `work status`, `work update`, etc.) directly
+
+The package uses the `bin` field in `package.json` to register the `work` command, making it available as a global executable after installation.
 
 ## Features
 

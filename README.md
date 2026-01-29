@@ -19,6 +19,8 @@ A centralized Python+Bun environment for AI agents. This monorepo provides share
 
 ## Installation
 
+### Option 1: From Source (Recommended for Development)
+
 ```bash
 # Install CLI tools and add to PATH
 ~/agenv/install.sh
@@ -34,6 +36,25 @@ source ~/.zshrc  # or ~/.bashrc
 ```
 
 This adds `~/agenv/bin` to your PATH and creates the `work` command.
+
+### Option 2: Global Installation via npm/bun
+
+Install the workstreams package globally to get the `work` command:
+
+```bash
+# Using npm
+npm install -g @agenv/workstreams
+
+# Using bun
+bun install -g @agenv/workstreams
+```
+
+After installation, verify with:
+```bash
+work --help
+```
+
+**Note:** This option installs only the workstreams package. For the full agenv environment with skills, use Option 1.
 
 ## CLI
 
