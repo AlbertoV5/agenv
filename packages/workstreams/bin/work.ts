@@ -55,8 +55,6 @@ import { main as executeMain } from "../src/cli/execute.ts"
 import { main as multiMain } from "../src/cli/multi.ts"
 import { main as multiNavigatorMain } from "../src/cli/multi-navigator.ts"
 import { main as multiGridMain } from "../src/cli/multi-grid.ts"
-// NOTE: serveMain uses JSX/React, so it must be dynamically imported to avoid
-// requiring react/jsx-dev-runtime in all contexts
 import { main as treeMain } from "../src/cli/tree.ts"
 import { main as githubMain } from "../src/cli/github.ts"
 import { main as startMain } from "../src/cli/start.ts"
@@ -77,12 +75,6 @@ import {
   getRoleFooter,
   isUserOnlyCommand,
 } from "../src/lib/help.ts"
-
-// Lazy loader for serve command (has JSX/React dependency)
-const serveMain = async (argv: string[]) => {
-  const { main } = await import("../src/cli/serve.ts")
-  return main(argv)
-}
 
 const SUBCOMMANDS = {
   init: initMain,
@@ -124,7 +116,6 @@ const SUBCOMMANDS = {
   multi: multiMain,
   "multi-navigator": multiNavigatorMain,
   "multi-grid": multiGridMain,
-  serve: serveMain,
   tree: treeMain,
   github: githubMain,
   session: sessionMain,
@@ -172,7 +163,6 @@ const COMMAND_DESCRIPTIONS: Record<string, string> = {
   report: "Generate progress report (includes metrics)",
   changelog: "Generate changelog from completed tasks",
   export: "Export workstream data (md, csv, json)",
-  serve: "Launch web visualization server",
   tree: "Show workstream structure tree",
   github: "Manage GitHub integration (enable, create-branch, etc.)",
   session: "Manage agent sessions (complete stale sessions)",
