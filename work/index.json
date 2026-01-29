@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-01-29T16:33:44.762Z",
+  "last_updated": "2026-01-29T16:38:05.914Z",
   "current_stream": "016-npm-publish-cleanup",
   "streams": [
     {
@@ -895,7 +895,7 @@
         ]
       },
       "created_at": "2026-01-29T16:12:55.638Z",
-      "updated_at": "2026-01-29T16:33:44.762Z",
+      "updated_at": "2026-01-29T16:38:05.914Z",
       "path": "work/016-npm-publish-cleanup",
       "generated_by": {
         "workstreams": "0.1.0"
@@ -924,8 +924,10 @@
         }
       },
       "github": {
-        "branch": "workstream/016-npm-publish-cleanup"
-      }
+        "branch": "workstream/016-npm-publish-cleanup",
+        "completed_at": "2026-01-29T16:38:05.914Z"
+      },
+      "status": "completed"
     }
   ]
 }
