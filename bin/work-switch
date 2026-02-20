@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# Switch between dev and npm versions of the work CLI
+# Usage: work-switch dev|npm|status
+
+WORK_LINK="$HOME/.bun/bin/work"
+DEV_TARGET="$HOME/agenv/packages/workstreams/bin/work.ts"
+NPM_TARGET="$HOME/.bun/install/global/node_modules/@agenv/workstreams/dist/bin/work.js"
+
+show_status() {
+  if [ -L "$WORK_LINK" ]; then
+    target=$(readlink "$WORK_LINK")
+    if [[ "$target" == *"agenv/packages"* ]]; then
+      echo "work -> dev (local: $target)"
+    elif [[ "$target" == *"install/global"* ]]; then
+      echo "work -> npm ($target)"
+    else
+      echo "work -> unknown ($target)"
+    fi
+  else
+    echo "work is not a symlink"
+  fi
+}
+
+case "${1:-status}" in
+  dev|development|local)
+    if [ ! -f "$DEV_TARGET" ]; then
+      echo "Error: Dev target not found: $DEV_TARGET"
+      exit 1
+    fi
+    rm -f "$WORK_LINK"
+    ln -s "$DEV_TARGET" "$WORK_LINK"
+    echo "Switched to dev (local development)"
+    show_status
+    ;;
+  npm|prod|production)
+    if [ ! -f "$NPM_TARGET" ]; then
+      echo "Error: npm target not found. Run: bun add -g @agenv/workstreams"
+      exit 1
+    fi
+    rm -f "$WORK_LINK"
+    ln -s "$NPM_TARGET" "$WORK_LINK"
+    echo "Switched to npm (production)"
+    show_status
+    ;;
+  status|"")
+    show_status
+    ;;
+  *)
+    echo "Usage: work-switch [dev|npm|status]"
+    echo ""
+    echo "Commands:"
+    echo "  dev, development, local  - Use local development version"
+    echo "  npm, prod, production    - Use npm-installed version"
+    echo "  status                   - Show current version (default)"
+    exit 1
+    ;;
+esac

@@ -1,0 +1,19 @@
+{
+  "enabled": true,
+  "sounds": {
+    "thread_complete": "/System/Library/Sounds/Glass.aiff",
+    "batch_complete": "/System/Library/Sounds/Hero.aiff",
+    "error": "/System/Library/Sounds/Basso.aiff"
+  },
+  "external_api": {
+    "enabled": false,
+    "webhook_url": "https://hooks.slack.com/services/YOUR/WEBHOOK/URL",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "events": [
+      "batch_complete",
+      "error"
+    ]
+  }
+}

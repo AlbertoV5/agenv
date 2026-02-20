@@ -1,0 +1,42 @@
+name: Publish @agenv/workstreams
+
+on:
+  push:
+    tags:
+      - 'workstreams-v*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write  # Required for OIDC trusted publishing
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+        working-directory: packages/workstreams
+
+      - name: Build
+        run: bun run build
+        working-directory: packages/workstreams
+
+      # Trusted publishing requires npm 11.5.1+
+      # Node 24 ships with npm 11.x
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+
+      # Uses OIDC trusted publishing - no NPM_TOKEN needed!
+      # Provenance disabled: not supported for private repos
+      - name: Publish to npm
+        run: npm publish --access public
+        working-directory: packages/workstreams
+        env:
+          NPM_CONFIG_PROVENANCE: false

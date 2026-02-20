@@ -1,0 +1,24 @@
+{
+  "name": "@agenv/cli",
+  "version": "0.1.0",
+  "description": "AgEnv CLI - unified command interface",
+  "module": "src/index.ts",
+  "type": "module",
+  "bin": {
+    "ag": "./bin/ag.ts"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

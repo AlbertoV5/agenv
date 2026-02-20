@@ -1,0 +1,25 @@
+{
+  "enabled": true,
+  "providers": {
+    "sound": {
+      "enabled": true,
+      "volume": 0.5
+    },
+    "notification_center": {
+      "enabled": true
+    },
+    "terminal_notifier": {
+      "enabled": false,
+      "click_action": "none"
+    },
+    "tts": {
+      "enabled": false
+    }
+  },
+  "events": {
+    "thread_complete": true,
+    "batch_complete": true,
+    "error": true,
+    "synthesis_complete": true
+  }
+}

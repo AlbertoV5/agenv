@@ -1,0 +1,604 @@
+/**
+ * Approval gate logic for workstreams
+ *
+ * Implements the Human-In-The-Loop (HITL) approval workflow:
+ * - Plans must be approved before tasks can be created
+ * - Approval includes a hash of PLAN.md for modification detection
+ * - If PLAN.md changes after approval, the approval is auto-revoked
+ */
+
+import { createHash } from "crypto"
+import { existsSync, readFileSync } from "fs"
+import { join } from "path"
+import type { ApprovalStatus, ApprovalMetadata, StreamMetadata, WorkIndex, ConsolidateError } from "./types.ts"
+import { loadIndex, saveIndex, getStream } from "./index.ts"
+import { getWorkDir } from "./repo.ts"
+import { parseStreamDocument } from "./stream-parser.ts"
+import { parseTasksMd } from "./tasks-md.ts"
+
+/**
+ * Get the path to PLAN.md for a workstream
+ */
+export function getPlanMdPath(repoRoot: string, streamId: string): string {
+  const workDir = getWorkDir(repoRoot)
+  return join(workDir, streamId, "PLAN.md")
+}
+
+/**
+ * Compute SHA-256 hash of PLAN.md content for modification detection
+ */
+export function computePlanHash(repoRoot: string, streamId: string): string | null {
+  const planPath = getPlanMdPath(repoRoot, streamId)
+
+  if (!existsSync(planPath)) {
+    return null
+  }
+
+  const content = readFileSync(planPath, "utf-8")
+  return createHash("sha256").update(content).digest("hex")
+}
+
+/**
+ * Get approval status (defaults to "draft" if not set)
+ */
+export function getApprovalStatus(stream: StreamMetadata): ApprovalStatus {
+  return stream.approval?.status ?? "draft"
+}
+
+/**
+ * Check if workstream is approved
+ */
+export function isApproved(stream: StreamMetadata): boolean {
+  return getApprovalStatus(stream) === "approved"
+}
+
+/**
+ * Check if plan was modified since approval
+ */
+export function isPlanModified(repoRoot: string, stream: StreamMetadata): boolean {
+  if (!stream.approval?.plan_hash) {
+    return false // No hash to compare against
+  }
+
+  const currentHash = computePlanHash(repoRoot, stream.id)
+  if (!currentHash) {
+    return true // PLAN.md was deleted
+  }
+
+  return currentHash !== stream.approval.plan_hash
+}
+
+/**
+ * Check if tasks can be created (plan must be approved)
+ * Returns { allowed: boolean; reason?: string }
+ */
+export function canCreateTasks(stream: StreamMetadata): {
+  allowed: boolean
+  reason?: string
+} {
+  const status = getApprovalStatus(stream)
+
+  switch (status) {
+    case "approved":
+      return { allowed: true }
+    case "draft":
+      return {
+        allowed: false,
+        reason: "Plan has not been approved. Run 'work approve' to approve it.",
+      }
+    case "revoked":
+      return {
+        allowed: false,
+        reason: `Plan approval was revoked${stream.approval?.revoked_reason ? `: ${stream.approval.revoked_reason}` : ""}. Run 'work approve' to re-approve.`,
+      }
+    default:
+      return {
+        allowed: false,
+        reason: `Unknown approval status: ${status}`,
+      }
+  }
+}
+
+/**
+ * Approve a workstream
+ * Stores the current PLAN.md hash to detect future modifications
+ */
+export function approveStream(
+  repoRoot: string,
+  streamIdOrName: string,
+  approvedBy?: string
+): StreamMetadata {
+  const index = loadIndex(repoRoot)
+  const streamIndex = index.streams.findIndex(
+    (s) => s.id === streamIdOrName || s.name === streamIdOrName
+  )
+
+  if (streamIndex === -1) {
+    throw new Error(`Workstream "${streamIdOrName}" not found`)
+  }
+
+  const stream = index.streams[streamIndex]!
+  const planHash = computePlanHash(repoRoot, stream.id)
+
+  if (!planHash) {
+    throw new Error(`PLAN.md not found for workstream "${stream.id}"`)
+  }
+
+  // Set approval metadata, preserving existing stages and tasks approvals
+  stream.approval = {
+    ...stream.approval,
+    status: "approved",
+    approved_at: new Date().toISOString(),
+    approved_by: approvedBy,
+    plan_hash: planHash,
+  }
+
+  stream.updated_at = new Date().toISOString()
+  saveIndex(repoRoot, index)
+
+  return stream
+}
+
+/**
+ * Revoke approval for a workstream
+ */
+export function revokeApproval(
+  repoRoot: string,
+  streamIdOrName: string,
+  reason?: string
+): StreamMetadata {
+  const index = loadIndex(repoRoot)
+  const streamIndex = index.streams.findIndex(
+    (s) => s.id === streamIdOrName || s.name === streamIdOrName
+  )
+
+  if (streamIndex === -1) {
+    throw new Error(`Workstream "${streamIdOrName}" not found`)
+  }
+
+  const stream = index.streams[streamIndex]!
+
+  // Preserve existing approval info but update status
+  stream.approval = {
+    ...stream.approval,
+    status: "revoked",
+    revoked_at: new Date().toISOString(),
+    revoked_reason: reason,
+  }
+
+  stream.updated_at = new Date().toISOString()
+  saveIndex(repoRoot, index)
+
+  return stream
+}
+
+/**
+ * Check if plan was modified since approval and auto-revoke if so
+ * Returns { revoked: boolean; stream: StreamMetadata }
+ */
+export function checkAndRevokeIfModified(
+  repoRoot: string,
+  stream: StreamMetadata
+): { revoked: boolean; stream: StreamMetadata } {
+  if (!isApproved(stream)) {
+    return { revoked: false, stream }
+  }
+
+  if (!isPlanModified(repoRoot, stream)) {
+    return { revoked: false, stream }
+  }
+
+  // Auto-revoke due to modification
+  const updatedStream = revokeApproval(
+    repoRoot,
+    stream.id,
+    "PLAN.md was modified after approval"
+  )
+
+  return { revoked: true, stream: updatedStream }
+}
+
+/**
+ * Format approval status for display
+ */
+export function formatApprovalStatus(stream: StreamMetadata): string {
+  const status = getApprovalStatus(stream)
+
+  switch (status) {
+    case "draft":
+      return "[D] draft (not approved)"
+    case "approved":
+      return "[A] approved"
+    case "revoked":
+      const reason = stream.approval?.revoked_reason
+      return `[R] revoked${reason ? ` (${reason})` : ""}`
+    default:
+      return `[?] ${status}`
+  }
+}
+
+/**
+ * Get approval status icon for compact display
+ */
+export function getApprovalIcon(stream: StreamMetadata): string {
+  const status = getApprovalStatus(stream)
+
+  switch (status) {
+    case "draft":
+      return "📝"
+    case "approved":
+      return "✅"
+    case "revoked":
+      return "⚠️"
+    default:
+      return "❓"
+  }
+}
+
+/**
+ * Result of checking for open questions
+ */
+export interface OpenQuestionsResult {
+  hasOpenQuestions: boolean
+  openCount: number
+  resolvedCount: number
+  questions: { stage: number; stageName: string; question: string }[]
+}
+
+/**
+ * Check for open questions in PLAN.md
+ * Returns details about unresolved questions that should block approval
+ */
+export function checkOpenQuestions(
+  repoRoot: string,
+  streamId: string
+): OpenQuestionsResult {
+  const planPath = getPlanMdPath(repoRoot, streamId)
+
+  if (!existsSync(planPath)) {
+    return {
+      hasOpenQuestions: false,
+      openCount: 0,
+      resolvedCount: 0,
+      questions: [],
+    }
+  }
+
+  const content = readFileSync(planPath, "utf-8")
+  const errors: ConsolidateError[] = []
+  const doc = parseStreamDocument(content, errors)
+
+  if (!doc) {
+    return {
+      hasOpenQuestions: false,
+      openCount: 0,
+      resolvedCount: 0,
+      questions: [],
+    }
+  }
+
+  const openQuestions: { stage: number; stageName: string; question: string }[] = []
+  let openCount = 0
+  let resolvedCount = 0
+
+  for (const stage of doc.stages) {
+    for (const q of stage.questions) {
+      if (q.resolved) {
+        resolvedCount++
+      } else if (q.question.trim()) {
+        openCount++
+        openQuestions.push({
+          stage: stage.id,
+          stageName: stage.name,
+          question: q.question,
+        })
+      }
+    }
+  }
+
+  return {
+    hasOpenQuestions: openCount > 0,
+    openCount,
+    resolvedCount,
+    questions: openQuestions,
+  }
+}
+
+/**
+ * Get approval status for a specific stage
+ */
+export function getStageApprovalStatus(
+  stream: StreamMetadata,
+  stageNumber: number
+): ApprovalStatus {
+  if (!stream.approval?.stages) {
+    return "draft"
+  }
+  return stream.approval.stages[stageNumber]?.status ?? "draft"
+}
+
+/**
+ * Approve a specific stage
+ */
+export function approveStage(
+  repoRoot: string,
+  streamIdOrName: string,
+  stageNumber: number,
+  approvedBy?: string
+): StreamMetadata {
+  const index = loadIndex(repoRoot)
+  const streamIndex = index.streams.findIndex(
+    (s) => s.id === streamIdOrName || s.name === streamIdOrName
+  )
+
+  if (streamIndex === -1) {
+    throw new Error(`Workstream "${streamIdOrName}" not found`)
+  }
+
+  const stream = index.streams[streamIndex]!
+
+  // Initialize approval object if it doesn't exist
+  if (!stream.approval) {
+    stream.approval = {
+      status: "draft"
+    }
+  }
+
+  // Initialize stages map if it doesn't exist
+  if (!stream.approval.stages) {
+    stream.approval.stages = {}
+  }
+
+  // Set stage approval
+  stream.approval.stages[stageNumber] = {
+    status: "approved",
+    approved_at: new Date().toISOString(),
+    approved_by: approvedBy,
+  }
+
+  stream.updated_at = new Date().toISOString()
+  saveIndex(repoRoot, index)
+
+  return stream
+}
+
+/**
+ * Revoke approval for a specific stage
+ */
+export function revokeStageApproval(
+  repoRoot: string,
+  streamIdOrName: string,
+  stageNumber: number,
+  reason?: string
+): StreamMetadata {
+  const index = loadIndex(repoRoot)
+  const streamIndex = index.streams.findIndex(
+    (s) => s.id === streamIdOrName || s.name === streamIdOrName
+  )
+
+  if (streamIndex === -1) {
+    throw new Error(`Workstream "${streamIdOrName}" not found`)
+  }
+
+  const stream = index.streams[streamIndex]!
+
+  if (!stream.approval?.stages?.[stageNumber]) {
+    throw new Error(`Stage ${stageNumber} is not approved, nothing to revoke`)
+  }
+
+  // Update status to revoked
+  stream.approval.stages[stageNumber] = {
+    ...stream.approval.stages[stageNumber],
+    status: "revoked",
+    revoked_at: new Date().toISOString(),
+    revoked_reason: reason,
+  }
+
+  stream.updated_at = new Date().toISOString()
+  saveIndex(repoRoot, index)
+
+  return stream
+}
+
+/**
+ * Store commit SHA in stage approval metadata
+ * Called after createStageApprovalCommit succeeds
+ */
+export function storeStageCommitSha(
+  repoRoot: string,
+  streamIdOrName: string,
+  stageNumber: number,
+  commitSha: string
+): StreamMetadata {
+  const index = loadIndex(repoRoot)
+  const streamIndex = index.streams.findIndex(
+    (s) => s.id === streamIdOrName || s.name === streamIdOrName
+  )
+
+  if (streamIndex === -1) {
+    throw new Error(`Workstream "${streamIdOrName}" not found`)
+  }
+
+  const stream = index.streams[streamIndex]!
+
+  if (!stream.approval?.stages?.[stageNumber]) {
+    throw new Error(`Stage ${stageNumber} is not approved`)
+  }
+
+  // Store the commit SHA
+  stream.approval.stages[stageNumber].commit_sha = commitSha
+
+  stream.updated_at = new Date().toISOString()
+  saveIndex(repoRoot, index)
+
+  return stream
+}
+
+// ============================================
+// TASKS APPROVAL GATE
+// ============================================
+
+/**
+ * Result of checking if tasks can be approved
+ */
+export interface TasksApprovalReadyResult {
+  ready: boolean
+  reason?: string
+  taskCount: number
+}
+
+/**
+ * Check if tasks can be approved (TASKS.md exists with tasks)
+ */
+export function checkTasksApprovalReady(
+  repoRoot: string,
+  streamId: string
+): TasksApprovalReadyResult {
+  const workDir = getWorkDir(repoRoot)
+  const tasksMdPath = join(workDir, streamId, "TASKS.md")
+
+  if (!existsSync(tasksMdPath)) {
+    return {
+      ready: false,
+      reason: "TASKS.md not found. Run 'work tasks' or create it manually to generate tasks.",
+      taskCount: 0,
+    }
+  }
+
+  const content = readFileSync(tasksMdPath, "utf-8")
+  const { tasks, errors } = parseTasksMd(content, streamId)
+
+  if (errors.length > 0) {
+    return {
+      ready: false,
+      reason: `TASKS.md has errors: ${errors[0]}`, // formatting issue
+      taskCount: 0,
+    }
+  }
+
+  if (tasks.length === 0) {
+    return {
+      ready: false,
+      reason: "TASKS.md exists but contains no valid tasks.",
+      taskCount: 0,
+    }
+  }
+
+  return {
+    ready: true,
+    taskCount: tasks.length,
+  }
+}
+
+/**
+ * Get tasks approval status
+ */
+export function getTasksApprovalStatus(stream: StreamMetadata): ApprovalStatus {
+  return stream.approval?.tasks?.status ?? "draft"
+}
+
+/**
+ * Approve tasks
+ */
+export function approveTasks(
+  repoRoot: string,
+  streamIdOrName: string
+): StreamMetadata {
+  const index = loadIndex(repoRoot)
+  const streamIndex = index.streams.findIndex(
+    (s) => s.id === streamIdOrName || s.name === streamIdOrName
+  )
+
+  if (streamIndex === -1) {
+    throw new Error(`Workstream "${streamIdOrName}" not found`)
+  }
+
+  const stream = index.streams[streamIndex]!
+
+  // Check readiness
+  const readyCheck = checkTasksApprovalReady(repoRoot, stream.id)
+  if (!readyCheck.ready) {
+    throw new Error(readyCheck.reason!)
+  }
+
+  // Initialize approval if needed
+  if (!stream.approval) {
+    stream.approval = { status: "draft" }
+  }
+
+  // Set tasks approval
+  stream.approval.tasks = {
+    status: "approved",
+    approved_at: new Date().toISOString(),
+    task_count: readyCheck.taskCount,
+  }
+
+  stream.updated_at = new Date().toISOString()
+  saveIndex(repoRoot, index)
+
+  return stream
+}
+
+/**
+ * Revoke tasks approval
+ */
+export function revokeTasksApproval(
+  repoRoot: string,
+  streamIdOrName: string,
+  reason?: string
+): StreamMetadata {
+  const index = loadIndex(repoRoot)
+  const streamIndex = index.streams.findIndex(
+    (s) => s.id === streamIdOrName || s.name === streamIdOrName
+  )
+
+  if (streamIndex === -1) {
+    throw new Error(`Workstream "${streamIdOrName}" not found`)
+  }
+
+  const stream = index.streams[streamIndex]!
+
+  // Initialize approval if needed
+  if (!stream.approval) {
+    stream.approval = { status: "draft" }
+  }
+
+  // Set tasks approval to revoked
+  stream.approval.tasks = {
+    status: "revoked",
+    revoked_at: new Date().toISOString(),
+    revoked_reason: reason,
+  }
+
+  stream.updated_at = new Date().toISOString()
+  saveIndex(repoRoot, index)
+
+  return stream
+}
+
+
+// ============================================
+// FULL APPROVAL CHECK
+// ============================================
+
+export function isFullyApproved(stream: StreamMetadata): boolean {
+  return (
+    getApprovalStatus(stream) === "approved" &&
+    getTasksApprovalStatus(stream) === "approved"
+  )
+}
+
+/**
+ * Get summary of all approval statuses
+ */
+export function getFullApprovalStatus(stream: StreamMetadata): {
+  plan: ApprovalStatus
+  tasks: ApprovalStatus
+  fullyApproved: boolean
+} {
+  return {
+    plan: getApprovalStatus(stream),
+    tasks: getTasksApprovalStatus(stream),
+    fullyApproved: isFullyApproved(stream),
+  }
+}

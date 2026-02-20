@@ -1,0 +1,36 @@
+---
+name: implementing-workstreams
+description: Execute tasks for an existing workstream and keep task state accurate.
+---
+
+# Implementing Workstreams
+
+## Start Here
+
+```bash
+work status
+work tree --batch "01.01"
+work list --tasks --thread "01.01.01"
+```
+
+## Execution Rules
+
+1. Work only on your assigned thread.
+2. Mark task start: `work update --task "ID" --status in_progress`
+3. Mark completion with report:
+   `work update --task "ID" --status completed --report "1-2 sentence summary"`
+4. If blocked:
+   `work update --task "ID" --status blocked --report "reason and dependency"`
+
+## Report Quality
+
+- Mention concrete files or modules changed.
+- Include notable decisions or deviations.
+- Keep it short and factual.
+
+## Recovery
+
+- If work is already done but status is stale, update status and add report.
+- If context is unclear, review:
+  - `work review plan`
+  - `work read --task "ID"`

@@ -1,0 +1,30 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // Target & Module - ES2022 for modern Node.js
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    
+    // Output configuration
+    "outDir": "./dist",
+    "declaration": true,
+    "declarationMap": true,
+    
+    // For declaration files only, we can allow .ts extensions
+    "allowImportingTsExtensions": true,
+    "emitDeclarationOnly": true,
+    "noEmit": false
+  },
+  "include": [
+    "src/**/*",
+    "bin/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "tests",
+    "**/*.test.ts",
+    "**/*.spec.ts"
+  ]
+}

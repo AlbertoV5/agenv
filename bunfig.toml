@@ -1,0 +1,12 @@
+[test]
+# Enable coverage by default
+coverage = true
+
+# Skip test files from coverage report (only show source files)
+coverageSkipTestFiles = true
+
+# Output both text (console) and lcov (for CI/tooling)
+coverageReporter = ["text", "lcov"]
+
+# Coverage output directory
+coverageDir = "coverage"

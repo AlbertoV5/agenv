@@ -1,0 +1,11 @@
+# Exclude from GitHub language statistics
+*.json linguist-detectable=false
+*.md linguist-documentation
+bun.lock linguist-generated
+
+# Vendored/generated files
+dist/** linguist-generated
+**/dist/** linguist-generated
+
+# If any compiled JS slips through, mark as generated
+packages/*/src/**/*.js linguist-generated

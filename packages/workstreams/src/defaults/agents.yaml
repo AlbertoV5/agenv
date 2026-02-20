@@ -1,0 +1,53 @@
+agents:
+  - name: default
+    description: General-purpose implementation agent.
+    best_for: Standard development tasks.
+    models:
+      [anthropic/claude-sonnet-4-5, { model: "google/claude-sonnet-4-5-thinking", variant: high }]
+
+  - name: systems-engineer
+    description: Good for complex multi-faceted work.
+    best_for: Architecture, complex systems, solving engineering problems.
+    models:
+      [
+        anthropic/claude-opus-4-5,
+        github-copilot/claude-opus-4.5,
+        { model: "google/claude-opus-4-5-thinking", variant: high },
+      ]
+
+  - name: frontend-speedster
+    description: Very efficient and effective frontend coder.
+    best_for: Straight-forward frontend tasks.
+    models:
+      [
+        "anthropic/claude-sonnet-4-5",
+        { model: google/gemini-3-flash-preview, variant: low },
+        { model: google/gemini-3-flash-preview, variant: high },
+        google/gemini-3-flash-preview,
+      ]
+
+  - name: code-reviewer
+    description: Specialized on code analysis.
+    best_for: Debugging, testing, code reviews.
+    models:
+      [
+        github-copilot/gpt-5.2-codex,
+        anthropic/claude-sonnet-4-5,
+        { model: google/gemini-3-pro-preview, variant: high },
+      ]
+
+  - name: documentation-minimalist
+    description: Model that creates short and sweet docs.
+    best_for: Documentation, reviews.
+    models:
+      [
+        github-copilot/gpt-5.2-codex,
+        anthropic/claude-sonnet-4-5,
+        { model: google/gemini-3-pro-preview, variant: low },
+      ]
+
+synthesis_agents:
+  - name: batch-synthesizer
+    description: Summarizes working agent outputs after thread completion.
+    best_for: Generating concise summaries of completed work for notifications.
+    models: [anthropic/claude-haiku-4-5]
