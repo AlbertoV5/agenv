@@ -34,7 +34,12 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 .DS_Store
 
 
-source_env.sh
+# local machine-specific setup
+env-setup.sh
+bin/source_env.sh
+agent/hooks/hooks.json
+agent/hooks/setup-env.sh
+agent/plugins/setup-env.ts
 
 # local workstream data
 work/
