@@ -2,22 +2,39 @@ import { describe, expect, test, mock, beforeEach, afterEach, spyOn } from "bun:
 import { mkdtempSync, writeFileSync, rmSync, existsSync } from "fs"
 import { join } from "path"
 import { tmpdir } from "os"
-import { findNextIncompleteBatch } from "../src/cli/multi"
+import { findNextIncompleteBatch, parseCliArgs } from "../src/cli/multi"
 import { getCompletionMarkerPath, getSessionFilePath, buildRunCommand, buildRetryRunCommand, buildPostSynthesisCommand } from "../src/lib/opencode"
-import type { Task, NormalizedModelSpec } from "../src/lib/types"
+import type { ThreadMetadata, NormalizedModelSpec } from "../src/lib/types"
 import * as notifications from "../src/lib/notifications"
 import { mockPlayNotification } from "./helpers"
 
 describe("multi cli", () => {
+    describe("parseCliArgs", () => {
+        test("parses --backend flag", () => {
+            const parsed = parseCliArgs(["bun", "work", "--batch", "01.01", "--backend", "opencode-sdk"])
+            expect(parsed?.backend).toBe("opencode-sdk")
+        })
+
+        test("parses --backend with tmux value", () => {
+            const parsed = parseCliArgs(["bun", "work", "--batch", "01.01", "--backend", "tmux"])
+            expect(parsed?.backend).toBe("tmux")
+        })
+
+        test("parses --allow-legacy-backends flag", () => {
+            const parsed = parseCliArgs(["bun", "work", "--batch", "01.01", "--allow-legacy-backends"])
+            expect(parsed?.allowLegacyBackends).toBe(true)
+        })
+    })
+
     describe("findNextIncompleteBatch", () => {
-        const baseTask: Task = {
-            id: "01.01.01.01",
-            name: "Test task",
-            thread_name: "Thread 1",
-            batch_name: "Batch 1",
-            stage_name: "Stage 1",
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
+        const baseThread: ThreadMetadata = {
+            threadId: "01.01.01",
+            threadName: "Thread 1",
+            stageName: "Stage 1",
+            batchName: "Batch 1",
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            sessions: [],
             status: "pending"
         }
 
@@ -27,10 +44,10 @@ describe("multi cli", () => {
 
         test("returns first batch if any task is pending", () => {
             const tasks = [
-                { ...baseTask, id: "01.01.01.01", status: "completed" },
-                { ...baseTask, id: "01.01.01.02", status: "pending" },
-                { ...baseTask, id: "01.02.01.01", status: "pending" }
-            ] as Task[]
+                { ...baseThread, threadId: "01.01.01", status: "completed" },
+                { ...baseThread, threadId: "01.01.02", status: "pending" },
+                { ...baseThread, threadId: "01.02.01", status: "pending" }
+            ] as ThreadMetadata[]
 
             // Should return 01.01 because it has a pending task
             expect(findNextIncompleteBatch(tasks)).toBe("01.01")
@@ -38,31 +55,31 @@ describe("multi cli", () => {
 
         test("returns second batch if first is fully complete", () => {
             const tasks = [
-                { ...baseTask, id: "01.01.01.01", status: "completed" },
-                { ...baseTask, id: "01.01.01.02", status: "completed" },
-                { ...baseTask, id: "01.02.01.01", status: "pending" },
-                { ...baseTask, id: "01.02.01.02", status: "in_progress" }
-            ] as Task[]
+                { ...baseThread, threadId: "01.01.01", status: "completed" },
+                { ...baseThread, threadId: "01.01.02", status: "completed" },
+                { ...baseThread, threadId: "01.02.01", status: "pending" },
+                { ...baseThread, threadId: "01.02.02", status: "in_progress" }
+            ] as ThreadMetadata[]
 
             expect(findNextIncompleteBatch(tasks)).toBe("01.02")
         })
 
         test("returns null if all batches are complete", () => {
             const tasks = [
-                { ...baseTask, id: "01.01.01.01", status: "completed" },
-                { ...baseTask, id: "01.02.01.01", status: "cancelled" },
-                { ...baseTask, id: "02.01.01.01", status: "completed" }
-            ] as Task[]
+                { ...baseThread, threadId: "01.01.01", status: "completed" },
+                { ...baseThread, threadId: "01.02.01", status: "cancelled" },
+                { ...baseThread, threadId: "02.01.01", status: "completed" }
+            ] as ThreadMetadata[]
 
             expect(findNextIncompleteBatch(tasks)).toBeNull()
         })
 
         test("handles out of order tasks", () => {
             const tasks = [
-                { ...baseTask, id: "02.01.01.01", status: "pending" },
-                { ...baseTask, id: "01.01.01.01", status: "completed" },
-                { ...baseTask, id: "01.02.01.01", status: "completed" }
-            ] as Task[]
+                { ...baseThread, threadId: "02.01.01", status: "pending" },
+                { ...baseThread, threadId: "01.01.01", status: "completed" },
+                { ...baseThread, threadId: "01.02.01", status: "completed" }
+            ] as ThreadMetadata[]
 
             // 01.01 and 01.02 are done, 02.01 is pending
             expect(findNextIncompleteBatch(tasks)).toBe("02.01")
@@ -70,9 +87,9 @@ describe("multi cli", () => {
 
         test("handles incomplete batch stuck in in_progress", () => {
             const tasks = [
-                { ...baseTask, id: "01.01.01.01", status: "in_progress" },
-                { ...baseTask, id: "02.01.01.01", status: "pending" }
-            ] as Task[]
+                { ...baseThread, threadId: "01.01.01", status: "in_progress" },
+                { ...baseThread, threadId: "02.01.01", status: "pending" }
+            ] as ThreadMetadata[]
 
             expect(findNextIncompleteBatch(tasks)).toBe("01.01")
         })
@@ -405,5 +422,3 @@ describe("multi cli", () => {
         })
     })
 })
-
-

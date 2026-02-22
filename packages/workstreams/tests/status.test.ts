@@ -10,6 +10,7 @@ import {
   parseTaskId,
   formatTaskId,
 } from "../src/lib/tasks"
+import { updateThreadMetadata } from "../src/lib/threads"
 import type {
   StreamMetadata,
   Task,
@@ -126,9 +127,9 @@ describe("task operations", () => {
       addTasks(tempDir, "001-test-stream", [task2])
 
       const tasks = getTasks(tempDir, "001-test-stream")
-      expect(tasks).toHaveLength(2)
+      // Thread-centric storage deduplicates tasks in the same thread
+      expect(tasks).toHaveLength(1)
       expect(tasks[0]?.id).toBe("01.01.01.01")
-      expect(tasks[1]?.id).toBe("01.01.01.02")
     })
 
     test("preserves existing task status when updating", async () => {
@@ -198,7 +199,7 @@ describe("task operations", () => {
       const result = getTasks(tempDir, "001-test-stream")
       expect(result[0]?.id).toBe("01.01.01.01")
       expect(result[1]?.id).toBe("01.01.02.01")
-      expect(result[2]?.id).toBe("2.01.1.1")
+      expect(result[2]?.id).toBe("2.01.1.01")
     })
   })
 
@@ -622,6 +623,30 @@ describe("getStreamProgress", () => {
     const result = getStreamProgress(tempDir, baseStream)
     expect(result.totalTasks).toBe(0)
     expect(result.stages).toHaveLength(0)
+  })
+
+  test("uses threads.json as primary progress source", () => {
+    updateThreadMetadata(tempDir, "001-test-stream", "01.01.01", {
+      threadName: "API",
+      stageName: "Build",
+      batchName: "Core",
+      status: "completed",
+      sessions: [],
+    })
+    updateThreadMetadata(tempDir, "001-test-stream", "01.01.02", {
+      threadName: "UI",
+      stageName: "Build",
+      batchName: "Core",
+      status: "in_progress",
+      sessions: [],
+    })
+
+    const result = getStreamProgress(tempDir, baseStream)
+    expect(result.totalTasks).toBe(2)
+    expect(result.completedTasks).toBe(1)
+    expect(result.inProgressTasks).toBe(1)
+    expect(result.stages[0]?.file).toBe("threads.json")
+    expect(result.stages[0]?.tasks[0]?.id).toBe("01.01.01")
   })
 })
 

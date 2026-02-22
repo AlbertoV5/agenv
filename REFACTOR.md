@@ -133,223 +133,76 @@ A `migrateTasksToThreads()` function should:
 
 ---
 
-## Part 2: Multi-Backend Agent Execution (Adapter Pattern)
+## Part 2: OpenCode Native Orchestration (Session-First)
 
-### Current Architecture (tmux-only)
+### Vision
 
-```
-work multi --batch "01.01"
-  → multi-orchestrator.ts: discover threads from tasks.json
-  → opencode.ts: build massive sh -c shell scripts with retry logic
-  → tmux.ts: create session, split panes, spawn processes
-  → marker-polling.ts: watch /tmp files for completion
-  → session close: grep opencode session list with jq for tracking IDs
-```
+The primary runtime is **inside a live OpenCode session**:
 
-**Pain points**: Shell escaping hell (1018 lines of opencode.ts), temp file IPC, fragile session discovery by title grepping, tmux dependency, 3-second stagger delays, no programmatic control.
+1. User asks the top-level planner agent to execute a batch/thread set.
+2. Planner launches worker subagents via **Task tool calls** (parallel when needed).
+3. Workers execute thread work using `implementing-workstreams`.
+4. Workers/planner update `threads.json` via `work update --thread ...`.
+5. Planner summarizes outcomes and next actions.
 
-### Proposed Architecture
+This is the canonical path. The system should optimize for this user->planner->subagent loop.
 
-```
-work multi --batch "01.01" [--backend opencode-subagent|opencode-sdk|tmux|gemini|claude]
-  → multi-orchestrator.ts: discover threads (backend-agnostic)
-  → AgentExecutionBackend.executeParallel(threads)
-      ├── OpenCodeSubagentBackend  (planning agent spawns child sessions)
-      ├── OpenCodeSdkBackend       (SDK session.prompt() calls)
-      ├── OpenCodeTmuxBackend      (current system, preserved)
-      ├── GeminiCliBackend         (gemini CLI wrapper)
-      └── ClaudeCodeBackend        (claude CLI wrapper)
-```
+### What We Remove or De-Scope
 
-### Backend Interface
+The following are not aligned with the native-only vision and should be removed or frozen:
 
-```typescript
-interface AgentExecutionBackend {
-  readonly name: string
-  
-  /** Check if backend tooling is available */
-  isAvailable(): Promise<boolean>
-  
-  /** Initialize (e.g., start opencode serve) */
-  initialize(config: BackendConfig): Promise<void>
-  
-  /** Execute threads in parallel, return results as they complete */
-  executeBatch(threads: ThreadExecutionRequest[]): AsyncIterable<ThreadExecutionResult>
-  
-  /** Abort all running threads */
-  abortAll(): Promise<void>
-  
-  /** Cleanup resources */
-  dispose(): Promise<void>
-}
+1. **Multi-backend expansion work** for non-native runtimes.
+2. **Subprocess-driven pseudo-subagent orchestration** (`opencode run` pretending to be Task orchestration).
+3. **Shell-heavy orchestration layers** built around tmux/session title parsing/marker files for the native path.
+4. **Smoke tests that validate subprocess behavior instead of in-session Task behavior**.
+5. **New feature work in `work multi` for native mode**. `work multi` may remain as legacy/fallback tooling, but not as the primary architecture.
 
-interface BackendConfig {
-  repoRoot: string
-  streamId: string
-  port?: number              // For opencode serve
-  synthesisEnabled: boolean
-  synthesisModels?: NormalizedModelSpec[]
-  maxParallel?: number       // Max concurrent threads
-}
+### Native Contract (What Must Be True)
 
-interface ThreadExecutionRequest {
-  threadId: string
-  threadName: string
-  promptPath: string
-  models: NormalizedModelSpec[]
-  agentName: string
-  synthesisModels?: NormalizedModelSpec[]
-}
+#### A. Planner Contract
 
-interface ThreadExecutionResult {
-  threadId: string
-  status: 'completed' | 'failed' | 'aborted'
-  sessionId?: string
-  duration: number
-  synthesisOutput?: string
-}
-```
+The planner prompt must explicitly require:
 
-### Backend Implementations
+- launch subagents using Task tool calls
+- run assigned threads in parallel where safe
+- mark thread status transitions (`in_progress`, `completed`, `blocked`)
+- include short per-thread report text on completion/blocking
+- return a deterministic summary shape for post-processing
 
-#### 1. `OpenCodeSubagentBackend` — The Deep Integration
+#### B. Worker Contract
 
-This is the key new backend. A **single opencode session** runs the planning/orchestrator agent, which spawns parallel child sessions using the native Task tool (subagents).
+Each worker subagent must:
 
-**How it works:**
-- Configure custom subagents in `opencode.json` (or `.opencode/agents/`) for each agent defined in `agents.yaml`
-- The planning agent's prompt instructs it to launch N subagents in parallel using the Task tool
-- Each subagent gets its thread prompt, model override, and the `implementing-workstreams` skill
-- opencode handles parallelism natively — multiple Task tool calls in one response = parallel execution
-- Child sessions are navigable with `<Leader>+Right/Left`
-- Synthesis can be another subagent invocation after each worker completes
+1. Work only on its assigned thread.
+2. Run `work update --thread "ID" --status in_progress` when starting.
+3. Run `work update --thread "ID" --status completed --report "..."` on success.
+4. Run `work update --thread "ID" --status blocked --report "reason + dependency"` if blocked.
 
-**Configuration generation:**
-```typescript
-// Dynamically generate .opencode/agents/ from agents.yaml
-function generateOpenCodeAgents(agentsConfig: AgentsConfigYaml): void {
-  for (const agent of agentsConfig.agents) {
-    // Create .opencode/agents/{name}.md with:
-    // - mode: subagent
-    // - model: agent.models[0] (primary model)
-    // - hidden: true (only invoked programmatically)
-    // - tools: full access
-    // - prompt: implementing-workstreams skill content
-  }
-}
-```
+#### C. Agent Configuration Contract
 
-**Orchestrator prompt generation:**
-```typescript
-function generateOrchestratorPrompt(threads: ThreadExecutionRequest[]): string {
-  return `
-You are orchestrating parallel work for batch ${batchId}.
+- `agents.yaml` is source of truth for available worker profiles.
+- Profiles map to OpenCode subagents (model + behavior + tools + skill usage).
+- `@agent:` annotations in PLAN thread definitions (or explicit `work assign`) select the worker profile.
 
-Launch the following subagents IN PARALLEL (use multiple Task tool calls in a single response):
+#### D. State Contract
 
-${threads.map(t => `
-- Thread ${t.threadId} "${t.threadName}": 
-  Use @${t.agentName} subagent with this prompt:
-  ${t.promptPath}
-`).join('\n')}
+- `threads.json` is the source of truth for execution state.
+- Planner and workers must write thread-level status/report updates.
+- Thread session references and synthesis output are attached at thread level.
 
-Wait for all to complete, then summarize results.
-  `
-}
-```
+### Verification (Native, Not Subprocess)
 
-**Advantages:**
-- Single opencode session = single context, single TUI
-- Native parallel execution (opencode's Task tool supports parallel invocations)
-- Child session navigation built-in
-- No tmux, no shell scripts, no temp files
-- Planning agent can react to results and make decisions
-- Synthesis is natural (planning agent summarizes after workers complete)
+Acceptance is prompt-driven in a real OpenCode session:
 
-**What's needed:**
-- Dynamic agent generation from `agents.yaml` → `.opencode/agents/*.md`
-- Orchestrator prompt template
-- Event monitoring via SDK `event.subscribe()` to update threads.json
-- Handle model override per-subagent (via agent config `model` field)
+1. Planner launches one subagent; subagent writes a known artifact file.
+2. Planner launches two subagents in parallel; both threads finish with reports.
+3. One subagent is intentionally blocked; planner reports mixed completed/blocked outcomes and next steps.
 
-#### 2. `OpenCodeSdkBackend` — Programmatic Headless
-
-Uses the SDK directly for headless/CI execution without the TUI.
-
-```typescript
-class OpenCodeSdkBackend implements AgentExecutionBackend {
-  async *executeBatch(threads: ThreadExecutionRequest[]) {
-    const client = createOpencodeClient({ baseUrl: `http://localhost:${this.port}` })
-    
-    const promises = threads.map(async (thread) => {
-      const session = await client.session.create({ body: { title: thread.threadName } })
-      const prompt = readFileSync(thread.promptPath, 'utf-8')
-      const [providerID, modelID] = thread.models[0].model.split('/')
-      
-      const result = await client.session.prompt({
-        path: { id: session.data.id },
-        body: {
-          model: { providerID, modelID },
-          parts: [{ type: 'text', text: prompt }],
-        },
-      })
-      
-      return { threadId: thread.threadId, status: 'completed', sessionId: session.data.id }
-    })
-    
-    for (const result of await Promise.allSettled(promises)) {
-      yield result.status === 'fulfilled' ? result.value : /* error result */
-    }
-  }
-}
-```
-
-#### 3. `OpenCodeTmuxBackend` — Current System Preserved
-
-Wraps the existing `tmux.ts` + `opencode.ts` code behind the interface. Minimal refactoring — just adapting the function signatures. This is the fallback for users who prefer the visual 2x2 grid.
-
-#### 4. `GeminiCliBackend` / `ClaudeCodeBackend`
-
-CLI wrappers that construct appropriate shell commands for each tool:
-
-```typescript
-class GeminiCliBackend implements AgentExecutionBackend {
-  buildCommand(thread: ThreadExecutionRequest): string {
-    return `cat "${thread.promptPath}" | gemini --model ${thread.models[0].model}`
-  }
-}
-
-class ClaudeCodeBackend implements AgentExecutionBackend {
-  buildCommand(thread: ThreadExecutionRequest): string {
-    const prompt = readFileSync(thread.promptPath, 'utf-8')
-    return `claude -p "${prompt}" --model ${thread.models[0].model}`
-  }
-}
-```
-
-These can optionally use tmux for visual multiplexing (shared infrastructure), or run headless.
-
-### Configuration
-
-Add backend selection to `agents.yaml` or a new `execution.json`:
-
-```yaml
-# agents.yaml (extended)
-execution:
-  backend: opencode-subagent  # opencode-subagent | opencode-sdk | tmux | gemini | claude
-  port: 4096
-  max_parallel: 8
-
-agents:
-  - name: default
-    # ... (unchanged)
-```
-
-Or via CLI flag: `work multi --batch "01.01" --backend opencode-subagent`
+Success criteria are thread status/report correctness and real repository artifacts, not subprocess exit codes.
 
 ---
 
-## Part 3: Combined Implementation Plan
+## Part 3: Native Implementation Plan
 
 ### Phase 1: Thread Data Model (Foundation)
 1. Extend `ThreadMetadata` with status/report/breadcrumb/agent fields
@@ -366,40 +219,40 @@ Or via CLI flag: `work multi --batch "01.01" --backend opencode-subagent`
 5. Update prompt generation to use thread details instead of task checklist
 6. Update `implementing-workstreams` skill
 
-### Phase 3: Backend Interface
-1. Define `AgentExecutionBackend` interface
-2. Refactor current tmux code into `OpenCodeTmuxBackend`
-3. Make `multi-orchestrator.ts` backend-agnostic
-4. Add backend selection to config + CLI
+### Phase 3: Planner/Worker Native Contracts
+1. Finalize planner prompt template for parallel Task orchestration.
+2. Finalize worker instruction template (`implementing-workstreams`) for thread-only updates.
+3. Define deterministic planner summary schema for thread outcomes.
+4. Add acceptance playbooks for the 3 native verification scenarios.
 
-### Phase 4: OpenCode Subagent Backend (Deep Integration)
-1. Build dynamic agent generation from `agents.yaml` → `.opencode/agents/*.md`
-2. Build orchestrator prompt generator
-3. Implement `OpenCodeSubagentBackend` using the SDK
-4. Add event monitoring for threads.json updates
-5. Handle synthesis as subagent invocation
+### Phase 4: Agent Configuration and Skills
+1. Ensure `agents.yaml` maps cleanly to native OpenCode subagent profiles.
+2. Support `@agent:` thread mapping from PLAN.md (with `work assign` fallback).
+3. Ensure skills are thread-native and do not reference TASKS.md/task IDs.
 
-### Phase 5: Additional Backends
-1. `OpenCodeSdkBackend` for headless/CI
-2. `GeminiCliBackend` 
-3. `ClaudeCodeBackend`
+### Phase 5: State and Synthesis Integration
+1. Stream planner/worker outcomes into `threads.json` consistently.
+2. Attach synthesis output at thread level.
+3. Ensure resume/continue logic uses thread state only.
 
-### Phase 6: Cleanup
+### Phase 6: Cleanup and Removal
 1. Remove `tasks.json`, `tasks.ts`, `tasks-md.ts` code paths
 2. Remove TASKS.md from workflow
-3. Update all documentation and skills
-4. Final migration tool for existing workstreams
+3. Remove/freeze native-path-irrelevant shell orchestration code
+4. Keep `work multi` as legacy/fallback only, with no new native-mode feature work
+5. Update all documentation and skills
+6. Final migration tool for existing workstreams
 
 ---
 
-## Key Risks & Mitigations
+## Key Risks & Mitigations (Native-Only)
 
 | Risk | Mitigation |
 |---|---|
 | Breaking existing workstreams | Migration utility + backward compat reading of tasks.json |
-| OpenCode subagent model limitations (max parallel, model override) | Keep tmux backend as fallback; test SDK limits early |
+| OpenCode planner may not consistently follow Task/output contract | Tight planner template + explicit acceptance scenarios + schema checks |
 | Agent assignment without TASKS.md | `@agent:` annotations in PLAN.md thread headers, or `work assign` command |
 | Loss of fine-grained progress tracking (no per-task status) | Thread breadcrumbs + reports provide sufficient granularity; agents can use their own todo tool internally |
 | PLAN.md thread details may be insufficient as work specs | Encourage richer thread details in planning; the skill instructions guide this |
 
-The bottom line: **tasks were a proxy for "what should the agent do" but the thread summary+details in PLAN.md already carry that information**. Removing the task layer eliminates redundancy, reduces agent tool calls from N to 1 per thread, and enables the leaner execution model needed for native subagent integration.
+The bottom line: **threads are the unit of execution, and OpenCode Task orchestration inside the active user session is the primary runtime**. We should prioritize prompt/skill contracts and thread-state correctness, and stop investing in native-path shell/tmux orchestration layers.

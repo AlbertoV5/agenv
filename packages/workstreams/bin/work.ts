@@ -5,17 +5,18 @@
  * Subcommands:
  *   create      - Create a new workstream
  *   status      - Show workstream progress
- *   update      - Update a task's status
+ *   update      - Update a thread's status
  *   complete    - Mark a workstream as complete
  *   index       - Update workstream metadata fields
- *   read        - Read task details
- *   list        - List tasks in a workstream
- *   add-task    - Add a task to a workstream
- *   delete      - Delete workstreams, stages, threads, or tasks
- *   review      - Review plan or tasks
+ *   read        - Read thread details
+ *   list        - List threads in a workstream
+ *   add-task    - Deprecated (thread-first workflow)
+ *   delete      - Delete workstreams, stages, batches, or threads
+ *   review      - Review plan/revisions (legacy task review available)
  *   validate    - Validate PLAN.md structure
  *   check       - Find unchecked items in plan
  *   preview     - Show PLAN.md structure
+ *   migrate     - Migrate legacy tasks.json into threads.json
  *   init        - Initialize work/ directory with default config files
  */
 
@@ -62,6 +63,7 @@ import { main as revisionMain } from "../src/cli/revision.ts"
 import { main as notificationsMain } from "../src/cli/notifications.ts"
 import { main as synthesisMain } from "../src/cli/synthesis.ts"
 import { main as planMain } from "../src/cli/plan.ts"
+import { main as migrateMain } from "../src/cli/migrate.ts"
 
 // Role and help utilities
 import {
@@ -86,6 +88,7 @@ const SUBCOMMANDS = {
   approve: approveMain,
   start: startMain,
   plan: planMain,
+  migrate: migrateMain,
   status: statusMain,
   "set-status": setStatusMain,
   update: updateTaskMain,
@@ -131,29 +134,30 @@ const COMMAND_DESCRIPTIONS: Record<string, string> = {
   continue: "Continue execution (alias for 'work multi --continue')",
   context: "Show workstream context and resume information",
   "add-stage": "Append a fix stage to a workstream",
-  approve: "Approve workstream plan/tasks/prompts (subcommands: plan, tasks, prompts)",
+  approve: "Approve workstream plan (tasks approval is deprecated)",
   start: "Start execution (requires all approvals, creates GitHub branch/issues)",
   plan: "Open planning session for workstream (resume or set session ID)",
+  migrate: "Migrate legacy tasks.json data into threads.json",
   agents: "Manage agent definitions (list, add, remove)",
   assign: "Assign agents to threads for batch execution",
   prompt: "Generate thread execution prompt for agents",
   execute: "Execute a thread prompt via opencode",
-  multi: "Execute all threads in a batch in parallel via tmux",
+  multi: "Execute all threads in a batch in parallel via OpenCode backend",
   status: "Show workstream progress",
   "set-status": "Set workstream status (pending, in_progress, completed, on_hold)",
-  update: "Update a task's status",
+  update: "Update a thread's status",
   complete: "Mark a workstream as complete",
   index: "Update workstream metadata fields",
-  read: "Read task details",
-  list: "List tasks in a workstream",
-  "add-task": "Add a task to a workstream (interactive if no flags)",
+  read: "Read thread details",
+  list: "List threads in a workstream",
+  "add-task": "Deprecated: tasks are removed; use PLAN.md threads",
   "add-batch": "Add a batch to a stage",
   "add-thread": "Add a thread to a batch",
   edit: "Open PLAN.md in editor",
-  delete: "Delete workstreams, stages, threads, or tasks",
+  delete: "Delete workstreams, stages, batches, or threads",
   files: "List and index files in files/ directory",
-  tasks: "Manage TASKS.md intermediate file (generate/serialize)",
-  review: "Review plan, tasks, or commits (plan, tasks, commits)",
+  tasks: "Deprecated: task-centric workflow removed",
+  review: "Review plan or commits (legacy tasks subcommand remains)",
   validate: "Validate plan structure and content",
   check: "Find unchecked items in plan",
   preview: "Show PLAN.md structure",
@@ -205,16 +209,17 @@ Current Workstream:
 
   Then run commands without --stream:
     work status
-    work list --tasks
-    work update --task "01.01.01.01" --status completed
+    work list --threads
+    work update --thread "01.01.01" --status completed
 
 Examples:
   work create --name my-feature --stages 2
   work current --set "001-my-feature"
   work status
-  work list --tasks
-  work update --task "01.01.01.01" --status completed
-  work add-task --stage 01 --batch 01 --thread 01 --name "Task description"
+  work list --threads
+  work update --thread "01.01.01" --status completed
+  work migrate tasks-to-threads
+  work assign --thread "01.01.01" --agent "backend-expert"
   work files --save
   work report metrics --blockers
   work report --output report.md

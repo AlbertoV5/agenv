@@ -1,185 +1,65 @@
-import { describe, expect, test, beforeEach, afterEach } from "bun:test";
-import { join } from "path";
-import { existsSync, mkdirSync, rmSync, writeFileSync } from "fs";
-import { main } from "../src/cli/list";
-import { createEmptyTasksFile, writeTasksFile } from "../src/lib/tasks";
-import type { Task } from "../src/lib/types";
+import { describe, expect, test, beforeEach, afterEach, spyOn, mock } from "bun:test"
+import { main } from "../src/cli/list"
+import * as repo from "../src/lib/repo.ts"
+import * as index from "../src/lib/index.ts"
+import * as threads from "../src/lib/threads.ts"
+import type { ThreadMetadata, WorkIndex, StreamMetadata } from "../src/lib/types"
 
-// Mock console.log and console.error
-const originalLog = console.log;
-const originalError = console.error;
-let logOutput: string[] = [];
-let errorOutput: string[] = [];
+describe("CLI: list", () => {
+  let logSpy: any
+  let errSpy: any
 
-function mockConsole() {
-    logOutput = [];
-    errorOutput = [];
-    console.log = (msg: string) => logOutput.push(msg);
-    console.error = (msg: string) => errorOutput.push(msg);
-}
+  beforeEach(() => {
+    logSpy = spyOn(console, "log").mockImplementation(() => {})
+    errSpy = spyOn(console, "error").mockImplementation(() => {})
+    spyOn(repo, "getRepoRoot").mockReturnValue("/tmp/repo")
 
-function restoreConsole() {
-    console.log = originalLog;
-    console.error = originalError;
-}
+    const stream: StreamMetadata = {
+      id: "001-test",
+      name: "test",
+      status: "in_progress",
+      session_estimated: { length: 1, unit: "session", session_minutes: [30, 45], session_iterations: [4, 8] },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      path: "work/001-test",
+      generated_by: { workstreams: "0.1.0" },
+      size: "short",
+      order: 1,
+    }
 
-const TEST_DIR = join(import.meta.dir, "temp_list_test");
-const REPO_ROOT = join(TEST_DIR, "repo");
-const WORK_DIR = join(REPO_ROOT, "work");
-const STREAM_ID = "001-test-stream";
+    spyOn(index, "loadIndex").mockReturnValue({
+      version: "1.0.0",
+      last_updated: new Date().toISOString(),
+      streams: [stream],
+    } as WorkIndex)
+    spyOn(index, "getResolvedStream").mockReturnValue(stream)
+  })
 
-describe("CLI: List Tasks with Filtering", () => {
-    beforeEach(() => {
-        mockConsole();
-        if (existsSync(TEST_DIR)) {
-            rmSync(TEST_DIR, { recursive: true });
-        }
-        mkdirSync(WORK_DIR, { recursive: true });
+  afterEach(() => {
+    mock.restore()
+  })
 
-        // Create index.json
-        writeFileSync(
-            join(WORK_DIR, "index.json"),
-            JSON.stringify({
-                streams: [
-                    {
-                        id: STREAM_ID,
-                        name: "Test Stream",
-                        status: "active",
-                        relativePath: STREAM_ID,
-                    },
-                ],
-            })
-        );
+  test("outputs threads in json", () => {
+    const data: ThreadMetadata[] = [{
+      threadId: "01.01.01",
+      threadName: "one",
+      stageName: "Stage 1",
+      batchName: "Batch 1",
+      status: "pending",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      sessions: [],
+    }]
+    spyOn(threads, "getThreads").mockReturnValue(data)
 
-        // Create tasks.json with sample tasks
-        const tasksFile = createEmptyTasksFile(STREAM_ID);
-        const tasks: Task[] = [
-            {
-                id: "01.01.01.01",
-                name: "Task 1",
-                status: "pending",
-                stage_name: "Stage 1",
-                batch_name: "Batch 1",
-                thread_name: "Thread 1",
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-            },
-            {
-                id: "01.01.02.01",
-                name: "Task 2",
-                status: "in_progress",
-                stage_name: "Stage 1",
-                batch_name: "Batch 1",
-                thread_name: "Thread 2",
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-            },
-            {
-                id: "01.02.01.01",
-                name: "Task 3 (Batch 2)",
-                status: "pending",
-                stage_name: "Stage 1",
-                batch_name: "Batch 2",
-                thread_name: "Thread 1 of Batch 2",
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-            },
-            {
-                id: "02.01.01.01",
-                name: "Task 4 (Stage 2)",
-                status: "pending",
-                stage_name: "Stage 2",
-                batch_name: "Batch 1",
-                thread_name: "Thread 1",
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-            },
-        ];
-        tasksFile.tasks = tasks;
+    main(["node", "work-list", "--json"])
+    const payload = JSON.parse(logSpy.mock.calls[0][0])
+    expect(payload[0].threadId).toBe("01.01.01")
+  })
 
-        mkdirSync(join(WORK_DIR, STREAM_ID), { recursive: true });
-        writeTasksFile(REPO_ROOT, STREAM_ID, tasksFile);
-    });
-
-    afterEach(() => {
-        restoreConsole();
-        if (existsSync(TEST_DIR)) {
-            rmSync(TEST_DIR, { recursive: true });
-        }
-    });
-
-    test("should list all tasks when no filters provided", () => {
-        main(["node", "work", "list", "--repo-root", REPO_ROOT, "--stream", STREAM_ID, "--json"]);
-        const output = JSON.parse(logOutput[0] || "[]");
-        expect(output.length).toBe(4);
-    });
-
-    test("should filter by stage", () => {
-        main([
-            "node", "work", "list",
-            "--repo-root", REPO_ROOT,
-            "--stream", STREAM_ID,
-            "--stage", "1",
-            "--json"
-        ]);
-        const output = JSON.parse(logOutput[0] || "[]");
-        expect(output.length).toBe(3);
-        expect(output.every((t: any) => t.id.startsWith("01."))).toBe(true);
-    });
-
-    test("should filter by batch", () => {
-        main([
-            "node", "work", "list",
-            "--repo-root", REPO_ROOT,
-            "--stream", STREAM_ID,
-            "--batch", "01.01",
-            "--json"
-        ]);
-        const output = JSON.parse(logOutput[0] || "[]");
-        expect(output.length).toBe(2);
-        expect(output.every((t: any) => t.id.startsWith("01.01."))).toBe(true);
-    });
-
-    test("should filter by thread", () => {
-        main([
-            "node", "work", "list",
-            "--repo-root", REPO_ROOT,
-            "--stream", STREAM_ID,
-            "--thread", "01.01.02",
-            "--json"
-        ]);
-        const output = JSON.parse(logOutput[0] || "[]");
-        expect(output.length).toBe(1);
-        expect(output[0].id).toBe("01.01.02.01");
-    });
-
-    test("should return empty list if no tasks match filter", () => {
-        main([
-            "node", "work", "list",
-            "--repo-root", REPO_ROOT,
-            "--stream", STREAM_ID,
-            "--batch", "99.99",
-            "--json"
-        ]);
-        // When no tasks found with json flag, it should log empty array or handle gracefully in main
-
-        expect(logOutput[0] || "").toContain("No tasks found");
-    });
-
-    test("should display correct hierarchy in text output", () => {
-        main([
-            "node", "work", "list",
-            "--repo-root", REPO_ROOT,
-            "--stream", STREAM_ID
-            // no --json tag to get text output
-        ]);
-
-        const output = logOutput.join("\n");
-        expect(output).toContain("Stage 01: Stage 1");
-        expect(output).toContain("  Batch 01: Batch 1");
-        expect(output).toContain("    Thread 01: Thread 1");
-        expect(output).toContain("    Thread 02: Thread 2"); // ID 01.01.02.xx
-        expect(output).toContain("  Batch 02: Batch 2");
-        expect(output).toContain("    Thread 01: Thread 1 of Batch 2"); // ID 01.02.01.xx
-    });
-});
+  test("supports deprecated --tasks alias", () => {
+    spyOn(threads, "getThreads").mockReturnValue([])
+    main(["node", "work-list", "--tasks"])
+    expect(errSpy.mock.calls.map((c: any[]) => c[0]).join("\n")).toContain("Deprecation")
+  })
+})

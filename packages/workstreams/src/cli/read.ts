@@ -1,41 +1,36 @@
 /**
  * CLI: Workstream Read
  *
- * Read task details by task ID.
+ * Read thread details by thread ID.
  */
 
 import { getRepoRoot } from "../lib/repo.ts"
 import { loadIndex, getResolvedStream } from "../lib/index.ts"
-import { getTaskById } from "../lib/tasks.ts"
-import type { Task } from "../lib/types.ts"
+import { getThreadMetadata } from "../lib/threads.ts"
+import type { ThreadMetadata } from "../lib/types.ts"
 
 interface ReadCliArgs {
   repoRoot?: string
   streamId?: string
   taskId?: string
+  threadId?: string
   json: boolean
 }
 
 function printHelp(): void {
   console.log(`
-work read - Read task details
+work read - Read thread details
 
 Usage:
-  work read --task <task-id> [--stream <stream-id>]
+  work read --thread <thread-id> [--stream <stream-id>]
 
 Options:
   --repo-root, -r  Repository root (auto-detected if omitted)
   --stream, -s     Workstream ID or name (uses current if not specified)
-  --task, -t       Task ID in format "stage.batch.thread.task" (e.g., "01.01.02.01") (required)
+  --thread         Thread ID in format "stage.batch.thread" (e.g., "01.01.02") (required)
+  --task, -t       Deprecated alias; mapped to thread when possible
   --json, -j       Output as JSON
   --help, -h       Show this help message
-
-Examples:
-  # Read task 01.01.02.01 (uses current workstream)
-  work read --task "01.01.02.01"
-
-  # Read task from specific workstream
-  work read --stream "001-my-stream" --task "01.01.02.01"
 `)
 }
 
@@ -80,6 +75,15 @@ function parseCliArgs(argv: string[]): ReadCliArgs | null {
         i++
         break
 
+      case "--thread":
+        if (!next) {
+          console.error("Error: --thread requires a value")
+          return null
+        }
+        parsed.threadId = next
+        i++
+        break
+
       case "--json":
       case "-j":
         parsed.json = true
@@ -92,18 +96,27 @@ function parseCliArgs(argv: string[]): ReadCliArgs | null {
     }
   }
 
+  if (!parsed.threadId && parsed.taskId) {
+    const parts = parsed.taskId.split(".")
+    if (parts.length === 4) {
+      parsed.threadId = `${parts[0]}.${parts[1]}.${parts[2]}`
+      console.error(`Deprecation: --task is deprecated; mapped to --thread "${parsed.threadId}".`)
+    }
+  }
+
   return parsed
 }
 
-function formatTask(task: Task): string {
+function formatThread(thread: ThreadMetadata): string {
   const lines: string[] = []
-
-  lines.push(`Task ${task.id}: ${task.name}`)
-  lines.push(`Stage: ${task.stage_name}`)
-  lines.push(`Thread: ${task.thread_name}`)
-  lines.push(`Status: ${task.status}`)
-  lines.push(`Updated: ${task.updated_at.split("T")[0]}`)
-
+  lines.push(`Thread ${thread.threadId}: ${thread.threadName}`)
+  lines.push(`Stage: ${thread.stageName}`)
+  lines.push(`Batch: ${thread.batchName}`)
+  lines.push(`Status: ${thread.status}`)
+  if (thread.assignedAgent) lines.push(`Assigned Agent: ${thread.assignedAgent}`)
+  if (thread.breadcrumb) lines.push(`Breadcrumb: ${thread.breadcrumb}`)
+  if (thread.report) lines.push(`Report: ${thread.report}`)
+  lines.push(`Updated: ${(thread.updatedAt || "").split("T")[0]}`)
   return lines.join("\n")
 }
 
@@ -114,14 +127,12 @@ export function main(argv: string[] = process.argv): void {
     process.exit(1)
   }
 
-  // Validate required args
-  if (!cliArgs.taskId) {
-    console.error("Error: --task is required")
+  if (!cliArgs.threadId) {
+    console.error("Error: --thread is required")
     console.error("\nRun with --help for usage information.")
     process.exit(1)
   }
 
-  // Auto-detect repo root if not provided
   let repoRoot: string
   try {
     repoRoot = cliArgs.repoRoot ?? getRepoRoot()
@@ -130,7 +141,6 @@ export function main(argv: string[] = process.argv): void {
     process.exit(1)
   }
 
-  // Load index and find workstream (uses current if not specified)
   let index
   try {
     index = loadIndex(repoRoot)
@@ -147,23 +157,19 @@ export function main(argv: string[] = process.argv): void {
     process.exit(1)
   }
 
-  // Get task
-  const task = getTaskById(repoRoot, stream.id, cliArgs.taskId)
-  if (!task) {
-    console.error(
-      `Error: Task "${cliArgs.taskId}" not found in workstream "${stream.id}"`,
-    )
+  const thread = getThreadMetadata(repoRoot, stream.id, cliArgs.threadId)
+  if (!thread) {
+    console.error(`Error: Thread "${cliArgs.threadId}" not found in workstream "${stream.id}"`)
     process.exit(1)
   }
 
   if (cliArgs.json) {
-    console.log(JSON.stringify(task, null, 2))
+    console.log(JSON.stringify(thread, null, 2))
   } else {
-    console.log(formatTask(task))
+    console.log(formatThread(thread))
   }
 }
 
-// Run if called directly
 if (import.meta.main) {
   main()
 }

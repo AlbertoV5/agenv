@@ -1,13 +1,13 @@
 /**
- * CLI: Update Task
+ * CLI: Update Thread
  *
- * Updates a specific task's status in a workstream's checklist.
+ * Updates a thread's status in threads.json.
  */
 
 import type { TaskStatus } from "../lib/types.ts"
 import { getRepoRoot } from "../lib/repo.ts"
 import { loadIndex, getResolvedStream } from "../lib/index.ts"
-import { updateTask, updateThreadTasks } from "../lib/update.ts"
+import { updateThread } from "../lib/update.ts"
 
 interface UpdateTaskCliArgs {
   repoRoot?: string
@@ -31,15 +31,13 @@ const VALID_STATUSES: TaskStatus[] = [
 
 function printHelp(): void {
   console.log(`
-work update - Update a task's status or all tasks in a thread
+work update - Update a thread's status
 
 Usage:
-  work update --task <id> --status <status> [options]
   work update --thread <id> --status <status> [options]
 
-Required (one of):
-  --task, -t       Task ID (e.g., "01.01.01.01" = Stage 01, Batch 01, Thread 01, Task 01)
-  --thread         Thread ID (e.g., "01.01.01" = Stage 01, Batch 01, Thread 01) - updates ALL tasks
+Required:
+  --thread         Thread ID (e.g., "01.01.01" = Stage 01, Batch 01, Thread 01)
   --status         New status: pending, in_progress, completed, blocked, cancelled
 
 Optional:
@@ -48,24 +46,20 @@ Optional:
   --note, -n       Add implementation note
   --breadcrumb, -b Add recovery breadcrumb (last action)
   --report         Completion report (brief summary of what was done)
-  --agent          Assign agent to task
+  --agent          Assign agent to thread
   --help, -h       Show this help message
 
 ID Formats:
-  Task:   "01.01.02.03" = Stage 01, Batch 01, Thread 02, Task 03
   Thread: "01.01.02"    = Stage 01, Batch 01, Thread 02
 
 Examples:
-  # Mark single task completed
-  work update --task "01.01.01.01" --status completed
-
-  # Mark all tasks in a thread completed
+  # Mark thread completed
   work update --thread "01.01.01" --status completed
 
-  # Mark task completed with report (recommended)
-  work update --task "01.01.01.01" --status completed --report "Added hono dependencies."
+  # Mark thread completed with report
+  work update --thread "01.01.01" --status completed --report "Added hono dependencies."
 
-  # Mark all tasks in thread cancelled
+  # Mark thread cancelled
   work update --thread "01.01.02" --status cancelled
 
   # Update in a specific workstream
@@ -183,13 +177,30 @@ function parseCliArgs(argv: string[]): UpdateTaskCliArgs | null {
     }
   }
 
+  // Compatibility: accept --task and route to --thread when unambiguous
+  if (parsed.taskId && !parsed.threadId) {
+    const parts = parsed.taskId.split(".")
+    if (parts.length === 4) {
+      parsed.threadId = `${parts[0]}.${parts[1]}.${parts[2]}`
+        console.error(
+          `Deprecation: --task is deprecated for 'work update'; ` +
+            `mapped to --thread "${parsed.threadId}".`,
+        )
+    } else {
+      console.error(
+        `Error: --task is deprecated and cannot be mapped. Use --thread "SS.BB.TT" instead.`,
+      )
+      return null
+    }
+  }
+
   // Validate required args
-  if (!parsed.taskId && !parsed.threadId) {
-    console.error("Error: --task or --thread is required")
+  if (!parsed.threadId) {
+    console.error("Error: --thread is required")
     return null
   }
-  if (parsed.taskId && parsed.threadId) {
-    console.error("Error: --task and --thread are mutually exclusive")
+  if (parsed.taskId && parsed.threadId && parsed.taskId.split(".").length !== 4) {
+    console.error("Error: --task is deprecated and cannot be combined with --thread")
     return null
   }
   if (!parsed.status) {
@@ -233,33 +244,17 @@ export async function main(argv: string[] = process.argv): Promise<void> {
   }
 
   try {
-    if (cliArgs.threadId) {
-      // Update all tasks in thread
-      const result = await updateThreadTasks({
-        repoRoot,
-        stream,
-        threadId: cliArgs.threadId,
-        status: cliArgs.status,
-        note: cliArgs.note,
-        breadcrumb: cliArgs.breadcrumb,
-        report: cliArgs.report,
-        assigned_agent: cliArgs.assigned_agent,
-      })
-      console.log(`Updated ${result.count} task(s) in thread ${result.threadId} to ${result.status}`)
-    } else {
-      // Update single task
-      const result = await updateTask({
-        repoRoot,
-        stream,
-        taskId: cliArgs.taskId!,
-        status: cliArgs.status,
-        note: cliArgs.note,
-        breadcrumb: cliArgs.breadcrumb,
-        report: cliArgs.report,
-        assigned_agent: cliArgs.assigned_agent,
-      })
-      console.log(`Updated task ${result.taskId} to ${result.status}`)
-    }
+    const result = await updateThread({
+      repoRoot,
+      stream,
+      threadId: cliArgs.threadId!,
+      status: cliArgs.status,
+      note: cliArgs.note,
+      breadcrumb: cliArgs.breadcrumb,
+      report: cliArgs.report,
+      assigned_agent: cliArgs.assigned_agent,
+    })
+    console.log(`Updated thread ${result.threadId} to ${result.status}`)
   } catch (e) {
     console.error(`Error: ${(e as Error).message}`)
     process.exit(1)

@@ -7,6 +7,7 @@
  *   plugins   - Install plugins to agent directories
  *   tools     - Install tools to agent directories
  *   commands  - Install commands to agent directories
+ *   agents    - Install OpenCode agents
  */
 
 import {
@@ -26,6 +27,7 @@ const AGENV_HOOKS = join(AGENV_HOME, "agent/hooks")
 const AGENV_PLUGINS = join(AGENV_HOME, "agent/plugins")
 const AGENV_TOOLS = join(AGENV_HOME, "agent/tools")
 const AGENV_COMMANDS = join(AGENV_HOME, "agent/commands")
+const AGENV_AGENTS = join(AGENV_HOME, "agent/agents")
 
 // Target directories for different agents
 const TARGETS: Record<string, string> = {
@@ -55,6 +57,7 @@ Subcommands:
   plugins    Install plugins to agent directories
   tools      Install tools to agent directories
   commands   Install commands to agent directories
+  agents     Install OpenCode agents
 
 Run 'ag install <subcommand> --help' for more information.
 `)
@@ -611,6 +614,11 @@ const COMMANDS_TARGETS: Record<string, string> = {
   opencode: process.env.HOME + "/.config/opencode/commands",
 } as Record<string, string>
 
+// Target directories for agents
+const AGENTS_TARGETS: Record<string, string> = {
+  opencode: process.env.HOME + "/.config/opencode/agents",
+} as Record<string, string>
+
 function printToolsHelp(): void {
   console.log(`
 ag install tools - Install tools to agent directories
@@ -1033,6 +1041,214 @@ function commandsCommand(args: string[]): void {
   }
 }
 
+// ============================================================================
+// Agents Installation
+// ============================================================================
+
+function printAgentsHelp(): void {
+  console.log(`
+ag install agents - Install OpenCode agents
+
+Usage:
+  ag install agents [options]
+
+Options:
+  --opencode     Install to ~/.config/opencode/agents (default)
+  --target PATH  Install to a custom directory
+  --clean        Remove ALL existing agents in target before installing
+  --list         List available agents without installing
+  --dry-run      Show what would be installed without making changes
+  --help, -h     Show this help message
+
+Examples:
+  ag install agents --opencode
+  ag install agents --clean --opencode
+  ag install agents --target ~/my-project/.opencode/agents
+  ag install agents --list
+`)
+}
+
+function listAgents(): void {
+  console.log(`Available agents in ${AGENV_AGENTS}:`)
+  console.log("")
+
+  if (!existsSync(AGENV_AGENTS)) {
+    console.log(`${YELLOW}No agents directory found${NC}`)
+    return
+  }
+
+  const entries = readdirSync(AGENV_AGENTS)
+  for (const entry of entries) {
+    const agentPath = join(AGENV_AGENTS, entry)
+    const isDir = statSync(agentPath).isDirectory()
+    const ext = entry.split(".").pop()
+
+    if (isDir || ext === "md") {
+      console.log(`  ${entry}`)
+    }
+  }
+}
+
+function cleanAgentsTarget(targetDir: string, dryRun: boolean): number {
+  if (!existsSync(targetDir)) return 0
+
+  let removedCount = 0
+  const entries = readdirSync(targetDir)
+
+  for (const entry of entries) {
+    const agentPath = join(targetDir, entry)
+    const isDir = statSync(agentPath).isDirectory()
+    const ext = entry.split(".").pop()
+
+    if (isDir || ext === "md") {
+      if (dryRun) {
+        console.log(`  [REMOVE] ${entry}`)
+      } else {
+        rmSync(agentPath, { recursive: true, force: true })
+        console.log(`  ${RED}✗${NC} ${entry} (removed)`)
+      }
+      removedCount++
+    }
+  }
+
+  if (removedCount > 0 && !dryRun) {
+    console.log(`${YELLOW}Removed ${removedCount} existing agents${NC}`)
+  }
+
+  return removedCount
+}
+
+function installAgentsTo(
+  targetDir: string,
+  dryRun: boolean,
+  clean: boolean,
+): void {
+  if (!existsSync(AGENV_AGENTS)) {
+    console.error(
+      `${RED}Error: Source agents directory not found: ${AGENV_AGENTS}${NC}`,
+    )
+    process.exit(1)
+  }
+
+  const entries = readdirSync(AGENV_AGENTS).filter((e) => {
+    const agentPath = join(AGENV_AGENTS, e)
+    const isDir = statSync(agentPath).isDirectory()
+    const ext = e.split(".").pop()
+    return isDir || ext === "md"
+  })
+
+  if (entries.length === 0) {
+    console.log(`${YELLOW}No agents found in ${AGENV_AGENTS}${NC}`)
+    return
+  }
+
+  if (dryRun) {
+    console.log(`${YELLOW}[DRY RUN]${NC} Would install to: ${targetDir}`)
+  } else {
+    console.log(`Installing agents to: ${targetDir}`)
+    mkdirSync(targetDir, { recursive: true })
+  }
+
+  if (clean) {
+    if (dryRun) {
+      console.log(`${YELLOW}[DRY RUN]${NC} Would remove existing agents:`)
+    } else {
+      console.log("Removing existing agents...")
+    }
+    cleanAgentsTarget(targetDir, dryRun)
+    console.log("")
+  }
+
+  if (dryRun) {
+    console.log("Would install:")
+  } else {
+    console.log("Installing:")
+  }
+
+  for (const entry of entries) {
+    const agentPath = join(AGENV_AGENTS, entry)
+    const targetAgent = join(targetDir, entry)
+
+    if (dryRun) {
+      if (existsSync(targetAgent) && !clean) {
+        console.log(`  [UPDATE] ${entry}`)
+      } else {
+        console.log(`  [NEW]    ${entry}`)
+      }
+    } else {
+      if (existsSync(targetAgent)) {
+        rmSync(targetAgent, { recursive: true, force: true })
+      }
+      cpSync(agentPath, targetAgent, { recursive: true })
+      console.log(`  ${GREEN}✓${NC} ${entry}`)
+    }
+  }
+
+  if (!dryRun) {
+    console.log(
+      `${GREEN}Done!${NC} Installed ${entries.length} agents to ${targetDir}`,
+    )
+  }
+}
+
+function agentsCommand(args: string[]): void {
+  const targets: (string | undefined)[] = []
+  let dryRun = false
+  let listOnly = false
+  let clean = false
+
+  let i = 0
+  while (i < args.length) {
+    const arg = args[i]
+    switch (arg) {
+      case "--opencode":
+        targets.push(AGENTS_TARGETS.opencode!)
+        break
+      case "--target":
+        i++
+        if (!args[i]) {
+          console.error(`${RED}Error: --target requires a path${NC}`)
+          process.exit(1)
+        }
+        targets.push(args[i])
+        break
+      case "--clean":
+        clean = true
+        break
+      case "--list":
+        listOnly = true
+        break
+      case "--dry-run":
+        dryRun = true
+        break
+      case "--help":
+      case "-h":
+        printAgentsHelp()
+        process.exit(0)
+      default:
+        console.error(`${RED}Error: Unknown option: ${arg}${NC}`)
+        printAgentsHelp()
+        process.exit(1)
+    }
+    i++
+  }
+
+  if (listOnly) {
+    listAgents()
+    return
+  }
+
+  if (targets.length === 0) {
+    targets.push(AGENTS_TARGETS.opencode!)
+  }
+
+  for (const target of targets) {
+    if (!target) continue
+    installAgentsTo(target, dryRun, clean)
+    console.log("")
+  }
+}
+
 function skillsCommand(args: string[]): void {
   const targets: (string | undefined)[] = []
   let dryRun = false
@@ -1146,9 +1362,12 @@ export function main(argv: string[]): void {
     case "commands":
       commandsCommand(args.slice(1))
       break
+    case "agents":
+      agentsCommand(args.slice(1))
+      break
     default:
       console.error(`Error: Unknown subcommand "${subcommand}"`)
-      console.error("\nAvailable subcommands: skills, hooks, plugins, tools, commands")
+      console.error("\nAvailable subcommands: skills, hooks, plugins, tools, commands, agents")
       console.error("\nRun 'ag install --help' for usage information.")
       process.exit(1)
   }

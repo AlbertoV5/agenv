@@ -1,9 +1,8 @@
 /**
  * CLI: Multi
  *
- * Executes all threads in a batch in parallel using tmux sessions.
- * Each thread runs in its own tmux window with an opencode instance
- * connected to a shared opencode serve backend.
+ * Legacy fallback command for batch execution outside native session orchestration.
+ * Native OpenCode flow is planner -> Task subagents inside the active session.
  */
 
 import { existsSync, readFileSync } from "fs"
@@ -11,14 +10,18 @@ import { getRepoRoot } from "../lib/repo.ts"
 import { loadIndex, getResolvedStream } from "../lib/index.ts"
 import { loadAgentsConfig, getDefaultSynthesisAgent, getSynthesisAgent, getSynthesisAgentModels } from "../lib/agents-yaml.ts"
 import {
-  readTasksFile,
-  parseTaskId,
+  ACTIVE_CLI_BACKEND_NAMES,
+  createExecutionBackend,
+  LEGACY_CLI_BACKEND_NAMES,
+  resolveBackendSelection,
+  type ThreadExecutionResult,
+} from "../lib/backends/index.ts"
+import type { OpenCodeBackendName } from "../lib/types.ts"
+import {
   generateSessionId,
-  startMultipleSessionsLocked,
-  completeMultipleSessionsLocked,
   getBatchMetadata,
 } from "../lib/tasks.ts"
-import type { Task, ThreadInfo, ThreadSessionMap } from "../lib/types.ts"
+import type { ThreadInfo, ThreadSessionMap, ThreadMetadata } from "../lib/types.ts"
 import { MAX_THREADS_PER_BATCH } from "../lib/types.ts"
 import type { MultiCliArgs } from "../lib/multi-types.ts"
 import {
@@ -44,16 +47,20 @@ import {
 } from "../lib/opencode.ts"
 import { NotificationTracker } from "../lib/notifications.ts"
 import { isSynthesisEnabled, getSynthesisAgentOverride } from "../lib/synthesis/config.ts"
-import { updateThreadMetadataLocked, setSynthesisOutput } from "../lib/threads.ts"
+import {
+  updateThreadMetadataLocked,
+  setSynthesisOutput,
+  getAllThreadMetadata,
+  startMultipleThreadSessionsLocked,
+  completeMultipleThreadSessionsLocked,
+} from "../lib/threads.ts"
 import { parseSynthesisOutputFile } from "../lib/synthesis/output.ts"
 import { parseBatchId } from "../lib/cli-utils.ts"
+import { parsePlannerOutcomePayload } from "../lib/planner-outcome.ts"
 import {
-  collectThreadInfoFromTasks,
-  buildPaneTitle,
+  collectThreadInfo,
+  executeThreadBatchWithBackend,
   buildThreadRunCommand,
-  setupTmuxSession,
-  setupGridController,
-  setupKillSessionKeybind,
   validateThreadPrompts,
 } from "../lib/multi-orchestrator.ts"
 import {
@@ -82,6 +89,9 @@ Optional:
   --continue, -c   Continue with the next incomplete batch
   --stream, -s     Workstream ID or name (uses current if not specified)
   --port, -p       OpenCode server port (default: 4096)
+  --backend        Execution backend (${ACTIVE_CLI_BACKEND_NAMES.join(" | ")})
+  --allow-legacy-backends
+                   Opt in to legacy/de-scoped backends (${LEGACY_CLI_BACKEND_NAMES.join(" | ")})
   --dry-run        Show commands without executing
   --no-server      Skip starting opencode serve (assume already running)
   --silent         Disable notification sounds (audio only)
@@ -89,8 +99,14 @@ Optional:
   --help, -h       Show this help message
 
 Description:
-  Executes all threads in a batch simultaneously in parallel using tmux.
-  Each thread runs in its own tmux window with a full opencode TUI.
+  Legacy CLI fallback for running a batch outside native OpenCode orchestration.
+  Native-first path is in-session planner orchestration using Task subagents.
+  Default backend is tmux.
+
+  tmux backend: legacy fallback where each thread runs in a tmux pane with full opencode TUI.
+  opencode-subagent/opencode-sdk backends: legacy/de-scoped for CLI subprocess orchestration.
+                     Hidden by default; require --allow-legacy-backends to opt in.
+                     Native path is planner-led in-session subagents via Task tool calls.
 
   A shared opencode serve backend is started (unless --no-server) to
   eliminate MCP cold boot times and share model cache across threads.
@@ -103,7 +119,7 @@ Examples:
 `)
 }
 
-function parseCliArgs(argv: string[]): MultiCliArgs | null {
+export function parseCliArgs(argv: string[]): MultiCliArgs | null {
   const args = argv.slice(2)
   const parsed: Partial<MultiCliArgs> = {}
 
@@ -165,6 +181,19 @@ function parseCliArgs(argv: string[]): MultiCliArgs | null {
         parsed.dryRun = true
         break
 
+      case "--backend":
+        if (!next) {
+          console.error("Error: --backend requires a value")
+          return null
+        }
+        parsed.backend = next
+        i++
+        break
+
+      case "--allow-legacy-backends":
+        parsed.allowLegacyBackends = true
+        break
+
       case "--no-server":
         parsed.noServer = true
         break
@@ -184,26 +213,16 @@ function parseCliArgs(argv: string[]): MultiCliArgs | null {
 }
 
 /**
- * Find the next incomplete batch based on tasks
+ * Find the next incomplete batch based on thread statuses
  */
-export function findNextIncompleteBatch(tasks: Task[]): string | null {
-  // Group tasks by batch ID "SS.BB"
-  const batches = new Map<string, Task[]>()
-
-  for (const task of tasks) {
-    try {
-      const parsed = parseTaskId(task.id)
-      if (!parsed) continue
-
-      const batchId = `${parsed.stage.toString().padStart(2, "0")}.${parsed.batch.toString().padStart(2, "0")}`
-
-      if (!batches.has(batchId)) {
-        batches.set(batchId, [])
-      }
-      batches.get(batchId)!.push(task)
-    } catch {
-      // Ignore invalid task IDs
-    }
+export function findNextIncompleteBatch(threads: ThreadMetadata[]): string | null {
+  const batches = new Map<string, ThreadMetadata[]>()
+  for (const thread of threads) {
+    const parts = thread.threadId.split(".")
+    if (parts.length !== 3) continue
+    const batchId = `${parts[0]}.${parts[1]}`
+    if (!batches.has(batchId)) batches.set(batchId, [])
+    batches.get(batchId)!.push(thread)
   }
 
   // Sort batch IDs to check in order
@@ -211,10 +230,9 @@ export function findNextIncompleteBatch(tasks: Task[]): string | null {
 
   // Find first batch that is not fully complete
   for (const batchId of sortedBatchIds) {
-    const batchTasks = batches.get(batchId)!
+    const batchThreads = batches.get(batchId)!
 
-    // Check if all tasks in this batch are completed or cancelled
-    const allDone = batchTasks.every(
+    const allDone = batchThreads.every(
       (t) => t.status === "completed" || t.status === "cancelled",
     )
 
@@ -231,6 +249,7 @@ export function findNextIncompleteBatch(tasks: Task[]): string | null {
  */
 function printDryRunOutput(
   stream: { id: string },
+  backend: OpenCodeBackendName,
   batchId: string,
   stageName: string,
   batchName: string,
@@ -248,6 +267,7 @@ function printDryRunOutput(
   console.log("=== DRY RUN ===\n")
   console.log(`Stream: ${stream.id}`)
   console.log(`Batch: ${batchId} (${stageName} -> ${batchName})`)
+  console.log(`Backend: ${backend}`)
   console.log(`Threads: ${threads.length}`)
   console.log(`Session: ${sessionName}`)
   console.log(`Port: ${port}`)
@@ -270,6 +290,24 @@ function printDryRunOutput(
     console.log("# Start opencode serve")
     console.log(buildServeCommand(port))
     console.log("")
+  }
+
+  if (backend === "opencode-sdk") {
+    console.log("# opencode-sdk backend is de-scoped and returns not_supported")
+    console.log("# This legacy mode is CLI subprocess-based and not the native path")
+    console.log("")
+    return
+  }
+
+  if (backend === "opencode-subagent") {
+    console.log("# opencode-subagent backend is de-scoped in CLI mode")
+    console.log("# Native orchestration is in-session planner -> Task tool subagents")
+    for (const thread of threads) {
+      const primaryModel = thread.models[0]?.model ?? "unknown"
+      console.log(`- ${thread.threadId}: ${thread.threadName} (${primaryModel})`)
+    }
+    console.log("")
+    return
   }
 
   console.log("# Create tmux session (Window 0: Dashboard)")
@@ -336,7 +374,7 @@ async function handleSessionClose(
   console.log(`\nSession detached. Checking thread statuses...`)
 
   const completions: Array<{
-    taskId: string
+    threadId: string
     sessionId: string
     status: "completed" | "failed" | "interrupted"
     exitCode?: number
@@ -353,7 +391,7 @@ async function handleSessionClose(
           const exitCode = paneStatus.exitStatus ?? undefined
           const status = exitCode === 0 ? "completed" : "failed"
           completions.push({
-            taskId: mapping.taskId,
+            threadId: mapping.threadId,
             sessionId: mapping.sessionId,
             status,
             exitCode,
@@ -369,7 +407,7 @@ async function handleSessionClose(
           console.log(`  Thread ${mapping.threadId}: still running`)
         } else {
           completions.push({
-            taskId: mapping.taskId,
+            threadId: mapping.threadId,
             sessionId: mapping.sessionId,
             status: "interrupted",
           })
@@ -387,7 +425,7 @@ async function handleSessionClose(
       console.log("Session closed. Marking all threads as completed...")
       for (const mapping of threadSessionMap) {
         completions.push({
-          taskId: mapping.taskId,
+          threadId: mapping.threadId,
           sessionId: mapping.sessionId,
           status: "completed",
         })
@@ -398,9 +436,9 @@ async function handleSessionClose(
 
     if (completions.length > 0) {
       console.log(
-        `\nUpdating ${completions.length} session statuses in tasks.json...`,
+        `\nUpdating ${completions.length} session statuses in threads.json...`,
       )
-      await completeMultipleSessionsLocked(repoRoot, streamId, completions)
+      await completeMultipleThreadSessionsLocked(repoRoot, streamId, completions)
     }
 
     // Capture opencode session IDs and synthesis output from temp files
@@ -463,6 +501,16 @@ async function handleSessionClose(
           if (!synthesisOutputText) {
             console.log(`  Thread ${mapping.threadId}: synthesis output is empty`)
             synthesisOutputText = ""
+          } else {
+            const outcomeValidation = parsePlannerOutcomePayload(
+              synthesisOutputText,
+              mapping.threadId,
+            )
+            if (!outcomeValidation.valid) {
+              console.log(
+                `  Thread ${mapping.threadId}: planner outcome payload check skipped (${outcomeValidation.errors.join("; ")})`,
+              )
+            }
           }
         } catch (e) {
           console.log(`  Thread ${mapping.threadId}: failed to parse synthesis output file (${(e as Error).message})`)
@@ -516,6 +564,16 @@ async function handleSessionClose(
   process.exit(code ?? 0)
 }
 
+async function collectBackendResults(
+  results: AsyncIterable<ThreadExecutionResult>,
+): Promise<ThreadExecutionResult[]> {
+  const collected: ThreadExecutionResult[] = []
+  for await (const result of results) {
+    collected.push(result)
+  }
+  return collected
+}
+
 export async function main(argv: string[] = process.argv): Promise<void> {
   const cliArgs = parseCliArgs(argv)
   if (!cliArgs) {
@@ -558,13 +616,13 @@ export async function main(argv: string[] = process.argv): Promise<void> {
   let batchId = cliArgs.batch
 
   if (cliArgs.continue) {
-    const tasksFile = readTasksFile(repoRoot, stream.id)
-    if (!tasksFile) {
-      console.error(`Error: No tasks found for stream ${stream.id}`)
+    const threads = getAllThreadMetadata(repoRoot, stream.id)
+    if (threads.length === 0) {
+      console.error(`Error: No threads found for stream ${stream.id}`)
       process.exit(1)
     }
 
-    const nextBatch = findNextIncompleteBatch(tasksFile.tasks)
+    const nextBatch = findNextIncompleteBatch(threads)
     if (!nextBatch) {
       console.log("All batches are complete! Nothing to continue.")
       process.exit(0)
@@ -614,6 +672,27 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     process.exit(1)
   }
 
+  let backendName: OpenCodeBackendName
+  try {
+    backendName = resolveBackendSelection(cliArgs.backend, agentsConfig, {
+      allowLegacyCliBackends: cliArgs.allowLegacyBackends,
+    })
+  } catch (error) {
+    console.error((error as Error).message)
+    process.exit(1)
+  }
+
+  if (!cliArgs.backend && agentsConfig.execution?.backend && agentsConfig.execution.backend !== backendName) {
+    console.log(
+      `Configured backend "${agentsConfig.execution.backend}" is legacy/de-scoped for CLI orchestration. Falling back to "${backendName}" backend.`,
+    )
+    if (!cliArgs.allowLegacyBackends) {
+      console.log(
+        `Hint: use --allow-legacy-backends to opt into configured legacy backends (${LEGACY_CLI_BACKEND_NAMES.join(", ")}).`,
+      )
+    }
+  }
+
   // Check if synthesis is enabled via synthesis.json config before loading synthesis agent
   const synthesisConfigEnabled = isSynthesisEnabled(repoRoot)
   
@@ -643,8 +722,8 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     console.log(`Synthesis: disabled (work/synthesis.json)`)
   }
 
-  // Discover threads from tasks.json
-  const threads = collectThreadInfoFromTasks(
+  // Discover threads from metadata store/PLAN
+  const threads = collectThreadInfo(
     repoRoot,
     stream.id,
     batchParsed.stage,
@@ -655,9 +734,9 @@ export async function main(argv: string[] = process.argv): Promise<void> {
 
   if (threads.length === 0) {
     console.error(
-      `Error: No tasks found for batch ${batchId} in stream ${stream.id}`,
+      `Error: No threads found for batch ${batchId} in stream ${stream.id}`,
     )
-    console.error(`\nHint: Make sure tasks.json has tasks for this batch.`)
+    console.error(`\nHint: Run 'work approve plan' to sync threads from PLAN.md.`)
     process.exit(1)
   }
 
@@ -694,13 +773,14 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     process.exit(1)
   }
 
-  const port = cliArgs.port ?? DEFAULT_PORT
+  const port = cliArgs.port ?? agentsConfig.execution?.port ?? DEFAULT_PORT
   const sessionName = getWorkSessionName(stream.id)
 
   // === DRY RUN MODE ===
   if (cliArgs.dryRun) {
     printDryRunOutput(
       stream,
+      backendName,
       batchId,
       stageName,
       batchName,
@@ -717,8 +797,18 @@ export async function main(argv: string[] = process.argv): Promise<void> {
 
   // === REAL EXECUTION ===
 
-  // Check if session already exists
-  if (sessionExists(sessionName)) {
+  const backend = createExecutionBackend(backendName)
+  const backendAvailable = await backend.isAvailable()
+  if (!backendAvailable) {
+    console.error(`Error: Selected backend "${backendName}" is not available in this environment.`)
+    if (backendName === "opencode-subagent") {
+      console.error("Hint: use native in-session planner orchestration with Task tool subagents.")
+      console.error("For CLI fallback, use --backend tmux.")
+    }
+    process.exit(1)
+  }
+
+  if (backendName === "tmux" && sessionExists(sessionName)) {
     console.error(`Error: tmux session "${sessionName}" already exists.`)
     console.error(`\nOptions:`)
     console.error(`  1. Attach to it: tmux attach -t "${sessionName}"`)
@@ -726,71 +816,86 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     process.exit(1)
   }
 
-  // Generate session IDs for each thread
-  console.log("Generating session IDs for thread tracking...")
-  for (const thread of threads) {
-    thread.sessionId = generateSessionId()
-  }
+  if (backendName === "tmux") {
+    // Generate session IDs for each thread
+    console.log("Generating session IDs for thread tracking...")
+    for (const thread of threads) {
+      thread.sessionId = generateSessionId()
+    }
 
-  // Start sessions in tasks.json
-  const sessionsToStart = threads
-    .filter((t) => t.firstTaskId && t.sessionId)
-    .map((t) => ({
-      taskId: t.firstTaskId!,
-      agentName: t.agentName,
-      model: t.models[0]?.model || "unknown",
-      sessionId: t.sessionId!,
-    }))
+    // Start sessions in threads.json
+    const sessionsToStart = threads
+      .filter((t) => t.sessionId)
+      .map((t) => ({
+        threadId: t.threadId,
+        agentName: t.agentName,
+        model: t.models[0]?.model || "unknown",
+        sessionId: t.sessionId!,
+      }))
 
-  if (sessionsToStart.length > 0) {
-    console.log(`Starting ${sessionsToStart.length} sessions in tasks.json...`)
-    await startMultipleSessionsLocked(repoRoot, stream.id, sessionsToStart)
-  }
+    if (sessionsToStart.length > 0) {
+      console.log(`Starting ${sessionsToStart.length} sessions in threads.json...`)
+      await startMultipleThreadSessionsLocked(repoRoot, stream.id, sessionsToStart)
+    }
 
-  // Start opencode serve if needed
-  if (!cliArgs.noServer) {
-    const serverRunning = await isServerRunning(port)
-    if (!serverRunning) {
-      console.log(`Starting opencode serve on port ${port}...`)
-      startServer(port, repoRoot)
+    // Start opencode serve if needed
+    if (!cliArgs.noServer) {
+      const serverRunning = await isServerRunning(port)
+      if (!serverRunning) {
+        console.log(`Starting opencode serve on port ${port}...`)
+        startServer(port, repoRoot)
 
-      console.log("Waiting for server to be ready...")
-      const ready = await waitForServer(port, 30000)
-      if (!ready) {
-        console.error(`Error: opencode serve did not start within 30 seconds`)
-        process.exit(1)
+        console.log("Waiting for server to be ready...")
+        const ready = await waitForServer(port, 30000)
+        if (!ready) {
+          console.error(`Error: opencode serve did not start within 30 seconds`)
+          process.exit(1)
+        }
+        console.log("Server ready.\n")
+      } else {
+        console.log(`opencode serve already running on port ${port}\n`)
       }
-      console.log("Server ready.\n")
-    } else {
-      console.log(`opencode serve already running on port ${port}\n`)
     }
   }
 
-  // Create tmux session with threads
-  console.log(`Creating tmux session "${sessionName}"...`)
-  const { threadSessionMap } = setupTmuxSession(
-    sessionName,
+  const executionStart = await executeThreadBatchWithBackend(
+    backend,
+    {
+      repoRoot,
+      streamId: stream.id,
+      batchId,
+      sessionName,
+      port,
+      synthesisEnabled: synthesisConfigEnabled,
+      maxParallel: agentsConfig.execution?.max_parallel,
+    },
     threads,
-    port,
-    repoRoot,
-    stream.id,
-    batchId,
   )
 
+  const initialResults = await collectBackendResults(executionStart.results)
+  if (executionStart.mode !== "tmux") {
+    console.error(`Backend "${backendName}" returned headless results.`)
+    if (backendName === "opencode-subagent") {
+      console.error(
+        "Native subagent orchestration is session-first. Run from a planner in an active OpenCode session using Task tool subagents.",
+      )
+    }
+    for (const result of initialResults) {
+      if (result.error) {
+        console.error(
+          `  ${result.threadId}: ${result.error.code} - ${result.error.message}`,
+        )
+        if (result.error.details) {
+          console.error(`    ${result.error.details}`)
+        }
+      }
+    }
+    await backend.dispose()
+    process.exit(initialResults.some((r) => r.status !== "completed") ? 1 : 0)
+  }
+
+  const threadSessionMap = executionStart.threadSessionMap
   console.log(`  Tracking ${threadSessionMap.length} thread sessions`)
-
-  // Setup grid controller for pagination (if >4 threads)
-  await setupGridController(
-    sessionName,
-    threads,
-    port,
-    batchId,
-    repoRoot,
-    stream.id,
-  )
-
-  // Setup keybinding to kill session
-  setupKillSessionKeybind()
 
   console.log(`
 Layout: ${threads.length <= 4 ? "2x2 Grid (all visible)" : `2x2 Grid with pagination (${threads.length} threads, use n/p to page)`}
@@ -826,6 +931,7 @@ Press Ctrl+b X to kill the session when done.
       pollingState,
       pollingPromise,
     )
+    await backend.dispose()
   })
 
   child.on("error", (err) => {

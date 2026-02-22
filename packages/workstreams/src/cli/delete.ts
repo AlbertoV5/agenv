@@ -1,43 +1,34 @@
 /**
  * CLI: Delete
  *
- * Delete workstreams, stages, threads, or individual tasks.
+ * Delete workstreams, stages, batches, or threads.
  */
 
 import { getRepoRoot } from "../lib/repo.ts"
 import { loadIndex, getResolvedStream, deleteStream } from "../lib/index.ts"
-import {
-  deleteTask,
-  deleteTasksByStage,
-  deleteTasksByBatch,
-  deleteTasksByThread,
-  parseTaskId,
-} from "../lib/tasks.ts"
+import { loadThreads, saveThreads } from "../lib/threads.ts"
 
 interface DeleteCliArgs {
   repoRoot?: string
   streamId?: string
-  // Delete targets (mutually exclusive)
-  task?: string // e.g., "01.01.02.03"
-  stage?: number // e.g., 01
-  batch?: string // e.g., "01.00" (stage.batch)
-  thread?: string // e.g., "01.01.02" (stage.batch.thread)
-  stream?: boolean // delete entire stream
+  stage?: number
+  batch?: string
+  thread?: string
+  stream?: boolean
   force?: boolean
 }
 
 function printHelp(): void {
   console.log(`
-work delete - Delete workstreams, stages, threads, or tasks
+work delete - Delete workstreams, stages, batches, or threads
 
 Usage:
   work delete [--stream <id>] [target] [options]
 
 Targets (mutually exclusive):
-  --task, -t <id>     Delete a single task (e.g., "01.01.02.03")
-  --stage <num>       Delete all tasks in a stage (e.g., 01)
-  --batch <id>        Delete all tasks in a batch (e.g., "01.00")
-  --thread <id>       Delete all tasks in a thread (e.g., "01.01.02")
+  --stage <num>       Delete all threads in a stage (e.g., 01)
+  --batch <id>        Delete all threads in a batch (e.g., "01.01")
+  --thread <id>       Delete a thread (e.g., "01.01.02")
   (no target)         Delete the entire workstream
 
 Options:
@@ -45,25 +36,6 @@ Options:
   --force, -f         Skip confirmation prompts
   --repo-root <path>  Repository root (auto-detected)
   --help, -h          Show this help message
-
-Examples:
-  # Delete a single task (uses current workstream)
-  work delete --task "01.01.02.03"
-
-  # Delete all tasks in stage 02
-  work delete --stage 02
-
-  # Delete all tasks in batch 01.00
-  work delete --batch "01.00"
-
-  # Delete all tasks in thread 01.01.02
-  work delete --thread "01.01.02"
-
-  # Delete specific workstream (with confirmation)
-  work delete --stream "001-my-stream"
-
-  # Delete workstream without confirmation
-  work delete --stream "001-my-stream" --force
 `)
 }
 
@@ -77,96 +49,42 @@ function parseCliArgs(argv: string[]): DeleteCliArgs | null {
 
     switch (arg) {
       case "--repo-root":
-        if (!next) {
-          console.error("Error: --repo-root requires a value")
-          return null
-        }
+        if (!next) return null
         parsed.repoRoot = next
         i++
         break
-
       case "--stream":
       case "-s":
       case "--plan":
       case "-p":
-        if (!next) {
-          console.error("Error: --stream requires a value")
-          return null
-        }
+        if (!next) return null
         parsed.streamId = next
         i++
         break
-
       case "--task":
       case "-t":
-        if (!next) {
-          console.error("Error: --task requires a value")
-          return null
-        }
-        parsed.task = next
-        i++
-        break
-
+        console.error("Error: --task is no longer supported. Use --thread, --batch, or --stage.")
+        return null
       case "--stage":
-        if (!next) {
-          console.error("Error: --stage requires a value")
-          return null
-        }
-        const stageNum = parseInt(next, 10)
-        if (isNaN(stageNum) || stageNum < 1) {
-          console.error("Error: --stage must be a positive number")
-          return null
-        }
-        parsed.stage = stageNum
+        if (!next) return null
+        parsed.stage = parseInt(next, 10)
         i++
         break
-
       case "--batch":
       case "-b":
-        if (!next) {
-          console.error("Error: --batch requires a value")
-          return null
-        }
-        // Validate format: "stage.batch"
-        const batchParts = next.split(".")
-        if (
-          batchParts.length !== 2 ||
-          batchParts.some((p) => isNaN(parseInt(p, 10)))
-        ) {
-          console.error(
-            'Error: --batch must be in format "stage.batch" (e.g., "1.00")',
-          )
-          return null
-        }
+        if (!next) return null
         parsed.batch = next
         i++
         break
-
       case "--thread":
-        if (!next) {
-          console.error("Error: --thread requires a value")
-          return null
-        }
-        // Validate format: "stage.batch.thread"
-        const threadParts = next.split(".")
-        if (
-          threadParts.length !== 3 ||
-          threadParts.some((p) => isNaN(parseInt(p, 10)))
-        ) {
-          console.error(
-            'Error: --thread must be in format "stage.batch.thread" (e.g., "01.01.02")',
-          )
-          return null
-        }
+        if (!next) return null
         parsed.thread = next
         i++
         break
-
       case "--force":
       case "-f":
         parsed.force = true
         break
-
       case "--help":
       case "-h":
         printHelp()
@@ -174,26 +92,24 @@ function parseCliArgs(argv: string[]): DeleteCliArgs | null {
     }
   }
 
-  // Check for mutually exclusive targets
-  const targets = [
-    parsed.task,
-    parsed.stage,
-    parsed.batch,
-    parsed.thread,
-  ].filter((t) => t !== undefined)
+  const targets = [parsed.stage, parsed.batch, parsed.thread].filter((x) => x !== undefined)
   if (targets.length > 1) {
-    console.error(
-      "Error: --task, --stage, --batch, and --thread are mutually exclusive",
-    )
+    console.error("Error: --stage, --batch, and --thread are mutually exclusive")
     return null
   }
-
-  // If no target specified, we're deleting the entire stream
-  if (targets.length === 0) {
-    parsed.stream = true
-  }
+  if (targets.length === 0) parsed.stream = true
 
   return parsed as DeleteCliArgs
+}
+
+function deleteThreadsByPrefix(repoRoot: string, streamId: string, prefix: string): number {
+  const threadsFile = loadThreads(repoRoot, streamId)
+  if (!threadsFile) return 0
+  const before = threadsFile.threads.length
+  threadsFile.threads = threadsFile.threads.filter((t) => !t.threadId.startsWith(prefix))
+  const deleted = before - threadsFile.threads.length
+  if (deleted > 0) saveThreads(repoRoot, streamId, threadsFile)
+  return deleted
 }
 
 export async function main(argv: string[] = process.argv): Promise<void> {
@@ -203,7 +119,6 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     process.exit(1)
   }
 
-  // Auto-detect repo root if not provided
   let repoRoot: string
   try {
     repoRoot = cliArgs.repoRoot ?? getRepoRoot()
@@ -212,125 +127,51 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     process.exit(1)
   }
 
-  let index
-  try {
-    index = loadIndex(repoRoot)
-  } catch (e) {
-    console.error((e as Error).message)
-    process.exit(1)
+  const index = loadIndex(repoRoot)
+  const stream = getResolvedStream(index, cliArgs.streamId)
+
+  if (cliArgs.stage !== undefined) {
+    const prefix = `${String(cliArgs.stage).padStart(2, "0")}.`
+    const deleted = deleteThreadsByPrefix(repoRoot, stream.id, prefix)
+    console.log(deleted > 0 ? `Deleted ${deleted} thread(s) from stage ${cliArgs.stage}` : `No threads found in stage ${cliArgs.stage}`)
+    return
   }
 
-  let stream
-  try {
-    stream = getResolvedStream(index, cliArgs.streamId)
-  } catch (e) {
-    console.error((e as Error).message)
-    process.exit(1)
+  if (cliArgs.batch) {
+    const prefix = `${cliArgs.batch}.`
+    const deleted = deleteThreadsByPrefix(repoRoot, stream.id, prefix)
+    console.log(deleted > 0 ? `Deleted ${deleted} thread(s) from batch ${cliArgs.batch}` : `No threads found in batch ${cliArgs.batch}`)
+    return
   }
 
-  try {
-    // Delete single task
-    if (cliArgs.task) {
-      // Validate task ID format
-      try {
-        parseTaskId(cliArgs.task)
-      } catch (e) {
-        console.error(`Error: ${(e as Error).message}`)
-        process.exit(1)
-      }
-
-      const deleted = deleteTask(repoRoot, stream.id, cliArgs.task)
-      if (deleted) {
-        console.log(`Deleted task ${cliArgs.task}: ${deleted.name}`)
-      } else {
-        console.error(
-          `Task "${cliArgs.task}" not found in workstream "${stream.id}"`,
-        )
-        process.exit(1)
-      }
+  if (cliArgs.thread) {
+    const threadsFile = loadThreads(repoRoot, stream.id)
+    if (!threadsFile) {
+      console.log(`No threads found in workstream ${stream.id}`)
       return
     }
-
-    // Delete all tasks in a stage
-    if (cliArgs.stage !== undefined) {
-      const deleted = deleteTasksByStage(repoRoot, stream.id, cliArgs.stage)
-      if (deleted.length > 0) {
-        console.log(
-          `Deleted ${deleted.length} task(s) from stage ${cliArgs.stage}`,
-        )
-        for (const task of deleted) {
-          console.log(`  - ${task.id}: ${task.name}`)
-        }
-      } else {
-        console.log(`No tasks found in stage ${cliArgs.stage}`)
-      }
+    const before = threadsFile.threads.length
+    threadsFile.threads = threadsFile.threads.filter((t) => t.threadId !== cliArgs.thread)
+    if (threadsFile.threads.length === before) {
+      console.log(`No thread found for ${cliArgs.thread}`)
       return
     }
+    saveThreads(repoRoot, stream.id, threadsFile)
+    console.log(`Deleted thread ${cliArgs.thread}`)
+    return
+  }
 
-    // Delete all tasks in a batch
-    if (cliArgs.batch) {
-      const [stage, batch] = cliArgs.batch.split(".").map(Number)
-      const deleted = deleteTasksByBatch(repoRoot, stream.id, stage!, batch!)
-      if (deleted.length > 0) {
-        console.log(
-          `Deleted ${deleted.length} task(s) from batch ${cliArgs.batch}`,
-        )
-        for (const task of deleted) {
-          console.log(`  - ${task.id}: ${task.name}`)
-        }
-      } else {
-        console.log(`No tasks found in batch ${cliArgs.batch}`)
-      }
-      return
+  if (cliArgs.stream) {
+    if (!cliArgs.force) {
+      console.log(`This will delete workstream "${stream.id}" and all its files.`)
+      console.log("Run with --force to confirm.")
+      process.exit(1)
     }
-
-    // Delete all tasks in a thread
-    if (cliArgs.thread) {
-      const [stage, batch, thread] = cliArgs.thread.split(".").map(Number)
-      const deleted = deleteTasksByThread(
-        repoRoot,
-        stream.id,
-        stage!,
-        batch!,
-        thread!,
-      )
-      if (deleted.length > 0) {
-        console.log(
-          `Deleted ${deleted.length} task(s) from thread ${cliArgs.thread}`,
-        )
-        for (const task of deleted) {
-          console.log(`  - ${task.id}: ${task.name}`)
-        }
-      } else {
-        console.log(`No tasks found in thread ${cliArgs.thread}`)
-      }
-      return
-    }
-
-    // Delete entire stream
-    if (cliArgs.stream) {
-      if (!cliArgs.force) {
-        console.log(
-          `This will delete workstream "${stream.id}" and all its files.`,
-        )
-        console.log("Run with --force to confirm.")
-        process.exit(1)
-      }
-
-      const result = await deleteStream(repoRoot, stream.id, {
-        deleteFiles: true,
-      })
-      console.log(`Deleted workstream: ${result.streamId}`)
-      console.log(`   Path: ${result.streamPath}`)
-      return
-    }
-  } catch (e) {
-    console.error(`Error: ${(e as Error).message}`)
-    process.exit(1)
+    const result = await deleteStream(repoRoot, stream.id, { deleteFiles: true })
+    console.log(`Deleted workstream: ${result.streamId}`)
   }
 }
 
-// Run if called directly
 if (import.meta.main) {
   main()
 }

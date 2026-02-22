@@ -2,7 +2,7 @@
  * Approval gate logic for workstreams
  *
  * Implements the Human-In-The-Loop (HITL) approval workflow:
- * - Plans must be approved before tasks can be created
+ * - Plans must be approved before execution starts
  * - Approval includes a hash of PLAN.md for modification detection
  * - If PLAN.md changes after approval, the approval is auto-revoked
  */
@@ -576,16 +576,49 @@ export function revokeTasksApproval(
   return stream
 }
 
+/**
+ * Compatibility-only tasks approval marker for thread-first workflow.
+ *
+ * This no longer validates TASKS.md and should not be used as a required gate.
+ */
+export function approveTasksCompatibility(
+  repoRoot: string,
+  streamIdOrName: string,
+  taskCount?: number,
+): StreamMetadata {
+  const index = loadIndex(repoRoot)
+  const streamIndex = index.streams.findIndex(
+    (s) => s.id === streamIdOrName || s.name === streamIdOrName,
+  )
+
+  if (streamIndex === -1) {
+    throw new Error(`Workstream "${streamIdOrName}" not found`)
+  }
+
+  const stream = index.streams[streamIndex]!
+  if (!stream.approval) {
+    stream.approval = { status: "draft" }
+  }
+
+  stream.approval.tasks = {
+    status: "approved",
+    approved_at: new Date().toISOString(),
+    task_count: taskCount,
+  }
+
+  stream.updated_at = new Date().toISOString()
+  saveIndex(repoRoot, index)
+
+  return stream
+}
+
 
 // ============================================
 // FULL APPROVAL CHECK
 // ============================================
 
 export function isFullyApproved(stream: StreamMetadata): boolean {
-  return (
-    getApprovalStatus(stream) === "approved" &&
-    getTasksApprovalStatus(stream) === "approved"
-  )
+  return getApprovalStatus(stream) === "approved"
 }
 
 /**

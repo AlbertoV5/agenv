@@ -1,18 +1,25 @@
 /**
  * Stage report generation
  *
- * Generates stage completion reports from task data.
- * Reports aggregate task reports by batch/thread for stage-gate review.
+ * Generates stage completion reports from thread execution data.
+ * Reports aggregate thread outcomes by batch for stage-gate review.
  */
 
 import { join } from "path"
 import { mkdirSync, readFileSync, writeFileSync } from "fs"
-import type { Task, TaskStatus, StageDefinition, ConsolidateError } from "./types.ts"
+import type {
+    ThreadMetadata,
+    ThreadStatus,
+    StageDefinition,
+    ConsolidateError,
+} from "./types.ts"
 import { loadIndex, findStream } from "./index.ts"
+import { getThreads } from "./threads.ts"
 import { getTasks, parseTaskId } from "./tasks.ts"
 import { getWorkDir } from "./repo.ts"
 import { resolveByNameOrIndex } from "./utils.ts"
 import { parseStreamDocument } from "./stream-parser.ts"
+import { parsePlannerOutcomePayload } from "./planner-outcome.ts"
 
 export interface StageReportData {
     stageNumber: number
@@ -41,18 +48,57 @@ export interface ThreadReportData {
 export interface TaskReportData {
     id: string
     name: string
-    status: TaskStatus
+    status: ThreadStatus
     report?: string
 }
 
+function normalizeReportText(report: string | undefined, threadId: string): string | undefined {
+    if (!report) return report
+
+    const validation = parsePlannerOutcomePayload(report, threadId)
+    if (validation.valid && validation.payload) {
+        return validation.payload.report
+    }
+
+    return report
+}
+
 export interface StageMetrics {
-    totalTasks: number
+    totalThreads: number
     completed: number
     inProgress: number
     pending: number
     blocked: number
     cancelled: number
     completionRate: number
+}
+
+function threadMetadataFromTasks(repoRoot: string, streamId: string): ThreadMetadata[] {
+    const tasks = getTasks(repoRoot, streamId)
+    const byThread = new Map<string, ThreadMetadata>()
+
+    for (const task of tasks) {
+        const parsed = parseTaskId(task.id)
+        const threadId = `${parsed.stage.toString().padStart(2, "0")}.${parsed.batch.toString().padStart(2, "0")}.${parsed.thread.toString().padStart(2, "0")}`
+        if (byThread.has(threadId)) continue
+
+        byThread.set(threadId, {
+            threadId,
+            threadName: task.thread_name,
+            batchName: task.batch_name,
+            stageName: task.stage_name,
+            status: task.status,
+            report: task.report,
+            breadcrumb: task.breadcrumb,
+            assignedAgent: task.assigned_agent,
+            sessions: task.sessions || [],
+            currentSessionId: task.currentSessionId,
+            createdAt: task.created_at,
+            updatedAt: task.updated_at,
+        })
+    }
+
+    return Array.from(byThread.values())
 }
 
 /**
@@ -86,21 +132,22 @@ export function generateStageReport(
     const stageNumber = stageDef.id
     const stagePrefix = stageNumber.toString().padStart(2, "0")
 
-    // Get all tasks for this stage
-    const allTasks = getTasks(repoRoot, stream.id)
-    const stageTasks = allTasks.filter((t) => {
-        const parsed = parseTaskId(t.id)
+    // Get all threads for this stage
+    const allThreads = getThreads(repoRoot, stream.id)
+    const threadSource = allThreads.length > 0 ? allThreads : threadMetadataFromTasks(repoRoot, stream.id)
+    const stageThreads = threadSource.filter((t) => {
+        const parsed = parseTaskId(`${t.threadId}.01`)
         return parsed.stage === stageNumber
     })
 
     // Calculate metrics
-    const metrics = calculateStageMetrics(stageTasks)
+    const metrics = calculateStageMetrics(stageThreads)
 
     // Determine overall stage status
-    const status = determineStageStatus(stageTasks, metrics)
+    const status = determineStageStatus(stageThreads, metrics)
 
-    // Group tasks into batch/thread hierarchy
-    const batches = groupTasksIntoBatches(stageTasks, stageDef.batches)
+    // Group threads into batch/thread hierarchy
+    const batches = groupThreadsIntoBatches(stageThreads, stageDef.batches)
 
     return {
         stageNumber,
@@ -116,18 +163,18 @@ export function generateStageReport(
 }
 
 /**
- * Calculate metrics for a set of tasks
+ * Calculate metrics for a set of threads
  */
-function calculateStageMetrics(tasks: Task[]): StageMetrics {
-    const total = tasks.length
-    const completed = tasks.filter((t) => t.status === "completed").length
-    const inProgress = tasks.filter((t) => t.status === "in_progress").length
-    const pending = tasks.filter((t) => t.status === "pending").length
-    const blocked = tasks.filter((t) => t.status === "blocked").length
-    const cancelled = tasks.filter((t) => t.status === "cancelled").length
+function calculateStageMetrics(threads: ThreadMetadata[]): StageMetrics {
+    const total = threads.length
+    const completed = threads.filter((t) => t.status === "completed").length
+    const inProgress = threads.filter((t) => t.status === "in_progress").length
+    const pending = threads.filter((t) => t.status === "pending").length
+    const blocked = threads.filter((t) => t.status === "blocked").length
+    const cancelled = threads.filter((t) => t.status === "cancelled").length
 
     return {
-        totalTasks: total,
+        totalThreads: total,
         completed,
         inProgress,
         pending,
@@ -138,24 +185,24 @@ function calculateStageMetrics(tasks: Task[]): StageMetrics {
 }
 
 /**
- * Determine overall stage status from task statuses
+ * Determine overall stage status from thread statuses
  */
 function determineStageStatus(
-    tasks: Task[],
+    threads: ThreadMetadata[],
     metrics: StageMetrics,
 ): "complete" | "in_progress" | "pending" | "blocked" {
-    if (tasks.length === 0) return "pending"
+    if (threads.length === 0) return "pending"
     if (metrics.blocked > 0) return "blocked"
-    if (metrics.completed === metrics.totalTasks) return "complete"
+    if (metrics.completed === metrics.totalThreads) return "complete"
     if (metrics.inProgress > 0 || metrics.completed > 0) return "in_progress"
     return "pending"
 }
 
 /**
- * Group tasks into batches and threads
+ * Group threads into batches for report rendering
  */
-function groupTasksIntoBatches(
-    tasks: Task[],
+function groupThreadsIntoBatches(
+    threads: ThreadMetadata[],
     batchDefs: { id: number; name: string; threads: { id: number; name: string }[] }[],
 ): BatchReportData[] {
     const batches: BatchReportData[] = []
@@ -170,18 +217,18 @@ function groupTasksIntoBatches(
         batchMap.set(batch.id, { name: batch.name, threads: threadMap })
     }
 
-    // Group tasks by batch and thread
-    const grouped = new Map<number, Map<number, Task[]>>()
-    for (const task of tasks) {
-        const parsed = parseTaskId(task.id)
+    // Group threads by batch and thread
+    const grouped = new Map<number, Map<number, ThreadMetadata[]>>()
+    for (const thread of threads) {
+        const parsed = parseTaskId(`${thread.threadId}.01`)
         if (!grouped.has(parsed.batch)) {
             grouped.set(parsed.batch, new Map())
         }
-        const batchTasks = grouped.get(parsed.batch)!
-        if (!batchTasks.has(parsed.thread)) {
-            batchTasks.set(parsed.thread, [])
+        const batchThreads = grouped.get(parsed.batch)!
+        if (!batchThreads.has(parsed.thread)) {
+            batchThreads.set(parsed.thread, [])
         }
-        batchTasks.get(parsed.thread)!.push(task)
+        batchThreads.get(parsed.thread)!.push(thread)
     }
 
     // Convert to BatchReportData
@@ -189,28 +236,29 @@ function groupTasksIntoBatches(
     for (const batchNum of sortedBatches) {
         const batchInfo = batchMap.get(batchNum)
         const batchName = batchInfo?.name ?? `Batch ${batchNum.toString().padStart(2, "0")}`
-        const batchTasks = grouped.get(batchNum)!
+        const batchThreads = grouped.get(batchNum)!
 
         const threads: ThreadReportData[] = []
-        const sortedThreads = Array.from(batchTasks.keys()).sort((a, b) => a - b)
+        const sortedThreads = Array.from(batchThreads.keys()).sort((a, b) => a - b)
         for (const threadNum of sortedThreads) {
             const threadName =
                 batchInfo?.threads.get(threadNum) ??
                 `Thread ${threadNum.toString().padStart(2, "0")}`
-            const threadTasks = batchTasks.get(threadNum)!
-
-            // Sort tasks by ID
-            threadTasks.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }))
+            const group = batchThreads.get(threadNum)!
+            const primary = group[0]
+            if (!primary) continue
 
             threads.push({
                 threadNumber: threadNum,
                 threadName,
-                tasks: threadTasks.map((t) => ({
-                    id: t.id,
-                    name: t.name,
-                    status: t.status,
-                    report: t.report,
-                })),
+                tasks: [
+                    {
+                        id: primary.threadId,
+                        name: primary.threadName || threadName,
+                        status: primary.status || "pending",
+                        report: normalizeReportText(primary.report, primary.threadId),
+                    },
+                ],
             })
         }
 
@@ -233,7 +281,7 @@ export function formatStageReportMarkdown(report: StageReportData): string {
     lines.push(`# Stage Report: ${report.stageName} (Stage ${report.stagePrefix})`)
     lines.push("")
     lines.push(`> **Generated:** ${report.generatedAt}  `)
-    lines.push(`> **Status:** ${formatStatus(report.status)} (${report.metrics.completed}/${report.metrics.totalTasks} tasks)`)
+    lines.push(`> **Status:** ${formatStatus(report.status)} (${report.metrics.completed}/${report.metrics.totalThreads} threads)`)
     lines.push("")
 
     lines.push("## Summary")
@@ -250,7 +298,7 @@ export function formatStageReportMarkdown(report: StageReportData): string {
 
         for (const thread of batch.threads) {
             const completedCount = thread.tasks.filter((t) => t.status === "completed").length
-            lines.push(`**Thread: ${thread.threadName}** (${completedCount}/${thread.tasks.length} tasks)`)
+            lines.push(`**Thread: ${thread.threadName}** (${completedCount}/${thread.tasks.length} threads)`)
 
             for (const task of thread.tasks) {
                 const statusIcon = getStatusIcon(task.status)
@@ -264,22 +312,22 @@ export function formatStageReportMarkdown(report: StageReportData): string {
     }
 
     // Issues section
-    const blockedTasks = report.batches
+    const blockedThreads = report.batches
         .flatMap((b) => b.threads)
         .flatMap((t) => t.tasks)
         .filter((t) => t.status === "blocked")
 
     lines.push("## Issues & Blockers")
     lines.push("")
-    if (blockedTasks.length > 0) {
-        for (const task of blockedTasks) {
+    if (blockedThreads.length > 0) {
+        for (const task of blockedThreads) {
             lines.push(`- **${task.id}:** ${task.name}`)
             if (task.report) {
                 lines.push(`  > ${task.report}`)
             }
         }
     } else {
-        lines.push("No blocked tasks in this stage.")
+        lines.push("No blocked threads in this stage.")
     }
     lines.push("")
 
@@ -288,7 +336,7 @@ export function formatStageReportMarkdown(report: StageReportData): string {
     lines.push("")
     lines.push("| Metric | Value |")
     lines.push("|--------|-------|")
-    lines.push(`| Tasks | ${report.metrics.completed}/${report.metrics.totalTasks} complete |`)
+    lines.push(`| Threads | ${report.metrics.completed}/${report.metrics.totalThreads} complete |`)
     lines.push(`| Completion Rate | ${report.metrics.completionRate.toFixed(1)}% |`)
     lines.push(`| Batches | ${report.batches.length} |`)
     lines.push(`| Threads | ${report.batches.reduce((acc, b) => acc + b.threads.length, 0)} |`)
@@ -313,7 +361,7 @@ function formatStatus(status: string): string {
     }
 }
 
-function getStatusIcon(status: TaskStatus): string {
+function getStatusIcon(status: ThreadStatus): string {
     switch (status) {
         case "completed":
             return "✓"

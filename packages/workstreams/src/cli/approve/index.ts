@@ -1,8 +1,8 @@
 /**
  * CLI: Approve Workstream Gates
  *
- * Approve or revoke workstream approvals for plan, tasks, or prompts.
- * Plan and tasks must be approved before running `work start`.
+ * Approve or revoke workstream approvals for plan and revision.
+ * Plan approval is the required gate before running `work start`.
  */
 
 import { getRepoRoot } from "../../lib/repo.ts"
@@ -24,14 +24,14 @@ Requires: USER role
 
 Usage:
   work approve plan [--stream <id>] [--force]
-  work approve tasks [--stream <id>]
+  work approve tasks [--stream <id>]  # deprecated compatibility shim
   work approve revision [--stream <id>]
   work approve [--stream <id>]  # Show status of all approvals
 
 Targets:
-  plan      Approve the PLAN.md structure (blocks if open questions exist)
-  tasks     Approve tasks (requires TASKS.md with tasks)
-  revision  Approve revised PLAN.md with new stages (generates TASKS.md)
+  plan      Approve PLAN.md and sync thread metadata into threads.json
+  tasks     Deprecated compatibility shim (migrates legacy tasks.json)
+  revision  Approve revised PLAN.md with new stages
 
 Options:
   --repo-root, -r  Repository root (auto-detected if omitted)
@@ -45,11 +45,14 @@ Options:
   --help, -h       Show this help message
 
 Description:
-  Workstreams require 2 approvals before starting:
+  Workstreams require plan approval before starting:
   1. Plan approval - validates PLAN.md structure, no open questions
-  2. Tasks approval - ensures tasks.json exists with tasks
+  2. Plan approval also syncs threads.json from PLAN.md
 
-  Run 'work start' after both approvals to create the GitHub branch and issues.
+  Legacy note: 'work approve tasks' is deprecated and only kept to migrate
+  old tasks.json data into threads.json.
+
+  Run 'work start' after plan approval to create the GitHub branch and issues.
 
   Note: This command requires USER role to maintain human-in-the-loop control.
   Set WORKSTREAM_ROLE=USER environment variable to enable approval commands.
@@ -60,9 +63,6 @@ Examples:
 
   # Approve plan
   work approve plan
-
-  # Approve tasks
-  work approve tasks
 
 
   # Revoke plan approval
@@ -237,13 +237,13 @@ export async function main(argv: string[] = process.argv): Promise<void> {
           `  ${formatApprovalIcon(fullStatus.plan)} Plan:    ${fullStatus.plan}`
         )
         console.log(
-          `  ${formatApprovalIcon(fullStatus.tasks)} Tasks:   ${fullStatus.tasks}`
+          `  ${formatApprovalIcon(fullStatus.tasks)} Tasks:   ${fullStatus.tasks} (deprecated gate)`
         )
         console.log("")
         if (fullStatus.fullyApproved) {
           console.log("All approvals complete. Run 'work start' to begin.")
         } else {
-          console.log("Pending approvals. Run 'work approve <target>' to approve.")
+          console.log("Pending approvals. Canonical flow: work validate plan -> work approve plan -> work assign --thread ...")
         }
       }
       return

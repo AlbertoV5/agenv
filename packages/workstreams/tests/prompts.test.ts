@@ -308,8 +308,10 @@ describe("Prompt Generation Library", () => {
       expect(prompt).toContain("Database Setup")
       expect(prompt).toContain("## Thread Summary")
       expect(prompt).toContain("## Thread Details")
-      expect(prompt).toContain("Your tasks are:")
+      expect(prompt).toContain("## Legacy Task Checklist (Compatibility)")
       expect(prompt).toContain("01.01.01.01")
+      expect(prompt).toContain("## Planner Outcome Contract")
+      expect(prompt).toContain("\"thread_id\": \"01.01.01\"")
     })
   })
 

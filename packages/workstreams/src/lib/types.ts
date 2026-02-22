@@ -176,6 +176,9 @@ export type TaskStatus =
   | "blocked"
   | "cancelled"
 
+// Thread-level status uses the same lifecycle values.
+export type ThreadStatus = TaskStatus
+
 // Stream status - computed from tasks or manually set
 export type StreamStatus =
   | "pending" // No tasks started (default)
@@ -188,9 +191,9 @@ export type ApprovalStatus = "draft" | "approved" | "revoked"
 
 /**
  * Approval metadata for human-in-the-loop gate
- * Workstreams require 2 approvals before starting:
- * 1. Plan approval (PLAN.md structure is correct)
- * 2. Tasks approval (tasks.json exists with tasks)
+ * Workstreams require plan approval before starting.
+ *
+ * `tasks` is retained as a deprecated compatibility field for legacy flows.
  */
 export interface ApprovalMetadata {
   status: ApprovalStatus
@@ -428,7 +431,11 @@ export interface ConsolidateResult {
 export interface EvaluationMetrics {
   streamId: string
   streamName: string
+  totalThreads: number
+  threadStatusCounts: Record<ThreadStatus, number>
+  /** @deprecated Use totalThreads */
   totalTasks: number
+  /** @deprecated Use threadStatusCounts */
   statusCounts: Record<TaskStatus, number>
   completionRate: number
   blockedRate: number
@@ -440,8 +447,14 @@ export interface EvaluationMetrics {
  * Blocker analysis result
  */
 export interface BlockerAnalysis {
+  blockedThreads: ThreadMetadata[]
+  blockersByStageThreads: Record<number, ThreadMetadata[]>
+  blockersByBatchThreads: Record<string, ThreadMetadata[]>
+  /** @deprecated Use blockedThreads */
   blockedTasks: Task[]
+  /** @deprecated Use blockersByStageThreads */
   blockersByStage: Record<number, Task[]>
+  /** @deprecated Use blockersByBatchThreads */
   blockersByBatch: Record<string, Task[]> // key is "stage.batch" e.g., "1.00"
   blockedPercentage: number
 }
@@ -450,8 +463,12 @@ export interface BlockerAnalysis {
  * Task filter result
  */
 export interface FilterResult {
+  matchingThreads: ThreadMetadata[]
+  totalThreads: number
+  /** @deprecated Use matchingThreads */
   matchingTasks: Task[]
   matchCount: number
+  /** @deprecated Use totalThreads */
   totalTasks: number
 }
 
@@ -585,8 +602,17 @@ export interface AgentsConfig {
  */
 export interface ThreadMetadata {
   threadId: string // Format: "SS.BB.TT" (e.g., "01.01.02")
+  threadName?: string // Thread display name
+  stageName?: string // Parent stage name
+  batchName?: string // Parent batch name
+  status?: ThreadStatus // Thread execution status
+  assignedAgent?: string // Assigned agent for this thread
+  report?: string // Thread completion/blocking report
+  breadcrumb?: string // Latest progress breadcrumb
   promptPath?: string // Relative path to prompt file (e.g., "prompts/01-stage/01-batch/thread.md")
   sessions: SessionRecord[] // Session history for this thread
+  createdAt?: string // Creation timestamp
+  updatedAt?: string // Last metadata update timestamp
   /**
    * Internal session tracking ID for the thread.
    * Used for internal state management and resume functionality.
@@ -628,6 +654,20 @@ export interface ThreadsJson {
   stream_id: string // Reference to the workstream ID
   last_updated: string // ISO date
   threads: ThreadMetadata[]
+}
+
+/**
+ * Thread discovered for batch execution.
+ */
+export interface DiscoveredThread {
+  threadId: string
+  threadNum: number
+  threadName: string
+  stageName: string
+  batchName: string
+  stageNum: number
+  batchNum: number
+  assignedAgent?: string
 }
 
 // ============================================
@@ -699,12 +739,24 @@ export interface SynthesisAgentDefinitionYaml {
   models: ModelSpec[] // List of models to try in order on failure
 }
 
+export type OpenCodeBackendName =
+  | "tmux"
+  | "opencode-subagent"
+  | "opencode-sdk"
+
+export interface ExecutionConfigYaml {
+  backend?: OpenCodeBackendName
+  port?: number
+  max_parallel?: number
+}
+
 /**
  * Root structure of agents.yaml
  */
 export interface AgentsConfigYaml {
   agents: AgentDefinitionYaml[]
   synthesis_agents?: SynthesisAgentDefinitionYaml[]
+  execution?: ExecutionConfigYaml
 }
 
 // ============================================

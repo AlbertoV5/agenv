@@ -119,7 +119,6 @@ AgEnv uses skill files under `agent/skills/*` to guide agent behavior through ea
 
 - `planning-workstreams`: used first to create the stream, shape `PLAN.md`, validate/check, and prepare tasks for approval.
 - `implementing-workstreams`: used by worker agents that execute thread tasks; these workers run in parallel by batch/thread.
-- `synthesizing-workstreams`: used after parallel execution to consolidate thread outcomes into a coherent status/update view.
 - `reviewing-workstreams`: used to review plan/task quality and readiness before or between execution phases.
 - `evaluating-workstreams`: used near completion to assess delivered work and finalize report quality (`REPORT.md`).
 
@@ -128,7 +127,7 @@ In practice:
 1. Planning agent uses planning skill to prepare plan/tasks.
 2. Human approves (`work approve plan`, `work approve tasks`) and starts (`work start`).
 3. Execution agents run threads in parallel with implementation skill.
-4. Synthesis/review/evaluation skills are used to summarize, validate, and close out the workstream.
+4. Review/evaluation skills are used to validate and close out the workstream.
 
 ## Test and Typecheck
 

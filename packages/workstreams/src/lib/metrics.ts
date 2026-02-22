@@ -7,12 +7,14 @@
 import type {
   Task,
   TaskStatus,
+  ThreadStatus,
   EvaluationMetrics,
   BlockerAnalysis,
   FilterResult,
   StreamMetadata,
 } from "./types.ts"
 import { getTasks, parseTaskId } from "./tasks.ts"
+import { getThreads } from "./threads.ts"
 import { loadIndex, resolveStreamId, findStream } from "./index.ts"
 
 /**
@@ -30,6 +32,7 @@ export function evaluateStream(
   }
 
   const tasks = getTasks(repoRoot, stream.id)
+  const threads = getThreads(repoRoot, stream.id)
 
   const statusCounts: Record<TaskStatus, number> = {
     pending: 0,
@@ -43,20 +46,34 @@ export function evaluateStream(
     statusCounts[task.status]++
   }
 
-  const total = tasks.length
+  const threadStatusCounts: Record<ThreadStatus, number> = {
+    pending: 0,
+    in_progress: 0,
+    completed: 0,
+    blocked: 0,
+    cancelled: 0,
+  }
+  for (const thread of threads) {
+    threadStatusCounts[thread.status || "pending"]++
+  }
+
+  const total = threads.length > 0 ? threads.length : tasks.length
+  const effectiveCounts = threads.length > 0 ? threadStatusCounts : statusCounts
   const completionRate = total > 0 ? (statusCounts.completed / total) * 100 : 0
-  const blockedRate = total > 0 ? (statusCounts.blocked / total) * 100 : 0
-  const cancelledRate = total > 0 ? (statusCounts.cancelled / total) * 100 : 0
+  const blockedRate = total > 0 ? (effectiveCounts.blocked / total) * 100 : 0
+  const cancelledRate = total > 0 ? (effectiveCounts.cancelled / total) * 100 : 0
 
   return {
     streamId: stream.id,
     streamName: stream.name,
+    totalThreads: total,
+    threadStatusCounts: effectiveCounts,
     totalTasks: total,
-    statusCounts,
+    statusCounts: effectiveCounts,
     completionRate,
     blockedRate,
     cancelledRate,
-    inProgressCount: statusCounts.in_progress,
+    inProgressCount: effectiveCounts.in_progress,
   }
 }
 
@@ -89,6 +106,8 @@ export function filterTasks(
   }
 
   return {
+    matchingThreads: matchingTasks as never,
+    totalThreads: tasks.length,
     matchingTasks,
     matchCount: matchingTasks.length,
     totalTasks: tasks.length,
@@ -114,9 +133,12 @@ export function analyzeBlockers(
 ): BlockerAnalysis {
   const tasks = getTasks(repoRoot, streamId)
   const blockedTasks = tasks.filter((t) => t.status === "blocked")
+  const blockedThreads = getThreads(repoRoot, streamId).filter((t) => t.status === "blocked")
 
   const blockersByStage: Record<number, Task[]> = {}
   const blockersByBatch: Record<string, Task[]> = {}
+  const blockersByStageThreads: Record<number, typeof blockedThreads> = {}
+  const blockersByBatchThreads: Record<string, typeof blockedThreads> = {}
   for (const task of blockedTasks) {
     const { stage, batch } = parseTaskId(task.id)
     // By stage
@@ -133,10 +155,27 @@ export function analyzeBlockers(
     blockersByBatch[batchKey].push(task)
   }
 
-  const blockedPercentage =
-    tasks.length > 0 ? (blockedTasks.length / tasks.length) * 100 : 0
+  for (const thread of blockedThreads) {
+    const parsed = parseTaskId(`${thread.threadId}.01`)
+    if (!blockersByStageThreads[parsed.stage]) {
+      blockersByStageThreads[parsed.stage] = []
+    }
+    blockersByStageThreads[parsed.stage]!.push(thread)
+
+    const batchKey = `${parsed.stage}.${parsed.batch.toString().padStart(2, "0")}`
+    if (!blockersByBatchThreads[batchKey]) {
+      blockersByBatchThreads[batchKey] = []
+    }
+    blockersByBatchThreads[batchKey]!.push(thread)
+  }
+
+  const denominator = blockedThreads.length > 0 ? getThreads(repoRoot, streamId).length : tasks.length
+  const blockedPercentage = denominator > 0 ? ((blockedThreads.length || blockedTasks.length) / denominator) * 100 : 0
 
   return {
+    blockedThreads,
+    blockersByStageThreads,
+    blockersByBatchThreads,
     blockedTasks,
     blockersByStage,
     blockersByBatch,
@@ -152,18 +191,18 @@ export function formatMetricsOutput(
   options: { compact?: boolean } = {}
 ): string {
   if (options.compact) {
-    return `${metrics.streamName}: ${metrics.statusCounts.completed}/${metrics.totalTasks} (${metrics.completionRate.toFixed(0)}%) | ${metrics.statusCounts.blocked} blocked | ${metrics.statusCounts.in_progress} in progress`
+    return `${metrics.streamName}: ${metrics.threadStatusCounts.completed}/${metrics.totalThreads} (${metrics.completionRate.toFixed(0)}%) | ${metrics.threadStatusCounts.blocked} blocked | ${metrics.threadStatusCounts.in_progress} in progress`
   }
 
   const lines: string[] = []
   lines.push(`Workstream: ${metrics.streamId} (${metrics.streamName})`)
   lines.push(``)
-  lines.push(`Tasks: ${metrics.totalTasks}`)
-  lines.push(`  Completed:   ${metrics.statusCounts.completed} (${metrics.completionRate.toFixed(1)}%)`)
-  lines.push(`  In Progress: ${metrics.statusCounts.in_progress}`)
-  lines.push(`  Pending:     ${metrics.statusCounts.pending}`)
-  lines.push(`  Blocked:     ${metrics.statusCounts.blocked} (${metrics.blockedRate.toFixed(1)}%)`)
-  lines.push(`  Cancelled:   ${metrics.statusCounts.cancelled}`)
+  lines.push(`Threads: ${metrics.totalThreads}`)
+  lines.push(`  Completed:   ${metrics.threadStatusCounts.completed} (${metrics.completionRate.toFixed(1)}%)`)
+  lines.push(`  In Progress: ${metrics.threadStatusCounts.in_progress}`)
+  lines.push(`  Pending:     ${metrics.threadStatusCounts.pending}`)
+  lines.push(`  Blocked:     ${metrics.threadStatusCounts.blocked} (${metrics.blockedRate.toFixed(1)}%)`)
+  lines.push(`  Cancelled:   ${metrics.threadStatusCounts.cancelled}`)
 
   return lines.join("\n")
 }
@@ -172,23 +211,23 @@ export function formatMetricsOutput(
  * Format blocker analysis for display
  */
 export function formatBlockerAnalysis(analysis: BlockerAnalysis): string {
-  if (analysis.blockedTasks.length === 0) {
-    return "No blocked tasks."
+  if (analysis.blockedThreads.length === 0) {
+    return "No blocked threads."
   }
 
   const lines: string[] = []
-  lines.push(`Blocked Tasks: ${analysis.blockedTasks.length} (${analysis.blockedPercentage.toFixed(1)}%)`)
+  lines.push(`Blocked Threads: ${analysis.blockedThreads.length} (${analysis.blockedPercentage.toFixed(1)}%)`)
   lines.push(``)
 
-  const stages = Object.keys(analysis.blockersByStage)
+  const stages = Object.keys(analysis.blockersByStageThreads)
     .map(Number)
     .sort((a, b) => a - b)
 
   for (const stage of stages) {
-    const tasks = analysis.blockersByStage[stage]!
+    const tasks = analysis.blockersByStageThreads[stage]!
     lines.push(`Stage ${stage}:`)
     for (const task of tasks) {
-      lines.push(`  [${task.id}] ${task.name}`)
+      lines.push(`  [${task.threadId}] ${task.threadName}`)
     }
   }
 
@@ -204,6 +243,14 @@ export function aggregateMetrics(
   const aggregate: EvaluationMetrics = {
     streamId: "all",
     streamName: "All Workstreams",
+    totalThreads: 0,
+    threadStatusCounts: {
+      pending: 0,
+      in_progress: 0,
+      completed: 0,
+      blocked: 0,
+      cancelled: 0,
+    },
     totalTasks: 0,
     statusCounts: {
       pending: 0,
@@ -219,7 +266,13 @@ export function aggregateMetrics(
   }
 
   for (const metrics of metricsList) {
-    aggregate.totalTasks += metrics.totalTasks
+    aggregate.totalThreads += metrics.totalThreads
+    aggregate.totalTasks += metrics.totalThreads
+    aggregate.threadStatusCounts.pending += metrics.threadStatusCounts.pending
+    aggregate.threadStatusCounts.in_progress += metrics.threadStatusCounts.in_progress
+    aggregate.threadStatusCounts.completed += metrics.threadStatusCounts.completed
+    aggregate.threadStatusCounts.blocked += metrics.threadStatusCounts.blocked
+    aggregate.threadStatusCounts.cancelled += metrics.threadStatusCounts.cancelled
     aggregate.statusCounts.pending += metrics.statusCounts.pending
     aggregate.statusCounts.in_progress += metrics.statusCounts.in_progress
     aggregate.statusCounts.completed += metrics.statusCounts.completed
@@ -228,13 +281,13 @@ export function aggregateMetrics(
     aggregate.inProgressCount += metrics.inProgressCount
   }
 
-  if (aggregate.totalTasks > 0) {
+  if (aggregate.totalThreads > 0) {
     aggregate.completionRate =
-      (aggregate.statusCounts.completed / aggregate.totalTasks) * 100
+      (aggregate.threadStatusCounts.completed / aggregate.totalThreads) * 100
     aggregate.blockedRate =
-      (aggregate.statusCounts.blocked / aggregate.totalTasks) * 100
+      (aggregate.threadStatusCounts.blocked / aggregate.totalThreads) * 100
     aggregate.cancelledRate =
-      (aggregate.statusCounts.cancelled / aggregate.totalTasks) * 100
+      (aggregate.threadStatusCounts.cancelled / aggregate.totalThreads) * 100
   }
 
   return aggregate

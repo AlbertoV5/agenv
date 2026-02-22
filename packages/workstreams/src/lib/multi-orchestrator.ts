@@ -1,8 +1,8 @@
 /**
  * Multi-Orchestrator
  *
- * Orchestration logic for executing multiple threads in parallel using tmux.
- * Handles thread discovery, session setup, pane spawning, and session tracking.
+ * Orchestration logic for executing multiple threads in parallel.
+ * Handles thread discovery and backend-agnostic execution routing.
  */
 
 import { join } from "path"
@@ -10,8 +10,7 @@ import { existsSync } from "fs"
 import { getWorkDir } from "./repo.ts"
 import { loadAgentsConfig, getAgentModels, getSynthesisAgentModels } from "./agents-yaml.ts"
 import type { SynthesisAgentDefinitionYaml, AgentsConfigYaml } from "./types.ts"
-import { discoverThreadsInBatch } from "./tasks.ts"
-import { getThreadMetadata } from "./threads.ts"
+import { discoverThreadsInBatch, getThreadMetadata } from "./threads.ts"
 import {
   createSession,
   addWindow,
@@ -24,10 +23,16 @@ import {
 import { buildRetryRunCommand, buildPostSynthesisCommand } from "./opencode.ts"
 import type { NormalizedModelSpec } from "./types.ts"
 import type { ThreadInfo, ThreadSessionMap } from "./multi-types.ts"
+import type {
+  AgentExecutionBackend,
+  BackendConfig,
+  BackendExecutionStart,
+  ThreadExecutionRequest,
+} from "./backends/index.ts"
 
 /**
- * Build the prompt file path for a thread using metadata strings
- * Used when discovering threads from tasks.json instead of PLAN.md
+ * Build the prompt file path for a thread using metadata strings.
+ * Used for legacy compatibility when prompt paths are not yet stored in threads.json.
  */
 export function getPromptFilePathFromMetadata(
   repoRoot: string,
@@ -67,7 +72,7 @@ export function buildPaneTitle(threadInfo: ThreadInfo): string {
 }
 
 /**
- * Options for collectThreadInfoFromTasks
+ * Options for collectThreadInfo
  */
 export interface CollectThreadInfoOptions {
   repoRoot: string
@@ -80,12 +85,12 @@ export interface CollectThreadInfoOptions {
 }
 
 /**
- * Collect thread information from tasks.json (not PLAN.md)
- * Discovers threads dynamically from tasks, including dynamically added ones
+ * Collect thread information from thread metadata + PLAN.md fallback.
+ * Discovers threads dynamically from threads.json with legacy tasks.json compatibility.
  * 
  * @param options - Collection options including optional synthesis agent
  */
-export function collectThreadInfoFromTasks(
+export function collectThreadInfo(
   repoRoot: string,
   streamId: string,
   stageNum: number,
@@ -121,7 +126,7 @@ export function collectThreadInfoFromTasks(
       const workDir = getWorkDir(repoRoot)
       promptPath = join(workDir, threadMeta.promptPath)
     } else {
-      // Fallback: reconstruct from task metadata (legacy behavior)
+      // Fallback: reconstruct from legacy metadata when promptPath is missing
       promptPath = getPromptFilePathFromMetadata(
         repoRoot,
         streamId,
@@ -133,7 +138,7 @@ export function collectThreadInfoFromTasks(
       )
     }
 
-    // Get agent (from task or default)
+    // Get agent (from thread metadata or default)
     const agentName = discovered.assignedAgent || "default"
 
     // Get models from agent (for retry logic)
@@ -153,7 +158,7 @@ export function collectThreadInfoFromTasks(
       promptPath,
       models,
       agentName,
-      firstTaskId: discovered.firstTaskId,
+      firstTaskId: `${discovered.threadId}.01`,
     }
 
     // Add synthesis agent fields if synthesis is enabled (for post-session synthesis)
@@ -166,6 +171,54 @@ export function collectThreadInfoFromTasks(
   }
 
   return threads
+}
+
+export function toThreadExecutionRequests(
+  threads: ThreadInfo[],
+): ThreadExecutionRequest[] {
+  return threads.map((thread) => ({
+    threadId: thread.threadId,
+    threadName: thread.threadName,
+    stageName: thread.stageName,
+    batchName: thread.batchName,
+    promptPath: thread.promptPath,
+    models: thread.models,
+    agentName: thread.agentName,
+    sessionId: thread.sessionId,
+    firstTaskId: thread.firstTaskId,
+    synthesisAgentName: thread.synthesisAgentName,
+    synthesisModels: thread.synthesisModels,
+  }))
+}
+
+export async function executeThreadBatchWithBackend(
+  backend: AgentExecutionBackend,
+  config: BackendConfig,
+  threads: ThreadInfo[],
+): Promise<BackendExecutionStart> {
+  await backend.initialize(config)
+  return backend.executeBatch(toThreadExecutionRequests(threads))
+}
+
+/**
+ * @deprecated Use collectThreadInfo().
+ */
+export function collectThreadInfoFromTasks(
+  repoRoot: string,
+  streamId: string,
+  stageNum: number,
+  batchNum: number,
+  agentsConfig: ReturnType<typeof loadAgentsConfig>,
+  synthesisAgent?: SynthesisAgentDefinitionYaml | null,
+): ThreadInfo[] {
+  return collectThreadInfo(
+    repoRoot,
+    streamId,
+    stageNum,
+    batchNum,
+    agentsConfig,
+    synthesisAgent,
+  )
 }
 
 /**

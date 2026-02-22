@@ -26,41 +26,36 @@ import {
   updateStageIssueState,
 } from "../../lib/github/index.ts"
 import { closeStageIssue } from "../../lib/github/issues.ts"
-import { generateTasksMdFromPlan } from "../../lib/tasks-md.ts"
 import { parseStreamDocument } from "../../lib/stream-parser.ts"
 import { getWorkDir } from "../../lib/repo.ts"
-import { atomicWriteFile, getResolvedStream } from "../../lib/index.ts"
-import { getTasks, parseTaskId } from "../../lib/tasks.ts"
+import { getResolvedStream } from "../../lib/index.ts"
+import { discoverThreadsInBatch, loadThreads, migrateTasksToThreads } from "../../lib/threads.ts"
 
 import type { ApproveCliArgs } from "./utils.ts"
 
 /**
- * Result of TASKS.md generation attempt
+ * Result of thread metadata sync attempt
  */
-interface TasksMdGenerationResult {
+interface ThreadMetadataSyncResult {
   success: boolean
-  path?: string
-  overwritten?: boolean
+  threadCount?: number
   error?: string
 }
 
 /**
- * Generate TASKS.md file after plan approval
+ * Populate threads.json metadata from PLAN.md after plan approval
  *
  * @param repoRoot - Repository root path
  * @param streamId - Workstream ID
- * @param streamName - Workstream name for the file header
  * @returns Result of the generation attempt
  */
-function generateTasksMdAfterApproval(
+function syncThreadsFromPlanAfterApproval(
   repoRoot: string,
   streamId: string,
-  streamName: string
-): TasksMdGenerationResult {
+): ThreadMetadataSyncResult {
   try {
     const workDir = getWorkDir(repoRoot)
     const streamDir = join(workDir, streamId)
-    const tasksMdPath = join(streamDir, "TASKS.md")
     const planMdPath = join(streamDir, "PLAN.md")
 
     // Check if PLAN.md exists
@@ -70,9 +65,6 @@ function generateTasksMdAfterApproval(
         error: `PLAN.md not found at ${planMdPath}`,
       }
     }
-
-    // Check if TASKS.md already exists
-    const overwritten = existsSync(tasksMdPath)
 
     // Parse PLAN.md to get the stream document
     const planContent = readFileSync(planMdPath, "utf-8")
@@ -86,16 +78,17 @@ function generateTasksMdAfterApproval(
       }
     }
 
-    // Generate TASKS.md content from the plan structure
-    const content = generateTasksMdFromPlan(streamName, doc)
+    for (const stage of doc.stages) {
+      for (const batch of stage.batches) {
+        discoverThreadsInBatch(repoRoot, streamId, stage.id, batch.id)
+      }
+    }
 
-    // Write the file
-    atomicWriteFile(tasksMdPath, content)
+    const synced = loadThreads(repoRoot, streamId)
 
     return {
       success: true,
-      path: tasksMdPath,
-      overwritten,
+      threadCount: synced?.threads.length || 0,
     }
   } catch (e) {
     return {
@@ -192,47 +185,16 @@ export async function handlePlanApproval(
       return
     }
 
-    // Validate that all tasks in the stage are completed
+    // Validate that all threads in the stage are completed
     if (!cliArgs.force) {
-      const allTasks = getTasks(repoRoot, stream.id)
-      const stageTasks = allTasks.filter((t) => {
-        try {
-          const parsed = parseTaskId(t.id)
-          return parsed.stage === stageNum
-        } catch {
-          return false
-        }
-      })
+      const threadsFile = loadThreads(repoRoot, stream.id)
+      const stagePrefix = `${String(stageNum).padStart(2, "0")}.`
+      const incompleteThreads = (threadsFile?.threads || [])
+        .filter((thread) => thread.threadId.startsWith(stagePrefix))
+        .filter((thread) => thread.status !== "completed" && thread.status !== "cancelled")
+        .sort((a, b) => a.threadId.localeCompare(b.threadId, undefined, { numeric: true }))
 
-      const incompleteTasks = stageTasks.filter((t) => t.status !== "completed" && t.status !== "cancelled")
-
-      // Group incomplete tasks by thread
-      const incompleteThreads = new Map<
-        string,
-        { count: number; name: string }
-      >()
-
-      incompleteTasks.forEach((t) => {
-        try {
-          const parsed = parseTaskId(t.id)
-          // Format thread ID: stage.batch.thread
-          const threadId = `${parsed.stage.toString().padStart(2, "0")}.${parsed.batch.toString().padStart(2, "0")}.${parsed.thread.toString().padStart(2, "0")}`
-
-          if (!incompleteThreads.has(threadId)) {
-            incompleteThreads.set(threadId, {
-              count: 0,
-              name: t.thread_name || `Thread ${parsed.thread}`,
-            })
-          }
-
-          const threadInfo = incompleteThreads.get(threadId)!
-          threadInfo.count++
-        } catch {
-          // ignore parsing errors
-        }
-      })
-
-      if (incompleteThreads.size > 0) {
+      if (incompleteThreads.length > 0) {
         if (cliArgs.json) {
           console.log(
             JSON.stringify(
@@ -241,16 +203,13 @@ export async function handlePlanApproval(
                 scope: "stage",
                 stage: stageNum,
                 streamId: stream.id,
-                reason: "incomplete_tasks",
-                incompleteThreadCount: incompleteThreads.size,
-                incompleteTaskCount: incompleteTasks.length,
-                incompleteThreads: Array.from(incompleteThreads.entries()).map(
-                  ([id, info]) => ({
-                    id,
-                    name: info.name,
-                    incompleteTasks: info.count,
-                  })
-                ),
+                reason: "incomplete_threads",
+                incompleteThreadCount: incompleteThreads.length,
+                incompleteThreads: incompleteThreads.map((thread) => ({
+                  id: thread.threadId,
+                  name: thread.threadName || thread.threadId,
+                  status: thread.status || "pending",
+                })),
               },
               null,
               2
@@ -258,19 +217,12 @@ export async function handlePlanApproval(
           )
         } else {
           console.error(
-            `Error: Cannot approve Stage ${stageNum} because ${incompleteThreads.size} thread(s) are not approved.`
+            `Error: Cannot approve Stage ${stageNum} because ${incompleteThreads.length} thread(s) are not complete.`
           )
           console.log("\nIncomplete threads:")
 
-          // Sort threads by ID
-          const sortedThreads = Array.from(incompleteThreads.entries()).sort(
-            (a, b) => a[0].localeCompare(b[0])
-          )
-
-          for (const [threadId, info] of sortedThreads) {
-            console.log(
-              `  - ${threadId} (${info.name}): ${info.count} task(s) remaining`
-            )
+          for (const thread of incompleteThreads) {
+            console.log(`  - ${thread.threadId} (${thread.threadName || thread.threadId}): ${thread.status || "pending"}`)
           }
 
           console.log("\nUse --force to approve anyway.")
@@ -521,12 +473,9 @@ export async function handlePlanApproval(
   try {
     const updatedStream = approveStream(repoRoot, stream.id, "user")
 
-    // Auto-generate TASKS.md after successful plan approval
-    const tasksMdResult = generateTasksMdAfterApproval(
-      repoRoot,
-      updatedStream.id,
-      updatedStream.name
-    )
+    // Auto-populate threads.json metadata after successful plan approval
+    const threadSyncResult = syncThreadsFromPlanAfterApproval(repoRoot, updatedStream.id)
+    const migrationResult = migrateTasksToThreads(repoRoot, updatedStream.id)
 
     if (cliArgs.json) {
       console.log(
@@ -541,11 +490,18 @@ export async function handlePlanApproval(
               ? questionsResult.openCount
               : 0,
             forcedApproval: questionsResult.hasOpenQuestions && cliArgs.force,
-            tasksMd: {
-              generated: tasksMdResult.success,
-              path: tasksMdResult.path,
-              overwritten: tasksMdResult.overwritten,
-              error: tasksMdResult.error,
+            threads: {
+              synced: threadSyncResult.success,
+              threadCount: threadSyncResult.threadCount,
+              error: threadSyncResult.error,
+            },
+            migration: {
+              tasksJsonFound: migrationResult.tasksJsonFound,
+              migrated: migrationResult.migrated,
+              taskCount: migrationResult.taskCount,
+              threadsTouched: migrationResult.threadsTouched,
+              backupPath: migrationResult.backupPath,
+              errors: migrationResult.errors,
             },
           },
           null,
@@ -558,17 +514,20 @@ export async function handlePlanApproval(
       )
       console.log(`  Status: ${formatApprovalStatus(updatedStream)}`)
 
-      // Report TASKS.md generation result
-      if (tasksMdResult.success) {
-        if (tasksMdResult.overwritten) {
-          console.log(`  Warning: Overwrote existing TASKS.md`)
-        }
-        console.log(`  TASKS.md generated at ${tasksMdResult.path}`)
+      // Report thread metadata sync result
+      if (threadSyncResult.success) {
+        console.log(`  threads.json synced (${threadSyncResult.threadCount} thread(s))`)
       } else {
+        console.log(`  Warning: Failed to sync threads.json: ${threadSyncResult.error}`)
+      }
+
+      if (migrationResult.tasksJsonFound) {
         console.log(
-          `  Warning: Failed to generate TASKS.md: ${tasksMdResult.error}`
+          `  Legacy migration: tasks.json -> threads.json (${migrationResult.taskCount} task(s), ${migrationResult.threadsTouched} thread(s))`,
         )
       }
+
+      console.log("  Next: assign agents with 'work assign --thread \"01.01.01\" --agent \"agent-name\"' if needed")
     }
   } catch (e) {
     console.error((e as Error).message)

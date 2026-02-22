@@ -1,7 +1,7 @@
 /**
  * CLI: Create Workstream
  *
- * Creates a new workstream with PLAN.md template and empty tasks.json.
+ * Creates a new workstream with PLAN.md template and metadata stores.
  */
 
 import { getRepoRoot } from "../lib/repo.ts"
@@ -39,7 +39,7 @@ Examples:
 Workstream Structure:
   Creates a new workstream directory with:
   - PLAN.md     Structured markdown for workstream definition
-  - tasks.json  Empty task tracker (populate with "work add-task")
+  - threads.json  Thread metadata tracker (auto-populated on plan approval)
   - files/      Directory for task outputs
   - docs/       Optional directory for additional documentation
 
@@ -47,8 +47,10 @@ Workflow:
   1. Create workstream: work create --name my-feature --stages 3
   2. Edit PLAN.md:      Fill in stage names, threads, and details
   3. Validate:          work validate plan
-  4. Track progress:    work list --stream "001-my-feature" --tasks
-  5. Document results:  work report init && fill in REPORT.md
+  4. Approve plan:      work approve plan
+  5. Assign agents:     work assign --thread "01.01.01" --agent "agent-name"
+  6. Track progress:    work list --stream "001-my-feature" --threads
+  7. Document results:  work report init && fill in REPORT.md
 `)
 }
 
@@ -164,13 +166,14 @@ export function main(argv: string[] = process.argv): void {
     console.log(`   Path: ${result.streamPath}`)
     console.log("")
     console.log("Next steps:")
-    console.log("  1. Edit PLAN.md to define stages, threads, and tasks")
+    console.log("  1. Edit PLAN.md to define stages, batches, and threads")
     console.log(`  2. Run: work validate plan`)
-    console.log(`  3. View: work list --stream "${result.streamId}" --tasks`)
+    console.log(`  3. Run: work approve plan`)
+    console.log(`  4. View: work list --stream "${result.streamId}" --threads`)
     console.log("")
     console.log("Created files:")
     console.log("  - PLAN.md     (edit to define workstream structure)")
-    console.log("  - tasks.json  (auto-populated by validation)")
+    console.log("  - threads.json (auto-populated by work approve plan)")
     console.log("  - docs/       (optional additional documentation)")
   } catch (e) {
     console.error(`Error: ${(e as Error).message}`)

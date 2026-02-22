@@ -6,7 +6,7 @@
  *
  * Subcommands:
  *   work       - Workstream management (create, status, update, complete, index)
- *   install    - Installation management (skills)
+ *   install    - Installation management (skills/hooks/plugins/tools/commands/agents)
  */
 
 import { main as workMain } from "../../workstreams/bin/work.ts"
@@ -31,7 +31,7 @@ Usage:
 
 Commands:
   work       Workstream management (create, status, update, complete, index)
-  install    Installation management (skills)
+  install    Installation management (skills/hooks/plugins/tools/commands/agents)
 
 Options:
   --help, -h      Show this help message

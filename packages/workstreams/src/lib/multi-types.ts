@@ -7,6 +7,7 @@
 
 // Re-export core types from types.ts
 export type { ThreadInfo, ThreadSessionMap } from "./types.ts"
+import type { OpenCodeBackendName } from "./types.ts"
 
 /**
  * CLI arguments for the multi command
@@ -20,4 +21,6 @@ export interface MultiCliArgs {
   noServer?: boolean
   continue?: boolean
   silent?: boolean
+  backend?: OpenCodeBackendName | string
+  allowLegacyBackends?: boolean
 }

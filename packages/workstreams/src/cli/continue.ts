@@ -9,6 +9,7 @@ import { main as multiMain } from "./multi.ts"
 import { getRepoRoot } from "../lib/repo.ts"
 import { loadIndex, getResolvedStream } from "../lib/index.ts"
 import { readTasksFile } from "../lib/tasks.ts"
+import { getAllThreadMetadata } from "../lib/threads.ts"
 import { findNextIncompleteBatch } from "./multi.ts"
 import {
   createReadlineInterface,
@@ -118,27 +119,28 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     process.exit(1)
   }
 
-  // Load tasks and find next incomplete batch
-  const tasksFile = readTasksFile(repoRoot, stream.id)
-  if (!tasksFile) {
-    console.error(`Error: No tasks found for stream ${stream.id}`)
+  // Load threads and find next incomplete batch
+  const threadMetadata = getAllThreadMetadata(repoRoot, stream.id)
+  if (threadMetadata.length === 0) {
+    console.error(`Error: No threads found for stream ${stream.id}`)
     process.exit(1)
   }
 
-  const nextBatch = findNextIncompleteBatch(tasksFile.tasks)
+  const nextBatch = findNextIncompleteBatch(threadMetadata)
   if (!nextBatch) {
     console.log("All batches are complete! Nothing to continue.")
     process.exit(0)
   }
 
   // Check for incomplete/failed threads with session history in the next batch
-  const incompleteThreads = findIncompleteThreadsInBatch(tasksFile.tasks, nextBatch)
+  const tasksFile = readTasksFile(repoRoot, stream.id)
+  const incompleteThreads = findIncompleteThreadsInBatch(tasksFile?.tasks || [], nextBatch)
   
   if (incompleteThreads.length > 0) {
     // Display summary of issues
     console.log(`\nFound ${incompleteThreads.length} incomplete/failed thread(s) with session history in batch ${nextBatch}:\n`)
     
-    const threadStatuses = buildThreadStatuses(tasksFile.tasks, incompleteThreads)
+    const threadStatuses = buildThreadStatuses(tasksFile?.tasks || [], incompleteThreads)
     displayThreadStatusTable(threadStatuses)
     
     // Offer interactive prompt

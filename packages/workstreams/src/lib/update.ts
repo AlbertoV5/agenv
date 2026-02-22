@@ -11,8 +11,8 @@ import {
   getTaskById,
   parseTaskId,
   parseThreadId,
-  updateTasksByThread,
 } from "./tasks.ts"
+import { updateThreadStatus, getThreadMetadata } from "./threads.ts"
 
 export interface UpdateTaskArgs {
   repoRoot: string
@@ -102,52 +102,114 @@ export interface UpdateThreadTasksResult {
   count: number
 }
 
+export interface UpdateThreadResult {
+  updated: boolean
+  file: string
+  threadId: string
+  status: TaskStatus
+}
+
 /**
  * Update all tasks in a thread
  */
 export async function updateThreadTasks(args: UpdateThreadTasksArgs): Promise<UpdateThreadTasksResult> {
   // Parse the thread ID
 
-  let parsed: { stage: number; batch: number; thread: number }
   try {
-    parsed = parseThreadId(args.threadId)
+    parseThreadId(args.threadId)
   } catch (e) {
     throw new Error(
       `Invalid thread ID: ${args.threadId}. Expected format "stage.batch.thread" (e.g., "01.01.02")`,
     )
   }
 
-  // Update all tasks in the thread
-  const updatedTasks = updateTasksByThread(
+  const updatedThread = updateThreadStatus(
     args.repoRoot,
     args.stream.id,
-    parsed.stage,
-    parsed.batch,
-    parsed.thread,
+    args.threadId,
     {
       status: args.status,
       breadcrumb: args.breadcrumb,
       report: args.report,
-      assigned_agent: args.assigned_agent,
+      assignedAgent: args.assigned_agent,
     },
   )
 
-  if (updatedTasks.length === 0) {
+  if (!updatedThread) {
+    const existingThread = getThreadMetadata(args.repoRoot, args.stream.id, args.threadId)
+    if (!existingThread) {
+      throw new Error(
+        `No tasks found in thread "${args.threadId}" in workstream "${args.stream.id}".`,
+      )
+    }
     throw new Error(
       `No tasks found in thread "${args.threadId}" in workstream "${args.stream.id}".`,
     )
   }
 
+  const syntheticTask: Task = {
+    id: `${args.threadId}.01`,
+    name: updatedThread.threadName || args.threadId,
+    thread_name: updatedThread.threadName || args.threadId,
+    batch_name: updatedThread.batchName || "",
+    stage_name: updatedThread.stageName || "",
+    created_at: updatedThread.createdAt || new Date().toISOString(),
+    updated_at: updatedThread.updatedAt || new Date().toISOString(),
+    status: updatedThread.status || args.status,
+    report: updatedThread.report,
+    breadcrumb: updatedThread.breadcrumb,
+    assigned_agent: updatedThread.assignedAgent,
+  }
+
   return {
     updated: true,
-    file: "tasks.json",
+    file: "threads.json",
     threadId: args.threadId,
     status: args.status,
-    tasks: updatedTasks,
-    count: updatedTasks.length,
+    tasks: [syntheticTask],
+    count: 1,
+  }
+}
+
+/**
+ * Update a thread's status in threads.json.
+ * Thread-first canonical update path.
+ */
+export async function updateThread(args: UpdateThreadTasksArgs): Promise<UpdateThreadResult> {
+  try {
+    parseThreadId(args.threadId)
+  } catch {
+    throw new Error(
+      `Invalid thread ID: ${args.threadId}. Expected format "stage.batch.thread" (e.g., "01.01.02")`,
+    )
+  }
+
+  const updatedThread = updateThreadStatus(
+    args.repoRoot,
+    args.stream.id,
+    args.threadId,
+    {
+      status: args.status,
+      breadcrumb: args.breadcrumb,
+      report: args.report,
+      assignedAgent: args.assigned_agent,
+    },
+  )
+
+  if (!updatedThread) {
+    throw new Error(
+      `Thread "${args.threadId}" not found in workstream "${args.stream.id}". ` +
+        `Run "work approve plan" to sync thread metadata from PLAN.md.`,
+    )
+  }
+
+  return {
+    updated: true,
+    file: "threads.json",
+    threadId: args.threadId,
+    status: args.status,
   }
 }
 
 // Re-export parseTaskId for backwards compatibility
 export { parseTaskId } from "./tasks.ts"
-

@@ -20,9 +20,68 @@ import {
   getThreadMetadata,
   loadThreads,
   migrateFromTasksJson,
+  updateThreadStatus,
+  getThreadCounts,
+  discoverThreadsInBatch as discoverThreadsInBatchFromThreads,
+  updateThreadMetadata,
+  type ThreadUpdateOptions,
+  type GroupedThreadsByStage,
+  groupThreads,
 } from "./threads.ts"
 
 const TASKS_FILE_VERSION = "1.0.0"
+
+function getThreadIdFromTaskLikeId(id: string): string | null {
+  const parts = id.split(".")
+  if (parts.length === 3) {
+    return id
+  }
+  if (parts.length === 4) {
+    return `${parts[0]}.${parts[1]}.${parts[2]}`
+  }
+  return null
+}
+
+function toSyntheticTaskId(threadId: string): string {
+  const parts = threadId.split(".")
+  if (parts.length !== 3) return threadId
+  return `${parts[0]}.${parts[1]}.${parts[2]}.01`
+}
+
+function toSyntheticTask(thread: {
+  threadId: string
+  threadName?: string
+  stageName?: string
+  batchName?: string
+  status?: TaskStatus
+  createdAt?: string
+  updatedAt?: string
+  report?: string
+  breadcrumb?: string
+  assignedAgent?: string
+  sessions: SessionRecord[]
+  currentSessionId?: string
+}): Task {
+  const now = new Date().toISOString()
+  const threadName = thread.threadName || thread.threadId
+  const stageName = thread.stageName || ""
+  const batchName = thread.batchName || ""
+  return {
+    id: toSyntheticTaskId(thread.threadId),
+    name: threadName,
+    thread_name: threadName,
+    batch_name: batchName,
+    stage_name: stageName,
+    created_at: thread.createdAt || now,
+    updated_at: thread.updatedAt || now,
+    status: thread.status || "pending",
+    report: thread.report,
+    breadcrumb: thread.breadcrumb,
+    assigned_agent: thread.assignedAgent,
+    sessions: thread.sessions,
+    currentSessionId: thread.currentSessionId,
+  }
+}
 
 /**
  * Get the path to tasks.json for a workstream
@@ -651,10 +710,23 @@ export function getTaskById(
   streamId: string,
   taskId: string,
 ): Task | null {
+  const threadId = getThreadIdFromTaskLikeId(taskId)
+  if (threadId) {
+    const thread = getThreadMetadata(repoRoot, streamId, threadId)
+    if (thread) {
+      const synthetic = toSyntheticTask(thread)
+      return { ...synthetic, id: partsToTaskId(taskId, synthetic.id) }
+    }
+  }
+
   const tasksFile = readTasksFile(repoRoot, streamId)
   if (!tasksFile) return null
 
   return tasksFile.tasks.find((t) => t.id === taskId) || null
+}
+
+function partsToTaskId(requestedId: string, fallbackId: string): string {
+  return requestedId.split(".").length === 4 ? requestedId : fallbackId
 }
 
 /**
@@ -665,6 +737,15 @@ export function getTasks(
   streamId: string,
   status?: TaskStatus,
 ): Task[] {
+  const threadsFile = loadThreads(repoRoot, streamId)
+  if (threadsFile && threadsFile.threads.length > 0) {
+    const all = threadsFile.threads.map((thread) => toSyntheticTask(thread))
+    if (status) {
+      return all.filter((task) => task.status === status)
+    }
+    return all.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }))
+  }
+
   const tasksFile = readTasksFile(repoRoot, streamId)
   if (!tasksFile) return []
 
@@ -692,6 +773,24 @@ export function updateTaskStatus(
   optionsOrStatus: TaskUpdateOptions | TaskStatus,
   legacyBreadcrumb?: string,
 ): Task | null {
+  const threadId = getThreadIdFromTaskLikeId(taskId)
+  if (threadId) {
+    const opts: ThreadUpdateOptions =
+      typeof optionsOrStatus === "string"
+        ? { status: optionsOrStatus, breadcrumb: legacyBreadcrumb }
+        : {
+            status: optionsOrStatus.status,
+            breadcrumb: optionsOrStatus.breadcrumb,
+            report: optionsOrStatus.report,
+            assignedAgent: optionsOrStatus.assigned_agent,
+          }
+    const updatedThread = updateThreadStatus(repoRoot, streamId, threadId, opts)
+    if (updatedThread) {
+      const synthetic = toSyntheticTask(updatedThread)
+      return { ...synthetic, id: partsToTaskId(taskId, synthetic.id) }
+    }
+  }
+
   const tasksFile = readTasksFile(repoRoot, streamId)
   if (!tasksFile) return null
 
@@ -727,6 +826,38 @@ export function addTasks(
   streamId: string,
   newTasks: Task[],
 ): TasksFile {
+  const now = new Date().toISOString()
+  for (const task of newTasks) {
+    const threadId = getThreadIdFromTaskLikeId(task.id)
+    if (!threadId) continue
+    const existing = getThreadMetadata(repoRoot, streamId, threadId)
+    if (existing) {
+      updateThreadMetadata(repoRoot, streamId, threadId, {
+        threadName: existing.threadName || task.thread_name,
+        stageName: existing.stageName || task.stage_name,
+        batchName: existing.batchName || task.batch_name,
+        status: existing.status || task.status,
+        assignedAgent: existing.assignedAgent || task.assigned_agent,
+        report: existing.report || task.report,
+        breadcrumb: existing.breadcrumb || task.breadcrumb,
+      })
+    } else {
+      updateThreadMetadata(repoRoot, streamId, threadId, {
+        threadName: task.thread_name,
+        stageName: task.stage_name,
+        batchName: task.batch_name,
+        status: task.status,
+        assignedAgent: task.assigned_agent,
+        report: task.report,
+        breadcrumb: task.breadcrumb,
+        sessions: task.sessions || [],
+        currentSessionId: task.currentSessionId,
+        createdAt: task.created_at || now,
+        updatedAt: task.updated_at || now,
+      })
+    }
+  }
+
   let tasksFile = readTasksFile(repoRoot, streamId)
 
   if (!tasksFile) {
@@ -779,8 +910,12 @@ export function getTaskCounts(
   blocked: number
   cancelled: number
 } {
-  const tasks = getTasks(repoRoot, streamId)
+  const threadCounts = getThreadCounts(repoRoot, streamId)
+  if (threadCounts.total > 0) {
+    return threadCounts
+  }
 
+  const tasks = getTasks(repoRoot, streamId)
   return {
     total: tasks.length,
     pending: tasks.filter((t) => t.status === "pending").length,
@@ -923,21 +1058,9 @@ export function groupTasks(
 // THREAD DISCOVERY FROM TASKS.JSON
 // ============================================
 
-/**
- * Discovered thread metadata from tasks.json
- * Contains all info needed to spawn thread execution
- */
-export interface DiscoveredThread {
-  threadId: string // Format: "SS.BB.TT" (e.g., "01.01.02")
-  threadNum: number // Thread number within batch
-  threadName: string // Thread name from first task
-  stageName: string // Stage name from first task
-  batchName: string // Batch name from first task
-  stageNum: number // Stage number
-  batchNum: number // Batch number
-  firstTaskId: string // ID of first task in thread (for session tracking)
-  assignedAgent?: string // Agent assignment from first task
-  taskCount: number // Number of tasks in this thread
+export type DiscoveredThread = import("./types.ts").DiscoveredThread & {
+  firstTaskId?: string
+  taskCount?: number
 }
 
 /**
@@ -956,61 +1079,15 @@ export function discoverThreadsInBatch(
   stageNum: number,
   batchNum: number,
 ): DiscoveredThread[] | null {
-  const tasksFile = readTasksFile(repoRoot, streamId)
-  if (!tasksFile) return null
-
-  // Build the batch prefix for filtering
-  const stageStr = stageNum.toString().padStart(2, "0")
-  const batchStr = batchNum.toString().padStart(2, "0")
-  const batchPrefix = `${stageStr}.${batchStr}.`
-
-  // Group tasks by thread ID (SS.BB.TT)
-  const threadMap = new Map<string, Task[]>()
-
-  for (const task of tasksFile.tasks) {
-    if (!task.id.startsWith(batchPrefix)) continue
-
-    try {
-      const parsed = parseTaskId(task.id)
-      const threadId = formatThreadId(parsed.stage, parsed.batch, parsed.thread)
-
-      if (!threadMap.has(threadId)) {
-        threadMap.set(threadId, [])
-      }
-      threadMap.get(threadId)!.push(task)
-    } catch {
-      // Skip invalid task IDs
-    }
+  const discovered = discoverThreadsInBatchFromThreads(repoRoot, streamId, stageNum, batchNum)
+  if (!discovered) {
+    return null
   }
-
-  // Convert to DiscoveredThread array
-  const threads: DiscoveredThread[] = []
-
-  for (const [threadId, tasks] of threadMap) {
-    // Sort tasks by ID to get first task
-    tasks.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }))
-    const firstTask = tasks[0]!
-
-    const parsed = parseTaskId(firstTask.id)
-
-    threads.push({
-      threadId,
-      threadNum: parsed.thread,
-      threadName: firstTask.thread_name,
-      stageName: firstTask.stage_name,
-      batchName: firstTask.batch_name,
-      stageNum: parsed.stage,
-      batchNum: parsed.batch,
-      firstTaskId: firstTask.id,
-      assignedAgent: firstTask.assigned_agent,
-      taskCount: tasks.length,
-    })
-  }
-
-  // Sort by thread number
-  threads.sort((a, b) => a.threadNum - b.threadNum)
-
-  return threads
+  return discovered.map((thread) => ({
+    ...thread,
+    firstTaskId: `${thread.threadId}.01`,
+    taskCount: 1,
+  }))
 }
 
 /**
@@ -1029,6 +1106,14 @@ export function getBatchMetadata(
   stageNum: number,
   batchNum: number,
 ): { stageName: string; batchName: string } | null {
+  const discovered = discoverThreadsInBatchFromThreads(repoRoot, streamId, stageNum, batchNum)
+  if (discovered && discovered.length > 0) {
+    return {
+      stageName: discovered[0]!.stageName,
+      batchName: discovered[0]!.batchName,
+    }
+  }
+
   const tasksFile = readTasksFile(repoRoot, streamId)
   if (!tasksFile) return null
 
@@ -1071,14 +1156,14 @@ export function parseTaskId(taskId: string): {
   task: number
 } {
   const parts = taskId.split(".")
-  if (parts.length === 4) {
+  if (parts.length === 4 || parts.length === 3) {
     const parsed = parts.map((p) => parseInt(p, 10))
     if (parsed.every((n) => !isNaN(n))) {
       return {
         stage: parsed[0]!,
         batch: parsed[1]!,
         thread: parsed[2]!,
-        task: parsed[3]!,
+        task: parsed[3] ?? 1,
       }
     }
   }
@@ -1156,6 +1241,12 @@ export function getTasksByThread(
   batchNumber: number,
   threadNumber: number,
 ): Task[] {
+  const threadId = formatThreadId(stageNumber, batchNumber, threadNumber)
+  const thread = getThreadMetadata(repoRoot, streamId, threadId)
+  if (thread) {
+    return [toSyntheticTask(thread)]
+  }
+
   const tasksFile = readTasksFile(repoRoot, streamId)
   if (!tasksFile) return []
 
@@ -1179,6 +1270,17 @@ export function updateTasksByThread(
   threadNumber: number,
   options: TaskUpdateOptions,
 ): Task[] {
+  const threadId = formatThreadId(stageNumber, batchNumber, threadNumber)
+  const updatedThread = updateThreadStatus(repoRoot, streamId, threadId, {
+    status: options.status,
+    breadcrumb: options.breadcrumb,
+    report: options.report,
+    assignedAgent: options.assigned_agent,
+  })
+  if (updatedThread) {
+    return [toSyntheticTask(updatedThread)]
+  }
+
   const tasksFile = readTasksFile(repoRoot, streamId)
   if (!tasksFile) return []
 

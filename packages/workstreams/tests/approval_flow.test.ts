@@ -1,7 +1,7 @@
 
 import { describe, test, expect, beforeAll, afterAll, beforeEach, afterEach } from "bun:test";
 import { join } from "path";
-import { existsSync, writeFileSync, mkdirSync, rmSync, readFileSync } from "fs";
+import { existsSync, writeFileSync, readFileSync } from "fs";
 import { createTestWorkstream, cleanupTestWorkstream, type TestWorkspace } from "./helpers/test-workspace.ts";
 import { captureCliOutput } from "./helpers/cli-runner.ts";
 import {
@@ -102,57 +102,6 @@ describe("Approval Flow", () => {
         expect(getStageApprovalStatus(updatedStream, 1)).toBe("approved");
     });
 
-    test("should check tasks approval readiness", () => {
-        const { checkTasksApprovalReady } = require("../src/lib/approval.ts");
-
-        // Should failing initially (no TASKS.md)
-        try {
-            const result = checkTasksApprovalReady(REPO_ROOT, "stream-001");
-            expect(result.ready).toBe(false);
-            expect(result.reason).toContain("TASKS.md not found");
-        } catch (e) {
-            // function might not be exported in test context if using bun test runner quirks
-            // but we can test the approval failure directly
-        }
-
-        // Create empty TASKS.md
-        writeFileSync(join(REPO_ROOT, "work/stream-001/TASKS.md"), "# Tasks: test-stream\n\n");
-
-        // Should fail (empty tasks)
-        try {
-            const result = checkTasksApprovalReady(REPO_ROOT, "stream-001");
-            expect(result.ready).toBe(false);
-            expect(result.reason).toContain("contains no valid tasks");
-        } catch (e) { }
-
-        // Create valid TASKS.md
-        writeFileSync(join(REPO_ROOT, "work/stream-001/TASKS.md"), `
-# Tasks: test-stream
-
-## Stage 01: Stage 1
-
-### Batch 01: Batch 1
-
-#### Thread 01: Thread 1
-
-- [ ] Task 01.01.01.01: Task 1
-        `.trim());
-
-        const result = checkTasksApprovalReady(REPO_ROOT, "stream-001");
-        expect(result.ready).toBe(true);
-        expect(result.taskCount).toBe(1);
-    });
-
-    test("should approve tasks", () => {
-        const { approveTasks, getTasksApprovalStatus } = require("../src/lib/approval.ts");
-
-        let stream = approveTasks(REPO_ROOT, "stream-001");
-        expect(getTasksApprovalStatus(stream)).toBe("approved");
-        expect(stream.approval?.tasks?.task_count).toBe(1);
-    });
-
-
-
     test("should verify full approval", () => {
         const { isFullyApproved, getFullApprovalStatus } = require("../src/lib/approval.ts");
         const index = loadIndex(REPO_ROOT);
@@ -163,13 +112,42 @@ describe("Approval Flow", () => {
 
         const status = getFullApprovalStatus(stream);
         expect(status.plan).toBe("approved");
-        expect(status.tasks).toBe("approved");
+        expect(status.tasks).toBe("draft");
         expect(status.fullyApproved).toBe(true);
+    });
+
+    test("work approve tasks is a deprecated compatibility shim", async () => {
+        const tasksPath = join(REPO_ROOT, "work/stream-001/tasks.json");
+        writeFileSync(tasksPath, JSON.stringify({
+            version: "1.0.0",
+            stream_id: "stream-001",
+            last_updated: new Date().toISOString(),
+            tasks: [{
+                id: "01.01.01.01",
+                name: "Legacy task",
+                thread_name: "Thread One",
+                batch_name: "Batch One",
+                stage_name: "Stage One",
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                status: "pending"
+            }]
+        }, null, 2));
+
+        const { main } = await import("../src/cli/approve/index.ts");
+        const { stdout } = await captureCliOutput(async () => {
+            await main(["node", "approve", "tasks", "--stream", "stream-001", "--repo-root", REPO_ROOT]);
+        });
+
+        const output = stdout.join("\n");
+        expect(output).toContain("deprecated");
+        expect(output).toContain("work approve plan");
+        expect(existsSync(join(REPO_ROOT, "work/stream-001/threads.json"))).toBe(true);
     });
 });
 
-// Separate test suite for TASKS.md auto-generation during plan approval
-describe("Plan Approval with TASKS.md Auto-Generation", () => {
+// Separate test suite for threads.json sync during plan approval
+describe("Plan Approval with threads.json Sync", () => {
     let workspace: TestWorkspace;
     let AUTOGEN_REPO_ROOT: string;
 
@@ -210,14 +188,13 @@ describe("Plan Approval with TASKS.md Auto-Generation", () => {
         delete process.env.WORKSTREAM_ROLE;
     });
 
-    test("should generate TASKS.md when approving plan with valid PLAN.md", async () => {
+    test("should sync threads.json when approving plan with valid PLAN.md", async () => {
         // Create a valid PLAN.md from fixture
         const planContent = readFileSync(join(import.meta.dir, "fixtures/plans/basic-plan.md"), "utf-8");
         writeFileSync(join(AUTOGEN_REPO_ROOT, "work/stream-autogen/PLAN.md"), planContent);
 
-        // Verify TASKS.md doesn't exist yet
-        const tasksMdPath = join(AUTOGEN_REPO_ROOT, "work/stream-autogen/TASKS.md");
-        expect(existsSync(tasksMdPath)).toBe(false);
+        const threadsPath = join(AUTOGEN_REPO_ROOT, "work/stream-autogen/threads.json");
+        expect(existsSync(threadsPath)).toBe(false);
 
         // Run the CLI approve command
         const { main } = await import("../src/cli/approve/index.ts");
@@ -232,31 +209,30 @@ describe("Plan Approval with TASKS.md Auto-Generation", () => {
         const stream = index.streams[0];
         expect(stream?.approval?.status).toBe("approved");
 
-        // Verify TASKS.md was generated
-        expect(existsSync(tasksMdPath)).toBe(true);
+        // Verify threads.json was generated and populated
+        expect(existsSync(threadsPath)).toBe(true);
+        const threadsJson = JSON.parse(readFileSync(threadsPath, "utf-8"));
+        expect(Array.isArray(threadsJson.threads)).toBe(true);
+        expect(threadsJson.threads.length).toBeGreaterThan(0);
 
-        // Verify TASKS.md content structure
-        const tasksMdContent = readFileSync(tasksMdPath, "utf-8");
-        expect(tasksMdContent).toContain("# Tasks: Auto-Gen Test Stream");
-        expect(tasksMdContent).toContain("## Stage 01: Stage One");
-        expect(tasksMdContent).toContain("### Batch 01: Batch One");
-        expect(tasksMdContent).toContain("#### Thread 01: Thread One");
-        // Also verify Stage 02 is present as per basic-plan.md
-        expect(tasksMdContent).toContain("## Stage 02: Stage Two");
-
-        // Verify output message mentions TASKS.md
+        // Verify output message mentions thread sync
         const outputJoined = stdout.join("\n");
-        expect(outputJoined).toContain("TASKS.md generated");
+        expect(outputJoined).toContain("threads.json synced");
     });
 
-    test("should warn when overwriting existing TASKS.md", async () => {
+    test("should merge when threads.json already exists", async () => {
         // Create a valid PLAN.md from fixture
         const planContent = readFileSync(join(import.meta.dir, "fixtures/plans/multi-batch-plan.md"), "utf-8");
         writeFileSync(join(AUTOGEN_REPO_ROOT, "work/stream-autogen/PLAN.md"), planContent);
 
-        // Pre-create TASKS.md
-        const tasksMdPath = join(AUTOGEN_REPO_ROOT, "work/stream-autogen/TASKS.md");
-        writeFileSync(tasksMdPath, "# Old TASKS.md content");
+        // Pre-create threads.json with one manual assignment
+        const threadsPath = join(AUTOGEN_REPO_ROOT, "work/stream-autogen/threads.json");
+        writeFileSync(threadsPath, JSON.stringify({
+            version: "1.0.0",
+            stream_id: "stream-autogen",
+            last_updated: new Date().toISOString(),
+            threads: [{ threadId: "01.01.01", threadName: "Thread One", stageName: "Stage One", batchName: "Batch One", status: "pending", assignedAgent: "coder", sessions: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }],
+        }, null, 2));
 
         // Run the CLI approve command
         const { main } = await import("../src/cli/approve/index.ts");
@@ -266,17 +242,16 @@ describe("Plan Approval with TASKS.md Auto-Generation", () => {
             await main(["node", "approve", "plan", "--stream", "stream-autogen", "--repo-root", AUTOGEN_REPO_ROOT]);
         });
 
-        // Verify TASKS.md was overwritten
-        const tasksMdContent = readFileSync(tasksMdPath, "utf-8");
-        expect(tasksMdContent).not.toContain("Old TASKS.md content");
-        expect(tasksMdContent).toContain("# Tasks:");
+        // Verify pre-existing assignment is preserved
+        const threadsJson = JSON.parse(readFileSync(threadsPath, "utf-8"));
+        const first = threadsJson.threads.find((t: any) => t.threadId === "01.01.01");
+        expect(first?.assignedAgent).toBe("coder");
 
-        // Verify warning was shown
         const outputJoined = stdout.join("\n");
-        expect(outputJoined).toContain("Overwrote existing TASKS.md");
+        expect(outputJoined).toContain("threads.json synced");
     });
 
-    test("should still approve plan when TASKS.md generation fails", async () => {
+    test("should still approve plan when thread sync fails", async () => {
         // Create a minimal PLAN.md without proper structure (will fail to generate proper tasks)
         writeFileSync(join(AUTOGEN_REPO_ROOT, "work/stream-autogen/PLAN.md"), "# Minimal Plan\nNo stages.");
 
@@ -288,7 +263,7 @@ describe("Plan Approval with TASKS.md Auto-Generation", () => {
             await main(["node", "approve", "plan", "--stream", "stream-autogen", "--repo-root", AUTOGEN_REPO_ROOT]);
         });
 
-        // Verify plan was still approved even if TASKS.md generation had issues
+        // Verify plan was still approved even if thread sync had issues
         const index = loadIndex(AUTOGEN_REPO_ROOT);
         const stream = index.streams[0];
         expect(stream?.approval?.status).toBe("approved");
@@ -298,7 +273,7 @@ describe("Plan Approval with TASKS.md Auto-Generation", () => {
         expect(outputJoined).toContain("Approved plan");
     });
 
-    test("should include TASKS.md info in JSON output", async () => {
+    test("should include threads sync info in JSON output", async () => {
         // Create a valid PLAN.md from fixture
         const planContent = readFileSync(join(import.meta.dir, "fixtures/plans/multi-batch-plan.md"), "utf-8");
         writeFileSync(join(AUTOGEN_REPO_ROOT, "work/stream-autogen/PLAN.md"), planContent);
@@ -315,14 +290,46 @@ describe("Plan Approval with TASKS.md Auto-Generation", () => {
         const jsonOutput = JSON.parse(stdout.join(""));
         expect(jsonOutput.action).toBe("approved");
         expect(jsonOutput.target).toBe("plan");
-        expect(jsonOutput.tasksMd).toBeDefined();
-        expect(jsonOutput.tasksMd.generated).toBe(true);
-        expect(jsonOutput.tasksMd.path).toContain("TASKS.md");
+        expect(jsonOutput.threads).toBeDefined();
+        expect(jsonOutput.threads.synced).toBe(true);
+        expect(jsonOutput.threads.threadCount).toBeGreaterThan(0);
+    });
+
+    test("should auto-migrate legacy tasks.json during plan approval", async () => {
+        const planContent = readFileSync(join(import.meta.dir, "fixtures/plans/basic-plan.md"), "utf-8");
+        writeFileSync(join(AUTOGEN_REPO_ROOT, "work/stream-autogen/PLAN.md"), planContent);
+        const tasksPath = join(AUTOGEN_REPO_ROOT, "work/stream-autogen/tasks.json");
+        writeFileSync(tasksPath, JSON.stringify({
+            version: "1.0.0",
+            stream_id: "stream-autogen",
+            last_updated: new Date().toISOString(),
+            tasks: [{
+                id: "01.01.01.01",
+                name: "Legacy task",
+                thread_name: "Parser",
+                batch_name: "Core",
+                stage_name: "Build",
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                status: "pending"
+            }]
+        }, null, 2));
+
+        const { main } = await import("../src/cli/approve/index.ts");
+        const { stdout } = await captureCliOutput(async () => {
+            await main(["node", "approve", "plan", "--stream", "stream-autogen", "--repo-root", AUTOGEN_REPO_ROOT, "--json"]);
+        });
+
+        const jsonOutput = JSON.parse(stdout.join(""));
+        expect(jsonOutput.migration).toBeDefined();
+        expect(jsonOutput.migration.tasksJsonFound).toBe(true);
+        expect(jsonOutput.migration.taskCount).toBe(1);
+        expect(jsonOutput.migration.backupPath).toBeDefined();
     });
 });
 
 // Separate test suite for tasks approval with auto-generation of tasks.json and prompts
-describe("Tasks Approval with Auto-Generation", () => {
+describe("Tasks Approval Compatibility", () => {
     let workspace: TestWorkspace;
     let TASKS_APPROVAL_REPO_ROOT: string;
 
@@ -368,169 +375,66 @@ describe("Tasks Approval with Auto-Generation", () => {
         delete process.env.WORKSTREAM_ROLE;
     });
 
-    test("should serialize TASKS.md to tasks.json directly", () => {
-        // Create valid TASKS.md 
-        const tasksMdContent = `# Tasks: Tasks Test Stream
-
-## Stage 01: Implementation
-
-### Batch 01: Core Features
-
-#### Thread 01: Feature A @agent:coder
-
-- [ ] Task 01.01.01.01: Implement feature A
-`;
-        const tasksMdPath = join(TASKS_APPROVAL_REPO_ROOT, "work/stream-tasks/TASKS.md");
-        writeFileSync(tasksMdPath, tasksMdContent);
-
-        // Directly test the parsing and addTasks functionality
-        const { parseTasksMd } = require("../src/lib/tasks-md.ts");
-        const { addTasks, readTasksFile } = require("../src/lib/tasks.ts");
-
-        const content = readFileSync(tasksMdPath, "utf-8");
-        const { tasks, errors } = parseTasksMd(content, "stream-tasks");
-
-        expect(errors.length).toBe(0);
-        expect(tasks.length).toBe(1);
-        expect(tasks[0].id).toBe("01.01.01.01");
-
-        // Write tasks to tasks.json
-        addTasks(TASKS_APPROVAL_REPO_ROOT, "stream-tasks", tasks);
-
-        // Verify tasks.json was created
+    test("work approve tasks migrates legacy tasks.json and returns deprecation JSON", async () => {
         const tasksJsonPath = join(TASKS_APPROVAL_REPO_ROOT, "work/stream-tasks/tasks.json");
-        expect(existsSync(tasksJsonPath)).toBe(true);
+        writeFileSync(tasksJsonPath, JSON.stringify({
+            version: "1.0.0",
+            stream_id: "stream-tasks",
+            last_updated: new Date().toISOString(),
+            tasks: [
+                {
+                    id: "01.01.01.01",
+                    name: "Legacy Task",
+                    thread_name: "Feature A",
+                    batch_name: "Core Features",
+                    stage_name: "Implementation",
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                    status: "pending"
+                }
+            ]
+        }, null, 2));
 
-        // Verify tasks.json content
-        const tasksFile = readTasksFile(TASKS_APPROVAL_REPO_ROOT, "stream-tasks");
-        expect(tasksFile?.tasks.length).toBe(1);
-        expect(tasksFile?.tasks[0].id).toBe("01.01.01.01");
-    });
-
-    test("should generate tasks.json and prompts when approving tasks via CLI", async () => {
-        // Create TASKS.md with valid tasks
-        const tasksMdContent = `# Tasks: Tasks Test Stream
-
-## Stage 01: Implementation
-
-### Batch 01: Core Features
-
-#### Thread 01: Feature A @agent:coder
-
-- [ ] Task 01.01.01.01: Implement feature A base
-- [ ] Task 01.01.01.02: Add feature A tests
-
-#### Thread 02: Feature B @agent:coder
-
-- [ ] Task 01.01.02.01: Implement feature B base
-`;
-        const tasksMdPath = join(TASKS_APPROVAL_REPO_ROOT, "work/stream-tasks/TASKS.md");
-        writeFileSync(tasksMdPath, tasksMdContent);
-
-        // Verify tasks.json doesn't exist yet
-        const tasksJsonPath = join(TASKS_APPROVAL_REPO_ROOT, "work/stream-tasks/tasks.json");
-        if (existsSync(tasksJsonPath)) rmSync(tasksJsonPath);
-        expect(existsSync(tasksJsonPath)).toBe(false);
-
-        // Run the CLI approve command for tasks
         const { main } = await import("../src/cli/approve/index.ts");
-
-        // Capture console output
-        const { stdout } = await captureCliOutput(async () => {
-            await main(["node", "approve", "tasks", "--stream", "stream-tasks", "--repo-root", TASKS_APPROVAL_REPO_ROOT]);
-        });
-
-        // Verify tasks.json was created
-        expect(existsSync(tasksJsonPath)).toBe(true);
-
-        // Verify tasks.json content
-        const tasksJson = JSON.parse(readFileSync(tasksJsonPath, "utf-8"));
-        expect(tasksJson.tasks.length).toBe(3);
-        expect(tasksJson.tasks[0].id).toBe("01.01.01.01");
-        expect(tasksJson.tasks[0].name).toBe("Implement feature A base");
-
-        // Verify TASKS.md was deleted
-        expect(existsSync(tasksMdPath)).toBe(false);
-
-        // Verify prompts directory exists and has prompt files
-        const promptsDir = join(TASKS_APPROVAL_REPO_ROOT, "work/stream-tasks/prompts");
-        expect(existsSync(promptsDir)).toBe(true);
-
-        // Verify output message
-        const outputJoined = stdout.join("\n");
-        expect(outputJoined).toContain("Tasks approved");
-        expect(outputJoined).toContain("tasks.json");
-        expect(outputJoined).toContain("TASKS.md deleted");
-    });
-
-    test("should approve even when prompt generation partially fails via CLI", async () => {
-        // Create valid TASKS.md
-        const tasksMdContent = `# Tasks: Tasks Test Stream
-
-## Stage 01: Implementation
-
-### Batch 01: Core Features
-
-#### Thread 01: Feature A @agent:coder
-
-- [ ] Task 01.01.01.01: Implement feature A
-`;
-        writeFileSync(join(TASKS_APPROVAL_REPO_ROOT, "work/stream-tasks/TASKS.md"), tasksMdContent);
-
-        // Run the CLI approve command
-        const { main } = await import("../src/cli/approve/index.ts");
-
-        const { stdout } = await captureCliOutput(async () => {
-            await main(["node", "approve", "tasks", "--stream", "stream-tasks", "--repo-root", TASKS_APPROVAL_REPO_ROOT]);
-        });
-
-        // Verify tasks were approved (even if prompts had issues)
-        const index = loadIndex(TASKS_APPROVAL_REPO_ROOT);
-        const stream = index.streams[0];
-        expect(stream?.approval?.tasks?.status).toBe("approved");
-
-        // Verify tasks.json was created
-        const tasksJsonPath = join(TASKS_APPROVAL_REPO_ROOT, "work/stream-tasks/tasks.json");
-        expect(existsSync(tasksJsonPath)).toBe(true);
-
-        // Verify output includes approval message
-        const outputJoined = stdout.join("\n");
-        expect(outputJoined).toContain("Tasks approved");
-    });
-
-    test("should include artifacts info in JSON output", async () => {
-        // Create valid TASKS.md
-        const tasksMdContent = `# Tasks: Tasks Test Stream
-
-## Stage 01: Implementation
-
-### Batch 01: Core Features
-
-#### Thread 01: Feature A @agent:coder
-
-- [ ] Task 01.01.01.01: Implement feature A
-- [ ] Task 01.01.01.02: Test feature A
-`;
-        const tasksMdPath = join(TASKS_APPROVAL_REPO_ROOT, "work/stream-tasks/TASKS.md");
-        writeFileSync(tasksMdPath, tasksMdContent);
-
-        // Verify file was written
-        expect(existsSync(tasksMdPath)).toBe(true);
-
-        // Run the CLI approve command with JSON output
-        const { main } = await import("../src/cli/approve/index.ts");
-
         const { stdout } = await captureCliOutput(async () => {
             await main(["node", "approve", "tasks", "--stream", "stream-tasks", "--repo-root", TASKS_APPROVAL_REPO_ROOT, "--json"]);
         });
 
-        // Parse JSON output
         const jsonOutput = JSON.parse(stdout.join(""));
-        expect(jsonOutput.action).toBe("approved");
+        expect(jsonOutput.action).toBe("deprecated");
         expect(jsonOutput.target).toBe("tasks");
-        expect(jsonOutput.artifacts).toBeDefined();
-        expect(jsonOutput.artifacts.tasksJson.generated).toBe(true);
-        expect(jsonOutput.artifacts.tasksJson.taskCount).toBe(2);
-        expect(jsonOutput.artifacts.tasksMdDeleted).toBe(true);
+        expect(jsonOutput.migration.tasksJsonFound).toBe(true);
+        expect(existsSync(join(TASKS_APPROVAL_REPO_ROOT, "work/stream-tasks/threads.json"))).toBe(true);
+    });
+
+    test("work approve tasks --revoke is rejected with deprecation guidance", async () => {
+        const { main } = await import("../src/cli/approve/index.ts");
+
+        const originalExit = process.exit;
+        let exitCode: number | undefined;
+        // @ts-ignore
+        process.exit = (code?: number) => {
+            exitCode = code ?? 0;
+            throw new Error(`Process exited with code ${code}`);
+        };
+
+        let stderr: string[] = [];
+        try {
+            const captured = await captureCliOutput(async () => {
+                try {
+                    await main(["node", "approve", "tasks", "--revoke", "--stream", "stream-tasks", "--repo-root", TASKS_APPROVAL_REPO_ROOT]);
+                } catch {
+                    // expected due to mocked process.exit
+                }
+            });
+            stderr = captured.stderr;
+        } finally {
+            process.exit = originalExit;
+        }
+
+        expect(exitCode).toBe(1);
+        const output = stderr.join("\n");
+        expect(output).toContain("no longer supported");
+        expect(output).toContain("deprecated");
     });
 });

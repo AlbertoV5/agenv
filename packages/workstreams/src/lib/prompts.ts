@@ -2,15 +2,20 @@
  * Prompt generation for workstream threads
  *
  * Generates execution prompts for agents with full thread context,
- * including tasks, stage definition, parallel threads, and test requirements.
+ * including thread definition, stage context, and execution contracts.
  */
 
 import { existsSync, readFileSync, mkdirSync, writeFileSync } from "fs"
 import { join, dirname } from "path"
 import { getWorkDir } from "./repo.ts"
 import { parseStreamDocument } from "./stream-parser.ts"
-import { getTasks, parseTaskId } from "./tasks.ts"
+import { getTasks } from "./tasks.ts"
 import { updateThreadMetadata } from "./threads.ts"
+import {
+  getPlannerOutcomeTemplate,
+  PLANNER_OUTCOME_REQUIRED_FIELDS,
+  PLANNER_OUTCOME_STATUS_VALUES,
+} from "./planner-outcome.ts"
 import type {
   Task,
   StageDefinition,
@@ -44,7 +49,7 @@ export interface PromptContext {
   thread: ThreadDefinition
   stage: StageDefinition
   batch: BatchDefinition
-  tasks: Task[]
+  tasks: Task[] // Legacy checklist compatibility from tasks.json
   parallelThreads: ThreadDefinition[]
   agentName?: string
 }
@@ -119,7 +124,7 @@ export function formatThreadId(
  * Gathers:
  * - Thread definition from PLAN.md
  * - Stage and batch context
- * - Tasks from tasks.json filtered to this thread
+ * - Legacy task checklist from tasks.json filtered to this thread
  * - Parallel threads in the same batch
  * - Agent assignment (if any)
  *
@@ -259,14 +264,15 @@ export function generateThreadPrompt(
   lines.push(context.thread.details || "(No details provided)")
   lines.push("")
 
-  // Tasks section
-  lines.push("Your tasks are:")
+  // Legacy compatibility section
+  lines.push("## Legacy Task Checklist (Compatibility)")
+  lines.push("These entries come from legacy tasks.json and are advisory only.")
   if (context.tasks.length > 0) {
     for (const task of context.tasks) {
       lines.push(`- [ ] ${task.id} ${task.name}`)
     }
   } else {
-    lines.push("(No tasks found for this thread)")
+    lines.push("(No legacy checklist entries found)")
   }
   lines.push("")
 
@@ -274,11 +280,38 @@ export function generateThreadPrompt(
   const batchId = `${context.stage.id.toString().padStart(2, "0")}.${context.batch.id.toString().padStart(2, "0")}`
 
   // Skill instruction
+  lines.push("## Worker Contract")
+  lines.push(`- Work only on thread ${context.threadIdString}.`)
   lines.push(
-    `When listing tasks, use \`work list --tasks --batch "${batchId}"\` to see tasks for this batch only.`,
+    `- Start with: \`work update --thread "${context.threadIdString}" --status in_progress\``,
+  )
+  lines.push(
+    `- Finish with: \`work update --thread "${context.threadIdString}" --status completed --report "1-2 sentence summary"\``,
+  )
+  lines.push(
+    `- If blocked: \`work update --thread "${context.threadIdString}" --status blocked --report "reason and dependency"\``,
+  )
+  lines.push("")
+
+  lines.push(
+    `When listing threads, use \`work list --threads --batch "${batchId}"\` to see threads for this batch only.`,
   )
   lines.push("")
   lines.push("Use the `implementing-workstreams` skill.")
+  lines.push("")
+
+  lines.push("## Planner Outcome Contract")
+  lines.push(
+    "Return the following JSON shape in your final response for deterministic planner aggregation:",
+  )
+  lines.push("")
+  lines.push("```json")
+  lines.push(JSON.stringify(getPlannerOutcomeTemplate(context.threadIdString), null, 2))
+  lines.push("```")
+  lines.push("")
+  lines.push(
+    "If blocked, set `status` to `blocked` and include dependency details in `report`.",
+  )
   lines.push("")
 
   return lines.join("\n")
@@ -329,6 +362,11 @@ export function generateThreadPromptJson(context: PromptContext): object {
       name: t.name,
       summary: t.summary,
     })),
+    plannerOutcomeContract: {
+      required: [...PLANNER_OUTCOME_REQUIRED_FIELDS],
+      statusEnum: [...PLANNER_OUTCOME_STATUS_VALUES],
+      template: getPlannerOutcomeTemplate(context.threadIdString),
+    },
   }
 }
 

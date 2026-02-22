@@ -1,5 +1,5 @@
 
-import { describe, test, expect, beforeEach, afterEach, jest, mock } from "bun:test";
+import { describe, test, expect, beforeEach, afterEach } from "bun:test";
 import { join } from "path";
 import { existsSync, writeFileSync, mkdirSync, rmSync } from "fs";
 import { saveIndex, loadIndex } from "../src/lib/index.ts";
@@ -41,32 +41,28 @@ describe("Stage Approval Validation", () => {
         };
         saveIndex(REPO_ROOT, index);
 
-        // Create tasks.json
-        const tasksJsonPath = join(REPO_ROOT, "work/stream-001/tasks.json");
-        writeFileSync(tasksJsonPath, JSON.stringify({
+        // Create threads.json
+        const threadsJsonPath = join(REPO_ROOT, "work/stream-001/threads.json");
+        writeFileSync(threadsJsonPath, JSON.stringify({
             version: "1.0.0",
             stream_id: "stream-001",
             last_updated: new Date().toISOString(),
-            tasks: [
+            threads: [
                 {
-                    id: "01.01.01.01",
-                    name: "Task 1",
-                    thread_name: "Thread 1",
-                    batch_name: "Batch 1",
-                    stage_name: "Stage 1",
+                    threadId: "01.01.01",
+                    threadName: "Thread 1",
+                    batchName: "Batch 1",
+                    stageName: "Stage 1",
                     status: "pending",
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString()
+                    sessions: []
                 },
                 {
-                    id: "02.01.01.01",
-                    name: "Task 2 (Stage 2)",
-                    thread_name: "Thread 1",
-                    batch_name: "Batch 1",
-                    stage_name: "Stage 2",
+                    threadId: "02.01.01",
+                    threadName: "Thread 1",
+                    batchName: "Batch 1",
+                    stageName: "Stage 2",
                     status: "pending",
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString()
+                    sessions: []
                 }
             ]
         }, null, 2));
@@ -80,7 +76,7 @@ describe("Stage Approval Validation", () => {
         delete process.env.WORKSTREAM_ROLE;
     });
 
-    test("should block stage approval if tasks are pending", async () => {
+    test("should block stage approval if threads are pending", async () => {
         const { main } = await import("../src/cli/approve/index.ts");
 
         // Mock process.exit
@@ -111,37 +107,33 @@ describe("Stage Approval Validation", () => {
 
         expect(exitCode).toBe(1);
         const output = logs.join("\n");
-        expect(output).toContain("Cannot approve Stage 1 because 1 thread(s) are not approved");
-        expect(output).toContain("01.01.01 (Thread 1): 1 task(s) remaining");
+        expect(output).toContain("Cannot approve Stage 1 because 1 thread(s) are not complete");
+        expect(output).toContain("01.01.01 (Thread 1): pending");
     });
 
-    test("should allow stage approval if tasks are completed", async () => {
-        // Update tasks.json to completed
-        const tasksJsonPath = join(REPO_ROOT, "work/stream-001/tasks.json");
-        writeFileSync(tasksJsonPath, JSON.stringify({
+    test("should allow stage approval if threads are completed", async () => {
+        // Update threads.json to completed
+        const threadsJsonPath = join(REPO_ROOT, "work/stream-001/threads.json");
+        writeFileSync(threadsJsonPath, JSON.stringify({
             version: "1.0.0",
             stream_id: "stream-001",
             last_updated: new Date().toISOString(),
-            tasks: [
+            threads: [
                 {
-                    id: "01.01.01.01",
-                    name: "Task 1",
-                    thread_name: "Thread 1",
-                    batch_name: "Batch 1",
-                    stage_name: "Stage 1",
+                    threadId: "01.01.01",
+                    threadName: "Thread 1",
+                    batchName: "Batch 1",
+                    stageName: "Stage 1",
                     status: "completed",
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString()
+                    sessions: []
                 },
                 {
-                    id: "02.01.01.01",
-                    name: "Task 2 (Stage 2)",
-                    thread_name: "Thread 1",
-                    batch_name: "Batch 1",
-                    stage_name: "Stage 2",
-                    status: "pending", // Stage 2 still pending, shouldn't affect Stage 1
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString()
+                    threadId: "02.01.01",
+                    threadName: "Thread 1",
+                    batchName: "Batch 1",
+                    stageName: "Stage 2",
+                    status: "pending",
+                    sessions: []
                 }
             ]
         }, null, 2));
@@ -170,7 +162,7 @@ describe("Stage Approval Validation", () => {
         expect(stream.approval?.stages?.[1]?.status).toBe("approved");
     });
 
-    test("should allow stage approval with --force even if tasks pending", async () => {
+    test("should allow stage approval with --force even if threads are pending", async () => {
         const { main } = await import("../src/cli/approve/index.ts");
 
         const logs: string[] = [];

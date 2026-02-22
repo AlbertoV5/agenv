@@ -1,18 +1,13 @@
 /**
  * CLI: Start Workstream
  *
- * Start a workstream after all approvals are complete.
+ * Start a workstream after required approvals are complete.
  * Creates the GitHub branch and issues for all stages.
  */
 
 import { getRepoRoot } from "../lib/repo.ts"
-import { loadIndex, getResolvedStream, saveIndex } from "../lib/index.ts"
-import {
-    isFullyApproved,
-    getFullApprovalStatus,
-    getApprovalStatus,
-    getTasksApprovalStatus,
-} from "../lib/approval.ts"
+import { loadIndex, getResolvedStream } from "../lib/index.ts"
+import { getFullApprovalStatus } from "../lib/approval.ts"
 import { isGitHubEnabled, loadGitHubConfig } from "../lib/github/config.ts"
 import { createWorkstreamBranch } from "../lib/github/branches.ts"
 import { createStageIssuesForWorkstream } from "./github.ts"
@@ -27,7 +22,7 @@ interface StartCliArgs {
 
 function printHelp(): void {
     console.log(`
-work start - Start a workstream after approvals are complete
+work start - Start a workstream after plan approval is complete
 
 Requires: USER role
 
@@ -41,7 +36,7 @@ Options:
   --help, -h       Show this help message
 
 Description:
-  Start a workstream after plan and tasks approvals are complete.
+  Start a workstream after plan approval is complete.
   
    This command:
    1. Creates the workstream branch on GitHub (workstream/{streamId})
@@ -50,7 +45,7 @@ Description:
 
 Prerequisites:
   - Run 'work approve plan' to approve the PLAN.md
-  - Run 'work approve tasks' to approve tasks.json
+  - Ensure thread metadata is synced in threads.json
   - Run 'work approve' to check approval status
 
 Examples:
@@ -154,7 +149,6 @@ export async function main(argv: string[] = process.argv): Promise<void> {
     if (!fullStatus.fullyApproved) {
         const missing: string[] = []
         if (fullStatus.plan !== "approved") missing.push("plan")
-        if (fullStatus.tasks !== "approved") missing.push("tasks")
 
         if (cliArgs.json) {
             console.log(JSON.stringify({
@@ -169,7 +163,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
             console.error("Error: Cannot start workstream - missing approvals")
             console.error("")
             console.error(`  Plan:    ${fullStatus.plan}`)
-            console.error(`  Tasks:   ${fullStatus.tasks}`)
+            console.error(`  Tasks:   ${fullStatus.tasks} (deprecated gate)`)
             console.error("")
             console.error("Run 'work approve <target>' to approve missing items:")
             for (const item of missing) {

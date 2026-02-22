@@ -33,7 +33,7 @@ Options:
   --help, -h         Show this help message
 
 Description:
-  Agents are defined in work/agents.yaml and can be assigned to tasks
+  Agents are defined in work/agents.yaml and can be assigned to threads
   for workstream execution. Each agent has a name, description of its
   specialization, use cases it's best for, and a list of models to use.
 

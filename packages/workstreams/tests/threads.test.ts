@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach } from "bun:test"
-import { mkdtempSync, rmSync, mkdirSync, existsSync, readFileSync } from "fs"
+import { mkdtempSync, rmSync, mkdirSync, existsSync, readFileSync, writeFileSync } from "fs"
 import { tmpdir } from "os"
 import { join } from "path"
 import {
@@ -25,6 +25,8 @@ import {
   modifyThreads,
   setSynthesisOutput,
   getSynthesisOutput,
+  discoverThreadsInBatch,
+  migrateTasksToThreads,
 } from "../src/lib/threads"
 import type { ThreadSynthesis } from "../src/lib/synthesis/types"
 import type { ThreadsJson, ThreadMetadata, TasksFile, SessionRecord } from "../src/lib/types"
@@ -195,6 +197,28 @@ describe("threads", () => {
       // Both fields should be stored independently
       expect(thread.currentSessionId).toBe("internal-session-id")
       expect(thread.opencodeSessionId).toBe("ses_externalOpencodeSessionId")
+    })
+  })
+
+  describe("thread discovery", () => {
+    test("discoverThreadsInBatch reads from PLAN.md and seeds threads.json", () => {
+      const planPath = join(repoRoot, "work", streamId, "PLAN.md")
+      writeFileSync(
+        planPath,
+        `# Plan: Test\n\n## Summary\nA\n\n## References\n\n## Stages\n\n### Stage 1: Build\n\n#### Definition\nDo work\n\n#### Constitution\n- follow rules\n\n#### Questions\n- [ ] none\n\n#### Batches\n\n##### Batch 1: Core\n\n###### Thread 1: Parser\n\n**Summary:** Parse data\n\n**Details:** add parser\n\n###### Thread 2: Writer\n\n**Summary:** Write data\n\n**Details:** add writer\n`,
+      )
+
+      const discovered = discoverThreadsInBatch(repoRoot, streamId, 1, 1)
+      expect(discovered).not.toBeNull()
+      expect(discovered).toHaveLength(2)
+      expect(discovered?.[0]?.threadId).toBe("01.01.01")
+      expect(discovered?.[1]?.threadId).toBe("01.01.02")
+
+      const metadata = getThreadMetadata(repoRoot, streamId, "01.01.01")
+      expect(metadata?.threadName).toBe("Parser")
+      expect(metadata?.stageName).toBe("Build")
+      expect(metadata?.batchName).toBe("Core")
+      expect(metadata?.status).toBe("pending")
     })
   })
 
@@ -633,6 +657,179 @@ describe("threads", () => {
 
       expect(issues.length).toBeGreaterThan(0)
       expect(issues.some((i) => i.includes("Thread 01.01.02 not found"))).toBe(true)
+    })
+
+    test("migrateTasksToThreads marks thread completed when all tasks are completed", () => {
+      const tasksPath = join(repoRoot, "work", streamId, "tasks.json")
+      const tasksFile: TasksFile = {
+        version: "1.0.0",
+        stream_id: streamId,
+        last_updated: new Date().toISOString(),
+        tasks: [
+          {
+            id: "01.01.01.01",
+            name: "Task A",
+            thread_name: "Thread A",
+            batch_name: "Batch A",
+            stage_name: "Stage A",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            status: "completed",
+          },
+          {
+            id: "01.01.01.02",
+            name: "Task B",
+            thread_name: "Thread A",
+            batch_name: "Batch A",
+            stage_name: "Stage A",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            status: "completed",
+          },
+        ],
+      }
+      writeFileSync(tasksPath, JSON.stringify(tasksFile, null, 2))
+
+      const result = migrateTasksToThreads(repoRoot, streamId)
+      const thread = getThreadMetadata(repoRoot, streamId, "01.01.01")
+
+      expect(result.tasksJsonFound).toBe(true)
+      expect(thread?.status).toBe("completed")
+      expect(existsSync(tasksPath)).toBe(true)
+      expect(result.backupPath).toBeDefined()
+      expect(result.backupPath ? existsSync(result.backupPath) : false).toBe(true)
+    })
+
+    test("migrateTasksToThreads merges reports and carries assigned agent", () => {
+      const tasksPath = join(repoRoot, "work", streamId, "tasks.json")
+      const tasksFile: TasksFile = {
+        version: "1.0.0",
+        stream_id: streamId,
+        last_updated: new Date().toISOString(),
+        tasks: [
+          {
+            id: "01.01.01.01",
+            name: "Task A",
+            thread_name: "Thread A",
+            batch_name: "Batch A",
+            stage_name: "Stage A",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            status: "in_progress",
+            report: "Implemented API",
+            assigned_agent: "backend-agent",
+          },
+          {
+            id: "01.01.01.02",
+            name: "Task B",
+            thread_name: "Thread A",
+            batch_name: "Batch A",
+            stage_name: "Stage A",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            status: "pending",
+            report: "Added tests",
+          },
+        ],
+      }
+      writeFileSync(tasksPath, JSON.stringify(tasksFile, null, 2))
+
+      migrateTasksToThreads(repoRoot, streamId)
+      const thread = getThreadMetadata(repoRoot, streamId, "01.01.01")
+
+      expect(thread?.assignedAgent).toBe("backend-agent")
+      expect(thread?.report).toContain("Implemented API")
+      expect(thread?.report).toContain("Added tests")
+      expect(thread?.status).toBe("in_progress")
+    })
+
+    test("migrateTasksToThreads uses blocked as worst-state", () => {
+      const tasksPath = join(repoRoot, "work", streamId, "tasks.json")
+      const tasksFile: TasksFile = {
+        version: "1.0.0",
+        stream_id: streamId,
+        last_updated: new Date().toISOString(),
+        tasks: [
+          {
+            id: "01.01.01.01",
+            name: "Task A",
+            thread_name: "Thread A",
+            batch_name: "Batch A",
+            stage_name: "Stage A",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            status: "blocked",
+          },
+          {
+            id: "01.01.01.02",
+            name: "Task B",
+            thread_name: "Thread A",
+            batch_name: "Batch A",
+            stage_name: "Stage A",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            status: "completed",
+          },
+        ],
+      }
+
+      writeFileSync(tasksPath, JSON.stringify(tasksFile, null, 2))
+
+      migrateTasksToThreads(repoRoot, streamId)
+      const thread = getThreadMetadata(repoRoot, streamId, "01.01.01")
+      expect(thread?.status).toBe("blocked")
+    })
+
+    test("migrateTasksToThreads maps completed+cancelled to cancelled", () => {
+      const tasksPath = join(repoRoot, "work", streamId, "tasks.json")
+      const tasksFile: TasksFile = {
+        version: "1.0.0",
+        stream_id: streamId,
+        last_updated: new Date().toISOString(),
+        tasks: [
+          {
+            id: "01.01.01.01",
+            name: "Task A",
+            thread_name: "Thread A",
+            batch_name: "Batch A",
+            stage_name: "Stage A",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            status: "completed",
+          },
+          {
+            id: "01.01.01.02",
+            name: "Task B",
+            thread_name: "Thread A",
+            batch_name: "Batch A",
+            stage_name: "Stage A",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            status: "cancelled",
+          },
+        ],
+      }
+
+      writeFileSync(tasksPath, JSON.stringify(tasksFile, null, 2))
+
+      migrateTasksToThreads(repoRoot, streamId)
+      const thread = getThreadMetadata(repoRoot, streamId, "01.01.01")
+      expect(thread?.status).toBe("cancelled")
+    })
+
+    test("migrateTasksToThreads archives tasks.json when requested", () => {
+      const tasksPath = join(repoRoot, "work", streamId, "tasks.json")
+      const tasksFile = createTasksFile()
+      writeFileSync(tasksPath, JSON.stringify(tasksFile, null, 2))
+
+      const result = migrateTasksToThreads(repoRoot, streamId, {
+        archiveTasksJson: true,
+      })
+
+      expect(result.archivePath).toBeDefined()
+      expect(result.archivePath ? existsSync(result.archivePath) : false).toBe(true)
+      expect(existsSync(tasksPath)).toBe(false)
+      expect(result.removedTasksJson).toBe(true)
     })
   })
 

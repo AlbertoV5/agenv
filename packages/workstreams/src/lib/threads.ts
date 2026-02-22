@@ -6,15 +6,55 @@
  * This data is separated from tasks.json to keep task definitions clean.
  */
 
-import { existsSync, readFileSync } from "fs"
+import { copyFileSync, existsSync, readFileSync, renameSync, unlinkSync } from "fs"
 import { join } from "path"
 import * as lockfile from "proper-lockfile"
-import type { ThreadMetadata, ThreadsJson, SessionRecord, TasksFile } from "./types.ts"
+import type {
+  ThreadMetadata,
+  ThreadsJson,
+  SessionRecord,
+  TasksFile,
+  DiscoveredThread,
+  ThreadStatus,
+} from "./types.ts"
 import type { ThreadSynthesis } from "./synthesis/types.ts"
 import { atomicWriteFile } from "./index.ts"
 import { getWorkDir } from "./repo.ts"
+import { parseStreamDocument } from "./stream-parser.ts"
 
 const THREADS_FILE_VERSION = "1.0.0"
+
+type ThreadMetadataPatch = Partial<Omit<ThreadMetadata, "threadId">>
+
+function parseThreadId(threadId: string): { stage: number; batch: number; thread: number } | null {
+  const parts = threadId.split(".")
+  if (parts.length !== 3) return null
+  const parsed = parts.map((part) => Number.parseInt(part, 10))
+  const stage = parsed[0]
+  const batch = parsed[1]
+  const thread = parsed[2]
+  if (stage === undefined || batch === undefined || thread === undefined) return null
+  if ([stage, batch, thread].some((n) => Number.isNaN(n))) return null
+  return { stage, batch, thread }
+}
+
+function createDefaultThreadMetadata(
+  threadId: string,
+  data: ThreadMetadataPatch = {},
+): ThreadMetadata {
+  const now = new Date().toISOString()
+  return {
+    threadId,
+    threadName: data.threadName || threadId,
+    stageName: data.stageName || "",
+    batchName: data.batchName || "",
+    status: data.status || "pending",
+    sessions: data.sessions || [],
+    ...data,
+    createdAt: data.createdAt || now,
+    updatedAt: now,
+  }
+}
 
 /**
  * Get the path to threads.json for a workstream
@@ -99,7 +139,7 @@ export function updateThreadMetadata(
   repoRoot: string,
   streamId: string,
   threadId: string,
-  data: Partial<Omit<ThreadMetadata, "threadId">>,
+  data: ThreadMetadataPatch,
 ): ThreadMetadata {
   let threadsFile = loadThreads(repoRoot, streamId)
 
@@ -110,14 +150,7 @@ export function updateThreadMetadata(
   const threadIndex = threadsFile.threads.findIndex((t) => t.threadId === threadId)
 
   if (threadIndex === -1) {
-    // Create new thread metadata
-    const newThread: ThreadMetadata = {
-      threadId,
-      sessions: data.sessions || [],
-      ...(data.promptPath && { promptPath: data.promptPath }),
-      ...(data.currentSessionId && { currentSessionId: data.currentSessionId }),
-      ...(data.opencodeSessionId && { opencodeSessionId: data.opencodeSessionId }),
-    }
+    const newThread: ThreadMetadata = createDefaultThreadMetadata(threadId, data)
     threadsFile.threads.push(newThread)
     saveThreads(repoRoot, streamId, threadsFile)
     return newThread
@@ -125,10 +158,16 @@ export function updateThreadMetadata(
 
   // Update existing thread
   const thread = threadsFile.threads[threadIndex]!
-  if (data.promptPath !== undefined) thread.promptPath = data.promptPath
-  if (data.sessions !== undefined) thread.sessions = data.sessions
-  if (data.currentSessionId !== undefined) thread.currentSessionId = data.currentSessionId
-  if (data.opencodeSessionId !== undefined) thread.opencodeSessionId = data.opencodeSessionId
+  Object.assign(thread, data)
+  thread.updatedAt = new Date().toISOString()
+  if (!thread.createdAt) {
+    thread.createdAt = thread.updatedAt
+  }
+  if (!thread.status) thread.status = "pending"
+  if (!thread.threadName) thread.threadName = thread.threadId
+  if (!thread.stageName) thread.stageName = ""
+  if (!thread.batchName) thread.batchName = ""
+  if (!thread.sessions) thread.sessions = []
 
   saveThreads(repoRoot, streamId, threadsFile)
   return thread
@@ -166,6 +205,267 @@ export function getAllThreadMetadata(
   return threadsFile.threads
 }
 
+export interface ThreadUpdateOptions {
+  status?: ThreadStatus
+  breadcrumb?: string
+  report?: string
+  assignedAgent?: string
+}
+
+export function getThreads(
+  repoRoot: string,
+  streamId: string,
+  status?: ThreadStatus,
+): ThreadMetadata[] {
+  const all = getAllThreadMetadata(repoRoot, streamId)
+  if (!status) return all
+  return all.filter((thread) => thread.status === status)
+}
+
+export function updateThreadStatus(
+  repoRoot: string,
+  streamId: string,
+  threadId: string,
+  optionsOrStatus: ThreadUpdateOptions | ThreadStatus,
+  legacyBreadcrumb?: string,
+): ThreadMetadata | null {
+  const existing = getThreadMetadata(repoRoot, streamId, threadId)
+  if (!existing) return null
+
+  const options =
+    typeof optionsOrStatus === "string"
+      ? { status: optionsOrStatus, breadcrumb: legacyBreadcrumb }
+      : optionsOrStatus
+
+  return updateThreadMetadata(repoRoot, streamId, threadId, {
+    ...(options.status ? { status: options.status } : {}),
+    ...(options.breadcrumb ? { breadcrumb: options.breadcrumb } : {}),
+    ...(options.report ? { report: options.report } : {}),
+    ...(options.assignedAgent ? { assignedAgent: options.assignedAgent } : {}),
+  })
+}
+
+export async function updateThreadStatusLocked(
+  repoRoot: string,
+  streamId: string,
+  threadId: string,
+  options: ThreadUpdateOptions,
+): Promise<ThreadMetadata | null> {
+  const filePath = getThreadsFilePath(repoRoot, streamId)
+  return withThreadsLock(filePath, () => updateThreadStatus(repoRoot, streamId, threadId, options))
+}
+
+export function getThreadCounts(
+  repoRoot: string,
+  streamId: string,
+): {
+  total: number
+  pending: number
+  in_progress: number
+  completed: number
+  blocked: number
+  cancelled: number
+} {
+  const threads = getThreads(repoRoot, streamId)
+  return {
+    total: threads.length,
+    pending: threads.filter((t) => t.status === "pending").length,
+    in_progress: threads.filter((t) => t.status === "in_progress").length,
+    completed: threads.filter((t) => t.status === "completed").length,
+    blocked: threads.filter((t) => t.status === "blocked").length,
+    cancelled: threads.filter((t) => t.status === "cancelled").length,
+  }
+}
+
+export type GroupedThreadsByStage = Map<string, Map<string, ThreadMetadata[]>>
+
+export function groupThreads(threads: ThreadMetadata[]): GroupedThreadsByStage {
+  const grouped = new Map<string, Map<string, ThreadMetadata[]>>()
+  for (const thread of threads) {
+    const stageName = thread.stageName || "Stage 01"
+    const batchName = thread.batchName || "Batch 01"
+    if (!grouped.has(stageName)) grouped.set(stageName, new Map())
+    const stageMap = grouped.get(stageName)!
+    if (!stageMap.has(batchName)) stageMap.set(batchName, [])
+    stageMap.get(batchName)!.push(thread)
+  }
+  return grouped
+}
+
+function getPromptRelativePathFromMetadata(
+  stageNum: number,
+  stageName: string,
+  batchNum: number,
+  batchName: string,
+  threadName: string,
+): string {
+  const safeStageName = stageName.replace(/[^a-zA-Z0-9_-]/g, "-").toLowerCase()
+  const safeBatchName = batchName.replace(/[^a-zA-Z0-9_-]/g, "-").toLowerCase()
+  const safeThreadName = threadName.replace(/[^a-zA-Z0-9_-]/g, "-").toLowerCase()
+  return join(
+    "prompts",
+    `${stageNum.toString().padStart(2, "0")}-${safeStageName}`,
+    `${batchNum.toString().padStart(2, "0")}-${safeBatchName}`,
+    `${safeThreadName}.md`,
+  )
+}
+
+function discoverThreadsFromPlan(
+  repoRoot: string,
+  streamId: string,
+  stageNum: number,
+  batchNum: number,
+): DiscoveredThread[] {
+  const workDir = getWorkDir(repoRoot)
+  const planPath = join(workDir, streamId, "PLAN.md")
+  if (!existsSync(planPath)) return []
+
+  const content = readFileSync(planPath, "utf-8")
+  const errors: Array<{ message: string }> = []
+  const doc = parseStreamDocument(content, errors)
+  if (!doc) return []
+
+  const stage = doc.stages.find((s) => s.id === stageNum)
+  if (!stage) return []
+  const batch = stage.batches.find((b) => b.id === batchNum)
+  if (!batch) return []
+
+  return batch.threads
+    .slice()
+    .sort((a, b) => a.id - b.id)
+    .map((thread) => ({
+      threadId: `${String(stageNum).padStart(2, "0")}.${String(batchNum).padStart(2, "0")}.${String(
+        thread.id,
+      ).padStart(2, "0")}`,
+      threadNum: thread.id,
+      threadName: thread.name,
+      stageName: stage.name,
+      batchName: batch.name,
+      stageNum,
+      batchNum,
+    }))
+}
+
+function discoverThreadsFromLegacyTasks(
+  tasksFile: TasksFile,
+  stageNum: number,
+  batchNum: number,
+): DiscoveredThread[] {
+  const prefix = `${String(stageNum).padStart(2, "0")}.${String(batchNum).padStart(2, "0")}.`
+  const byThread = new Map<string, typeof tasksFile.tasks>()
+  for (const task of tasksFile.tasks) {
+    if (!task.id.startsWith(prefix)) continue
+    const threadId = extractThreadIdFromTaskId(task.id)
+    if (!threadId) continue
+    if (!byThread.has(threadId)) byThread.set(threadId, [])
+    byThread.get(threadId)!.push(task)
+  }
+
+  const discovered: DiscoveredThread[] = []
+  for (const [threadId, tasks] of byThread) {
+    const first = tasks.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }))[0]
+    if (!first) continue
+    const parsed = parseThreadId(threadId)
+    if (!parsed) continue
+    discovered.push({
+      threadId,
+      threadNum: parsed.thread,
+      threadName: first.thread_name,
+      stageName: first.stage_name,
+      batchName: first.batch_name,
+      stageNum: parsed.stage,
+      batchNum: parsed.batch,
+      assignedAgent: first.assigned_agent,
+    })
+  }
+
+  return discovered.sort((a, b) => a.threadNum - b.threadNum)
+}
+
+export function discoverThreadsInBatch(
+  repoRoot: string,
+  streamId: string,
+  stageNum: number,
+  batchNum: number,
+): DiscoveredThread[] | null {
+  const stagePrefix = String(stageNum).padStart(2, "0")
+  const batchPrefix = String(batchNum).padStart(2, "0")
+
+  const planDiscovered = discoverThreadsFromPlan(repoRoot, streamId, stageNum, batchNum)
+  if (planDiscovered.length > 0) {
+    const existing = loadThreads(repoRoot, streamId) ?? createEmptyThreadsFile(streamId)
+    const existingById = new Map(existing.threads.map((t) => [t.threadId, t]))
+    let changed = false
+
+    for (const thread of planDiscovered) {
+      const current = existingById.get(thread.threadId)
+      const promptPath = getPromptRelativePathFromMetadata(
+        thread.stageNum,
+        thread.stageName,
+        thread.batchNum,
+        thread.batchName,
+        thread.threadName,
+      )
+
+      if (!current) {
+        existing.threads.push(
+          createDefaultThreadMetadata(thread.threadId, {
+            threadName: thread.threadName,
+            stageName: thread.stageName,
+            batchName: thread.batchName,
+            status: "pending",
+            promptPath,
+          }),
+        )
+        changed = true
+      } else if (!current.threadName || !current.stageName || !current.batchName || !current.promptPath) {
+        Object.assign(current, {
+          threadName: current.threadName || thread.threadName,
+          stageName: current.stageName || thread.stageName,
+          batchName: current.batchName || thread.batchName,
+          promptPath: current.promptPath || promptPath,
+        })
+        current.updatedAt = new Date().toISOString()
+        changed = true
+      }
+    }
+
+    if (changed) {
+      existing.threads.sort((a, b) => a.threadId.localeCompare(b.threadId, undefined, { numeric: true }))
+      saveThreads(repoRoot, streamId, existing)
+    }
+
+    return planDiscovered
+  }
+
+  const threadsFile = loadThreads(repoRoot, streamId)
+  if (threadsFile && threadsFile.threads.length > 0) {
+    const discovered: DiscoveredThread[] = []
+    for (const thread of threadsFile.threads) {
+      if (!thread.threadId.startsWith(`${stagePrefix}.${batchPrefix}.`)) continue
+      const parsed = parseThreadId(thread.threadId)
+      if (!parsed) continue
+      discovered.push({
+        threadId: thread.threadId,
+        threadNum: parsed.thread,
+        threadName: thread.threadName || thread.threadId,
+        stageName: thread.stageName || `Stage ${stagePrefix}`,
+        batchName: thread.batchName || `Batch ${batchPrefix}`,
+        stageNum: parsed.stage,
+        batchNum: parsed.batch,
+        assignedAgent: thread.assignedAgent,
+      })
+    }
+    discovered.sort((a, b) => a.threadNum - b.threadNum)
+    if (discovered.length > 0) return discovered
+  }
+
+  const tasksPath = join(getWorkDir(repoRoot), streamId, "tasks.json")
+  if (!existsSync(tasksPath)) return null
+  const tasksFile = JSON.parse(readFileSync(tasksPath, "utf-8")) as TasksFile
+  return discoverThreadsFromLegacyTasks(tasksFile, stageNum, batchNum)
+}
+
 // ============================================
 // FILE LOCKING FOR CONCURRENT ACCESS
 // ============================================
@@ -200,7 +500,7 @@ export async function updateThreadMetadataLocked(
   repoRoot: string,
   streamId: string,
   threadId: string,
-  data: Partial<Omit<ThreadMetadata, "threadId">>,
+  data: ThreadMetadataPatch,
 ): Promise<ThreadMetadata> {
   const filePath = getThreadsFilePath(repoRoot, streamId)
 
@@ -262,12 +562,18 @@ export function startThreadSession(
   const threadIndex = threadsFile.threads.findIndex((t) => t.threadId === threadId)
 
   if (threadIndex === -1) {
-    // Create new thread with session
-    threadsFile.threads.push({
-      threadId,
-      sessions: [session],
-      currentSessionId: sessionId,
-    })
+    const parsed = parseThreadId(threadId)
+    const stageNum = parsed?.stage ?? 0
+    const batchNum = parsed?.batch ?? 0
+    threadsFile.threads.push(
+      createDefaultThreadMetadata(threadId, {
+        threadName: `Thread ${String(parsed?.thread ?? 0).padStart(2, "0")}`,
+        stageName: `Stage ${String(stageNum).padStart(2, "0")}`,
+        batchName: `Batch ${String(batchNum).padStart(2, "0")}`,
+        sessions: [session],
+        currentSessionId: sessionId,
+      }),
+    )
   } else {
     // Add session to existing thread
     threadsFile.threads[threadIndex]!.sessions.push(session)
@@ -388,11 +694,18 @@ export async function startMultipleThreadSessionsLocked(
       )
 
       if (threadIndex === -1) {
-        threadsFile.threads.push({
-          threadId: sessionInfo.threadId,
-          sessions: [session],
-          currentSessionId: sessionInfo.sessionId,
-        })
+        const parsed = parseThreadId(sessionInfo.threadId)
+        const stageNum = parsed?.stage ?? 0
+        const batchNum = parsed?.batch ?? 0
+        threadsFile.threads.push(
+          createDefaultThreadMetadata(sessionInfo.threadId, {
+            threadName: `Thread ${String(parsed?.thread ?? 0).padStart(2, "0")}`,
+            stageName: `Stage ${String(stageNum).padStart(2, "0")}`,
+            batchName: `Batch ${String(batchNum).padStart(2, "0")}`,
+            sessions: [session],
+            currentSessionId: sessionInfo.sessionId,
+          }),
+        )
       } else {
         threadsFile.threads[threadIndex]!.sessions.push(session)
         threadsFile.threads[threadIndex]!.currentSessionId = sessionInfo.sessionId
@@ -685,6 +998,209 @@ export interface MigrationResult {
   errors: string[]
 }
 
+export interface MigrateTasksToThreadsOptions {
+  archiveTasksJson?: boolean
+  removeTasksJson?: boolean
+  backupTasksJson?: boolean
+}
+
+export interface MigrateTasksToThreadsResult extends MigrationResult {
+  migrated: boolean
+  tasksJsonFound: boolean
+  taskCount: number
+  threadsTouched: number
+  backupPath?: string
+  archivePath?: string
+  removedTasksJson: boolean
+}
+
+function deriveThreadStatus(taskStatuses: ThreadStatus[]): ThreadStatus {
+  if (taskStatuses.length === 0) return "pending"
+  if (taskStatuses.every((status) => status === "completed")) return "completed"
+  if (taskStatuses.every((status) => status === "cancelled")) return "cancelled"
+  if (taskStatuses.includes("blocked")) return "blocked"
+  if (taskStatuses.includes("in_progress")) return "in_progress"
+  if (taskStatuses.includes("pending")) return "pending"
+  if (taskStatuses.includes("cancelled")) return "cancelled"
+  return "pending"
+}
+
+function mergeReportParts(parts: string[]): string | undefined {
+  const unique = Array.from(
+    new Set(parts.map((part) => part.trim()).filter((part) => part.length > 0)),
+  )
+  if (unique.length === 0) return undefined
+  return unique.join("\n\n")
+}
+
+function migrateTasksDataToThreads(
+  repoRoot: string,
+  streamId: string,
+  tasksFile: TasksFile,
+): MigrationResult & { taskCount: number; threadsTouched: number } {
+  const result: MigrationResult & { taskCount: number; threadsTouched: number } = {
+    threadsCreated: 0,
+    sessionsMigrated: 0,
+    errors: [],
+    taskCount: tasksFile.tasks.length,
+    threadsTouched: 0,
+  }
+
+  let threadsFile = loadThreads(repoRoot, streamId)
+  if (!threadsFile) {
+    threadsFile = createEmptyThreadsFile(streamId)
+  }
+
+  const threadMap = new Map<string, ThreadMetadata>()
+  for (const thread of threadsFile.threads) {
+    threadMap.set(thread.threadId, thread)
+  }
+
+  const tasksByThread = new Map<string, typeof tasksFile.tasks>()
+  for (const task of tasksFile.tasks) {
+    const threadId = extractThreadIdFromTaskId(task.id)
+    if (!threadId) {
+      result.errors.push(`Invalid task ID format: ${task.id}`)
+      continue
+    }
+
+    if (!tasksByThread.has(threadId)) {
+      tasksByThread.set(threadId, [])
+    }
+    tasksByThread.get(threadId)!.push(task)
+  }
+
+  for (const [threadId, tasks] of tasksByThread) {
+    let thread = threadMap.get(threadId)
+    const seedTask = tasks
+      .slice()
+      .sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }))[0]
+
+    if (!thread) {
+      thread = createDefaultThreadMetadata(threadId, {
+        threadName: seedTask?.thread_name || threadId,
+        stageName: seedTask?.stage_name || "",
+        batchName: seedTask?.batch_name || "",
+        status: deriveThreadStatus(tasks.map((task) => task.status)),
+        sessions: [],
+      })
+      threadMap.set(threadId, thread)
+      result.threadsCreated++
+    }
+
+    result.threadsTouched++
+
+    if (!thread.threadName && seedTask?.thread_name) thread.threadName = seedTask.thread_name
+    if (!thread.stageName && seedTask?.stage_name) thread.stageName = seedTask.stage_name
+    if (!thread.batchName && seedTask?.batch_name) thread.batchName = seedTask.batch_name
+
+    const migratedStatus = deriveThreadStatus(tasks.map((task) => task.status))
+    if (!thread.status || thread.status === "pending") {
+      thread.status = migratedStatus
+    }
+
+    if (!thread.assignedAgent) {
+      const assigned = tasks.find((task) => task.assigned_agent)?.assigned_agent
+      if (assigned) thread.assignedAgent = assigned
+    }
+
+    const mergedReport = mergeReportParts([
+      thread.report || "",
+      ...tasks.map((task) => task.report || ""),
+    ])
+    if (mergedReport) thread.report = mergedReport
+
+    if (!thread.breadcrumb) {
+      const breadcrumbTask = tasks.find((task) => task.breadcrumb)
+      if (breadcrumbTask?.breadcrumb) {
+        thread.breadcrumb = breadcrumbTask.breadcrumb
+      }
+    }
+
+    if (!thread.currentSessionId) {
+      const currentSessionTask = tasks.find((task) => task.currentSessionId)
+      if (currentSessionTask?.currentSessionId) {
+        thread.currentSessionId = currentSessionTask.currentSessionId
+      }
+    }
+
+    const existingSessionIds = new Set(thread.sessions.map((session) => session.sessionId))
+    for (const task of tasks) {
+      for (const session of task.sessions || []) {
+        if (existingSessionIds.has(session.sessionId)) continue
+        thread.sessions.push(session)
+        existingSessionIds.add(session.sessionId)
+        result.sessionsMigrated++
+      }
+    }
+
+    thread.updatedAt = new Date().toISOString()
+  }
+
+  threadsFile.threads = Array.from(threadMap.values()).sort((a, b) =>
+    a.threadId.localeCompare(b.threadId, undefined, { numeric: true }),
+  )
+  saveThreads(repoRoot, streamId, threadsFile)
+
+  return result
+}
+
+export function migrateTasksToThreads(
+  repoRoot: string,
+  streamId: string,
+  options: MigrateTasksToThreadsOptions = {},
+): MigrateTasksToThreadsResult {
+  const tasksPath = join(getWorkDir(repoRoot), streamId, "tasks.json")
+  const backupEnabled = options.backupTasksJson !== false
+
+  if (!existsSync(tasksPath)) {
+    return {
+      migrated: false,
+      tasksJsonFound: false,
+      taskCount: 0,
+      threadsTouched: 0,
+      threadsCreated: 0,
+      sessionsMigrated: 0,
+      errors: [],
+      removedTasksJson: false,
+    }
+  }
+
+  const tasksFile = JSON.parse(readFileSync(tasksPath, "utf-8")) as TasksFile
+  const migration = migrateTasksDataToThreads(repoRoot, streamId, tasksFile)
+
+  const timestamp = new Date().toISOString().replace(/[:]/g, "-")
+  let backupPath: string | undefined
+  if (backupEnabled) {
+    backupPath = `${tasksPath}.bak-${timestamp}`
+    copyFileSync(tasksPath, backupPath)
+  }
+
+  let archivePath: string | undefined
+  let removedTasksJson = false
+  if (options.archiveTasksJson) {
+    archivePath = `${tasksPath}.archived-${timestamp}`
+    renameSync(tasksPath, archivePath)
+    removedTasksJson = true
+  } else if (options.removeTasksJson) {
+    unlinkSync(tasksPath)
+    removedTasksJson = true
+  }
+
+  return {
+    migrated: true,
+    tasksJsonFound: true,
+    taskCount: migration.taskCount,
+    threadsTouched: migration.threadsTouched,
+    threadsCreated: migration.threadsCreated,
+    sessionsMigrated: migration.sessionsMigrated,
+    errors: migration.errors,
+    backupPath,
+    archivePath,
+    removedTasksJson,
+  }
+}
+
 /**
  * Migrate session and GitHub issue data from tasks.json to threads.json
  * This is a one-time migration utility for transitioning to the new structure.
@@ -704,86 +1220,12 @@ export function migrateFromTasksJson(
   streamId: string,
   tasksFile: TasksFile,
 ): MigrationResult {
-  const result: MigrationResult = {
-    threadsCreated: 0,
-    sessionsMigrated: 0,
-    errors: [],
+  const migration = migrateTasksDataToThreads(repoRoot, streamId, tasksFile)
+  return {
+    threadsCreated: migration.threadsCreated,
+    sessionsMigrated: migration.sessionsMigrated,
+    errors: migration.errors,
   }
-
-  // Load or create threads.json
-  let threadsFile = loadThreads(repoRoot, streamId)
-  if (!threadsFile) {
-    threadsFile = createEmptyThreadsFile(streamId)
-  }
-
-  // Build a map of existing threads for quick lookup
-  const threadMap = new Map<string, ThreadMetadata>()
-  for (const thread of threadsFile.threads) {
-    threadMap.set(thread.threadId, thread)
-  }
-
-  // Group tasks by thread ID
-  const tasksByThread = new Map<string, typeof tasksFile.tasks>()
-  for (const task of tasksFile.tasks) {
-    const threadId = extractThreadIdFromTaskId(task.id)
-    if (!threadId) {
-      result.errors.push(`Invalid task ID format: ${task.id}`)
-      continue
-    }
-
-    if (!tasksByThread.has(threadId)) {
-      tasksByThread.set(threadId, [])
-    }
-    tasksByThread.get(threadId)!.push(task)
-  }
-
-  // Process each thread
-  for (const [threadId, tasks] of tasksByThread) {
-    // Get or create thread metadata
-    let thread = threadMap.get(threadId)
-    const isNew = !thread
-
-    if (!thread) {
-      thread = {
-        threadId,
-        sessions: [],
-      }
-      threadMap.set(threadId, thread)
-      result.threadsCreated++
-    }
-
-    // Collect sessions from all tasks in this thread
-    for (const task of tasks) {
-      if (task.sessions && task.sessions.length > 0) {
-        // Append sessions, avoiding duplicates by sessionId
-        const existingSessionIds = new Set(thread.sessions.map((s) => s.sessionId))
-        for (const session of task.sessions) {
-          if (!existingSessionIds.has(session.sessionId)) {
-            thread.sessions.push(session)
-            result.sessionsMigrated++
-          }
-        }
-      }
-
-      // Use currentSessionId from first task with one (if thread doesn't have one)
-      if (!thread.currentSessionId && task.currentSessionId) {
-        thread.currentSessionId = task.currentSessionId
-      }
-    }
-
-    // GitHub issues are now stored in github.json per-stage, not in threads.json
-    // Migration of github_issue is no longer performed
-  }
-
-  // Update threads array
-  threadsFile.threads = Array.from(threadMap.values()).sort((a, b) =>
-    a.threadId.localeCompare(b.threadId, undefined, { numeric: true })
-  )
-
-  // Save threads.json
-  saveThreads(repoRoot, streamId, threadsFile)
-
-  return result
 }
 
 /**

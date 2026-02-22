@@ -4,6 +4,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { getContinueContext } from "../src/lib/continue"
 import type { TasksFile } from "../src/lib/types"
+import { updateThreadMetadata } from "../src/lib/threads"
 
 describe("getContinueContext", () => {
   let tempDir: string
@@ -143,5 +144,30 @@ describe("getContinueContext", () => {
     expect(ctx.activeTask).toBeUndefined()
     expect(ctx.nextTask).toBeUndefined()
     expect(ctx.lastCompletedTask?.id).toBe("1.1.1")
+  })
+
+  test("prefers thread metadata when threads.json exists", async () => {
+    updateThreadMetadata(tempDir, streamId, "01.01.01", {
+      threadName: "Core",
+      stageName: "Build",
+      batchName: "Batch 01",
+      status: "in_progress",
+      assignedAgent: "backend-agent",
+      sessions: [],
+    })
+    updateThreadMetadata(tempDir, streamId, "01.01.02", {
+      threadName: "Tests",
+      stageName: "Build",
+      batchName: "Batch 01",
+      status: "pending",
+      sessions: [],
+    })
+
+    const ctx = getContinueContext(tempDir, streamId, streamName)
+
+    expect(ctx.activeThread?.threadId).toBe("01.01.01")
+    expect(ctx.nextThread?.threadId).toBe("01.01.02")
+    expect(ctx.activeTask?.id).toBe("01.01.01.01")
+    expect(ctx.assignedAgent).toBe("backend-agent")
   })
 })

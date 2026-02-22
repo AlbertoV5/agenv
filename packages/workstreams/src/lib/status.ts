@@ -8,12 +8,14 @@ import type {
   StreamMetadata,
   StreamProgress,
   StreamStatus,
-  Task,
   StageStatus,
   ParsedTask,
   ApprovalStatus,
+  Task,
+  ThreadMetadata,
 } from "./types.ts"
 import { getTasks, getTaskCounts } from "./tasks.ts"
+import { getThreads, getThreadCounts } from "./threads.ts"
 import { getStageApprovalStatus } from "./approval.ts"
 
 // Re-export ParsedStage for backwards compatibility during migration
@@ -41,7 +43,8 @@ export function computeStreamStatus(
     return "on_hold"
   }
 
-  const counts = getTaskCounts(repoRoot, stream.id)
+  const threadCounts = getThreadCounts(repoRoot, stream.id)
+  const counts = threadCounts.total > 0 ? threadCounts : getTaskCounts(repoRoot, stream.id)
 
   // No tasks means pending
   if (counts.total === 0) {
@@ -77,17 +80,106 @@ export function getStreamStatus(repoRoot: string, stream: StreamMetadata): Strea
 /**
  * Calculate stage status from task statuses
  */
-function calculateStageStatus(tasks: Task[]): StageStatus {
-  if (tasks.length === 0) return "pending"
+function parseThreadLikeId(id: string): { stage: number; batch: number; thread: number } | null {
+  const parts = id.split(".")
+  if (parts.length < 3) return null
+  const stage = Number.parseInt(parts[0]!, 10)
+  const batch = Number.parseInt(parts[1]!, 10)
+  const thread = Number.parseInt(parts[2]!, 10)
+  if ([stage, batch, thread].some((part) => Number.isNaN(part))) return null
+  return { stage, batch, thread }
+}
 
-  const done = tasks.filter((t) => t.status === "completed" || t.status === "cancelled").length
-  const inProgress = tasks.filter((t) => t.status === "in_progress").length
-  const blocked = tasks.filter((t) => t.status === "blocked").length
+function calculateStageStatusFromThreads(threads: Array<{ status?: string }>): StageStatus {
+  if (threads.length === 0) return "pending"
 
-  if (done === tasks.length) return "complete"
+  const done = threads.filter((t) => t.status === "completed" || t.status === "cancelled").length
+  const inProgress = threads.filter((t) => t.status === "in_progress").length
+  const blocked = threads.filter((t) => t.status === "blocked").length
+
+  if (done === threads.length) return "complete"
   if (blocked > 0 && inProgress === 0 && done === 0) return "blocked"
   if (inProgress > 0 || done > 0) return "in_progress"
   return "pending"
+}
+
+function toParsedTaskFromThread(thread: ThreadMetadata): ParsedTask {
+  const parsed = parseThreadLikeId(thread.threadId)
+  return {
+    id: thread.threadId,
+    description: thread.threadName || thread.threadId,
+    status: thread.status || "pending",
+    stageNumber: parsed?.stage,
+    taskGroupNumber: parsed?.thread ?? 1,
+    subtaskNumber: 1,
+    lineNumber: 0,
+  }
+}
+
+function getLegacyTaskProgress(repoRoot: string, stream: StreamMetadata): StreamProgress {
+  const tasks = getTasks(repoRoot, stream.id)
+  const counts = getTaskCounts(repoRoot, stream.id)
+
+  const stages: ParsedStage[] = []
+  const stageNumbers = new Set<number>()
+  for (const task of tasks) {
+    const parsed = parseThreadLikeId(task.id)
+    if (parsed) stageNumbers.add(parsed.stage)
+  }
+
+  for (const stageNum of Array.from(stageNumbers).sort((a, b) => a - b)) {
+    const stagePrefix = `${stageNum.toString().padStart(2, "0")}.`
+    const stageTasks = tasks.filter((t) => t.id.startsWith(stagePrefix))
+    const stageName = stageTasks[0]?.stage_name || `Stage ${stageNum}`
+
+    stages.push({
+      number: stageNum,
+      title: stageName,
+      status: calculateStageStatusFromThreads(stageTasks),
+      taskCount: stageTasks.length,
+      completedCount: stageTasks.filter((t) => t.status === "completed" || t.status === "cancelled").length,
+    })
+  }
+
+  const stageTasksMap = new Map<number, ParsedTask[]>()
+  for (const task of tasks) {
+    const parsed = parseThreadLikeId(task.id)
+    if (!parsed) continue
+
+    if (!stageTasksMap.has(parsed.stage)) {
+      stageTasksMap.set(parsed.stage, [])
+    }
+
+    stageTasksMap.get(parsed.stage)!.push({
+      id: task.id,
+      description: task.name,
+      status: task.status,
+      stageNumber: parsed.stage,
+      taskGroupNumber: parsed.thread,
+      subtaskNumber: 1,
+      lineNumber: 0,
+    })
+  }
+
+  return {
+    streamId: stream.id,
+    streamName: stream.name,
+    size: stream.size,
+    stages: stages.map((s) => ({
+      number: s.number,
+      title: s.title,
+      status: s.status,
+      tasks: stageTasksMap.get(s.number) || [],
+      file: "tasks.json",
+    })),
+    totalTasks: counts.total,
+    completedTasks: counts.completed + counts.cancelled,
+    inProgressTasks: counts.in_progress,
+    blockedTasks: counts.blocked,
+    pendingTasks: counts.pending,
+    percentComplete:
+      counts.total > 0 ? Math.round(((counts.completed + counts.cancelled) / counts.total) * 100) : 0,
+  }
 }
 
 /**
@@ -97,56 +189,48 @@ export function getStreamProgress(
   repoRoot: string,
   stream: StreamMetadata
 ): StreamProgress {
-  const tasks = getTasks(repoRoot, stream.id)
-  const counts = getTaskCounts(repoRoot, stream.id)
+  const threads = getThreads(repoRoot, stream.id)
+  if (threads.length === 0) {
+    return getLegacyTaskProgress(repoRoot, stream)
+  }
 
-  // Build stage info from tasks
+  const counts = getThreadCounts(repoRoot, stream.id)
+
+  // Build stage info from threads
   const stages: ParsedStage[] = []
   const stageNumbers = new Set<number>()
 
-  // Extract stage numbers from task IDs
-  for (const task of tasks) {
-    const stageNum = parseInt(task.id.split(".")[0]!, 10)
-    if (!isNaN(stageNum)) {
-      stageNumbers.add(stageNum)
-    }
+  // Extract stage numbers from thread IDs
+  for (const thread of threads) {
+    const parsed = parseThreadLikeId(thread.threadId)
+    if (parsed) stageNumbers.add(parsed.stage)
   }
 
   // Build stage summaries
   for (const stageNum of Array.from(stageNumbers).sort((a, b) => a - b)) {
     const stagePrefix = `${stageNum.toString().padStart(2, "0")}.`
-    const stageTasks = tasks.filter((t) => t.id.startsWith(stagePrefix))
-    const stageName = stageTasks[0]?.stage_name || `Stage ${stageNum}`
+    const stageThreads = threads.filter((t) => t.threadId.startsWith(stagePrefix))
+    const stageName = stageThreads[0]?.stageName || `Stage ${stageNum}`
 
     stages.push({
       number: stageNum,
       title: stageName,
-      status: calculateStageStatus(stageTasks),
-      taskCount: stageTasks.length,
-      completedCount: stageTasks.filter((t) => t.status === "completed" || t.status === "cancelled").length,
+      status: calculateStageStatusFromThreads(stageThreads),
+      taskCount: stageThreads.length,
+      completedCount: stageThreads.filter((t) => t.status === "completed" || t.status === "cancelled").length,
     })
   }
 
-  // Map tasks to ParsedTask format for each stage
+  // Map threads to ParsedTask compatibility format for each stage
   const stageTasksMap = new Map<number, ParsedTask[]>()
-  for (const task of tasks) {
-    const parts = task.id.split(".")
-    const stageNum = parseInt(parts[0]!, 10)
-    const threadNum = parseInt(parts[1] || "1", 10)
-    const taskNum = parseInt(parts[2] || "1", 10)
+  for (const thread of threads) {
+    const parsed = parseThreadLikeId(thread.threadId)
+    if (!parsed) continue
 
-    if (!stageTasksMap.has(stageNum)) {
-      stageTasksMap.set(stageNum, [])
+    if (!stageTasksMap.has(parsed.stage)) {
+      stageTasksMap.set(parsed.stage, [])
     }
-    stageTasksMap.get(stageNum)!.push({
-      id: task.id,
-      description: task.name,
-      status: task.status,
-      stageNumber: stageNum,
-      taskGroupNumber: threadNum,
-      subtaskNumber: taskNum,
-      lineNumber: 0, // Not applicable for JSON-based tasks
-    })
+    stageTasksMap.get(parsed.stage)!.push(toParsedTaskFromThread(thread))
   }
 
   return {
@@ -158,7 +242,7 @@ export function getStreamProgress(
       title: s.title,
       status: s.status,
       tasks: stageTasksMap.get(s.number) || [],
-      file: "tasks.json",
+      file: "threads.json",
     })),
     totalTasks: counts.total,
     completedTasks: counts.completed + counts.cancelled,
@@ -227,7 +311,10 @@ export function formatSessionHistory(
   streamId: string,
   progress: StreamProgress
 ): string {
-  const tasks = getTasks(repoRoot, streamId)
+  const threads = getThreads(repoRoot, streamId)
+  if (threads.length === 0) {
+    return "\nNo thread session history found.\n"
+  }
   const lines: string[] = []
   const bar = "=".repeat(80)
   
@@ -237,31 +324,13 @@ export function formatSessionHistory(
   
   for (const stage of progress.stages) {
     const stagePrefix = `${stage.number.toString().padStart(2, "0")}.`
-    const stageTasks = tasks.filter(t => t.id.startsWith(stagePrefix))
-    
-    // Group by thread
-    const threadMap = new Map<string, typeof tasks>()
-    for (const task of stageTasks) {
-      const parts = task.id.split(".")
-      if (parts.length < 3) continue
-      const threadId = parts.slice(0, 3).join(".")
-      
-      if (!threadMap.has(threadId)) {
-        threadMap.set(threadId, [])
-      }
-      threadMap.get(threadId)!.push(task)
-    }
-    
-    // Display each thread's session history
-    for (const [threadId, threadTasks] of threadMap) {
-      const firstTask = threadTasks[0]
-      if (!firstTask) continue
-      
-      // Count total sessions across all tasks in thread
-      const allSessions = threadTasks.flatMap(t => t.sessions || [])
+    const stageThreads = threads.filter((thread) => thread.threadId.startsWith(stagePrefix))
+
+    for (const thread of stageThreads) {
+      const allSessions = thread.sessions || []
       if (allSessions.length === 0) continue
       
-      lines.push(`\n${stage.title} - ${firstTask.thread_name} (${threadId})`)
+      lines.push(`\n${stage.title} - ${thread.threadName || thread.threadId} (${thread.threadId})`)
       lines.push("-".repeat(80))
       
       // Show session details
@@ -307,17 +376,16 @@ export interface ThreadInfo {
 export function getThreadInfo(tasks: ParsedTask[]): Map<string, ThreadInfo> {
   const threadsMap = new Map<string, ThreadInfo>()
   
-  // Group tasks by thread (first 3 parts of ID: stage.batch.thread)
+  // Group by thread-like IDs (stage.batch.thread)
   for (const task of tasks) {
-    const parts = task.id.split(".")
-    if (parts.length < 3) continue
-    
-    const threadId = parts.slice(0, 3).join(".")
+    const parsed = parseThreadLikeId(task.id)
+    if (!parsed) continue
+    const threadId = `${parsed.stage.toString().padStart(2, "0")}.${parsed.batch.toString().padStart(2, "0")}.${parsed.thread.toString().padStart(2, "0")}`
     
     if (!threadsMap.has(threadId)) {
       threadsMap.set(threadId, {
         threadId,
-        threadName: "(unknown)",
+        threadName: task.description,
         sessionCount: 0,
         hasRunningSession: false,
         isResumable: false
@@ -332,22 +400,19 @@ export function getThreadInfo(tasks: ParsedTask[]): Map<string, ThreadInfo> {
  * Get thread information with session data from full Task objects
  */
 export function getThreadInfoWithSessions(repoRoot: string, streamId: string, stageNumber: number): Map<string, ThreadInfo> {
-  const tasks = getTasks(repoRoot, streamId)
+  const threads = getThreads(repoRoot, streamId)
   const stagePrefix = `${stageNumber.toString().padStart(2, "0")}.`
-  const stageTasks = tasks.filter(t => t.id.startsWith(stagePrefix))
+  const stageThreads = threads.filter((t) => t.threadId.startsWith(stagePrefix))
   
   const threadsMap = new Map<string, ThreadInfo>()
   
-  for (const task of stageTasks) {
-    const parts = task.id.split(".")
-    if (parts.length < 3) continue
-    
-    const threadId = parts.slice(0, 3).join(".")
+  for (const thread of stageThreads) {
+    const threadId = thread.threadId
     
     if (!threadsMap.has(threadId)) {
       threadsMap.set(threadId, {
         threadId,
-        threadName: task.thread_name,
+        threadName: thread.threadName || threadId,
         sessionCount: 0,
         hasRunningSession: false,
         isResumable: false
@@ -357,23 +422,23 @@ export function getThreadInfoWithSessions(repoRoot: string, streamId: string, st
     const threadInfo = threadsMap.get(threadId)!
     
     // Count sessions
-    if (task.sessions) {
-      threadInfo.sessionCount += task.sessions.length
+    if (thread.sessions) {
+      threadInfo.sessionCount += thread.sessions.length
       
       // Check for running sessions
-      const hasRunning = task.sessions.some(s => s.status === "running")
+      const hasRunning = thread.sessions.some(s => s.status === "running")
       if (hasRunning) {
         threadInfo.hasRunningSession = true
       }
       
       // Check last session status
-      if (task.sessions.length > 0) {
-        const lastSession = task.sessions[task.sessions.length - 1]
+      if (thread.sessions.length > 0) {
+        const lastSession = thread.sessions[thread.sessions.length - 1]
         threadInfo.lastSessionStatus = lastSession!.status
         
-        // Thread is resumable if last session was interrupted or failed and not all tasks are complete
+        // Thread is resumable if last session was interrupted or failed and the thread is not complete
         if ((lastSession!.status === "interrupted" || lastSession!.status === "failed") && 
-            task.status !== "completed") {
+            thread.status !== "completed") {
           threadInfo.isResumable = true
         }
       }

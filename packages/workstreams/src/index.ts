@@ -73,7 +73,7 @@ export {
   formatStreamStatusIcon,
 } from "./lib/status.ts"
 
-// Task updates
+// Thread/task updates
 export {
   parseTaskId,
   updateTask,
@@ -96,7 +96,23 @@ export {
 // EXPORTS FOR PLAN.md + tasks.json SYSTEM
 // ============================================
 
-// Task operations (tasks.json)
+// Thread operations (threads.json)
+export {
+  getThreadsFilePath,
+  createEmptyThreadsFile,
+  loadThreads,
+  saveThreads,
+  getThreadMetadata,
+  getAllThreadMetadata,
+  getThreads,
+  updateThreadStatus,
+  getThreadCounts,
+  groupThreads,
+  discoverThreadsInBatch,
+  migrateTasksToThreads,
+} from "./lib/threads.ts"
+
+// Task compatibility operations (legacy surface)
 export {
   getTasksFilePath,
   createEmptyTasksFile,
@@ -169,6 +185,18 @@ export {
   type GeneratePromptOptions,
 } from "./lib/prompts.ts"
 
+// Planner outcome contract
+export {
+  PLANNER_OUTCOME_REQUIRED_FIELDS,
+  PLANNER_OUTCOME_STATUS_VALUES,
+  getPlannerOutcomeTemplate,
+  validatePlannerOutcomePayload,
+  parsePlannerOutcomePayload,
+  type PlannerOutcomePayload,
+  type PlannerOutcomeStatus,
+  type PlannerOutcomeValidationResult,
+} from "./lib/planner-outcome.ts"
+
 // Role-based access control
 export {
   getCurrentRole,
@@ -180,3 +208,16 @@ export {
   type WorkstreamRole,
   type CommandPermission,
 } from "./lib/roles.ts"
+
+// Multi backend execution
+export {
+  createExecutionBackend,
+  resolveBackendSelection,
+  isOpenCodeBackendName,
+  OPENCODE_BACKEND_NAMES,
+  type AgentExecutionBackend,
+  type BackendConfig,
+  type BackendExecutionStart,
+  type ThreadExecutionRequest,
+  type ThreadExecutionResult,
+} from "./lib/backends/index.ts"

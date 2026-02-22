@@ -5,13 +5,13 @@
  * which defines available agents with their descriptions and models.
  *
  * Supports multiple models per agent with optional variants for retry logic.
- * Agent-to-task assignments are stored in tasks.json (Task.assigned_agent).
+ * Agent-to-thread assignments are stored in threads.json (with legacy tasks.json compatibility).
  *
  * ## Schema
  *
  * The agents.yaml file supports two main sections:
  *
- * 1. `agents`: List of working agents (perform tasks)
+ * 1. `agents`: List of working agents (execute thread work)
  * 2. `synthesis_agents`: (Optional) List of synthesis agents (orchestrate and summarize)
  *
  * Example configuration:
@@ -41,12 +41,20 @@ import { parse as parseYaml, stringify as stringifyYaml } from "yaml"
 import type {
     AgentsConfigYaml,
     AgentDefinitionYaml,
+    ExecutionConfigYaml,
+    OpenCodeBackendName,
     SynthesisAgentDefinitionYaml,
     ModelSpec,
     NormalizedModelSpec,
 } from "./types.ts"
 import { getWorkDir } from "./repo.ts"
 import { isValidModelFormat } from "./model.ts"
+
+const ALLOWED_EXECUTION_BACKENDS: readonly OpenCodeBackendName[] = [
+    "tmux",
+    "opencode-subagent",
+    "opencode-sdk",
+] as const
 
 /**
  * Get the agents.yaml file path
@@ -240,9 +248,54 @@ export function parseAgentsYaml(content: string): {
             }
         }
 
+        let execution: ExecutionConfigYaml | undefined
+        if (parsed.execution !== undefined) {
+            if (!parsed.execution || typeof parsed.execution !== "object") {
+                errors.push("Invalid YAML: 'execution' must be an object if present")
+            } else {
+                const executionConfig: ExecutionConfigYaml = {}
+                const backend = (parsed.execution as Record<string, unknown>).backend
+                const port = (parsed.execution as Record<string, unknown>).port
+                const maxParallel = (parsed.execution as Record<string, unknown>).max_parallel
+
+                if (backend !== undefined) {
+                    if (typeof backend !== "string" || !ALLOWED_EXECUTION_BACKENDS.includes(backend as OpenCodeBackendName)) {
+                        errors.push(
+                            `Invalid YAML: execution.backend must be one of ${ALLOWED_EXECUTION_BACKENDS.join(", ")}`
+                        )
+                    } else {
+                        executionConfig.backend = backend as OpenCodeBackendName
+                    }
+                }
+
+                if (port !== undefined) {
+                    if (typeof port !== "number" || !Number.isInteger(port) || port <= 0) {
+                        errors.push("Invalid YAML: execution.port must be a positive integer")
+                    } else {
+                        executionConfig.port = port
+                    }
+                }
+
+                if (maxParallel !== undefined) {
+                    if (typeof maxParallel !== "number" || !Number.isInteger(maxParallel) || maxParallel <= 0) {
+                        errors.push("Invalid YAML: execution.max_parallel must be a positive integer")
+                    } else {
+                        executionConfig.max_parallel = maxParallel
+                    }
+                }
+
+                if (Object.keys(executionConfig).length > 0) {
+                    execution = executionConfig
+                }
+            }
+        }
+
         const config: AgentsConfigYaml = { agents }
         if (synthesisAgents.length > 0) {
             config.synthesis_agents = synthesisAgents
+        }
+        if (execution) {
+            config.execution = execution
         }
 
         return { config, errors }
@@ -399,4 +452,3 @@ export function getSynthesisAgentModels(
     }
     return agent.models.map(normalizeModelSpec)
 }
-

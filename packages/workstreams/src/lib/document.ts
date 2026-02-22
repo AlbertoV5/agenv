@@ -101,7 +101,7 @@ export function formatReportMarkdown(report: ProgressReport): string {
   lines.push(``)
   lines.push(`| Metric | Value |`)
   lines.push(`|--------|-------|`)
-  lines.push(`| Total Tasks | ${report.metrics.totalTasks} |`)
+  lines.push(`| Total Threads | ${report.metrics.totalThreads} |`)
   lines.push(
     `| Completed | ${report.metrics.statusCounts.completed} (${report.metrics.completionRate.toFixed(1)}%) |`
   )
@@ -287,7 +287,7 @@ export function exportStreamAsMarkdown(repoRoot: string, streamId: string): stri
   lines.push(``)
   lines.push(`**Status:** ${report.status}`)
   lines.push(
-    `**Progress:** ${report.metrics.statusCounts.completed}/${report.metrics.totalTasks} tasks (${report.metrics.completionRate.toFixed(0)}%)`
+    `**Progress:** ${report.metrics.threadStatusCounts.completed}/${report.metrics.totalThreads} threads (${report.metrics.completionRate.toFixed(0)}%)`
   )
   lines.push(``)
 
@@ -354,7 +354,7 @@ export function generateSummary(
   const m = report.metrics
 
   if (!detailed) {
-    return `${report.streamName}: ${m.statusCounts.completed}/${m.totalTasks} tasks completed (${m.completionRate.toFixed(0)}%), ${m.statusCounts.in_progress} in progress, ${m.statusCounts.blocked} blocked.`
+    return `${report.streamName}: ${m.threadStatusCounts.completed}/${m.totalThreads} threads completed (${m.completionRate.toFixed(0)}%), ${m.threadStatusCounts.in_progress} in progress, ${m.threadStatusCounts.blocked} blocked.`
   }
 
   const lines: string[] = []
@@ -363,12 +363,12 @@ export function generateSummary(
   )
   lines.push(``)
   lines.push(
-    `Out of ${m.totalTasks} total tasks, ${m.statusCounts.completed} are completed, ${m.statusCounts.in_progress} are in progress, and ${m.statusCounts.pending} are pending.`
+    `Out of ${m.totalThreads} total threads, ${m.threadStatusCounts.completed} are completed, ${m.threadStatusCounts.in_progress} are in progress, and ${m.threadStatusCounts.pending} are pending.`
   )
 
-  if (m.statusCounts.blocked > 0) {
+  if (m.threadStatusCounts.blocked > 0) {
     lines.push(
-      ` There are ${m.statusCounts.blocked} blocked tasks that need attention.`
+      ` There are ${m.threadStatusCounts.blocked} blocked threads that need attention.`
     )
   }
 
