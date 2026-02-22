@@ -1,7 +1,7 @@
 ---
 description: Apply requested edits to PLAN.md and re-validate
-agent: plan
-subtask: true
+agent: manager
+subtask: false
 ---
 
 Use @agent/skills/planning-workstreams/SKILL.md.
@@ -9,12 +9,14 @@ Use @agent/skills/planning-workstreams/SKILL.md.
 Apply this planning change request: $ARGUMENTS
 
 Required actions:
+- Launch subagents to explore affected code areas for this change request.
+- Use manager for synthesis and plan edits, not broad file-by-file exploration.
 - Update PLAN.md according to the request.
 - Keep thread definitions executable and concrete.
 - Re-run plan checks and validation (`work validate plan`, `work check plan`, `work preview`).
 
-Subagent behavior:
-- This command runs as a planner subagent.
+Execution behavior:
+- This command runs in the active manager context (not as a subtask).
 - It does not launch worker subagents.
 
 Output format:

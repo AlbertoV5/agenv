@@ -15,6 +15,7 @@ import type { Task } from "../lib/types.ts"
 interface PreviewCliArgs {
   repoRoot?: string
   streamId?: string
+  stage?: number
   verbose: boolean
   json: boolean
 }
@@ -24,11 +25,12 @@ function printHelp(): void {
 work preview - Show PLAN.md structure
 
 Usage:
-  work preview [--stream <stream-id>]
+  work preview [--stream <stream-id>] [--stage <n>]
 
 Options:
   --repo-root, -r  Repository root (auto-detected if omitted)
   --stream, -s     Workstream ID or name (uses current if not specified)
+  --stage          Show only one stage (e.g. 1)
   --verbose, -v    Show more details
   --json, -j       Output as JSON
   --help, -h       Show this help message
@@ -48,6 +50,9 @@ Examples:
 
   # Preview specific workstream
   work preview --stream "001-my-stream"
+
+  # Preview only stage 1 from current workstream
+  work preview --stage 1
 `)
 }
 
@@ -85,6 +90,19 @@ function parseCliArgs(argv: string[]): PreviewCliArgs | null {
       case "--verbose":
       case "-v":
         parsed.verbose = true
+        break
+
+      case "--stage":
+        if (!next) {
+          console.error("Error: --stage requires a value")
+          return null
+        }
+        parsed.stage = parseInt(next, 10)
+        if (Number.isNaN(parsed.stage) || parsed.stage < 1) {
+          console.error("Error: --stage must be a positive number")
+          return null
+        }
+        i++
         break
 
       case "--json":
@@ -174,7 +192,7 @@ function progressPercent(completed: number, total: number): string {
   return `${Math.round((completed / total) * 100)}%`
 }
 
-function formatPreview(preview: StreamPreview, verbose: boolean, tasks: Task[]): string {
+function formatPreview(preview: StreamPreview, verbose: boolean, tasks: Task[], planPath: string): string {
   const lines: string[] = []
 
   if (!preview.streamName) {
@@ -182,6 +200,7 @@ function formatPreview(preview: StreamPreview, verbose: boolean, tasks: Task[]):
   }
 
   lines.push(`Workstream: ${preview.streamName}`)
+  lines.push(`Plan: ${planPath}`)
 
   if (preview.summary) {
     lines.push(`Summary: ${preview.summary}`)
@@ -342,6 +361,19 @@ export function main(argv: string[] = process.argv): void {
   const content = readFileSync(planMdPath, "utf-8")
   const preview = getStreamPreview(content)
 
+  if (cliArgs.stage !== undefined) {
+    const requested = cliArgs.stage
+    const stage = preview.stages.find((s) => s.number === requested)
+    if (!stage) {
+      const available = preview.stages.map((s) => s.number).join(", ") || "none"
+      console.error(`Error: Stage ${requested} not found in workstream "${stream.id}". Available stages: ${available}`)
+      process.exit(1)
+    }
+
+    preview.stages = [stage]
+    preview.stageCount = 1
+  }
+
   // Load task data for progress
   const tasks = getTasks(repoRoot, stream.id)
 
@@ -349,6 +381,7 @@ export function main(argv: string[] = process.argv): void {
     // Include task progress in JSON output
     const progressData = {
       ...preview,
+      planPath: planMdPath,
       taskProgress: {
         total: tasks.length,
         completed: tasks.filter((t) => t.status === "completed").length,
@@ -359,7 +392,7 @@ export function main(argv: string[] = process.argv): void {
     }
     console.log(JSON.stringify(progressData, null, 2))
   } else {
-    console.log(formatPreview(preview, cliArgs.verbose, tasks))
+    console.log(formatPreview(preview, cliArgs.verbose, tasks, planMdPath))
   }
 }
 

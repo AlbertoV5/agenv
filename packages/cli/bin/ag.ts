@@ -6,7 +6,7 @@
  *
  * Subcommands:
  *   work       - Workstream management (create, status, update, complete, index)
- *   install    - Installation management (skills/hooks/plugins/tools/commands/agents)
+ *   install    - Installation management (skills/hooks/plugins/tools/commands/agents/opencode)
  */
 
 import { main as workMain } from "../../workstreams/bin/work.ts"
@@ -31,7 +31,7 @@ Usage:
 
 Commands:
   work       Workstream management (create, status, update, complete, index)
-  install    Installation management (skills/hooks/plugins/tools/commands/agents)
+  install    Installation management (skills/hooks/plugins/tools/commands/agents/opencode)
 
 Options:
   --help, -h      Show this help message
@@ -42,6 +42,7 @@ Examples:
   ag work status
   ag install skills --claude
   ag install skills --all
+  ag install opencode
 
 Run 'ag <command> --help' for more information on a command.
 `)

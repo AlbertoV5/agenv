@@ -1,6 +1,6 @@
 ---
 description: Run final workstream evaluation and produce completion assessment
-agent: plan
+agent: manager
 subtask: true
 ---
 

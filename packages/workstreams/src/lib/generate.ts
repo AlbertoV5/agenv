@@ -1,12 +1,12 @@
 /**
  * Workstream generation functions
  *
- * Creates workstream directories with PLAN.md and tasks.json files.
+ * Creates workstream directories with PLAN.md and supporting files.
  */
 
 import { existsSync, mkdirSync, readFileSync } from "fs"
 import { join } from "path"
-import type { StreamMetadata, GeneratedBy, TasksFile, ConsolidateError } from "./types.ts"
+import type { StreamMetadata, GeneratedBy, ConsolidateError } from "./types.ts"
 import { VERSION as WORKSTREAMS_VERSION } from "../version.ts"
 import { getWorkDir } from "./repo.ts"
 import {
@@ -112,18 +112,6 @@ ${stages.join("\n\n")}
 
 *Last updated: ${now}*
 `
-}
-
-/**
- * Generate empty tasks.json content
- */
-function generateTasksJson(streamId: string): TasksFile {
-  return {
-    version: "1.0.0",
-    stream_id: streamId,
-    last_updated: new Date().toISOString(),
-    tasks: [],
-  }
 }
 
 /**
@@ -239,7 +227,6 @@ function generateReportMdTemplate(
  *
  * Creates a new workstream with:
  * - PLAN.md at workstream root (structured markdown)
- * - tasks.json at workstream root (empty, populated by add-task)
  */
 export function generateStream(args: GenerateStreamArgs): GenerateStreamResult {
   const workDir = getWorkDir(args.repoRoot)
@@ -276,12 +263,6 @@ export function generateStream(args: GenerateStreamArgs): GenerateStreamResult {
   // Generate PLAN.md
   const planContent = generatePlanMd(streamId, args.name, args.stages ?? 1)
   atomicWriteFile(join(streamDir, "PLAN.md"), planContent)
-
-  // Generate empty tasks.json
-  atomicWriteFile(
-    join(streamDir, "tasks.json"),
-    JSON.stringify(generateTasksJson(streamId), null, 2),
-  )
 
   // Note: REPORT.md is created via 'work report init' when needed
   // Note: docs/ directory is created empty for optional documentation
@@ -333,4 +314,3 @@ export function createGenerateArgs(
     stages,
   }
 }
-

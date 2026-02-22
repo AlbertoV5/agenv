@@ -13,22 +13,33 @@ description: Create and prepare workstreams for execution. Planning only, no cod
 
 ## Workflow
 
-1. Create stream: `work create --name "feature-name" --stages N`
-2. Set current stream: `work current --set "NNN-feature-name"`
-3. Fill `PLAN.md` with stages, batches, threads, and stage questions.
-4. Validate before review:
+1. Explore the codebase first via Task subagents (do not do full-file exploration yourself):
+   - Launch `explore` or `general` subagents for architecture and file discovery.
+   - Run subagents in parallel for independent areas.
+   - Synthesize findings into concrete planning inputs.
+2. Always create a NEW stream: `work create --name "feature-name" --stages N`
+3. Set it current: `work current --set "NNN-feature-name"`
+4. Fill `PLAN.md` with stages, batches, threads, and stage questions.
+5. Validate before review:
    - `work validate plan`
    - `work check plan`
    - `work preview`
-5. Ask user to approve plan: `!work approve plan` (auto-populates `threads.json` from PLAN.md)
-6. Assign agents to threads: `work assign --thread "01.01.01" --agent "agent-name"`
-7. Link planning session using `workstream_link_planning_session`.
+6. If Stage Questions remain open, ask the user those questions with the `question` tool and wait for answers before asking for approval.
+   - Prefer one consolidated question prompt rather than many tiny prompts.
+   - If the tool is unavailable, ask in plain text with numbered questions and recommended defaults.
+7. Assign agents to every thread before approval:
+   - Add explicit `@agent:<agent-name>` in each PLAN thread heading.
+8. Once Stage Questions are resolved (or user explicitly accepts them as deferred), ask user to approve plan: `!work approve plan` (auto-populates `threads.json` from PLAN.md)
 
 ## Planning Rules
 
 - Prefer independent threads in the same batch.
 - Use clear file paths and concrete outputs.
 - Put unresolved decisions in Stage Questions (`- [ ] ...`).
+- Never silently leave many open Stage Questions without surfacing them to the user.
+- When asking questions, provide a short numbered list and a recommended default for each when possible.
+- Do not leave threads unassigned unless the user explicitly asks for default fallback.
+- Manager should delegate broad discovery/research to subagents and keep itself focused on synthesis and planning decisions.
 
 ## Native Orchestration Contract
 
@@ -40,7 +51,7 @@ description: Create and prepare workstreams for execution. Planning only, no cod
     - `system-engineer-*` for system threads
     - `frontend-designer-*` for frontend threads
     - `default*` as final fallback
-  - Persist reassignment before retry: `work assign --thread "ID" --agent "new-agent"`.
+  - Persist reassignment by updating that thread heading in PLAN.md to `@agent:new-agent` before retry.
   - Limit automatic failover to one reassignment attempt per thread execution cycle.
   - If still failing, mark blocked with a concrete dependency/error report.
 - Worker subagents must update thread status in `threads.json` through CLI:
@@ -60,6 +71,5 @@ work validate plan
 work check plan
 !work approve plan
 work agents
-work assign --thread "01.01.01" --agent "backend-expert"
 work prompt --stage 1 --batch 1
 ```

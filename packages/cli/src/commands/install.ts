@@ -8,6 +8,7 @@
  *   tools     - Install tools to agent directories
  *   commands  - Install commands to agent directories
  *   agents    - Install OpenCode agents
+ *   opencode  - Install full OpenCode setup (clean)
  */
 
 import {
@@ -58,6 +59,7 @@ Subcommands:
   tools      Install tools to agent directories
   commands   Install commands to agent directories
   agents     Install OpenCode agents
+  opencode   Install full OpenCode setup (clean)
 
 Run 'ag install <subcommand> --help' for more information.
 `)
@@ -1249,6 +1251,94 @@ function agentsCommand(args: string[]): void {
   }
 }
 
+function printOpenCodeBundleHelp(): void {
+  console.log(`
+ag install opencode - Install full OpenCode setup (clean)
+
+Usage:
+  ag install opencode [options]
+
+Options:
+  --clean        Remove existing files in each target before installing (default: true)
+  --no-clean     Keep existing files and update in place
+  --dry-run      Show what would be installed without making changes
+  --list         List what would be installed
+  --help, -h     Show this help message
+
+Installs to OpenCode config directories:
+  - skills   -> ~/.config/opencode/skills
+  - tools    -> ~/.config/opencode/tools
+  - commands -> ~/.config/opencode/commands
+  - agents   -> ~/.config/opencode/agents
+  - plugins  -> ~/.config/opencode/plugins
+
+Examples:
+  ag install opencode
+  ag install opencode --dry-run
+  ag install opencode --no-clean
+`)
+}
+
+function opencodeBundleCommand(args: string[]): void {
+  let dryRun = false
+  let listOnly = false
+  let clean = true
+
+  let i = 0
+  while (i < args.length) {
+    const arg = args[i]
+    switch (arg) {
+      case "--dry-run":
+        dryRun = true
+        break
+      case "--list":
+        listOnly = true
+        break
+      case "--clean":
+        clean = true
+        break
+      case "--no-clean":
+        clean = false
+        break
+      case "--help":
+      case "-h":
+        printOpenCodeBundleHelp()
+        process.exit(0)
+      default:
+        console.error(`${RED}Error: Unknown option: ${arg}${NC}`)
+        printOpenCodeBundleHelp()
+        process.exit(1)
+    }
+    i++
+  }
+
+  if (listOnly) {
+    console.log("OpenCode bundle includes:")
+    console.log(`  skills:   ${AGENV_SKILLS}`)
+    console.log(`  tools:    ${AGENV_TOOLS}`)
+    console.log(`  commands: ${AGENV_COMMANDS}`)
+    console.log(`  agents:   ${AGENV_AGENTS}`)
+    console.log(`  plugins:  ${AGENV_PLUGINS}`)
+    return
+  }
+
+  console.log("Installing OpenCode bundle...")
+  installSkillsTo(TARGETS.opencode!, dryRun, clean)
+  console.log("")
+  installToolsTo(TOOLS_TARGETS.opencode!, dryRun, clean)
+  console.log("")
+  installCommandsTo(COMMANDS_TARGETS.opencode!, dryRun, clean)
+  console.log("")
+  installAgentsTo(AGENTS_TARGETS.opencode!, dryRun, clean)
+  console.log("")
+  installPluginsTo(PLUGINS_TARGETS.opencode!, dryRun, clean)
+  console.log("")
+
+  if (!dryRun) {
+    console.log(`${GREEN}OpenCode install complete.${NC}`)
+  }
+}
+
 function skillsCommand(args: string[]): void {
   const targets: (string | undefined)[] = []
   let dryRun = false
@@ -1365,9 +1455,12 @@ export function main(argv: string[]): void {
     case "agents":
       agentsCommand(args.slice(1))
       break
+    case "opencode":
+      opencodeBundleCommand(args.slice(1))
+      break
     default:
       console.error(`Error: Unknown subcommand "${subcommand}"`)
-      console.error("\nAvailable subcommands: skills, hooks, plugins, tools, commands, agents")
+      console.error("\nAvailable subcommands: skills, hooks, plugins, tools, commands, agents, opencode")
       console.error("\nRun 'ag install --help' for usage information.")
       process.exit(1)
   }

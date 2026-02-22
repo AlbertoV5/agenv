@@ -1,6 +1,6 @@
 ---
 description: Review latest batch outcomes and prepare stage approval guidance
-agent: plan
+agent: manager
 subtask: false
 ---
 
