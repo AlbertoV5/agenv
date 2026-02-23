@@ -32,6 +32,13 @@ description: Create and prepare workstreams for execution. Planning only, no cod
 - Use clear file paths and concrete outputs.
 - Put unresolved decisions in Stage Questions (`- [ ] ...`).
 
+## Asking Questions
+
+- If you have questions during planning, use the opencode `question` tool. Mark all questions as open first, then ask the user, and fill with the responses afterwards.
+- The tool supports asking multiple questions in one call via the `questions` array; use this when collecting related inputs together.
+- For each question, provide exactly one predefined option labeled as recommended.
+- Keep `custom` enabled so the user can type their own answer (open response).
+
 ## Useful Commands
 
 ```bash

@@ -22,6 +22,13 @@ work list --tasks --thread "01.01.01"
 4. If blocked:
    `work update --task "ID" --status blocked --report "reason and dependency"`
 
+## Questions
+
+- Do not ask questions to the user during implementation.
+- If a task or plan is unclear, mark the task as blocked:
+  `work update --task "ID" --status blocked --report "unclear: <specific question>"`
+- Describe the exact ambiguity so it can be resolved during review.
+
 ## Report Quality
 
 - Mention concrete files or modules changed.
