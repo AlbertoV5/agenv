@@ -5,9 +5,10 @@
  */
 
 import { join, dirname } from "path"
-import { appendFileSync, mkdirSync, writeFileSync } from "fs"
+import { mkdirSync, writeFileSync, readFileSync, existsSync } from "fs"
 import { getRepoRoot, getWorkDir } from "../lib/repo.ts"
 import { loadIndex, getResolvedStream } from "../lib/index.ts"
+import { parseStreamDocument } from "../lib/stream-parser.ts"
 import {
   getPromptContext,
   generateThreadPrompt,
@@ -259,11 +260,6 @@ export async function main(argv: string[] = process.argv): Promise<void> {
 
   // Handle full stream or stage/batch generation
   if (!cliArgs.threadId) {
-    const { join } = await import("path")
-    const { readFileSync, existsSync } = await import("fs")
-    const { getWorkDir } = await import("../lib/repo.ts")
-    const { parseStreamDocument } = await import("../lib/stream-parser.ts")
-
     // Parse CLI args for filtering
     const stageNum = cliArgs.stage ? parseInt(cliArgs.stage, 10) : undefined
     const batchNum = cliArgs.batch ? parseInt(cliArgs.batch, 10) : undefined

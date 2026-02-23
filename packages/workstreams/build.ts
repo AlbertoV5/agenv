@@ -60,6 +60,7 @@ async function transpileFile(srcPath: string, outPath: string) {
   // Rewrite .ts extensions to .js in imports, and add .js where missing for relative imports
   jsCode = jsCode.replace(/from\s+["'](.+?)\.ts["']/g, 'from "$1.js"')
   jsCode = jsCode.replace(/import\s+["'](.+?)\.ts["']/g, 'import "$1.js"')
+  jsCode = jsCode.replace(/import\((['"])(.+?)\.ts\1\)/g, 'import("$2.js")')
   jsCode = jsCode.replace(/export\s+\*\s+from\s+["'](.+?)\.ts["']/g, 'export * from "$1.js"')
   
   // Add .js extension to relative imports that don't have an extension

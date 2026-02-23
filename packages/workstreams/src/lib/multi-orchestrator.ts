@@ -331,7 +331,9 @@ export async function setupGridController(
   console.log("  Setting up grid controller for pagination...")
   const bunPath = process.execPath
   const { resolve } = await import("path")
-  const binPath = resolve(import.meta.dir, "../../bin/work.ts")
+  const jsBinPath = resolve(import.meta.dir, "../../bin/work.js")
+  const tsBinPath = resolve(import.meta.dir, "../../bin/work.ts")
+  const binPath = existsSync(jsBinPath) ? jsBinPath : tsBinPath
 
   // Build thread command environment variables for respawn
   const threadCmdEnv = threads

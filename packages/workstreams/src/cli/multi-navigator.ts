@@ -8,7 +8,8 @@
 import { join } from "path"
 import { readFileSync } from "fs"
 import readline from "readline"
-import { getRepoRoot } from "../lib/repo.ts"
+import { getRepoRoot, getWorkDir } from "../lib/repo.ts"
+import { loadIndex, getResolvedStream } from "../lib/index.ts"
 import { readTasksFile, parseTaskId } from "../lib/tasks.ts"
 import { loadAgentsConfig, getAgentYaml } from "../lib/agents-yaml.ts"
 import { parseStreamDocument } from "../lib/stream-parser.ts"
@@ -353,7 +354,6 @@ export async function main(argv: string[] = process.argv) {
     // ...
 
     // Let's stick with PLAN.md loading for correctness
-    const { loadIndex, getResolvedStream } = await import("../lib/index.ts")
     const idx = loadIndex(repoRoot)
     const stream = getResolvedStream(idx, streamId)
     const planPath = join(repoRoot, "agenv", "work", stream.id, "PLAN.md")
@@ -361,7 +361,6 @@ export async function main(argv: string[] = process.argv) {
     // Let's use standard helpers if possible.
 
     // Just re-use the working parser logic?
-    const { getWorkDir } = await import("../lib/repo.ts")
     const wDir = getWorkDir(repoRoot)
     const pPath = join(wDir, stream.id, "PLAN.md")
     const content = readFileSync(pPath, "utf-8")

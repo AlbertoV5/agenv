@@ -16,6 +16,7 @@ import { getStreamPlanMdPath } from "../lib/consolidate.ts"
 import { parseStreamDocument } from "../lib/stream-parser.ts"
 import { generateTasksMdFromPlan, generateTasksMdFromTasks, parseTasksMd } from "../lib/tasks-md.ts"
 import { getTasks } from "../lib/tasks.ts"
+import { generateAllPrompts } from "../lib/prompts.ts"
 import type { TasksFile } from "../lib/types.ts"
 
 interface TasksCliArgs {
@@ -231,6 +232,20 @@ export function main(argv: string[] = process.argv): void {
 
       atomicWriteFile(tasksJsonPath, JSON.stringify(tasksFile, null, 2))
       console.log(`Updated: ${tasksJsonPath}`)
+
+      const promptsResult = generateAllPrompts(repoRoot, stream.id)
+      console.log(
+        `Prompts: ${promptsResult.generatedFiles.length}/${promptsResult.totalThreads} generated`
+      )
+      if (!promptsResult.success) {
+        console.log("Warning: Some prompts failed to generate:")
+        for (const err of promptsResult.errors.slice(0, 3)) {
+          console.log(`- ${err}`)
+        }
+        if (promptsResult.errors.length > 3) {
+          console.log(`- ... and ${promptsResult.errors.length - 3} more errors`)
+        }
+      }
 
       unlinkSync(tasksMdPath)
       console.log("Deleted TASKS.md")
